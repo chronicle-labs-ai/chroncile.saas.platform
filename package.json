@@ -1,0 +1,42 @@
+{
+  "name": "agent-warmup-platform",
+  "version": "0.1.0",
+  "description": "Agent Warmup Platform - MVP",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "dev": "turbo run dev",
+    "dev:frontend": "turbo run dev --filter=frontend",
+    "build": "turbo build",
+    "build:frontend": "turbo build --filter=frontend",
+    "db:push": "turbo run db:push",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:studio": "turbo run db:studio",
+    "format:check": "prettier --check apps/** packages/**",
+    "format:write": "prettier --write apps/** packages/**",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --cache --cache-location=node_modules/.cache/.eslintcache --fix",
+    "lint:staged": "lint-staged --allow-empty"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.14.0"
+  },
+  "packageManager": "yarn@4.7.0",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.8.0"
+  }
+}
