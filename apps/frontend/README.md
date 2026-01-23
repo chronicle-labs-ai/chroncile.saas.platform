@@ -12,15 +12,34 @@ This is the Next.js frontend application for the Agent Warmup Platform MVP.
 2. **Set up environment variables**:
    Create a `.env` file in the `apps/frontend` directory with:
    ```env
+   # Database
    DATABASE_URL="postgresql://user:password@localhost:5432/agent_warmup?schema=public"
+   
+   # NextAuth
    AUTH_SECRET="your-secret-key-here-generate-with-openssl-rand-base64-32"
-   AUTH_URL="http://localhost:3000"
+   AUTH_TRUST_HOST=true
+   
+   # App URL (use your Vercel URL in production)
+   NEXT_PUBLIC_APP_URL="http://localhost:3000"
+   
+   # Intercom OAuth
+   INTERCOM_CLIENT_ID="your-intercom-client-id"
+   INTERCOM_CLIENT_SECRET="your-intercom-client-secret"
+   
+   # Encryption key for storing tokens (32 bytes = 64 hex chars)
+   ENCRYPTION_KEY="generate-with-openssl-rand-hex-32"
+   
+   # Events Manager
    EVENTS_MANAGER_URL="http://localhost:8080"
    ```
 
-   To generate a secure `AUTH_SECRET`:
+   To generate secrets:
    ```bash
+   # Generate AUTH_SECRET
    openssl rand -base64 32
+   
+   # Generate ENCRYPTION_KEY (64 hex characters)
+   openssl rand -hex 32
    ```
 
 3. **Set up the database**:
@@ -58,12 +77,18 @@ This is the Next.js frontend application for the Agent Warmup Platform MVP.
 - ✅ Route protection middleware
 - ✅ Dashboard layout with sidebar navigation
 
+### Connections (Week 2)
+- ✅ Intercom OAuth flow
+- ✅ Token encryption for secure storage
+- ✅ Connection management UI
+- ✅ Workspace info retrieval
+
 ### Pages
 - `/login` - Login page
 - `/signup` - Signup page with organization creation
 - `/dashboard` - Protected dashboard home
 - `/dashboard/events` - Events timeline (placeholder)
-- `/dashboard/connections` - Integration management (placeholder)
+- `/dashboard/connections` - Integration management with Intercom OAuth
 - `/dashboard/settings` - Account and organization settings
 
 ### Database Schema
@@ -96,6 +121,7 @@ apps/frontend/
 ├── lib/
 │   ├── auth.ts          # NextAuth configuration
 │   ├── db.ts            # Prisma client
+│   ├── encryption.ts    # Token encryption/decryption
 │   ├── validations.ts   # Zod schemas
 │   └── utils.ts         # Utility functions
 ├── prisma/
