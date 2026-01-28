@@ -385,9 +385,11 @@ export async function getAccount(accountId: string): Promise<{ data: Account }> 
     throw new Error("PIPEDREAM_PROJECT_ID must be set");
   }
 
-  return pipedreamFetch<{ data: Account }>(
+  const account = await pipedreamFetch<Account>(
     `/v1/connect/${PIPEDREAM_PROJECT_ID}/accounts/${accountId}`
   );
+
+  return { data: account };
 }
 
 export async function deleteAccount(accountId: string): Promise<void> {
