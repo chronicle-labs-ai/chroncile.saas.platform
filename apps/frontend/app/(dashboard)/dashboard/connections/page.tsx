@@ -64,15 +64,9 @@ export default async function ConnectionsPage({
     createdAt: conn.createdAt,
   }));
 
-  // Check if Intercom is connected
-  const intercomConnection = connectionsData.find(
-    (c) => c.provider === "intercom" && c.status === "active"
-  );
-
   return (
     <ConnectionsClient
       connections={connectionsData}
-      intercomConnection={intercomConnection || null}
       successMessage={params.success}
       errorMessage={params.error}
       pipedreamSuccess={params.pipedream_success === "true"}

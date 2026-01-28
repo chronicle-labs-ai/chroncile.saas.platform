@@ -4,14 +4,7 @@ import { createConnectToken, isPipedreamConfigured } from "@/lib/pipedream";
 
 export const dynamic = "force-dynamic";
 
-/**
- * POST /api/pipedream/token
- * 
- * Creates a short-lived Connect token for the frontend to initiate
- * the Pipedream account connection flow.
- */
 export async function POST(request: NextRequest) {
-  // Verify user is authenticated
   const session = await auth();
   if (!session?.user?.tenantId) {
     return NextResponse.json(
@@ -20,7 +13,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Check Pipedream is configured
   if (!isPipedreamConfigured()) {
     return NextResponse.json(
       { error: "Pipedream is not configured" },
@@ -32,32 +24,60 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { app } = body as { app?: string };
 
-    // Use tenantId as the external user ID for Pipedream
-    // This allows all users in a tenant to share connections
     const externalUserId = session.user.tenantId;
 
-    // Get the app URL for redirects and webhooks
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     
-    // Build allowed origins - include both http and https for localhost
-    const allowedOrigins = [appUrl];
-    if (appUrl.includes("localhost")) {
-      // Add both http and https variants for local development
-      allowedOrigins.push(appUrl.replace("http://", "https://"));
-      allowedOrigins.push(appUrl.replace("https://", "http://"));
+    const requestOrigin = request.headers.get("origin") || request.nextUrl.origin;
+    
+    const requestUrlOrigin = request.nextUrl.origin;
+    
+    const allowedOrigins = new Set<string>();
+    
+    if (appUrl) {
+      allowedOrigins.add(appUrl);
+      if (appUrl.includes("ngrok")) {
+        const urlWithoutProtocol = appUrl.replace(/^https?:\/\//, "");
+        allowedOrigins.add(`https://${urlWithoutProtocol}`);
+        allowedOrigins.add(`http://${urlWithoutProtocol}`);
+      }
     }
+    
+    if (requestOrigin) {
+      allowedOrigins.add(requestOrigin);
+    }
+    
+    if (requestUrlOrigin) {
+      allowedOrigins.add(requestUrlOrigin);
+      if (requestUrlOrigin.includes("localhost")) {
+        allowedOrigins.add("http://localhost:3000");
+        allowedOrigins.add("https://localhost:3000");
+        allowedOrigins.add("http://127.0.0.1:3000");
+        allowedOrigins.add("https://127.0.0.1:3000");
+      }
+    }
+    
+    if (appUrl.includes("localhost") || requestOrigin.includes("localhost") || requestUrlOrigin.includes("localhost")) {
+      allowedOrigins.add("http://localhost:3000");
+      allowedOrigins.add("https://localhost:3000");
+      allowedOrigins.add("http://127.0.0.1:3000");
+      allowedOrigins.add("https://127.0.0.1:3000");
+    }
+    
+    const allowedOriginsArray = Array.from(allowedOrigins);
 
     console.log("[Pipedream Token] Creating token with:", {
       externalUserId,
-      allowedOrigins,
+      allowedOrigins: allowedOriginsArray,
       appUrl,
+      requestOrigin,
       app,
     });
 
     const tokenResponse = await createConnectToken({
       externalUserId,
-      app, // Pass the app slug to connect
-      allowedOrigins,
+      app,
+      allowedOrigins: allowedOriginsArray,
       successRedirectUri: `${appUrl}/dashboard/connections?pipedream_success=true${app ? `&app=${app}` : ""}`,
       errorRedirectUri: `${appUrl}/dashboard/connections?pipedream_error=true`,
       webhookUri: `${appUrl}/api/pipedream/auth-webhook`,
