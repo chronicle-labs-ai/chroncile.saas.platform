@@ -91,7 +91,24 @@ function mapTopicToEventType(topic: string): string {
 }
 
 export async function HEAD() {
-  return new NextResponse(null, { status: 200 });
+  return new NextResponse(null, { 
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "HEAD, POST, OPTIONS",
+    }
+  });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "HEAD, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-Hub-Signature",
+    }
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -135,7 +152,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing app_id" }, { status: 400 });
   }
 
-  const connection = await prisma.connection.findFirst({
+  let connection = await prisma.connection.findFirst({
     where: {
       provider: "intercom",
       status: "active",
@@ -150,10 +167,36 @@ export async function POST(request: NextRequest) {
   });
 
   if (!connection) {
-    console.error(`No connection found for Intercom app_id: ${webhook.app_id}`);
+    connection = await prisma.connection.findFirst({
+      where: {
+        provider: "intercom",
+        status: "active",
+      },
+      include: {
+        tenant: true,
+      },
+    });
+
+    if (connection) {
+      const currentMetadata = (connection.metadata as Record<string, unknown>) || {};
+      await prisma.connection.update({
+        where: { id: connection.id },
+        data: {
+          metadata: {
+            ...currentMetadata,
+            workspace_id: webhook.app_id,
+          },
+        },
+      });
+      console.log(`Learned workspace_id=${webhook.app_id} for connection ${connection.id}, tenant=${connection.tenantId}`);
+    }
+  }
+
+  if (!connection) {
+    console.error(`No active Intercom connection found for app_id: ${webhook.app_id}`);
     return NextResponse.json({ 
       received: true,
-      message: "No matching tenant found - webhook ignored" 
+      message: "No active Intercom connection found - webhook ignored" 
     });
   }
 
