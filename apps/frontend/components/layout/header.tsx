@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
+import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
 
 interface User {
   name?: string | null;
@@ -13,6 +14,7 @@ export function Header({ user }: { user: User }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState<string>("");
+  const { eventsCount, connectionsCount } = useDashboardStats();
 
   useEffect(() => {
     const updateTime = () => {
@@ -87,16 +89,16 @@ export function Header({ user }: { user: User }) {
           <div className="flex items-baseline gap-1.5">
             <div className="status-dot status-dot--nominal status-dot--pulse relative top-[-1px]" />
             <span className="text-[11px] text-tertiary leading-none">Events</span>
-            <span className="font-mono text-[13px] text-nominal font-medium tabular-nums leading-none">0</span>
+            <span className="font-mono text-[13px] text-nominal font-medium tabular-nums leading-none">{eventsCount}</span>
           </div>
           
           <div className="w-px h-4 bg-border-dim" />
           
           {/* Connections status */}
           <div className="flex items-baseline gap-1.5">
-            <div className="status-dot status-dot--data relative top-[-1px]" />
+            <div className={`status-dot relative top-[-1px] ${connectionsCount > 0 ? "status-dot--nominal status-dot--pulse" : "status-dot--data"}`} />
             <span className="text-[11px] text-tertiary leading-none">Connections</span>
-            <span className="font-mono text-[13px] text-data font-medium tabular-nums leading-none">0</span>
+            <span className="font-mono text-[13px] text-data font-medium tabular-nums leading-none">{connectionsCount}</span>
           </div>
           
           <div className="w-px h-4 bg-border-dim" />
