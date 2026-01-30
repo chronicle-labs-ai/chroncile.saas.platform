@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 interface EventEnvelope {
   event_id: string;
@@ -35,17 +35,33 @@ const getConversationId = (event: EventEnvelope): string => {
   return event.subject?.conversation_id || "N/A";
 };
 
+const MESSENGER_STORAGE_KEY = "agent-warmup-events-messenger";
+
+interface StoredMessenger {
+  provider: string;
+  appId: string;
+}
+
 interface EventsClientProps {
   tenantId: string;
   eventsManagerUrl: string;
+  hasActiveIntercom: boolean;
 }
 
-export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) {
+export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: EventsClientProps) {
   const [events, setEvents] = useState<EventEnvelope[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventEnvelope | null>(null);
   const [filter, setFilter] = useState<string>("all");
+
+  const [messengerPanelOpen, setMessengerPanelOpen] = useState(false);
+  const [messengerStep, setMessengerStep] = useState<"provider" | "appId">("provider");
+  const [messengerProvider, setMessengerProvider] = useState<string | null>(null);
+  const [messengerAppId, setMessengerAppId] = useState("");
+  const [messengerStatus, setMessengerStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [messengerError, setMessengerError] = useState("");
+  const messengerScriptRef = useRef<HTMLScriptElement | null>(null);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -78,6 +94,103 @@ export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  const unloadMessengerWidget = useCallback(() => {
+    const w = window as Window & { Intercom?: (action: string) => void; intercomSettings?: unknown };
+    try {
+      w.Intercom?.("shutdown");
+    } catch (_) {}
+    w.intercomSettings = undefined;
+    delete (window as unknown as Record<string, unknown>)["Intercom"];
+    const script = messengerScriptRef.current;
+    if (script?.parentNode) {
+      script.parentNode.removeChild(script);
+    }
+    messengerScriptRef.current = null;
+    document.querySelectorAll('script[src^="https://widget.intercom.io/widget/"]').forEach((el) => el.remove());
+  }, []);
+
+  const loadMessengerWidget = useCallback((appId: string) => {
+    unloadMessengerWidget();
+    (window as Window & { intercomSettings?: Record<string, unknown> }).intercomSettings = {
+      app_id: appId,
+      hide_default_launcher: true,
+      z_index: 99999,
+    };
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://widget.intercom.io/widget/${appId}`;
+    script.onload = () => {
+      messengerScriptRef.current = script;
+      setMessengerStatus("loaded");
+      setMessengerError("");
+      try {
+        localStorage.setItem(MESSENGER_STORAGE_KEY, JSON.stringify({ provider: "intercom", appId }));
+      } catch (_) {}
+    };
+    script.onerror = () => {
+      setMessengerStatus("error");
+      setMessengerError("Could not load the messenger. Check the App ID and try again.");
+    };
+    document.body.appendChild(script);
+  }, [unloadMessengerWidget]);
+
+  useEffect(() => {
+    if (!hasActiveIntercom) return;
+    try {
+      const raw = localStorage.getItem(MESSENGER_STORAGE_KEY);
+      if (!raw) return;
+      const stored = JSON.parse(raw) as StoredMessenger;
+      if (stored?.provider === "intercom" && typeof stored?.appId === "string" && stored.appId.trim()) {
+        setMessengerProvider("intercom");
+        setMessengerAppId(stored.appId.trim());
+        setMessengerStep("appId");
+        setMessengerStatus("loading");
+        loadMessengerWidget(stored.appId.trim());
+      }
+    } catch (_) {}
+  }, [hasActiveIntercom, loadMessengerWidget]);
+
+  const handleMessengerChooseProvider = (provider: string) => {
+    setMessengerProvider(provider);
+    setMessengerStep("appId");
+    setMessengerAppId("");
+    setMessengerStatus("idle");
+    setMessengerError("");
+  };
+
+  const handleMessengerBackToProvider = () => {
+    unloadMessengerWidget();
+    try {
+      localStorage.removeItem(MESSENGER_STORAGE_KEY);
+    } catch (_) {}
+    setMessengerProvider(null);
+    setMessengerStep("provider");
+    setMessengerAppId("");
+    setMessengerStatus("idle");
+    setMessengerError("");
+  };
+
+  const handleMessengerLoad = () => {
+    const appId = messengerAppId.trim();
+    if (!appId) {
+      setMessengerError("Enter your Intercom workspace App ID.");
+      setMessengerStatus("error");
+      return;
+    }
+    setMessengerError("");
+    setMessengerStatus("loading");
+    loadMessengerWidget(appId);
+  };
+
+  const handleMessengerChangeAppId = () => {
+    unloadMessengerWidget();
+    try {
+      localStorage.removeItem(MESSENGER_STORAGE_KEY);
+    } catch (_) {}
+    setMessengerStatus("idle");
+    setMessengerError("");
+  };
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -132,9 +245,136 @@ export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) 
     }
   };
 
+  const floatingMessengerUI = hasActiveIntercom ? (
+    <>
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col-reverse items-end gap-3" style={{ isolation: "isolate" }}>
+        <button
+          type="button"
+          onClick={() => setMessengerPanelOpen((o) => !o)}
+          className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity border-2 border-data flex-shrink-0"
+          style={{ background: "var(--data)", color: "var(--black)" }}
+          title="Open messenger to verify events"
+          aria-label="Open messenger panel"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+          </svg>
+        </button>
+        {messengerPanelOpen && (
+          <div className="panel w-[320px] max-h-[min(420px,70vh)] flex flex-col border-border-default shadow-lg flex-shrink-0">
+            <div className="panel__header flex items-center justify-between flex-shrink-0">
+              <span className="panel__title">Open messenger</span>
+              <button
+                type="button"
+                onClick={() => setMessengerPanelOpen(false)}
+                className="p-1 text-tertiary hover:text-primary transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="panel__content space-y-4 overflow-y-auto min-h-0">
+              {messengerStep === "provider" ? (
+                <>
+                  <p className="text-xs text-tertiary">
+                    Choose a provider to open its messenger and send test events. Events will appear here.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleMessengerChooseProvider("intercom")}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-elevated border border-border-default hover:border-data transition-colors text-left"
+                  >
+                    <span className="w-8 h-8 bg-data-bg border border-data flex items-center justify-center text-data font-mono text-xs font-bold">IN</span>
+                    <span className="text-sm font-medium text-primary">Intercom</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {messengerStatus === "loaded" ? (
+                    <>
+                      <p className="text-xs text-tertiary">
+                        Currently: <span className="font-mono text-data">{messengerProvider}</span> – <span className="font-mono text-secondary">{messengerAppId}</span>
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const w = window as Window & { Intercom?: (action: string) => void };
+                            w.Intercom?.("show");
+                          }}
+                          className="btn btn--primary w-full text-sm"
+                        >
+                          Open messenger
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleMessengerChangeAppId}
+                          className="btn btn--secondary w-full text-sm"
+                        >
+                          Change App ID
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleMessengerBackToProvider}
+                          className="btn btn--ghost w-full text-sm text-tertiary"
+                        >
+                          Choose another provider
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-tertiary">
+                        Enter your Intercom workspace App ID. Load the messenger to send test events.
+                      </p>
+                      <label htmlFor="events-messenger-app-id" className="block text-xs text-tertiary uppercase tracking-wide mb-1">
+                        App ID
+                      </label>
+                      <input
+                        id="events-messenger-app-id"
+                        type="text"
+                        value={messengerAppId}
+                        onChange={(e) => setMessengerAppId(e.target.value)}
+                        placeholder="e.g. rf0pkb6p"
+                        className="input mb-2"
+                        disabled={messengerStatus === "loading"}
+                      />
+                      {messengerStatus === "loading" && <p className="text-xs text-tertiary">Loading…</p>}
+                      {messengerStatus === "error" && messengerError && <p className="text-xs text-critical">{messengerError}</p>}
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={handleMessengerLoad}
+                          disabled={messengerStatus === "loading"}
+                          className="btn btn--primary w-full"
+                        >
+                          {messengerStatus === "loading" ? "Loading…" : "Load messenger"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleMessengerBackToProvider}
+                          className="btn btn--ghost w-full text-sm text-tertiary"
+                        >
+                          Choose another provider
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  ) : null;
+
   // Loading state
   if (loading && events.length === 0) {
     return (
+      <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -155,12 +395,15 @@ export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) 
           </div>
         </div>
       </div>
+      {floatingMessengerUI}
+      </>
     );
   }
 
   // Error state
   if (error) {
     return (
+      <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -198,13 +441,16 @@ export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) 
           </div>
         </div>
       </div>
+      {floatingMessengerUI}
+      </>
     );
   }
 
   // Empty state
   if (events.length === 0) {
     return (
-      <div className="space-y-6">
+      <>
+        <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Event Stream</div>
@@ -249,11 +495,14 @@ export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) 
           </div>
         </div>
       </div>
+        {floatingMessengerUI}
+      </>
     );
   }
 
   // Main events view
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -415,5 +664,7 @@ export function EventsClient({ tenantId, eventsManagerUrl }: EventsClientProps) 
         </div>
       </div>
     </div>
+    {floatingMessengerUI}
+    </>
   );
 }
