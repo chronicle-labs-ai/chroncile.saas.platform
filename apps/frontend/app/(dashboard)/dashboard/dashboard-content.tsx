@@ -38,7 +38,6 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
         <div className="text-sm text-tertiary">{currentDate}</div>
       </div>
 
-      {/* System Status Banner */}
       <div className="panel">
         <div className="flex items-center justify-between px-4 py-3 bg-nominal-bg border-b border-nominal-dim">
           <div className="flex items-center gap-3">
@@ -53,9 +52,7 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
         </div>
       </div>
 
-      {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Events Today */}
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Events Today</span>
@@ -74,7 +71,6 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
           </div>
         </div>
 
-        {/* Active Connections */}
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Connections</span>
@@ -104,7 +100,6 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
           </div>
         </div>
 
-        {/* Recording Sessions */}
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Sessions</span>
@@ -341,7 +336,7 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
               <p className="text-sm text-tertiary mb-4">
                 System operation manuals and API reference guides.
               </p>
-              <a href="#" className="btn btn--secondary w-full">
+              <Link href="/dashboard/docs" className="btn btn--secondary w-full">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -356,7 +351,7 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
                   />
                 </svg>
                 View Docs
-              </a>
+              </Link>
             </div>
           </div>
 
