@@ -25,31 +25,54 @@ model User {
 }
 
 model Tenant {
-  id          String       @id @default(cuid())
-  name        String
-  slug        String       @unique
-  users       User[]
-  connections Connection[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  users             User[]
+  connections       Connection[]
+  pipedreamTriggers PipedreamTrigger[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   @@index([slug])
 }
 
 model Connection {
-  id           String   @id @default(cuid())
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  provider     String   // "intercom", "stripe", etc.
-  accessToken  String   // encrypted
-  refreshToken String?  // encrypted
-  expiresAt    DateTime?
-  metadata     Json?    // workspace info, webhook config, etc.
-  status       String   @default("active") // "active", "inactive", "error"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider        String   // "intercom", "slack", "stripe", etc.
+  accessToken     String?  // encrypted (optional for Pipedream-managed connections)
+  refreshToken    String?  // encrypted
+  expiresAt       DateTime?
+  pipedreamAuthId String?  // Pipedream account ID (apn_xxx) for managed connections
+  metadata        Json?    // workspace info, webhook config, etc.
+  status          String   @default("active") // "active", "inactive", "error"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  triggers PipedreamTrigger[]
 
   @@unique([tenantId, provider])
   @@index([tenantId])
   @@index([provider])
+  @@index([pipedreamAuthId])
+}
+
+model PipedreamTrigger {
+  id              String     @id @default(cuid())
+  tenantId        String
+  tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connectionId    String
+  connection      Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  triggerId       String     // Pipedream trigger component ID (e.g., "slack-new-message")
+  deploymentId    String     @unique // Pipedream deployment ID (dc_xxx)
+  configuredProps Json?      // Filter configuration (channels, event types, etc.)
+  status          String     @default("active") // "active", "paused", "error"
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([tenantId])
+  @@index([connectionId])
+  @@index([deploymentId])
 }
