@@ -1,8 +1,3 @@
-/**
- * Topic tree: hierarchical paths source/event_type for timeline.
- * Aligned with events-manager timeline-core topic_tree.
- */
-
 import type { TimelineEvent } from "./types";
 import { sourceColor, pathColor } from "./constants";
 
@@ -112,7 +107,6 @@ function sortChildren(node: TopicTreeNode): void {
   node.children.forEach(sortChildren);
 }
 
-/** Collect visible nodes (respecting collapsed set). */
 export function getVisibleNodes(
   roots: TopicTreeNode[],
   collapsedSet: Set<string>

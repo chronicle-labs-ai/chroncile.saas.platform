@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   MIN_HALF_WIDTH_MS,
   MAX_HALF_WIDTH_MS,
   getTickIntervalSeconds,
 } from "./constants";
-import { useRef } from "react";
 export interface TimeViewState {
   centerMs: number;
   halfWidthMs: number;
@@ -25,15 +24,6 @@ export function useTimeView(initialCenterMs?: number, initialHalfWidthMs?: numbe
   const startMs = centerMs - halfWidthMs;
   const endMs = centerMs + halfWidthMs;
   const durationMs = halfWidthMs * 2;
-  // #region agent log
-  const loggedRef = useRef(false);
-  useEffect(() => {
-    if (!loggedRef.current) {
-      loggedRef.current = true;
-      fetch('http://127.0.0.1:7243/ingest/6fce5cef-9add-46e2-86b2-8a3973475f52',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useTimeView.ts:state',message:'TimeView initial state',data:{centerMs,halfWidthMs,startMs,endMs,durationMs,durationHours:durationMs/3600000},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-    }
-  });
-  // #endregion
 
   const pan = useCallback((deltaMs: number) => {
     setCenterMs((c) => c + deltaMs);

@@ -1,7 +1,3 @@
-/**
- * Streams panel types. Aligned with events-manager streams_panel.
- */
-
 export type StreamId = string;
 
 export interface Stream {

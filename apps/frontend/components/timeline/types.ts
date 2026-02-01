@@ -1,8 +1,3 @@
-/**
- * Timeline Widget Types
- * Aligned with events-manager timeline-widget/js types.
- */
-
 export interface TimelineEvent {
   id: string;
   source: string;

@@ -77,7 +77,7 @@ export function TimelinePanel({
     hasInitialCentered.current = true;
     const times = events.map((e) => new Date(e.occurredAt).getTime());
     const latestMs = Math.max(...times);
-    const half = 30 * 60 * 1000; // 30 min each side (1 h total)
+    const half = 30 * 60 * 1000;
     setRange(latestMs - half, latestMs + half);
   }, [events, setRange]);
 
@@ -157,7 +157,6 @@ export function TimelinePanel({
       const rect = timeAreaRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      // Scroll vertical (deltaY) = ZOOM
       if (Math.abs(e.deltaY) > 0.1) {
         const x = e.clientX - rect.left;
         const anchorMs = xToTime(x, timeAreaWidth);
@@ -165,7 +164,6 @@ export function TimelinePanel({
         zoomAt(anchorMs, factor);
       }
 
-      // Scroll horizontal (deltaX) = PAN horizontal
       if (Math.abs(e.deltaX) > 0.1) {
         const msPerPixel = durationMs / Math.max(1, timeAreaWidth);
         const deltaMs = -e.deltaX * msPerPixel;
@@ -182,9 +180,6 @@ export function TimelinePanel({
       Math.floor(startMs / majorIntervalMs) * majorIntervalMs + majorIntervalMs;
     const out: number[] = [];
     for (let t = firstTickMs; t <= endMs; t += majorIntervalMs) out.push(t);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/6fce5cef-9add-46e2-86b2-8a3973475f52',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TimelinePanel.tsx:ticks',message:'Tick computation',data:{startMs,endMs,durationMs,durationSecs,majorIntervalMs,ticksCount:out.length,firstTick:out[0],lastTick:out[out.length-1],sampleTicks:out.slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H5'})}).catch(()=>{});
-    // #endregion
     return out;
   }, [startMs, endMs, majorIntervalMs]);
 
@@ -233,7 +228,6 @@ export function TimelinePanel({
         flexDirection: "column",
       }}
     >
-      {/* Controls */}
       <div
         style={{
           display: "flex",
@@ -300,7 +294,6 @@ export function TimelinePanel({
         </span>
       </div>
 
-      {/* Header: STREAMS count + time axis */}
       <div
         style={{
           display: "flex",
@@ -350,12 +343,9 @@ export function TimelinePanel({
                 />
               );
             })}
-            {ticks.map((t, i) => {
+            {ticks.map((t) => {
               const x = timeToX(t, timeAreaWidth);
               const label = formatTickLabel(durationSecs, t);
-              // #region agent log
-              if (i < 3 || i >= ticks.length - 1) fetch('http://127.0.0.1:7243/ingest/6fce5cef-9add-46e2-86b2-8a3973475f52',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TimelinePanel.tsx:formatTickLabel',message:'Tick label render',data:{index:i,tickMs:t,label,durationSecs,x},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3,H4'})}).catch(()=>{});
-              // #endregion
               return (
                 <span
                   key={t}
@@ -376,7 +366,6 @@ export function TimelinePanel({
         </div>
       </div>
 
-      {/* Rows */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 200 }}>
         {visibleNodes.map((node, idx) => {
           const pathKey = node.pathKey;
@@ -473,7 +462,6 @@ export function TimelinePanel({
                     />
                   );
                 })}
-                {/* Playhead */}
                 {(() => {
                   const px = timeToX(playheadMs, timeAreaWidth);
                   return (

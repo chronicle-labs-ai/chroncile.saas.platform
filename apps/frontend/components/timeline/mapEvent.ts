@@ -1,9 +1,6 @@
 import type { EventEnvelopeDto } from "@/lib/events-manager-sse";
 import type { TimelineEvent } from "./types";
 
-/**
- * Map API EventEnvelopeDto to TimelineEvent for the timeline widget.
- */
 export function eventEnvelopeToTimelineEvent(e: EventEnvelopeDto): TimelineEvent {
   const message =
     typeof e.payload?.text === "string" ? e.payload.text : undefined;

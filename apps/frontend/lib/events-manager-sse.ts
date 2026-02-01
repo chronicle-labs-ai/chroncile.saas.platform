@@ -1,9 +1,3 @@
-/**
- * SSE client for Events Manager stream.
- * GET /api/stream?tenant_id=...&event_type=...&conversation_id=...
- * Listens for "event" type; data = JSON EventEnvelopeDto.
- */
-
 export interface EventEnvelopeDto {
   event_id: string;
   tenant_id: string;
@@ -26,10 +20,6 @@ export interface SubscribeToStreamParams {
   conversationId?: string;
 }
 
-/**
- * Subscribe to the Events Manager SSE stream. Calls onEvent for each "event" message.
- * Returns a cleanup function to close the connection.
- */
 export function subscribeToStream(
   baseUrl: string,
   params: SubscribeToStreamParams,

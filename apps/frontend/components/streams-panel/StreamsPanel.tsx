@@ -66,7 +66,6 @@ export function StreamsPanel({
 
   const saveRecording = useCallback(() => {
     if (recordingState.kind !== "PendingSave") return;
-    // TODO: pass recorded events from parent and export JSON
     onRecordingStateChange(REC_IDLE);
   }, [recordingState, onRecordingStateChange]);
 
@@ -120,7 +119,6 @@ export function StreamsPanel({
 
       {!collapsed && (
         <>
-          {/* REC section */}
           <div
             style={{
               padding: 12,
@@ -282,7 +280,6 @@ export function StreamsPanel({
             )}
           </div>
 
-          {/* Stream list */}
           <div style={{ padding: 8 }}>
             {streams.map((s) => (
               <div

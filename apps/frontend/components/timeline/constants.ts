@@ -1,7 +1,3 @@
-/**
- * Timeline constants and dark theme (aligned with events-manager timeline-core theme.rs).
- */
-
 export const DEFAULT_ROW_HEIGHT = 28;
 export const DEFAULT_LABEL_WIDTH = 180;
 export const HEADER_HEIGHT = 40;
@@ -9,7 +5,6 @@ export const INDENT_SIZE = 20;
 export const MIN_HALF_WIDTH_MS = 1000;
 export const MAX_HALF_WIDTH_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Dark theme (timeline-core dark) */
 export const TIMELINE_THEME = {
   bg_primary: "rgb(8, 10, 18)",
   bg_surface: "rgb(12, 15, 25)",
@@ -59,7 +54,6 @@ export function sourceColor(source: string): string {
   }
 }
 
-/** Path color variation from base (hex). */
 export function pathColor(pathDisplay: string, baseHex: string): string {
   let hash = 0;
   for (let i = 0; i < pathDisplay.length; i++) hash = (hash + pathDisplay.charCodeAt(i)) >>> 0;
@@ -132,10 +126,8 @@ export function getTickIntervalSeconds(durationMs: number): number {
   return 3600;
 }
 
-/** Max ticks on the time axis (avoids overcrowding). */
 export const MAX_TICKS = 17;
 
-/** Tick interval in ms. */
 export function getTickIntervalMs(durationMs: number): number {
   const base = getTickIntervalSeconds(durationMs) * 1000;
   const estimatedTicks = Math.ceil(durationMs / base);
@@ -144,7 +136,6 @@ export function getTickIntervalMs(durationMs: number): number {
   return Math.ceil(durationMs / MAX_TICKS / 1000) * 1000;
 }
 
-/** Format time label based on zoom level. Uses local timezone to match event detail panel. */
 export function formatTickLabel(durationSecs: number, ms: number): string {
   const d = new Date(ms);
   const pad = (n: number) => n.toString().padStart(2, "0");
