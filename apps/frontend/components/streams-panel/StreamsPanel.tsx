@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import type { Stream, RecordingState, StreamId } from "./types";
 import {
   REC_IDLE,
@@ -43,6 +43,12 @@ export function StreamsPanel({
   const [streamsToRecord, setStreamsToRecord] = useState<Set<StreamId>>(
     new Set(streams.filter((s) => s.enabled).map((s) => s.id))
   );
+  const [recordingTick, setRecordingTick] = useState(0);
+  useEffect(() => {
+    if (recordingState.kind !== "Recording") return;
+    const id = setInterval(() => setRecordingTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [recordingState.kind]);
 
   const startSelecting = useCallback(() => {
     setStreamsToRecord(new Set(streams.filter((s) => s.enabled).map((s) => s.id)));
