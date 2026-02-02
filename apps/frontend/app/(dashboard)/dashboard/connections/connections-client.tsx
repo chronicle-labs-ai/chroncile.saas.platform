@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmModal } from "@/components/ui/modal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ConnectionData {
   id: string;
@@ -83,6 +84,50 @@ const CATEGORIES = [
   { id: "marketing", label: "Marketing" },
   { id: "productivity", label: "Productivity" },
 ];
+
+function ConnectionsIntegrationsSkeleton() {
+  return (
+    <>
+      <div className="px-4 py-4 border-b border-border-dim space-y-4">
+        <Skeleton className="w-full h-10 rounded-md" />
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <Skeleton
+              key={i}
+              className="h-8 flex-1 min-w-[4rem] max-w-[6rem]"
+            />
+          ))}
+        </div>
+      </div>
+      <div className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="bg-surface border border-border-dim rounded-md overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-3 bg-elevated border-b border-border-dim">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-8 h-8 shrink-0" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-3.5 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-4/5" />
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-9 w-full mt-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
 
 export function ConnectionsClient({
   connections: initialConnections,
@@ -717,96 +762,91 @@ export function ConnectionsClient({
           {isPipedreamConfigured && <span className="badge badge--neutral">Pipedream</span>}
         </div>
 
-        {isPipedreamConfigured && !loadingApps && (
-          <div className="px-4 py-4 border-b border-border-dim space-y-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                {searchingApps ? (
-                  <svg className="w-4 h-4 text-data animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                  </svg>
-                )}
-              </div>
-              <input
-                type="text"
-                placeholder="Search integrations... (e.g., Intercom, Slack, Stripe)"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowAllApps(false);
-                }}
-                className="w-full pl-10 pr-3 py-2 bg-base border border-border-default text-sm placeholder:text-disabled focus:outline-none focus:border-data"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-tertiary hover:text-primary"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    setShowAllApps(false);
-                  }}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors border ${
-                    selectedCategory === category.id
-                      ? "bg-data text-base border-data"
-                      : "bg-elevated text-secondary border-border-default hover:border-border-bright"
-                  }`}
-                >
-                  {category.label}
-                  {category.id === "connected" && activeConnections > 0 && (
-                    <span className="ml-1.5 font-mono tabular-nums">{activeConnections}</span>
+        {loadingApps ? (
+          <ConnectionsIntegrationsSkeleton />
+        ) : (
+          <>
+            {isPipedreamConfigured && (
+              <div className="px-4 py-4 border-b border-border-dim space-y-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    {searchingApps ? (
+                      <svg className="w-4 h-4 text-data animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                      </svg>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search integrations... (e.g., Intercom, Slack, Stripe)"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowAllApps(false);
+                    }}
+                    className="w-full pl-10 pr-3 py-2 bg-base border border-border-default text-sm placeholder:text-disabled focus:outline-none focus:border-data"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-tertiary hover:text-primary"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   )}
-                </button>
-              ))}
-            </div>
+                </div>
 
-            {(searchQuery || selectedCategory !== "all") && (
-              <div className="text-sm text-tertiary">
-                {searchingApps ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Searching...
-                  </span>
-                ) : (
-                  <>
-                    <span className="font-mono tabular-nums">{filteredApps.length}</span> result{filteredApps.length !== 1 ? "s" : ""}
-                    {searchQuery && ` for "${searchQuery}"`}
-                  </>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        setSelectedCategory(category.id);
+                        setShowAllApps(false);
+                      }}
+                      className={`px-3 py-1.5 text-sm font-medium transition-colors border ${
+                        selectedCategory === category.id
+                          ? "bg-data text-base border-data"
+                          : "bg-elevated text-secondary border-border-default hover:border-border-bright"
+                      }`}
+                    >
+                      {category.label}
+                      {category.id === "connected" && activeConnections > 0 && (
+                        <span className="ml-1.5 font-mono tabular-nums">{activeConnections}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {(searchQuery || selectedCategory !== "all") && (
+                  <div className="text-sm text-tertiary">
+                    {searchingApps ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Searching...
+                      </span>
+                    ) : (
+                      <>
+                        <span className="font-mono tabular-nums">{filteredApps.length}</span> result{filteredApps.length !== 1 ? "s" : ""}
+                        {searchQuery && ` for "${searchQuery}"`}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             )}
-          </div>
-        )}
 
-        <div className="p-4">
-          {loadingApps ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="relative">
-                <div className="w-12 h-12 border-2 border-border-default rounded-full" />
-                <div className="absolute top-0 left-0 w-12 h-12 border-2 border-data border-t-transparent rounded-full animate-spin" />
-              </div>
-              <div className="text-sm text-tertiary mt-4">Loading integrations...</div>
-            </div>
-          ) : (
+            <div className="p-4">
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {isPipedreamConfigured && pipedreamApps.length > 0 ? (
@@ -872,8 +912,9 @@ export function ConnectionsClient({
                 </div>
               )}
             </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Active Connections */}
