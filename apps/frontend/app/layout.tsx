@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Agent Warmup | Command Center",
   description: "AI Agent Testing & Validation Platform",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

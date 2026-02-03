@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/ui/logo";
 
 const navigation = [
   {
@@ -64,10 +65,7 @@ export function Sidebar() {
           {/* System Header */}
           <div className="h-12 flex items-center px-4 border-b border-border-dim bg-elevated">
             <Link href="/dashboard" className="flex items-center gap-3">
-              {/* Logo mark - simple, geometric */}
-              <div className="w-6 h-6 border border-data flex items-center justify-center">
-                <div className="w-2 h-2 bg-data" />
-              </div>
+              <Logo className="w-6 h-6 shrink-0" variant="dark" />
               <span className="text-sm font-semibold tracking-tight text-primary">
                 Agent Warmup
               </span>
@@ -160,7 +158,8 @@ export function Sidebar() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2 border-t border-border-dim">
+          <div className="px-4 py-2 border-t border-border-dim flex items-center gap-2">
+            <Logo className="w-4 h-4 shrink-0 opacity-70" variant="dark" />
             <span className="text-[10px] text-disabled">
               © 2026 Agent Warmup
             </span>

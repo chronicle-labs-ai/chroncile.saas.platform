@@ -1,4 +1,5 @@
 import { AuthBackground } from "@/components/auth/AuthLeftPanel";
+import { Logo } from "@/components/ui/logo";
 
 export default function AuthLayout({
   children,
@@ -15,7 +16,7 @@ export default function AuthLayout({
         <div className="flex flex-col justify-between p-16 w-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-data" />
+            <Logo className="w-8 h-8 shrink-0" variant="dark" />
             <span className="text-base font-medium text-primary/90">
               Agent Warmup
             </span>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 
 type FieldErrors = {
   name?: string[];
@@ -72,7 +73,7 @@ export default function SignupPage() {
   return (
     <div className="space-y-10">
       <div className="lg:hidden flex items-center gap-3 mb-8">
-        <div className="w-8 h-8 bg-data" />
+        <Logo className="w-8 h-8 shrink-0" variant="dark" />
         <span className="text-base font-medium text-white">
           Agent Warmup
         </span>
