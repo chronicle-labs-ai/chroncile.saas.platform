@@ -9,6 +9,7 @@ import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
 import { StreamsPanel } from "@/components/streams-panel/StreamsPanel";
 import type { RecordingState } from "@/components/streams-panel/types";
 import { REC_IDLE, recRecording } from "@/components/streams-panel/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EventEnvelope {
   event_id: string;
@@ -54,6 +55,64 @@ interface EventsClientProps {
   tenantId: string;
   eventsManagerUrl: string;
   hasActiveIntercom: boolean;
+}
+
+function EventsListSkeleton({ tabBar }: { tabBar: React.ReactNode }) {
+  return (
+    <div className="space-y-6">
+      {tabBar}
+      <div className="flex items-center justify-between">
+        <div>
+          <Skeleton className="h-3 w-28 mb-1" />
+          <Skeleton className="h-7 w-24" />
+        </div>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+      <div className="panel">
+        <div className="flex items-center justify-between px-4 py-3 bg-elevated border-b border-border-dim">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 panel">
+          <div className="panel__header">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-5 w-14 rounded-sm" />
+          </div>
+          <div className="divide-y divide-border-dim max-h-[600px] overflow-y-auto">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="w-8 h-8 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3.5 w-28" />
+                    <Skeleton className="h-4 w-14 rounded-sm" />
+                  </div>
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <Skeleton className="h-4 w-4 shrink-0 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="panel">
+          <div className="panel__header">
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <div className="panel__content space-y-4">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-4/5" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: EventsClientProps) {
@@ -525,28 +584,8 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
   if (viewTab === "list" && loading && events.length === 0) {
     return (
       <>
-      <div className="space-y-6">
-        {tabBar}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Event Stream</div>
-            <h1 className="text-2xl font-semibold text-primary">Events</h1>
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel__content">
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="relative">
-                <div className="w-12 h-12 border-2 border-border-default rounded-full" />
-                <div className="absolute top-0 left-0 w-12 h-12 border-2 border-data border-t-transparent rounded-full animate-spin" />
-              </div>
-              <div className="text-sm text-tertiary mt-4">Loading events...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {floatingMessengerUI}
+        <EventsListSkeleton tabBar={tabBar} />
+        {floatingMessengerUI}
       </>
     );
   }
@@ -709,7 +748,15 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2" style={{ minHeight: 400 }}>
               {timelineLoading ? (
-                <div className="panel flex items-center justify-center py-16 text-tertiary">Loading timeline…</div>
+                <div className="panel overflow-hidden">
+                  <div className="p-4 border-b border-border-dim space-y-2">
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <div className="p-4">
+                    <Skeleton className="w-full min-h-[360px] rounded-md" />
+                  </div>
+                </div>
               ) : (
                 <TimelinePanel
                   events={timelineBuffer}

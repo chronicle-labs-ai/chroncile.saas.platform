@@ -2,11 +2,93 @@
 
 import Link from "next/link";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RecentActivity } from "./recent-activity";
 
 interface DashboardContentProps {
   userName: string;
   currentDate: string;
+}
+
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <Skeleton className="h-3 w-32 mb-2" />
+          <Skeleton className="h-7 w-56" />
+        </div>
+        <Skeleton className="h-4 w-36" />
+      </div>
+
+      <div className="panel">
+        <div className="flex items-center justify-between px-4 py-3 bg-elevated border-b border-border-dim">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="panel">
+            <div className="panel__header">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-2 w-2 rounded-full" />
+            </div>
+            <div className="panel__content">
+              <Skeleton className="h-8 w-12 mb-2" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 panel">
+          <div className="panel__header">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-5 w-20 rounded-sm" />
+          </div>
+          <div className="divide-y divide-border-dim">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-4">
+                <Skeleton className="w-10 h-10 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-sm" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="panel">
+            <div className="panel__header">
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <div className="panel__content">
+              <Skeleton className="h-3 w-full mb-2" />
+              <Skeleton className="h-3 w-4/5 mb-4" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel__header">
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <div className="panel__content">
+              <Skeleton className="h-3 w-full mb-2" />
+              <Skeleton className="h-3 w-4/5 mb-4" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <RecentActivity />
+    </div>
+  );
 }
 
 export function DashboardContent({ userName, currentDate }: DashboardContentProps) {
@@ -15,6 +97,7 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
     connectionsCount,
     eventsTodayCount,
     sessionsCount,
+    isLoading,
   } = useDashboardStats();
 
   const step1Complete = connectionsCount >= 1;
@@ -22,6 +105,10 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
   const step3Complete = false;
   const completedSteps =
     (step1Complete ? 1 : 0) + (step2Complete ? 1 : 0) + (step3Complete ? 1 : 0);
+
+  if (isLoading) {
+    return <OverviewSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
