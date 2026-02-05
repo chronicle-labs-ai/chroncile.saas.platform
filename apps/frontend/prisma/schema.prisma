@@ -39,6 +39,30 @@ model Tenant {
   @@index([slug])
 }
 
+model Event {
+  eventId        String   @id @db.VarChar(26) @map("event_id")
+  tenantId       String   @map("tenant_id")
+  source         String
+  sourceEventId  String   @map("source_event_id")
+  eventType      String   @map("event_type")
+  conversationId String   @map("conversation_id")
+  ticketId       String?  @map("ticket_id")
+  customerId     String?  @map("customer_id")
+  accountId      String?  @map("account_id")
+  actorType      String   @map("actor_type")
+  actorId        String   @map("actor_id")
+  actorName      String?  @map("actor_name")
+  occurredAt     DateTime @map("occurred_at")
+  ingestedAt     DateTime @default(now()) @map("ingested_at")
+  schemaVersion  Int      @default(1) @map("schema_version")
+  payload        Json
+  piiFlags       Json     @map("pii_flags")
+  permissions    Json
+
+  @@map("events")
+  @@unique([tenantId, source, sourceEventId])
+}
+
 model Run {
   id              String   @id @default(cuid())
   tenantId        String
