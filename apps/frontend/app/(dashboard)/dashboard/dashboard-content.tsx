@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecentActivity } from "./recent-activity";
+import { RecentRuns } from "./recent-runs";
 
 interface DashboardContentProps {
   userName: string;
@@ -97,6 +98,8 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
     connectionsCount,
     eventsTodayCount,
     sessionsCount,
+    runsCount,
+    runsTodayCount,
     isLoading,
   } = useDashboardStats();
 
@@ -187,28 +190,28 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
           </div>
         </div>
 
-        <div className="panel">
+        <Link href="/dashboard/runs" className="panel hover:border-data/30 transition-colors">
           <div className="panel__header">
-            <span className="panel__title">Sessions</span>
+            <span className="panel__title">Runs</span>
             <div
               className={
-                sessionsCount > 0
+                runsCount > 0
                   ? "status-dot status-dot--nominal status-dot--pulse"
-                  : "status-dot status-dot--offline"
+                  : "status-dot status-dot--data"
               }
             />
           </div>
           <div className="panel__content">
             <div className="metric">
-              <div className="metric__value text-tertiary">{sessionsCount}</div>
+              <div className="metric__value metric__value--data">{runsTodayCount}</div>
               <div className="mt-2 flex items-center gap-2">
-                <span className="badge badge--neutral">
-                  {sessionsCount > 0 ? "Active" : "Standby"}
+                <span className="metric__delta metric__delta--neutral">
+                  {runsCount} total
                 </span>
               </div>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* System Health */}
         <div className="panel">
@@ -392,7 +395,7 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
               </div>
             ) : (
               <Link
-                href="/dashboard/events"
+                href="/dashboard/runs"
                 className={`flex items-center gap-4 px-4 py-4 transition-colors group ${!step2Complete ? "opacity-50 pointer-events-none" : "hover:bg-hover"}`}
               >
                 <div className="w-10 h-10 border border-border-default bg-elevated flex items-center justify-center font-mono text-sm font-bold text-tertiary">
@@ -414,6 +417,7 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
 
         {/* Quick Actions - 1 column */}
         <div className="space-y-4">
+          <RecentRuns />
           {/* Documentation */}
           <div className="panel">
             <div className="panel__header">
