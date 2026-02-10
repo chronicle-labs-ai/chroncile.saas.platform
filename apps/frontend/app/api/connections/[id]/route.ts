@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { decrypt } from "@/lib/encryption";
-import { deleteAccount } from "@/lib/pipedream";
+import { deleteAccount, deleteDeployedTrigger } from "@/lib/pipedream";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +33,20 @@ export async function DELETE(
         { error: "Connection not found" },
         { status: 404 }
       );
+    }
+
+    const triggers = await prisma.pipedreamTrigger.findMany({
+      where: { connectionId: id },
+      select: { deploymentId: true },
+    });
+
+    for (const trigger of triggers) {
+      try {
+        await deleteDeployedTrigger(trigger.deploymentId, session.user.tenantId);
+        console.log(`Deleted Pipedream trigger ${trigger.deploymentId}`);
+      } catch (triggerError) {
+        console.error(`Error deleting trigger ${trigger.deploymentId}:`, triggerError);
+      }
     }
 
     if (connection.pipedreamAuthId) {

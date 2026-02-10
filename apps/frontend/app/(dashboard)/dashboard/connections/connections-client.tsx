@@ -446,12 +446,14 @@ export function ConnectionsClient({
         throw new Error(data.error || "Failed to disconnect");
       }
 
-      setConnections((prev) => prev.filter((c) => c.id !== connectionToDisconnect.id));
+      const disconnectedId = connectionToDisconnect.id;
+      setConnections((prev) => prev.filter((c) => c.id !== disconnectedId));
+      setDeployedTriggers((prev) => prev.filter((t) => t.connectionId !== disconnectedId));
 
       showToastMessage("Connection disconnected successfully", "success");
       setShowDisconnectModal(false);
       setConnectionToDisconnect(null);
-      
+
       router.refresh();
     } catch (error) {
       console.error("Disconnect error:", error);
