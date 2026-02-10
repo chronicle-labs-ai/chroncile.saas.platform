@@ -225,7 +225,6 @@ export function ConnectionsClient({
         workspace_info_error: "Network error getting workspace info. Please try again.",
         encryption_not_configured: "Server configuration error. Please contact support.",
         disconnect_failed: "Failed to disconnect. Please try again.",
-        intercom_oauth_deprecated: "Direct Intercom OAuth has been deprecated. Please use the Pipedream integration below.",
       };
       showToastMessage(errorMessages[errorMessage] || `Error: ${errorMessage}`, "error");
     }

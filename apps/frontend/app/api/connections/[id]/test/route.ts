@@ -1,24 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { decrypt } from "@/lib/encryption";
-import { getAccount, Account } from "@/lib/pipedream";
+import { getAccount } from "@/lib/pipedream";
 
 export const dynamic = "force-dynamic";
-
-interface IntercomMeResponse {
-  type: string;
-  id: string;
-  email: string;
-  name: string;
-  app: {
-    type: string;
-    id_code: string;
-    name: string;
-    created_at: number;
-    region: string;
-  };
-}
 
 interface HealthCheckResult {
   healthy: boolean;
@@ -76,10 +61,6 @@ export async function POST(
 
     if (connection.pipedreamAuthId) {
       return await testPipedreamConnection(connection);
-    } else if (connection.accessToken) {
-      if (connection.provider === "intercom") {
-        return await testDirectIntercomConnection(connection);
-      }
     }
 
     return NextResponse.json({
@@ -184,101 +165,6 @@ async function testPipedreamConnection(connection: {
       status: "error",
       message: "Failed to test connection",
       error: errorMessage,
-      details: {
-        last_checked: new Date().toISOString(),
-      },
-    });
-  }
-}
-
-async function testDirectIntercomConnection(connection: {
-  id: string;
-  accessToken: string | null;
-  status: string;
-  metadata: unknown;
-}): Promise<NextResponse<HealthCheckResult>> {
-  try {
-    if (!connection.accessToken) {
-      return NextResponse.json({
-        healthy: false,
-        status: "error",
-        message: "No access token found",
-        error: "Connection is missing access token",
-        details: {
-          last_checked: new Date().toISOString(),
-        },
-      });
-    }
-
-    const accessToken = decrypt(connection.accessToken);
-
-    const response = await fetch("https://api.intercom.io/me", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Intercom health check failed:", errorText);
-
-      if (response.status === 401) {
-        return NextResponse.json({
-          healthy: false,
-          status: "expired",
-          message: "Access token is invalid or expired",
-          error: "Token expired - please reconnect your Intercom account",
-          details: {
-            last_checked: new Date().toISOString(),
-          },
-        });
-      }
-
-      return NextResponse.json({
-        healthy: false,
-        status: "error",
-        message: "Failed to connect to Intercom",
-        error: `Intercom API returned status ${response.status}`,
-        details: {
-          last_checked: new Date().toISOString(),
-        },
-      });
-    }
-
-    const data: IntercomMeResponse = await response.json();
-
-    return NextResponse.json({
-      healthy: true,
-      status: "connected",
-      message: "Connection is healthy",
-      details: {
-        workspace_name: data.app?.name,
-        admin_email: data.email,
-        region: data.app?.region,
-        last_checked: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    console.error("Error testing Intercom connection:", error);
-
-    if (error instanceof Error && error.message.includes("decrypt")) {
-      return NextResponse.json({
-        healthy: false,
-        status: "error",
-        message: "Failed to decrypt access token",
-        error: "Token decryption failed - the connection may need to be re-established",
-        details: {
-          last_checked: new Date().toISOString(),
-        },
-      });
-    }
-
-    return NextResponse.json({
-      healthy: false,
-      status: "error",
-      message: "Failed to test connection",
-      error: error instanceof Error ? error.message : "Unknown error",
       details: {
         last_checked: new Date().toISOString(),
       },
