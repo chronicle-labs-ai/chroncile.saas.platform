@@ -167,6 +167,10 @@ export function ConnectionsClient({
   const [addTriggerModalConnection, setAddTriggerModalConnection] = useState<ConnectionData | null>(null);
   const hasShownPostConnectModalRef = useRef(false);
 
+  const [resolvingRedirect, setResolvingRedirect] = useState(
+    () => pipedreamSuccess || pipedreamError
+  );
+
   const showToastMessage = useCallback((message: string, type: "success" | "error") => {
     setToastMessage(message);
     setToastType(type);
@@ -214,6 +218,9 @@ export function ConnectionsClient({
       syncConnections();
     } else if (pipedreamError) {
       showToastMessage("Failed to connect - please try again", "error");
+      router.replace("/dashboard/connections", { scroll: false });
+      const t = setTimeout(() => setResolvingRedirect(false), 800);
+      return () => clearTimeout(t);
     } else if (errorMessage) {
       const errorMessages: Record<string, string> = {
         invalid_state: "Security check failed. Please try connecting again.",
@@ -732,6 +739,40 @@ export function ConnectionsClient({
       </div>
     );
   };
+
+  if (resolvingRedirect) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="panel px-8 py-6 flex flex-col items-center gap-4 max-w-sm">
+          <div className="status-dot status-dot--data status-dot--pulse" />
+          <p className="text-sm font-medium text-primary text-center">
+            {pipedreamError ? "Connection failed." : "Completing connection…"}
+          </p>
+          {!pipedreamError && (
+            <svg
+              className="w-8 h-8 text-data animate-spin"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
