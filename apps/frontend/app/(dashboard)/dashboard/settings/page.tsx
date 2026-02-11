@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { CopyButton } from "@/components/ui/copy-button";
+import { AgentEndpointPanel } from "@/components/settings/AgentEndpointPanel";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -134,6 +135,8 @@ export default async function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <AgentEndpointPanel />
 
       {/* System Status */}
       <div className="panel">

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appendAuditLog } from "@/lib/audit-log";
 import prisma from "@/lib/db";
 import eventsManager from "@/lib/events-manager";
 
@@ -216,6 +217,40 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`Event ingested: ${result.event_id}, type=${eventType}, tenant=${tenantId || "unknown"}`);
+
+    if (tenantId && result.ingested) {
+      const invocationId = `inv_${result.event_id}`;
+      const eventSnapshot = {
+        ...event,
+        _pipedream: {
+          deployment_id: deploymentId,
+          received_at: new Date().toISOString(),
+        },
+      };
+      try {
+        const run = await prisma.run.create({
+          data: {
+            tenantId,
+            eventId: result.event_id,
+            invocationId,
+            mode: "shadow",
+            status: "pending",
+            eventSnapshot: eventSnapshot as Record<string, unknown>,
+            workflowId: null,
+          },
+        });
+        await appendAuditLog({
+          tenantId,
+          runId: run.id,
+          eventId: result.event_id,
+          invocationId,
+          action: "run_created",
+          payload: { mode: "shadow", source: "webhook" },
+        });
+      } catch (err) {
+        console.error("Webhook: failed to create run", err);
+      }
+    }
 
     return NextResponse.json({
       received: true,

@@ -95,6 +95,38 @@ export function RunsClient() {
   }, [data?.nextCursor, data?.hasMore, statusFilter, pageCursor, pageHasMore]);
 
   const [creating, setCreating] = useState(false);
+  const [processingPending, setProcessingPending] = useState(false);
+  const [processMessage, setProcessMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const sendPendingToAgent = useCallback(async () => {
+    setProcessingPending(true);
+    setProcessMessage(null);
+    try {
+      const res = await fetch("/api/runs/process-pending", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to process pending");
+      }
+      const { processed = 0, failed = 0 } = data;
+      if (processed === 0 && failed === 0) {
+        setProcessMessage({ type: "success", text: "No pending runs" });
+      } else {
+        setProcessMessage({
+          type: "success",
+          text: `${processed} run(s) sent${failed > 0 ? `, ${failed} failed` : ""}`,
+        });
+      }
+      await mutate();
+    } catch (e) {
+      setProcessMessage({
+        type: "error",
+        text: e instanceof Error ? e.message : "Failed to send pending to agent",
+      });
+    } finally {
+      setProcessingPending(false);
+    }
+  }, [mutate]);
+
   const createTestRun = useCallback(async () => {
     setCreating(true);
     try {
@@ -128,21 +160,38 @@ export function RunsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="text-xs text-tertiary tracking-wide uppercase mb-1">
             Agent runs
           </div>
           <h1 className="text-2xl font-semibold text-primary">Runs</h1>
         </div>
-        <button
-          type="button"
-          onClick={createTestRun}
-          disabled={creating}
-          className="btn btn--primary"
-        >
-          {creating ? "Creating…" : "Create test run"}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {processMessage && (
+            <span
+              className={`text-sm ${processMessage.type === "success" ? "text-nominal" : "text-critical"}`}
+            >
+              {processMessage.text}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={sendPendingToAgent}
+            disabled={processingPending}
+            className="btn btn--secondary"
+          >
+            {processingPending ? "Sending…" : "Send pending to agent"}
+          </button>
+          <button
+            type="button"
+            onClick={createTestRun}
+            disabled={creating}
+            className="btn btn--primary"
+          >
+            {creating ? "Creating…" : "Create test run"}
+          </button>
+        </div>
       </div>
 
       <div className="panel">
