@@ -55,10 +55,16 @@ function statusBadgeClass(status: string): string {
     case "failed":
       return "badge badge--critical";
     case "pending":
+    case "pending_review":
       return "badge badge--caution";
     default:
       return "badge badge--neutral";
   }
+}
+
+function statusDisplayLabel(status: string): string {
+  if (status === "pending_review") return "Pending review";
+  return status;
 }
 
 export function RunsClient() {
@@ -198,18 +204,25 @@ export function RunsClient() {
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-elevated border-b border-border-dim">
           <span className="text-sm font-medium text-secondary">Filter by status</span>
           <div className="flex flex-wrap gap-2">
-            {["", "pending", "completed", "rejected", "approved"].map((s) => (
+            {[
+              { value: "", label: "All" },
+              { value: "pending", label: "Pending" },
+              { value: "pending_review", label: "Needs review" },
+              { value: "completed", label: "Completed" },
+              { value: "rejected", label: "Rejected" },
+              { value: "approved", label: "Approved" },
+            ].map(({ value, label }) => (
               <button
-                key={s || "all"}
+                key={value || "all"}
                 type="button"
-                onClick={() => setStatusFilter(s)}
+                onClick={() => setStatusFilter(value)}
                 className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
-                  (s || "") === (statusFilter || "")
+                  value === (statusFilter ?? "")
                     ? "bg-data-bg border-data text-data"
                     : "border-border-default text-secondary hover:bg-hover"
                 }`}
               >
-                {s || "All"}
+                {label}
               </button>
             ))}
           </div>
@@ -294,7 +307,7 @@ export function RunsClient() {
                         event {run.eventId} · {run.mode} · {formatDate(run.createdAt)}
                       </div>
                     </div>
-                    <span className={statusBadgeClass(run.status)}>{run.status}</span>
+                    <span className={statusBadgeClass(run.status)}>{statusDisplayLabel(run.status)}</span>
                     <svg className="w-4 h-4 shrink-0 text-tertiary group-hover:text-data transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                     </svg>

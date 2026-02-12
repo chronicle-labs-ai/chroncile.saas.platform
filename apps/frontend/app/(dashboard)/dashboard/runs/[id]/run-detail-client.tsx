@@ -62,10 +62,16 @@ function statusBadgeClass(status: string): string {
     case "failed":
       return "badge badge--critical";
     case "pending":
+    case "pending_review":
       return "badge badge--caution";
     default:
       return "badge badge--neutral";
   }
+}
+
+function statusDisplayLabel(status: string): string {
+  if (status === "pending_review") return "Pending review";
+  return status;
 }
 
 function JsonBlock({ data, title }: { data: unknown; title: string }) {
@@ -99,7 +105,10 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
   );
 
   const [updating, setUpdating] = useState(false);
-  const simulateReview = useCallback(
+  const [reviewNote, setReviewNote] = useState("");
+  const isReviewable = run != null && run.agentResponse != null && run.humanDecision == null;
+
+  const submitReview = useCallback(
     async (decision: "approved" | "rejected") => {
       if (!run) return;
       setUpdating(true);
@@ -112,11 +121,12 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
             humanDecision: {
               decision,
               reviewedAt: new Date().toISOString(),
-              note: "Simulated review from dashboard",
+              ...(reviewNote.trim() && { note: reviewNote.trim() }),
             },
           }),
         });
         if (!res.ok) throw new Error("Failed to update run");
+        setReviewNote("");
         await mutateRun();
       } catch (e) {
         console.error(e);
@@ -125,7 +135,7 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
         setUpdating(false);
       }
     },
-    [run, runId, mutateRun]
+    [run, runId, mutateRun, reviewNote]
   );
 
   const auditEntries = auditData?.entries ?? [];
@@ -173,7 +183,7 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
             {run.invocationId}
           </span>
         </div>
-        <span className={statusBadgeClass(run.status)}>{run.status}</span>
+        <span className={statusBadgeClass(run.status)}>{statusDisplayLabel(run.status)}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -217,30 +227,52 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
         <div className="space-y-4">
           <div className="panel">
             <div className="panel__header">
-              <span className="panel__title">Simulate review</span>
+              <span className="panel__title">Review</span>
             </div>
             <div className="panel__content">
-              <p className="text-xs text-tertiary mb-3">
-                For demos: mark this run as approved or rejected and store a human decision.
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => simulateReview("approved")}
-                  disabled={updating}
-                  className="btn btn--secondary flex-1"
-                >
-                  {updating ? "…" : "Approve"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => simulateReview("rejected")}
-                  disabled={updating}
-                  className="btn btn--secondary flex-1"
-                >
-                  {updating ? "…" : "Reject"}
-                </button>
-              </div>
+              {isReviewable ? (
+                <>
+                  <p className="text-xs text-tertiary mb-3">
+                    This run is waiting for human approval or rejection. Your decision is stored for audit and metrics.
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-tertiary tracking-wide uppercase mb-1">
+                        Note (optional)
+                      </label>
+                      <textarea
+                        value={reviewNote}
+                        onChange={(e) => setReviewNote(e.target.value)}
+                        placeholder="Add a note for this review…"
+                        rows={2}
+                        className="w-full px-3 py-2 bg-elevated border border-border-default text-sm text-secondary focus:outline-none focus:border-data resize-y"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => submitReview("approved")}
+                        disabled={updating}
+                        className="btn btn--secondary flex-1"
+                      >
+                        {updating ? "…" : "Approve"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => submitReview("rejected")}
+                        disabled={updating}
+                        className="btn btn--secondary flex-1"
+                      >
+                        {updating ? "…" : "Reject"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : run?.humanDecision != null ? (
+                <p className="text-xs text-tertiary">This run has already been reviewed.</p>
+              ) : run?.agentResponse == null ? (
+                <p className="text-xs text-tertiary">Waiting for agent response. Use &quot;Send pending to agent&quot; from the Runs list.</p>
+              ) : null}
             </div>
           </div>
 

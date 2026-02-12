@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
 
   const tenantId = session.user.tenantId;
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status") ?? undefined;
+  let status = searchParams.get("status") ?? undefined;
+  const needsReview = searchParams.get("needsReview") === "true";
+  if (needsReview || status === "needs_review") status = "pending_review";
   const workflowId = searchParams.get("workflowId") ?? undefined;
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "50", 10) || 50, 100);
   const cursor = searchParams.get("cursor") ?? undefined;

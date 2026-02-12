@@ -37,10 +37,16 @@ function statusClass(status: string): string {
     case "failed":
       return "text-critical";
     case "pending":
+    case "pending_review":
       return "text-caution";
     default:
       return "text-tertiary";
   }
+}
+
+function statusDisplayLabel(status: string): string {
+  if (status === "pending_review") return "Pending review";
+  return status;
 }
 
 export function RecentRuns() {
@@ -78,7 +84,7 @@ export function RecentRuns() {
                     </div>
                   </div>
                   <span className={`text-xs shrink-0 ${statusClass(run.status)}`}>
-                    {run.status}
+                    {statusDisplayLabel(run.status)}
                   </span>
                   <svg className="w-3.5 h-3.5 shrink-0 text-tertiary group-hover:text-data transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />

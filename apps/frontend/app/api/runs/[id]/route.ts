@@ -104,6 +104,17 @@ export async function PATCH(
       },
     });
 
+    if (humanDecision !== undefined) {
+      await appendAuditLog({
+        tenantId,
+        runId: id,
+        eventId: run.eventId,
+        invocationId: run.invocationId,
+        action: "review_submitted",
+        payload: { decision: (humanDecision as { decision?: string })?.decision },
+      });
+    }
+
     return NextResponse.json(updated);
   } catch (err) {
     console.error("Update run error:", err);

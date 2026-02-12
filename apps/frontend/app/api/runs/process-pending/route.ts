@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { appendAuditLog } from "@/lib/audit-log";
 import { resolveAgentConfig, invokeAgent } from "@/lib/agent-endpoint";
@@ -33,7 +34,7 @@ export async function POST() {
     where: {
       tenantId,
       status: "pending",
-      agentResponse: null,
+      agentResponse: { equals: Prisma.DbNull },
     },
     orderBy: { createdAt: "asc" },
     take: 50,
@@ -62,7 +63,7 @@ export async function POST() {
         data: {
           agentRequest: payload,
           agentResponse: result.data ?? null,
-          status: "completed",
+          status: "pending_review",
         },
       });
       await appendAuditLog({
