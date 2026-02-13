@@ -1,6 +1,6 @@
-# Agent Warmup Platform - Frontend
+# Chronicle Labs - Frontend
 
-This is the Next.js frontend application for the Agent Warmup Platform MVP.
+This is the Next.js frontend application for Chronicle Labs.
 
 ## Setup
 

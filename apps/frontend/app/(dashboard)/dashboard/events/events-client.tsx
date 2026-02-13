@@ -35,7 +35,7 @@ const getConversationId = (event: EventEnvelope): string => {
   return event.subject?.conversation_id || "N/A";
 };
 
-const MESSENGER_STORAGE_KEY = "agent-warmup-events-messenger";
+const MESSENGER_STORAGE_KEY = "chronicle-labs-events-messenger";
 
 interface StoredMessenger {
   provider: string;

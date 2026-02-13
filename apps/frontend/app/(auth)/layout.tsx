@@ -17,7 +17,7 @@ export default function AuthLayout({
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-data" />
             <span className="text-base font-medium text-primary/90">
-              Agent Warmup
+              Chronicle Labs
             </span>
           </div>
 
@@ -52,7 +52,7 @@ export default function AuthLayout({
 
           {/* Footer */}
           <div className="flex items-center gap-2 text-xs text-tertiary/40">
-            <span>© 2026 Agent Warmup</span>
+            <span>© 2026 Chronicle Labs</span>
           </div>
         </div>
       </div>

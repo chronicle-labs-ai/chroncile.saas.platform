@@ -69,7 +69,7 @@ export function Sidebar() {
                 <div className="w-2 h-2 bg-data" />
               </div>
               <span className="text-sm font-semibold tracking-tight text-primary">
-                Agent Warmup
+                Chronicle Labs
               </span>
             </Link>
           </div>
@@ -162,7 +162,7 @@ export function Sidebar() {
           {/* Footer */}
           <div className="px-4 py-2 border-t border-border-dim">
             <span className="text-[10px] text-disabled">
-              © 2026 Agent Warmup
+              © 2026 Chronicle Labs
             </span>
           </div>
         </div>
