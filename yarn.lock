@@ -2748,6 +2748,7 @@ __metadata:
     tailwindcss: "npm:^3.4.0"
     three: "npm:^0.182.0"
     typescript: "npm:^5.8.0"
+    unicornstudio-react: "npm:2.0.1-1"
     zod: "npm:^3.24.1"
   languageName: unknown
   linkType: soft
@@ -5630,6 +5631,19 @@ __metadata:
   version: 6.21.0
   resolution: "undici-types@npm:6.21.0"
   checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
+  languageName: node
+  linkType: hard
+
+"unicornstudio-react@npm:2.0.1-1":
+  version: 2.0.1-1
+  resolution: "unicornstudio-react@npm:2.0.1-1"
+  peerDependencies:
+    react: ">=18.0.0"
+    react-dom: ">=18.0.0"
+  peerDependenciesMeta:
+    next:
+      optional: true
+  checksum: 10c0/01d46127bb9fdce265e82059b242ec50c72e763def35074a26f7bfa49ae8459fc89b4a46455b90b9e2230982697afd4e530ce39882207b2a9cc0586e01115580
   languageName: node
   linkType: hard
 
