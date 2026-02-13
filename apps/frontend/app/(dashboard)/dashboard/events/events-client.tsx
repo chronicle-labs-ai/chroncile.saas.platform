@@ -97,9 +97,7 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
 
   const unloadMessengerWidget = useCallback(() => {
     const w = window as Window & { Intercom?: (action: string) => void; intercomSettings?: unknown };
-    try {
-      w.Intercom?.("shutdown");
-    } catch (_) {}
+    w.Intercom?.("shutdown");
     w.intercomSettings = undefined;
     delete (window as unknown as Record<string, unknown>)["Intercom"];
     const script = messengerScriptRef.current;
@@ -124,9 +122,7 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
       messengerScriptRef.current = script;
       setMessengerStatus("loaded");
       setMessengerError("");
-      try {
-        localStorage.setItem(MESSENGER_STORAGE_KEY, JSON.stringify({ provider: "intercom", appId }));
-      } catch (_) {}
+      localStorage.setItem(MESSENGER_STORAGE_KEY, JSON.stringify({ provider: "intercom", appId }));
     };
     script.onerror = () => {
       setMessengerStatus("error");
@@ -137,18 +133,21 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
 
   useEffect(() => {
     if (!hasActiveIntercom) return;
+    const raw = localStorage.getItem(MESSENGER_STORAGE_KEY);
+    if (!raw) return;
+    let stored: StoredMessenger;
     try {
-      const raw = localStorage.getItem(MESSENGER_STORAGE_KEY);
-      if (!raw) return;
-      const stored = JSON.parse(raw) as StoredMessenger;
-      if (stored?.provider === "intercom" && typeof stored?.appId === "string" && stored.appId.trim()) {
-        setMessengerProvider("intercom");
-        setMessengerAppId(stored.appId.trim());
-        setMessengerStep("appId");
-        setMessengerStatus("loading");
-        loadMessengerWidget(stored.appId.trim());
-      }
-    } catch (_) {}
+      stored = JSON.parse(raw) as StoredMessenger;
+    } catch {
+      return;
+    }
+    if (stored?.provider === "intercom" && typeof stored?.appId === "string" && stored.appId.trim()) {
+      setMessengerProvider("intercom");
+      setMessengerAppId(stored.appId.trim());
+      setMessengerStep("appId");
+      setMessengerStatus("loading");
+      loadMessengerWidget(stored.appId.trim());
+    }
   }, [hasActiveIntercom, loadMessengerWidget]);
 
   const handleMessengerChooseProvider = (provider: string) => {
@@ -161,9 +160,7 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
 
   const handleMessengerBackToProvider = () => {
     unloadMessengerWidget();
-    try {
-      localStorage.removeItem(MESSENGER_STORAGE_KEY);
-    } catch (_) {}
+    localStorage.removeItem(MESSENGER_STORAGE_KEY);
     setMessengerProvider(null);
     setMessengerStep("provider");
     setMessengerAppId("");
@@ -185,9 +182,7 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
 
   const handleMessengerChangeAppId = () => {
     unloadMessengerWidget();
-    try {
-      localStorage.removeItem(MESSENGER_STORAGE_KEY);
-    } catch (_) {}
+    localStorage.removeItem(MESSENGER_STORAGE_KEY);
     setMessengerStatus("idle");
     setMessengerError("");
   };
