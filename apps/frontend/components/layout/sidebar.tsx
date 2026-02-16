@@ -67,7 +67,7 @@ export function Sidebar() {
             <Link href="/dashboard" className="flex items-center gap-3">
               <Logo className="w-6 h-6 shrink-0" variant="dark" />
               <span className="text-sm font-semibold tracking-tight text-primary">
-                Agent Warmup
+                Chronicle Labs
               </span>
             </Link>
           </div>
@@ -161,7 +161,7 @@ export function Sidebar() {
           <div className="px-4 py-2 border-t border-border-dim flex items-center gap-2">
             <Logo className="w-4 h-4 shrink-0 opacity-70" variant="dark" />
             <span className="text-[10px] text-disabled">
-              © 2026 Agent Warmup
+              © 2026 Chronicle Labs
             </span>
           </div>
         </div>

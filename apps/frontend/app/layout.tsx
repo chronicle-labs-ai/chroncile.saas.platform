@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Agent Warmup | Command Center",
+  title: "Chronicle Labs | Command Center",
   description: "AI Agent Testing & Validation Platform",
   icons: {
     icon: "/icon.svg",

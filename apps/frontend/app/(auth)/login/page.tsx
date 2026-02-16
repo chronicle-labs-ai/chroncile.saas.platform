@@ -4,7 +4,10 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Logo } from "@/components/ui/logo";
+import { AydeaIcon } from "@/components/icons/AydeaIcon";
+
+const inputClass =
+  "w-full px-3 py-2.5 bg-transparent border border-[hsl(0,0%,90%)] rounded-[0.75rem] text-base text-[hsl(0,0%,8%)] placeholder:text-[hsl(0,0%,45%)] focus:outline-none focus:ring-2 focus:ring-[hsl(0,0%,8%)] focus:ring-offset-0 transition-colors";
 
 function LoginForm() {
   const router = useRouter();
@@ -44,34 +47,34 @@ function LoginForm() {
   };
 
   return (
-    <div className="space-y-10">
-      <div className="lg:hidden flex items-center gap-3 mb-8">
-        <Logo className="w-8 h-8 shrink-0" variant="dark" />
-        <span className="text-base font-medium text-white">
-          Agent Warmup
+    <div className="space-y-8">
+      <div className="lg:hidden flex items-center gap-3 mb-6">
+        <AydeaIcon className="h-8 w-8 shrink-0 text-[hsl(0,0%,8%)]" />
+        <span className="text-base font-medium text-[hsl(0,0%,8%)] tracking-tight">
+          Chronicle Labs
         </span>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-light text-white mb-2">
+      <div className="mb-2 text-center">
+        <h1 className="text-2xl font-bold text-[hsl(0,0%,8%)] mb-1 tracking-tight">
           Sign in
         </h1>
-        <p className="text-sm text-white/90">
+        <p className="text-sm text-[hsl(0,0%,45%)]">
           Welcome back
         </p>
       </div>
 
       {registered && (
-        <p className="text-sm text-nominal">Account created successfully</p>
+        <p className="text-sm text-[#00ff88]">Account created successfully</p>
       )}
       {error && (
-        <p className="text-sm text-critical">{error}</p>
+        <p className="text-sm text-[#ff3b3b]">{error}</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-xs text-white mb-2 font-medium">
+            <label htmlFor="email" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
               Email
             </label>
             <input
@@ -81,13 +84,13 @@ function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full px-0 py-3 bg-transparent border-0 border-b border-white/30 text-base text-white placeholder:text-white/60 focus:outline-none focus:border-data transition-colors"
+              className={inputClass}
               placeholder="you@company.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-xs text-white mb-2 font-medium">
+            <label htmlFor="password" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
               Password
             </label>
             <input
@@ -97,7 +100,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full px-0 py-3 bg-transparent border-0 border-b border-white/30 text-base text-white placeholder:text-white/60 focus:outline-none focus:border-data transition-colors"
+              className={inputClass}
               placeholder="••••••••"
             />
           </div>
@@ -106,15 +109,18 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-data text-white py-3.5 text-sm font-semibold rounded-md hover:bg-data/90 focus:outline-none focus:ring-2 focus:ring-data focus:ring-offset-2 focus:ring-offset-transparent transition-colors disabled:opacity-50"
+          className="w-full bg-[hsl(0,0%,8%)] text-white py-3.5 text-sm font-medium rounded-[0.75rem] hover:bg-[hsl(0,0%,12%)] focus:outline-none focus:ring-2 focus:ring-[hsl(0,0%,8%)] focus:ring-offset-2 transition-colors disabled:opacity-50 mt-2"
         >
           {loading ? "..." : "Continue"}
         </button>
       </form>
 
-      <p className="text-sm text-white/90">
+      <p className="text-sm text-[hsl(0,0%,45%)] mt-6 text-center">
         No account?{" "}
-        <Link href="/signup" className="text-white font-medium underline underline-offset-2 hover:text-data transition-colors">
+        <Link
+          href="/signup"
+          className="text-[hsl(0,0%,8%)] font-medium underline underline-offset-2 hover:opacity-80 transition-opacity"
+        >
           Create one
         </Link>
       </p>
@@ -124,7 +130,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="text-sm text-white/80">Loading...</div>}>
+    <Suspense fallback={<div className="text-sm text-[hsl(0,0%,45%)]">Loading...</div>}>
       <LoginForm />
     </Suspense>
   );

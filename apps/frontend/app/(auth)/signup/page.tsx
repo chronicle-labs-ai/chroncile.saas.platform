@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Logo } from "@/components/ui/logo";
+import { AydeaIcon } from "@/components/icons/AydeaIcon";
 
 type FieldErrors = {
   name?: string[];
@@ -11,6 +11,9 @@ type FieldErrors = {
   password?: string[];
   organizationName?: string[];
 };
+
+const baseInputClass =
+  "w-full px-3 py-2.5 bg-transparent border rounded-[0.75rem] text-base text-[hsl(0,0%,8%)] placeholder:text-[hsl(0,0%,45%)] focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -66,36 +69,38 @@ export default function SignupPage() {
   };
 
   const inputClass = (hasError: boolean) =>
-    `w-full px-0 py-3 bg-transparent border-0 border-b text-base text-white placeholder:text-white/60 focus:outline-none transition-colors ${
-      hasError ? "border-critical" : "border-white/30 focus:border-data"
+    `${baseInputClass} ${
+      hasError
+        ? "border-[#ff3b3b] focus:ring-[#ff3b3b]"
+        : "border-[hsl(0,0%,90%)] focus:ring-[hsl(0,0%,8%)]"
     }`;
 
   return (
-    <div className="space-y-10">
-      <div className="lg:hidden flex items-center gap-3 mb-8">
-        <Logo className="w-8 h-8 shrink-0" variant="dark" />
-        <span className="text-base font-medium text-white">
-          Agent Warmup
+    <div className="space-y-8">
+      <div className="lg:hidden flex items-center gap-3 mb-6">
+        <AydeaIcon className="h-8 w-8 shrink-0 text-[hsl(0,0%,8%)]" />
+        <span className="text-base font-medium text-[hsl(0,0%,8%)] tracking-tight">
+          Chronicle Labs
         </span>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-light text-white mb-2">
+      <div className="mb-2 text-center">
+        <h1 className="text-2xl font-bold text-[hsl(0,0%,8%)] mb-1 tracking-tight">
           Create account
         </h1>
-        <p className="text-sm text-white/90">
+        <p className="text-sm text-[hsl(0,0%,45%)]">
           Get started in minutes
         </p>
       </div>
 
       {generalError && (
-        <p className="text-sm text-critical">{generalError}</p>
+        <p className="text-sm text-[#ff3b3b]">{generalError}</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-xs text-white mb-2 font-medium">
+            <label htmlFor="name" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
               Name
             </label>
             <input
@@ -110,12 +115,12 @@ export default function SignupPage() {
               placeholder="Your name"
             />
             {errors.name && (
-              <p className="mt-2 text-xs text-critical">{errors.name[0]}</p>
+              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.name[0]}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-xs text-white mb-2 font-medium">
+            <label htmlFor="email" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
               Email
             </label>
             <input
@@ -130,12 +135,12 @@ export default function SignupPage() {
               placeholder="you@company.com"
             />
             {errors.email && (
-              <p className="mt-2 text-xs text-critical">{errors.email[0]}</p>
+              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.email[0]}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-xs text-white mb-2 font-medium">
+            <label htmlFor="password" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
               Password
             </label>
             <input
@@ -150,16 +155,16 @@ export default function SignupPage() {
               placeholder="••••••••"
             />
             {errors.password ? (
-              <p className="mt-2 text-xs text-critical">{errors.password[0]}</p>
+              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.password[0]}</p>
             ) : (
-              <p className="mt-2 text-xs text-white/70">
+              <p className="mt-2 text-xs text-[hsl(0,0%,45%)]">
                 8+ chars, mixed case, number
               </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="organizationName" className="block text-xs text-white mb-2 font-medium">
+            <label htmlFor="organizationName" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
               Organization
             </label>
             <input
@@ -173,7 +178,7 @@ export default function SignupPage() {
               placeholder="Company name"
             />
             {errors.organizationName && (
-              <p className="mt-2 text-xs text-critical">{errors.organizationName[0]}</p>
+              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.organizationName[0]}</p>
             )}
           </div>
         </div>
@@ -181,15 +186,18 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-data text-white py-3.5 text-sm font-semibold rounded-md hover:bg-data/90 focus:outline-none focus:ring-2 focus:ring-data focus:ring-offset-2 focus:ring-offset-transparent transition-colors disabled:opacity-50"
+          className="w-full bg-[hsl(0,0%,8%)] text-white py-3.5 text-sm font-medium rounded-[0.75rem] hover:bg-[hsl(0,0%,12%)] focus:outline-none focus:ring-2 focus:ring-[hsl(0,0%,8%)] focus:ring-offset-2 transition-colors disabled:opacity-50 mt-2"
         >
           {loading ? "..." : "Continue"}
         </button>
       </form>
 
-      <p className="text-sm text-white/90">
+      <p className="text-sm text-[hsl(0,0%,45%)] mt-6 text-center">
         Have an account?{" "}
-        <Link href="/login" className="text-white font-medium underline underline-offset-2 hover:text-data transition-colors">
+        <Link
+          href="/login"
+          className="text-[hsl(0,0%,8%)] font-medium underline underline-offset-2 hover:opacity-80 transition-opacity"
+        >
           Sign in
         </Link>
       </p>
