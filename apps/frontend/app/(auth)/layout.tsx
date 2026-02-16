@@ -18,7 +18,7 @@ export default function AuthLayout({
           <div className="flex items-center gap-3">
             <Logo className="w-8 h-8 shrink-0" variant="dark" />
             <span className="text-base font-medium text-primary/90">
-              Agent Warmup
+              Chronicle.ai
             </span>
           </div>
 
@@ -53,7 +53,7 @@ export default function AuthLayout({
 
           {/* Footer */}
           <div className="flex items-center gap-2 text-xs text-tertiary/40">
-            <span>© 2026 Agent Warmup</span>
+            <span>© 2026 Chronicle.ai</span>
           </div>
         </div>
       </div>

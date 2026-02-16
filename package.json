@@ -1,7 +1,7 @@
 {
-  "name": "agent-warmup-platform",
+  "name": "chronicle-ai-platform",
   "version": "0.1.0",
-  "description": "Agent Warmup Platform - MVP",
+  "description": "Chronicle.ai Platform - MVP",
   "private": true,
   "type": "module",
   "scripts": {

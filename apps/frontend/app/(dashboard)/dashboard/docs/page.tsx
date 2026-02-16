@@ -11,17 +11,17 @@ export default function DocsPage() {
           User Manual
         </h1>
         <p className="text-sm text-tertiary mt-1">
-          Learn how to use Agent Warmup.
+          Learn how to use Chronicle.ai.
         </p>
       </div>
 
       <div className="panel">
         <div className="panel__header">
-          <span className="panel__title">What is Agent Warmup?</span>
+          <span className="panel__title">What is Chronicle.ai?</span>
         </div>
         <div className="panel__content space-y-3 text-sm text-secondary">
           <p>
-            Agent Warmup helps you connect your tools and services, see the
+            Chronicle.ai helps you connect your tools and services, see the
             events they generate, and keep an eye on your activity in one place.
             You can add connections (like webhooks or integrations), watch
             events as they come in, and use the dashboard to see how things are
@@ -124,7 +124,7 @@ export default function DocsPage() {
         </div>
         <div className="panel__content space-y-3 text-sm text-secondary">
           <p>
-            A connection is a link between Agent Warmup and an external service
+            A connection is a link between Chronicle.ai and an external service
             (for example a webhook or an integration like Pipedream). On the{" "}
             <Link href="/dashboard/connections" className="text-data hover:underline">
               Connections
@@ -197,8 +197,7 @@ export default function DocsPage() {
             </li>
             <li>
               <strong className="text-primary">API / Webhook</strong> — See the
-              webhook endpoint and API details used to send events into Agent
-              Warmup. Use these when configuring external tools.
+              webhook endpoint and API details used to send events into Chronicle.ai. Use these when configuring external tools.
             </li>
             <li>
               <strong className="text-primary">System Status</strong> — Check

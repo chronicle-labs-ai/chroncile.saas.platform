@@ -75,7 +75,7 @@ export default function SignupPage() {
       <div className="lg:hidden flex items-center gap-3 mb-8">
         <Logo className="w-8 h-8 shrink-0" variant="dark" />
         <span className="text-base font-medium text-white">
-          Agent Warmup
+          Chronicle.ai
         </span>
       </div>
 

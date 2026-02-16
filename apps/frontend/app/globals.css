@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================
-   AGENT WARMUP - COMMAND & CONTROL INTERFACE
+   CHRONICLE.AI - COMMAND & CONTROL INTERFACE
    Anduril-inspired operator-native design
    Mission-first. Stress-tested. Instrumentation.
    ============================================ */
@@ -725,6 +725,73 @@ body::before {
       rgba(255, 255, 255, 0.04) 4px
     );
   animation: dither-shift 0.3s steps(4) infinite;
+}
+
+/* ============================================
+   SANDBOX / REACT FLOW OVERRIDES
+   ============================================ */
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* React Flow dark theme overrides */
+.react-flow__controls {
+  background: #0f1215 !important;
+  border: 1px solid #252a30 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+.react-flow__controls button {
+  background: #0f1215 !important;
+  border-color: #252a30 !important;
+  fill: #9aa0a6 !important;
+}
+
+.react-flow__controls button:hover {
+  background: #1a1d21 !important;
+  fill: #e8eaed !important;
+}
+
+.react-flow__minimap {
+  background: #0a0c0f !important;
+  border: 1px solid #252a30 !important;
+  border-radius: 6px !important;
+}
+
+.react-flow__edge-path {
+  stroke: #353c45 !important;
+  stroke-width: 2px !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #00d4ff !important;
+}
+
+.react-flow__handle {
+  transition: all 100ms ease;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.4);
+}
+
+.react-flow__connection-line {
+  stroke: #00d4ff !important;
+  stroke-width: 2px !important;
+}
+
+.react-flow__attribution {
+  display: none !important;
 }
 
 /* No animations for reduced motion */

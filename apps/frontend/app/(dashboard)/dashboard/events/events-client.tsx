@@ -44,7 +44,7 @@ const getConversationId = (event: EventEnvelope): string => {
   return event.subject?.conversation_id || "N/A";
 };
 
-const MESSENGER_STORAGE_KEY = "agent-warmup-events-messenger";
+const MESSENGER_STORAGE_KEY = "chronicle-ai-events-messenger";
 
 interface StoredMessenger {
   provider: string;
@@ -234,7 +234,11 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
         if (closed) return;
         if (dto.event_type === "system.connected") return;
         const te = eventEnvelopeToTimelineEvent(dto);
-        setTimelineBuffer((prev) => [...prev, te]);
+        setTimelineBuffer((prev) => {
+          // Deduplicate — SSE may replay events or overlap with initial fetch
+          if (prev.some((e) => e.id === te.id)) return prev;
+          return [...prev, te];
+        });
         setNewEventsCount((n) => n + 1);
         const rec = recordingStateRef.current;
         if (rec.kind === "Recording") {

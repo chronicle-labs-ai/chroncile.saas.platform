@@ -1,6 +1,6 @@
-# Agent Warmup Platform - Frontend
+# Chronicle.ai Platform - Frontend
 
-This is the Next.js frontend application for the Agent Warmup Platform MVP.
+This is the Next.js frontend application for the Chronicle.ai Platform MVP.
 
 ## Setup
 
@@ -13,7 +13,7 @@ This is the Next.js frontend application for the Agent Warmup Platform MVP.
    Create a `.env` file in the `apps/frontend` directory with:
    ```env
    # Database
-   DATABASE_URL="postgresql://user:password@localhost:5432/agent_warmup?schema=public"
+   DATABASE_URL="postgresql://user:password@localhost:5432/chronicle_ai?schema=public"
    
    # NextAuth
    AUTH_SECRET="your-secret-key-here-generate-with-openssl-rand-base64-32"

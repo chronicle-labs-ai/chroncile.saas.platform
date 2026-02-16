@@ -50,6 +50,7 @@ export function TimelinePanel({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const timeAreaRef = useRef<HTMLDivElement>(null);
+  const rowsContainerRef = useRef<HTMLDivElement>(null);
   const [timeAreaWidth, setTimeAreaWidth] = useState(600);
   const labelWidth = 200;
 
@@ -65,21 +66,33 @@ export function TimelinePanel({
   }, []);
 
   const timeView = useTimeView();
-  const { startMs, endMs, durationMs, timeToX, xToTime, pan, zoomAt, fitToTimes, setRange, expandToInclude } = timeView;
+  const { startMs, endMs, durationMs, timeToX, xToTime, pan, zoomAt, fitToTimes, setRange } = timeView;
+
+  /* Pre-compute event timestamps once */
+  const eventsWithMs = useMemo(
+    () => events.map((ev) => ({ ev, ms: new Date(ev.occurredAt).getTime() })),
+    [events]
+  );
+
+  const eventTimesMs = useMemo(
+    () => eventsWithMs.map((item) => item.ms),
+    [eventsWithMs]
+  );
 
   const hasInitialCentered = useRef(false);
   useEffect(() => {
-    if (events.length === 0) {
+    if (eventTimesMs.length === 0) {
       hasInitialCentered.current = false;
       return;
     }
+    // Don't override range during active playback — the auto-follow handles it
+    if (playback !== "paused") return;
     if (hasInitialCentered.current) return;
     hasInitialCentered.current = true;
-    const times = events.map((e) => new Date(e.occurredAt).getTime());
-    const latestMs = Math.max(...times);
+    const latestMs = Math.max(...eventTimesMs);
     const half = 30 * 60 * 1000;
     setRange(latestMs - half, latestMs + half);
-  }, [events, setRange]);
+  }, [eventTimesMs, setRange, playback]);
 
   const treeRoots = useMemo(() => buildTopicTree(events), [events]);
   const visibleNodes = useMemo(
@@ -87,21 +100,55 @@ export function TimelinePanel({
     [treeRoots, collapsedSet]
   );
 
-  const eventTimesMs = useMemo(
-    () => events.map((e) => new Date(e.occurredAt).getTime()),
-    [events]
-  );
+  /* Auto-follow playhead for both "playing" and "live" modes.
+     Uses a sliding window: the playhead stays at ~75% of the view width.
+     When the playhead would exceed 75%, we pan the window forward (keeping
+     the zoom level constant) rather than expanding the range wider. */
+  const prevPlaybackRef = useRef<PlaybackState>("paused");
+  // Keep a live ref to the current time view so the interval can read it
+  // without re-creating the effect on every range change.
+  const timeViewRef = useRef({ centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs });
+  timeViewRef.current = { centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs };
 
   useEffect(() => {
-    if (playback !== "live") return;
-    setPlayheadMs(Date.now());
+    if (playback === "paused") {
+      prevPlaybackRef.current = "paused";
+      return;
+    }
+
+    const wasPaused = prevPlaybackRef.current === "paused";
+    prevPlaybackRef.current = playback;
+
+    // When entering playing/live from paused, zoom to a tight window around now
+    if (wasPaused) {
+      const now = Date.now();
+      const half = 10_000; // ±10 seconds = 20 second window
+      // Position so playhead is at 75% of the window
+      setRange(now - half * 1.5, now + half * 0.5);
+      setPlayheadMs(now);
+      // Mark initial centering done so it won't override after pause
+      hasInitialCentered.current = true;
+    }
+
     const interval = setInterval(() => {
       const now = Date.now();
       setPlayheadMs(now);
-      expandToInclude(now, 0.1);
-    }, 100);
+
+      // Sliding window: keep playhead at ~75% of the view.
+      const { centerMs: c, halfWidthMs: h } = timeViewRef.current;
+      const viewStart = c - h;
+      const viewDuration = h * 2;
+
+      // If playhead is past 75% of the view, slide forward
+      const threshold = viewStart + viewDuration * 0.75;
+      if (now > threshold) {
+        // Pan so playhead sits at 75%, keeping same zoom level
+        const newStart = now - viewDuration * 0.75;
+        setRange(newStart, newStart + viewDuration);
+      }
+    }, 60);
     return () => clearInterval(interval);
-  }, [playback, expandToInclude]);
+  }, [playback, setRange]);
 
   const toggleCollapsed = useCallback((pathKey: string) => {
     setCollapsedSet((prev) => {
@@ -158,27 +205,53 @@ export function TimelinePanel({
     };
   }, [isDragging, dragStartX, pan, durationMs, timeAreaWidth]);
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+  /* Native wheel handler — must be non-passive so preventDefault works.
+     Attached to both the header time area and the rows container so zoom
+     works anywhere on the timeline. */
+  const wheelDepsRef = useRef({ xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth });
+  wheelDepsRef.current = { xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth };
+
+  useEffect(() => {
+    const headerEl = timeAreaRef.current;
+    const rowsEl = rowsContainerRef.current;
+
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const rect = timeAreaRef.current?.getBoundingClientRect();
+      const { xToTime: x2t, zoomAt: za, pan: p, durationMs: dur, timeAreaWidth: tw, labelWidth: lw } = wheelDepsRef.current;
+
+      // For the header area, use the element rect directly.
+      // For rows, offset by the label column width.
+      let rect: DOMRect | undefined;
+      let xOffset = 0;
+      if (headerEl && headerEl.contains(e.target as Node)) {
+        rect = headerEl.getBoundingClientRect();
+      } else {
+        rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        xOffset = lw; // rows have the label column on the left
+      }
       if (!rect) return;
 
       if (Math.abs(e.deltaY) > 0.1) {
-        const x = e.clientX - rect.left;
-        const anchorMs = xToTime(x, timeAreaWidth);
+        const x = e.clientX - rect.left - xOffset;
+        const anchorMs = x2t(Math.max(0, x), tw);
         const factor = e.deltaY > 0 ? 1.2 : 1 / 1.2;
-        zoomAt(anchorMs, factor);
+        za(anchorMs, factor);
       }
 
       if (Math.abs(e.deltaX) > 0.1) {
-        const msPerPixel = durationMs / Math.max(1, timeAreaWidth);
+        const msPerPixel = dur / Math.max(1, tw);
         const deltaMs = -e.deltaX * msPerPixel;
-        pan(deltaMs);
+        p(deltaMs);
       }
-    },
-    [xToTime, zoomAt, timeAreaWidth, durationMs, pan]
-  );
+    };
+
+    if (headerEl) headerEl.addEventListener("wheel", onWheel, { passive: false });
+    if (rowsEl) rowsEl.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      if (headerEl) headerEl.removeEventListener("wheel", onWheel);
+      if (rowsEl) rowsEl.removeEventListener("wheel", onWheel);
+    };
+  }, []);
 
   const majorIntervalMs = getTickIntervalMs(durationMs);
   const durationSecs = durationMs / 1000;
@@ -190,37 +263,115 @@ export function TimelinePanel({
     return out;
   }, [startMs, endMs, majorIntervalMs]);
 
+
   const { eventsByPath, eventsBySource } = useMemo(() => {
-    const byPath: Record<string, TimelineEvent[]> = {};
-    const bySource: Record<string, TimelineEvent[]> = {};
-    for (const ev of events) {
-      const path = topicPathFromEvent(ev.source, ev.type);
+    const byPath: Record<string, typeof eventsWithMs> = {};
+    const bySource: Record<string, typeof eventsWithMs> = {};
+    for (const item of eventsWithMs) {
+      const path = topicPathFromEvent(item.ev.source, item.ev.type);
       const pathKey = topicPathDisplay(path);
       if (!byPath[pathKey]) byPath[pathKey] = [];
-      byPath[pathKey].push(ev);
-      if (!bySource[ev.source]) bySource[ev.source] = [];
-      bySource[ev.source].push(ev);
+      byPath[pathKey].push(item);
+      if (!bySource[item.ev.source]) bySource[item.ev.source] = [];
+      bySource[item.ev.source].push(item);
     }
     return { eventsByPath: byPath, eventsBySource: bySource };
-  }, [events]);
+  }, [eventsWithMs]);
 
   const getEventsForNode = useCallback(
-    (node: TopicTreeNode): TimelineEvent[] => {
+    (node: TopicTreeNode): typeof eventsWithMs => {
       if (node.path.segments.length === 1) {
         return eventsBySource[node.name] ?? [];
       }
       if (node.children.length === 0) {
         return eventsByPath[node.pathKey] ?? [];
       }
-      const result: TimelineEvent[] = [];
+      const seen = new Set<string>();
+      const result: typeof eventsWithMs = [];
       function collect(n: TopicTreeNode) {
-        if (eventsByPath[n.pathKey]) result.push(...eventsByPath[n.pathKey]);
+        const items = eventsByPath[n.pathKey];
+        if (items) {
+          for (const item of items) {
+            if (!seen.has(item.ev.id)) {
+              seen.add(item.ev.id);
+              result.push(item);
+            }
+          }
+        }
         for (const child of n.children) collect(child);
       }
       collect(node);
       return result;
     },
     [eventsByPath, eventsBySource]
+  );
+
+  /**
+   * For a row's events, return only the marks to render:
+   * - Cull events outside the visible time range
+   * - Bucket nearby events into single marks when zoomed out
+   * Returns { key, x, count, ev } for each mark to render.
+   */
+  const MAX_MARKS_PER_ROW = 200;
+  const getRowMarks = useCallback(
+    (rowEvents: typeof eventsWithMs, color: string) => {
+      // Viewport cull
+      const visible = rowEvents.filter(
+        (item) => item.ms >= startMs && item.ms <= endMs
+      );
+      if (visible.length === 0) return [];
+
+      // If few enough, render individually
+      if (visible.length <= MAX_MARKS_PER_ROW) {
+        return visible.map((item, idx) => ({
+          key: `${item.ev.id}_${idx}`,
+          x: timeToX(item.ms, timeAreaWidth),
+          count: 1,
+          ev: item.ev,
+        }));
+      }
+
+      // Bucket nearby events — merge events that would be < 4px apart
+      const pxPerMs = timeAreaWidth / Math.max(1, durationMs);
+      const bucketWidthMs = Math.max(1, 4 / pxPerMs);
+      const sorted = [...visible].sort((a, b) => a.ms - b.ms);
+
+      const marks: { key: string; x: number; count: number; ev: TimelineEvent }[] = [];
+      let bucketStart = sorted[0].ms;
+      let bucketEvents: typeof visible = [sorted[0]];
+
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i].ms - bucketStart < bucketWidthMs) {
+          bucketEvents.push(sorted[i]);
+        } else {
+          // Flush bucket
+          const avgMs =
+            bucketEvents.reduce((sum, e) => sum + e.ms, 0) / bucketEvents.length;
+          marks.push({
+            key: `b_${marks.length}_${bucketEvents[0].ev.id}`,
+            x: timeToX(avgMs, timeAreaWidth),
+            count: bucketEvents.length,
+            ev: bucketEvents[bucketEvents.length - 1].ev, // latest event for selection
+          });
+          bucketStart = sorted[i].ms;
+          bucketEvents = [sorted[i]];
+        }
+      }
+      // Flush last bucket
+      if (bucketEvents.length > 0) {
+        const avgMs =
+          bucketEvents.reduce((sum, e) => sum + e.ms, 0) / bucketEvents.length;
+        marks.push({
+          key: `b_${marks.length}_${bucketEvents[0].ev.id}`,
+          x: timeToX(avgMs, timeAreaWidth),
+          count: bucketEvents.length,
+          ev: bucketEvents[bucketEvents.length - 1].ev,
+        });
+      }
+
+      return marks;
+    },
+    [startMs, endMs, timeToX, timeAreaWidth, durationMs]
   );
 
   return (
@@ -247,9 +398,9 @@ export function TimelinePanel({
       >
         <button
           type="button"
-          onClick={() => onPlaybackChange?.(playback === "playing" ? "paused" : "playing")}
+          onClick={() => onPlaybackChange?.(playback === "paused" ? "playing" : "paused")}
           style={{
-            background: TIMELINE_THEME.button_bg,
+            background: playback === "playing" ? TIMELINE_THEME.button_active : TIMELINE_THEME.button_bg,
             color: TIMELINE_THEME.text_primary,
             border: "none",
             padding: "4px 10px",
@@ -258,7 +409,7 @@ export function TimelinePanel({
             fontSize: 12,
           }}
         >
-          {playback === "playing" ? "⏸ Pause" : "▶ Play"}
+          {playback !== "paused" ? "⏸ Pause" : "▶ Play"}
         </button>
         <button
           type="button"
@@ -331,7 +482,6 @@ export function TimelinePanel({
           }}
           onClick={handleTimeAreaClick}
           onMouseDown={handleTimeAreaMouseDown}
-          onWheel={handleWheel}
           role="presentation"
         >
             {ticks.map((t) => {
@@ -373,11 +523,12 @@ export function TimelinePanel({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", minHeight: 200 }}>
+      <div ref={rowsContainerRef} style={{ flex: 1, overflowY: "auto", minHeight: 200 }}>
         {visibleNodes.map((node, idx) => {
           const pathKey = node.pathKey;
           const hasChildren = node.children.length > 0;
           const rowEvents = getEventsForNode(node);
+          const marks = getRowMarks(rowEvents, node.color);
 
           return (
             <div
@@ -439,36 +590,34 @@ export function TimelinePanel({
                   minWidth: 0,
                 }}
               >
-                {rowEvents.map((ev) => {
-                  const evMs = new Date(ev.occurredAt).getTime();
-                  const x = timeToX(evMs, timeAreaWidth);
-                  return (
-                    <button
-                      key={ev.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPlayheadMs(evMs);
-                        onSelect?.({ eventId: ev.id, event: ev });
-                        onPlayheadChange?.({ time: ev.occurredAt });
-                        onPlaybackChange?.("paused");
-                      }}
-                      style={{
-                        position: "absolute",
-                        left: x - 4,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        width: 8,
-                        height: 14,
-                        borderRadius: 2,
-                        background: node.color,
-                        border: selectedEventId === ev.id ? `2px solid ${TIMELINE_THEME.accent}` : "none",
-                        cursor: "pointer",
-                      }}
-                      title={`${ev.type} ${ev.occurredAt}`}
-                    />
-                  );
-                })}
+                {marks.map((mark) => (
+                  <button
+                    key={mark.key}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const evMs = new Date(mark.ev.occurredAt).getTime();
+                      setPlayheadMs(evMs);
+                      onSelect?.({ eventId: mark.ev.id, event: mark.ev });
+                      onPlayheadChange?.({ time: mark.ev.occurredAt });
+                      onPlaybackChange?.("paused");
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: mark.x - 4,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: mark.count > 1 ? Math.min(16, 6 + mark.count) : 8,
+                      height: 14,
+                      borderRadius: 2,
+                      background: node.color,
+                      opacity: mark.count > 1 ? Math.min(1, 0.6 + mark.count * 0.05) : 1,
+                      border: selectedEventId === mark.ev.id ? `2px solid ${TIMELINE_THEME.accent}` : "none",
+                      cursor: "pointer",
+                    }}
+                    title={mark.count > 1 ? `${mark.count} events` : `${mark.ev.type} ${mark.ev.occurredAt}`}
+                  />
+                ))}
                 {(() => {
                   const px = timeToX(playheadMs, timeAreaWidth);
                   return (
@@ -479,7 +628,7 @@ export function TimelinePanel({
                         top: 0,
                         bottom: 0,
                         width: 2,
-                        background: playback === "live" ? TIMELINE_THEME.playhead : TIMELINE_THEME.accent,
+                        background: playback === "paused" ? TIMELINE_THEME.accent : TIMELINE_THEME.playhead,
                         pointerEvents: "none",
                       }}
                     />

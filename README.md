@@ -1,13 +1,13 @@
-# Agent Warmup Platform
+# Chronicle.ai Platform
 
-Agent Warmup Platform MVP - A platform to test, validate, and gradually graduate AI agents to production.
+Chronicle.ai Platform MVP - A platform to test, validate, and gradually graduate AI agents to production.
 
 ## Project Structure
 
 This is a monorepo using Yarn workspaces and Turbo:
 
 ```
-agent-warmup-app/
+chronicle-ai-app/
 ├── apps/
 │   └── frontend/          # Next.js frontend application
 ├── packages/
