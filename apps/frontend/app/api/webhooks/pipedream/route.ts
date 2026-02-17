@@ -119,7 +119,7 @@ function normalizeEventType(provider: string, eventType?: string): string {
  */
 export async function POST(request: NextRequest) {
   let event: PipedreamTriggerEvent;
-  
+
   try {
     event = await request.json();
   } catch {
@@ -130,11 +130,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Try to identify the trigger from headers or payload
-  const deploymentId = 
-    request.headers.get("x-pd-deployment-id") ||
-    (event.deployment_id as string) ||
-    (event._metadata as { deployment_id?: string })?.deployment_id;
+  // Try to identify the trigger from headers or payload (Pipedream may use various locations)
+  const headerDeploy = request.headers.get("x-pd-deployment-id") ?? request.headers.get("x-pd-emitter-id");
+  const bodyDeploy = (event.deployment_id ?? event.deploymentId ?? (event as Record<string, unknown>).emitter_id) as string | undefined;
+  const meta = event._metadata as Record<string, unknown> | undefined;
+  const metaDeploy = (meta?.deployment_id ?? meta?.deploymentId ?? meta?.emitter_id) as string | undefined;
+  const emitterObj = (event as Record<string, unknown>).emitter as { id?: string } | undefined;
+  const emitterDeploy = emitterObj?.id;
+  const deploymentId = headerDeploy || bodyDeploy || metaDeploy || emitterDeploy || undefined;
 
   console.log(`Received Pipedream event: deployment_id=${deploymentId || "unknown"}`);
 
@@ -191,10 +194,17 @@ export async function POST(request: NextRequest) {
                        (event.topic as string);
   const eventType = normalizeEventType(provider, rawEventType);
 
-  // Get timestamp
-  const occurredAt = (event.timestamp as string) || 
-                     (event.created_at as string) || 
-                     new Date().toISOString();
+  // Get timestamp - Events Manager expects RFC 3339 string (not Unix integer)
+  const rawTs = event.timestamp ?? event.created_at;
+  let occurredAt: string;
+  if (typeof rawTs === "number") {
+    const ms = rawTs < 1e12 ? rawTs * 1000 : rawTs;
+    occurredAt = new Date(ms).toISOString();
+  } else if (typeof rawTs === "string") {
+    occurredAt = rawTs;
+  } else {
+    occurredAt = new Date().toISOString();
+  }
 
   try {
     const result = await eventsManager.ingestEvent({
@@ -262,7 +272,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Failed to ingest Pipedream event:", error);
-    
+
     // Still acknowledge the webhook to prevent retries
     return NextResponse.json({
       received: true,

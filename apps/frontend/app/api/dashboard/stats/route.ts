@@ -22,18 +22,22 @@ export async function GET() {
     const endIso = now.toISOString();
 
     const baseUrl = `${EVENTS_MANAGER_URL}/api/events/query?tenant_id=${encodeURIComponent(tenantId)}`;
+    const fetchOpts = { cache: "no-store" as RequestCache, signal: AbortSignal.timeout(5000) };
+
+    const fetchEvents = (url: string) =>
+      fetch(url, fetchOpts)
+        .then((res) => (res.ok ? res.json() : { count: 0 }))
+        .catch(() => ({ count: 0 }));
+
     const [connectionsCount, eventsResponse, eventsTodayResponse, runsCount, runsTodayCount] =
       await Promise.all([
         prisma.connection.count({
           where: { tenantId, status: "active" },
         }),
-        fetch(`${baseUrl}&limit=1000`, { cache: "no-store" }).then((res) =>
-          res.ok ? res.json() : { count: 0 }
+        fetchEvents(`${baseUrl}&limit=1000`),
+        fetchEvents(
+          `${baseUrl}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&limit=1000`
         ),
-        fetch(
-          `${baseUrl}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&limit=1000`,
-          { cache: "no-store" }
-        ).then((res) => (res.ok ? res.json() : { count: 0 })),
         prisma.run.count({ where: { tenantId } }),
         prisma.run.count({
           where: {
