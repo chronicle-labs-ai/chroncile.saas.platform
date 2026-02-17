@@ -4,7 +4,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Limit connections to avoid "MaxClientsInSessionMode" with pooled Postgres (Neon, Supabase, etc.)
+// Configure URL for pooled Postgres (Supabase, Neon, etc.)
 function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL ?? "";
   if (!url) return url;
@@ -12,6 +12,10 @@ function getDatabaseUrl(): string {
     const parsed = new URL(url);
     if (!parsed.searchParams.has("connection_limit")) {
       parsed.searchParams.set("connection_limit", "1");
+    }
+    // Disable prepared statements for PgBouncer/Supabase pooler (fixes "prepared statement already exists")
+    if (!parsed.searchParams.has("pgbouncer")) {
+      parsed.searchParams.set("pgbouncer", "true");
     }
     return parsed.toString();
   } catch {
