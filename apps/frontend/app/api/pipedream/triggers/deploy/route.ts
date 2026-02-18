@@ -83,11 +83,8 @@ export async function POST(request: NextRequest) {
   };
 
 
-  const POLLING_TRIGGERS = ["intercom-new-user-reply"];
-  if (
-    !fullConfiguredProps.timer &&
-    POLLING_TRIGGERS.includes(triggerId)
-  ) {
+  // Default polling: 1 min for all triggers (Pipedream ignores timer for non-polling triggers)
+  if (!fullConfiguredProps.timer) {
     fullConfiguredProps.timer = { intervalSeconds: 60 };
   }
 
