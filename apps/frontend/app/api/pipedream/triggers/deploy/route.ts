@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
 
   const base = getWebhookUrl() || `${process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin}/api/webhooks/pipedream`;
-  const webhookUrl = `${base}${base.includes("?") ? "&" : "?"}tenant_id=${tenantId}`;
+  const webhookUrl = base.endsWith("/") ? `${base}${tenantId}` : `${base}/${tenantId}`;
 
   try {
     // Deploy the trigger via Pipedream API
