@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEFAULT_APP_ID = "drwqvw3v";
+
+type IntercomWindow = Window & {
+  Intercom?: (action: string, ...args: unknown[]) => void;
+  intercomSettings?: Record<string, unknown>;
+};
 
 export function IntercomMessengerWidget() {
   const appId = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || DEFAULT_APP_ID;
   const [loaded, setLoaded] = useState(false);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const onHideRegistered = useRef(false);
 
   useEffect(() => {
     if (!appId.trim()) return;
 
-    const w = window as Window & { Intercom?: (action: string) => void; intercomSettings?: Record<string, unknown> };
+    const w = window as IntercomWindow;
     w.intercomSettings = {
       app_id: appId,
       hide_default_launcher: true,
@@ -25,6 +31,13 @@ export function IntercomMessengerWidget() {
     script.onload = () => {
       scriptRef.current = script;
       setLoaded(true);
+      // When user closes messenger, shutdown so next open = new identity
+      if (!onHideRegistered.current && w.Intercom) {
+        w.Intercom("onHide", () => {
+          w.Intercom?.("shutdown");
+        });
+        onHideRegistered.current = true;
+      }
     };
     document.body.appendChild(script);
 
@@ -34,13 +47,23 @@ export function IntercomMessengerWidget() {
       delete (window as unknown as Record<string, unknown>)["Intercom"];
       if (script?.parentNode) script.parentNode.removeChild(script);
       document.querySelectorAll('script[src^="https://widget.intercom.io/widget/"]').forEach((el) => el.remove());
+      onHideRegistered.current = false;
     };
   }, [appId]);
 
-  const openMessenger = () => {
-    const w = window as Window & { Intercom?: (action: string) => void };
-    w.Intercom?.("show");
-  };
+  const openMessenger = useCallback(() => {
+    const w = window as IntercomWindow;
+    if (!w.Intercom) return;
+    // Shutdown clears cookie; boot without user_id = new anonymous visitor (avoids 403
+    // when Identity Verification is enabled, which requires user_hash for user_id)
+    w.Intercom("shutdown");
+    w.Intercom("boot", {
+      app_id: appId,
+      hide_default_launcher: true,
+      z_index: 99999,
+    });
+    w.Intercom("show");
+  }, [appId]);
 
   return (
     <button
