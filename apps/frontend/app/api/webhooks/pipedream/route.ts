@@ -74,12 +74,15 @@ function extractActor(
     }
     
     case "intercom": {
-      const author = event.author as { type?: string; id?: string; name?: string };
+      const author =
+        (event.author as { type?: string; id?: string; name?: string }) ??
+        (event.source as { author?: { type?: string; id?: string; name?: string } })?.author;
       if (author) {
+        const isCustomer = author.type === "user" || author.type === "lead";
         return {
-          type: author.type === "user" ? "customer" : "agent",
+          type: isCustomer ? "customer" : "agent",
           id: author.id || "unknown",
-          name: author.name,
+          name: author.name ?? undefined,
         };
       }
       return { type: "system", id: "intercom" };
@@ -130,14 +133,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Try to identify the trigger from headers or payload (Pipedream may use various locations)
   const headerDeploy = request.headers.get("x-pd-deployment-id") ?? request.headers.get("x-pd-emitter-id");
   const bodyDeploy = (event.deployment_id ?? event.deploymentId ?? (event as Record<string, unknown>).emitter_id) as string | undefined;
   const meta = event._metadata as Record<string, unknown> | undefined;
   const metaDeploy = (meta?.deployment_id ?? meta?.deploymentId ?? meta?.emitter_id) as string | undefined;
   const emitterObj = (event as Record<string, unknown>).emitter as { id?: string } | undefined;
   const emitterDeploy = emitterObj?.id;
+  const queryTenantId = request.nextUrl.searchParams.get("tenant_id");
   const deploymentId = headerDeploy || bodyDeploy || metaDeploy || emitterDeploy || undefined;
+
+  const innerEvent = (event as Record<string, unknown>).event as PipedreamTriggerEvent | undefined;
+  const eventToProcess: PipedreamTriggerEvent = innerEvent ?? event;
 
   console.log(`Received Pipedream event: deployment_id=${deploymentId || "unknown"}`);
 
@@ -163,39 +169,54 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Fallback: Pipedream often doesn't send deployment_id; use tenant_id from URL (set at deploy)
+  if (!tenantId && queryTenantId) {
+    const exists = await prisma.tenant.findUnique({
+      where: { id: queryTenantId },
+    });
+    if (exists) {
+      tenantId = queryTenantId;
+    }
+  }
+
   // If we can't identify the tenant, we can still log the event
   // but we won't be able to associate it with a specific tenant
   if (!tenantId) {
     console.warn("Could not identify tenant for Pipedream event");
-    // Try to extract provider from event structure
-    if (event.type && typeof event.type === "string") {
-      const parts = event.type.split(".");
-      if (parts.length > 0) {
-        provider = parts[0];
-      }
+  }
+
+  // Derive provider from event structure when not from trigger lookup
+  const ev = eventToProcess;
+  if (provider === "unknown") {
+    if (ev.conversation_parts && (ev.source as Record<string, unknown>)?.author) {
+      provider = "intercom";
+    } else if (ev.type && typeof ev.type === "string") {
+      const parts = ev.type.split(".");
+      if (parts.length > 0) provider = parts[0];
     }
   }
 
-  // Generate event identifiers
-  const eventId = (event.id as string) || 
-                  (event.event_id as string) || 
+  // Generate event identifiers (use eventToProcess for payload fields)
+  const eventId = (ev.id as string) || 
+                  (ev.event_id as string) || 
                   `pd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const sourceEventId = `pipedream_${eventId}`;
   
   // Extract entity/conversation ID
-  const entityId = extractEntityId(event, provider);
+  const entityId = extractEntityId(ev, provider);
   
   // Extract actor information
-  const actor = extractActor(event, provider);
+  const actor = extractActor(ev, provider);
   
   // Determine event type
-  const rawEventType = (event.type as string) || 
-                       (event.event as string) || 
-                       (event.topic as string);
+  const rawEventType = (ev.type as string) || 
+                       (ev.event as string) || 
+                       (ev.topic as string);
   const eventType = normalizeEventType(provider, rawEventType);
 
   // Get timestamp - Events Manager expects RFC 3339 string (not Unix integer)
-  const rawTs = event.timestamp ?? event.created_at;
+  // Intercom uses created_at (unix) or statistics.last_contact_reply_at
+  const rawTs = ev.timestamp ?? ev.created_at ?? (ev.statistics as { last_contact_reply_at?: number })?.last_contact_reply_at;
   let occurredAt: string;
   if (typeof rawTs === "number") {
     const ms = rawTs < 1e12 ? rawTs * 1000 : rawTs;
@@ -216,7 +237,7 @@ export async function POST(request: NextRequest) {
       actor_id: actor.id,
       actor_name: actor.name,
       payload: {
-        ...event,
+        ...eventToProcess,
         _pipedream: {
           deployment_id: deploymentId,
           received_at: new Date().toISOString(),
@@ -232,7 +253,7 @@ export async function POST(request: NextRequest) {
     if (tenantId && result.ingested) {
       const invocationId = `inv_${result.event_id}`;
       const eventSnapshot = {
-        ...event,
+        ...eventToProcess,
         _pipedream: {
           deployment_id: deploymentId,
           received_at: new Date().toISOString(),

@@ -82,9 +82,18 @@ export async function POST(request: NextRequest) {
     user_id: tenantId,
   };
 
-  // Get the webhook URL
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-  const webhookUrl = getWebhookUrl() || `${appUrl}/api/webhooks/pipedream`;
+
+  const POLLING_TRIGGERS = ["intercom-new-user-reply"];
+  if (
+    !fullConfiguredProps.timer &&
+    POLLING_TRIGGERS.includes(triggerId)
+  ) {
+    fullConfiguredProps.timer = { intervalSeconds: 60 };
+  }
+
+
+  const base = getWebhookUrl() || `${process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin}/api/webhooks/pipedream`;
+  const webhookUrl = `${base}${base.includes("?") ? "&" : "?"}tenant_id=${tenantId}`;
 
   try {
     // Deploy the trigger via Pipedream API
