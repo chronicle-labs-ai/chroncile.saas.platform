@@ -1,0 +1,52 @@
+{
+  "plans": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "description": "Events, runs, and one connection for small teams.",
+      "amountCents": 2900,
+      "currency": "usd",
+      "interval": "month",
+      "lookupKey": "starter_monthly",
+      "features": [
+        "Event ingestion and timeline",
+        "Runs and workflow processing",
+        "1 Pipedream connection",
+        "Agent endpoint configuration",
+        "Audit log (30 days)"
+      ]
+    },
+    {
+      "id": "pro",
+      "name": "Pro",
+      "description": "More connections, lead gen, and higher limits.",
+      "amountCents": 7900,
+      "currency": "usd",
+      "interval": "month",
+      "lookupKey": "pro_monthly",
+      "features": [
+        "Everything in Starter",
+        "Up to 5 Pipedream connections",
+        "Lead gen (Clay-style search, create runs)",
+        "Runs by workflow filter",
+        "Audit log (90 days)"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "description": "Unlimited connections and full platform access.",
+      "amountCents": 19900,
+      "currency": "usd",
+      "interval": "month",
+      "lookupKey": "enterprise_monthly",
+      "features": [
+        "Everything in Pro",
+        "Unlimited Pipedream connections",
+        "Extended audit retention",
+        "Priority support",
+        "Custom agent workflows"
+      ]
+    }
+  ]
+}

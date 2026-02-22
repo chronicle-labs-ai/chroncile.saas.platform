@@ -11,7 +11,9 @@ function getDatabaseUrl(): string {
   try {
     const parsed = new URL(url);
     if (!parsed.searchParams.has("connection_limit")) {
-      parsed.searchParams.set("connection_limit", "1");
+      // Use more connections in dev to avoid pool timeout (auth + page queries)
+      const limit = process.env.NODE_ENV === "development" ? "5" : "1";
+      parsed.searchParams.set("connection_limit", limit);
     }
     // Disable prepared statements for PgBouncer/Supabase pooler (fixes "prepared statement already exists")
     if (!parsed.searchParams.has("pgbouncer")) {

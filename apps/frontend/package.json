@@ -10,7 +10,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "stripe:sync-plans": "node scripts/stripe-sync-plans.mjs"
   },
   "dependencies": {
     "@prisma/client": "6.19.2",
@@ -25,12 +26,14 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "remotion": "^4.0.410",
+    "stripe": "^20.3.1",
     "swr": "^2.2.5",
     "three": "^0.182.0",
     "unicornstudio-react": "2.0.1-1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "dotenv": "^16.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
