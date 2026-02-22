@@ -165,7 +165,11 @@ export function Sidebar() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-tertiary">Environment</span>
-                  <span className="font-mono text-xs text-caution">DEV</span>
+                  <span
+                    className={`font-mono text-xs ${process.env.NODE_ENV === "production" ? "text-nominal" : "text-caution"}`}
+                  >
+                    {process.env.NODE_ENV === "production" ? "PROD" : "DEV"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-tertiary">Status</span>
