@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
           workflowId: "lead-gen",
           mode: "shadow",
           status: "pending",
-          eventSnapshot: (lead ?? {}) as Prisma.InputJsonValue,
+          eventSnapshot: (lead ?? {}) as unknown as Prisma.InputJsonValue,
         },
       });
       await appendAuditLog({
