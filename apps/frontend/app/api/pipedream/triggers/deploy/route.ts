@@ -70,24 +70,33 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Build configured props with the auth provision ID
+  const tenantId = session.user.tenantId;
+
+  // Build configured props with auth and user IDs (Pipedream ignores unknown props)
   const fullConfiguredProps: Record<string, unknown> = {
     ...configuredProps,
-    // The app prop name varies by trigger, but typically matches the app slug
     [connection.provider]: {
       authProvisionId: connection.pipedreamAuthId,
     },
+    userIds: [tenantId],
+    user_id: tenantId,
   };
 
-  // Get the webhook URL
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-  const webhookUrl = getWebhookUrl() || `${appUrl}/api/webhooks/pipedream`;
+
+  // Default polling: 1 min for all triggers (Pipedream ignores timer for non-polling triggers)
+  if (!fullConfiguredProps.timer) {
+    fullConfiguredProps.timer = { intervalSeconds: 60 };
+  }
+
+
+  const base = getWebhookUrl() || `${process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin}/api/webhooks/pipedream`;
+  const webhookUrl = base.endsWith("/") ? `${base}${tenantId}` : `${base}/${tenantId}`;
 
   try {
     // Deploy the trigger via Pipedream API
     const response = await deployTrigger({
       id: triggerId,
-      externalUserId: session.user.tenantId,
+      externalUserId: tenantId,
       configuredProps: fullConfiguredProps,
       webhookUrl,
       emitOnDeploy: false, // Don't emit historical events on deploy
@@ -98,7 +107,7 @@ export async function POST(request: NextRequest) {
     // Save the trigger deployment to our database
     const savedTrigger = await prisma.pipedreamTrigger.create({
       data: {
-        tenantId: session.user.tenantId,
+        tenantId,
         connectionId: connection.id,
         triggerId,
         deploymentId: deployedTrigger.id,

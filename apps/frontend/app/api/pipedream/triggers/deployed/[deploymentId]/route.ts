@@ -49,8 +49,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    // Get live status from Pipedream
-    const pipedreamTrigger = await getDeployedTrigger(deploymentId);
+    const pipedreamTrigger = await getDeployedTrigger(deploymentId, session.user.tenantId);
 
     return NextResponse.json({
       id: trigger.id,
@@ -115,8 +114,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    // Delete from Pipedream
-    await deleteDeployedTrigger(deploymentId);
+    await deleteDeployedTrigger(deploymentId, session.user.tenantId);
 
     // Delete from our database
     await prisma.pipedreamTrigger.delete({

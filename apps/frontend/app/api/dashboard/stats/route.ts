@@ -22,18 +22,30 @@ export async function GET() {
     const endIso = now.toISOString();
 
     const baseUrl = `${EVENTS_MANAGER_URL}/api/events/query?tenant_id=${encodeURIComponent(tenantId)}`;
-    const [connectionsCount, eventsResponse, eventsTodayResponse] = await Promise.all([
-      prisma.connection.count({
-        where: { tenantId, status: "active" },
-      }),
-      fetch(`${baseUrl}&limit=1000`, { cache: "no-store" }).then((res) =>
-        res.ok ? res.json() : { count: 0 }
-      ),
-      fetch(
-        `${baseUrl}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&limit=1000`,
-        { cache: "no-store" }
-      ).then((res) => (res.ok ? res.json() : { count: 0 })),
-    ]);
+    const fetchOpts = { cache: "no-store" as RequestCache, signal: AbortSignal.timeout(5000) };
+
+    const fetchEvents = (url: string) =>
+      fetch(url, fetchOpts)
+        .then((res) => (res.ok ? res.json() : { count: 0 }))
+        .catch(() => ({ count: 0 }));
+
+    const [connectionsCount, eventsResponse, eventsTodayResponse, runsCount, runsTodayCount] =
+      await Promise.all([
+        prisma.connection.count({
+          where: { tenantId, status: "active" },
+        }),
+        fetchEvents(`${baseUrl}&limit=1000`),
+        fetchEvents(
+          `${baseUrl}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&limit=1000`
+        ),
+        prisma.run.count({ where: { tenantId } }),
+        prisma.run.count({
+          where: {
+            tenantId,
+            createdAt: { gte: startOfTodayUtc, lte: now },
+          },
+        }),
+      ]);
 
     const eventsCount = typeof eventsResponse?.count === "number" ? eventsResponse.count : 0;
     const eventsTodayCount =
@@ -44,12 +56,22 @@ export async function GET() {
       connectionsCount,
       eventsTodayCount,
       sessionsCount: 0,
+      runsCount,
+      runsTodayCount,
     });
   } catch (err) {
     console.error("Dashboard stats error:", err);
     return NextResponse.json(
-      { eventsCount: 0, connectionsCount: 0, eventsTodayCount: 0, sessionsCount: 0 },
+      {
+        eventsCount: 0,
+        connectionsCount: 0,
+        eventsTodayCount: 0,
+        sessionsCount: 0,
+        runsCount: 0,
+        runsTodayCount: 0,
+      },
       { status: 200 }
     );
   }
 }
+

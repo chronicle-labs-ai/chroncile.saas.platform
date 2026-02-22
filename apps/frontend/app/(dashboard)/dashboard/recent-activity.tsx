@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import useSWR from "swr";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EventEnvelope {
   event_id: string;
@@ -93,9 +94,21 @@ export function RecentActivity() {
       </div>
       <div className="panel__content">
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="text-sm text-tertiary">Loading...</div>
-          </div>
+          <ul className="divide-y divide-border-dim">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <li key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="h-9 w-9 shrink-0 rounded" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3.5 w-24" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-3 w-16 shrink-0" />
+              </li>
+            ))}
+          </ul>
         )}
         {error && (
           <div className="flex flex-col items-center justify-center py-8 text-center">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/ui/logo";
 
 const navigation = [
   {
@@ -22,6 +23,24 @@ const navigation = [
       </svg>
     ),
     status: "LIVE",
+  },
+  {
+    name: "Runs",
+    href: "/dashboard/runs",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Lead gen",
+    href: "/dashboard/lead-gen",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+      </svg>
+    ),
   },
   {
     name: "Connections",
@@ -64,10 +83,7 @@ export function Sidebar() {
           {/* System Header */}
           <div className="h-12 flex items-center px-4 border-b border-border-dim bg-elevated">
             <Link href="/dashboard" className="flex items-center gap-3">
-              {/* Logo mark - simple, geometric */}
-              <div className="w-6 h-6 border border-data flex items-center justify-center">
-                <div className="w-2 h-2 bg-data" />
-              </div>
+              <Logo className="w-6 h-6 shrink-0" variant="dark" />
               <span className="text-sm font-semibold tracking-tight text-primary">
                 Chronicle Labs
               </span>
@@ -160,7 +176,8 @@ export function Sidebar() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2 border-t border-border-dim">
+          <div className="px-4 py-2 border-t border-border-dim flex items-center gap-2">
+            <Logo className="w-4 h-4 shrink-0 opacity-70" variant="dark" />
             <span className="text-[10px] text-disabled">
               © 2026 Chronicle Labs
             </span>

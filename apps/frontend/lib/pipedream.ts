@@ -179,7 +179,11 @@ async function pipedreamFetch<T>(
     throw new Error(`Pipedream API error: ${response.status} - ${error}`);
   }
 
-  return JSON.parse(responseText);
+  if (response.status === 204 || !responseText.trim()) {
+    return undefined as T;
+  }
+
+  return JSON.parse(responseText) as T;
 }
 
 export async function createConnectToken(
@@ -236,9 +240,11 @@ export async function listApps(options?: {
 export async function listTriggers(options?: {
   app?: string;
   limit?: number;
-  offset?: number;
   query?: string;
-}): Promise<{ data: TriggerComponent[] }> {
+  after?: string;
+  before?: string;
+  registry?: "public" | "private" | "all";
+}): Promise<{ data: TriggerComponent[]; page_info?: { count: number; total_count: number; start_cursor?: string; end_cursor?: string } }> {
   if (!PIPEDREAM_PROJECT_ID) {
     throw new Error("PIPEDREAM_PROJECT_ID must be set");
   }
@@ -246,10 +252,12 @@ export async function listTriggers(options?: {
   const params = new URLSearchParams();
   if (options?.app) params.set("app", options.app);
   if (options?.limit) params.set("limit", options.limit.toString());
-  if (options?.offset) params.set("offset", options.offset.toString());
   if (options?.query) params.set("q", options.query);
+  if (options?.after) params.set("after", options.after);
+  if (options?.before) params.set("before", options.before);
+  if (options?.registry) params.set("registry", options.registry);
 
-  return pipedreamFetch<{ data: TriggerComponent[] }>(
+  return pipedreamFetch<{ data: TriggerComponent[]; page_info?: { count: number; total_count: number; start_cursor?: string; end_cursor?: string } }>(
     `/v1/connect/${PIPEDREAM_PROJECT_ID}/triggers?${params}`
   );
 }
@@ -320,29 +328,35 @@ export async function listDeployedTriggers(
 
   const params = new URLSearchParams({ external_user_id: externalUserId });
   return pipedreamFetch<{ data: DeployedTrigger[] }>(
-    `/v1/connect/${PIPEDREAM_PROJECT_ID}/triggers/deployed?${params}`
+    `/v1/connect/${PIPEDREAM_PROJECT_ID}/deployed-triggers?${params}`
   );
 }
 
 export async function getDeployedTrigger(
-  deploymentId: string
+  deploymentId: string,
+  externalUserId?: string
 ): Promise<{ data: DeployedTrigger }> {
   if (!PIPEDREAM_PROJECT_ID) {
     throw new Error("PIPEDREAM_PROJECT_ID must be set");
   }
 
+  const params = externalUserId ? `?external_user_id=${encodeURIComponent(externalUserId)}` : "";
   return pipedreamFetch<{ data: DeployedTrigger }>(
-    `/v1/connect/${PIPEDREAM_PROJECT_ID}/triggers/deployed/${deploymentId}`
+    `/v1/connect/${PIPEDREAM_PROJECT_ID}/deployed-triggers/${deploymentId}${params}`
   );
 }
 
-export async function deleteDeployedTrigger(deploymentId: string): Promise<void> {
+export async function deleteDeployedTrigger(
+  deploymentId: string,
+  externalUserId?: string
+): Promise<void> {
   if (!PIPEDREAM_PROJECT_ID) {
     throw new Error("PIPEDREAM_PROJECT_ID must be set");
   }
 
+  const params = externalUserId ? `?external_user_id=${encodeURIComponent(externalUserId)}` : "";
   await pipedreamFetch<void>(
-    `/v1/connect/${PIPEDREAM_PROJECT_ID}/triggers/deployed/${deploymentId}`,
+    `/v1/connect/${PIPEDREAM_PROJECT_ID}/deployed-triggers/${deploymentId}${params}`,
     { method: "DELETE" }
   );
 }
@@ -356,7 +370,7 @@ export async function updateDeployedTrigger(
   }
 
   return pipedreamFetch<{ data: DeployedTrigger }>(
-    `/v1/connect/${PIPEDREAM_PROJECT_ID}/triggers/deployed/${deploymentId}`,
+    `/v1/connect/${PIPEDREAM_PROJECT_ID}/deployed-triggers/${deploymentId}`,
     {
       method: "PATCH",
       body: JSON.stringify(options),

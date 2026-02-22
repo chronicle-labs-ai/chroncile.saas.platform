@@ -3,6 +3,7 @@
 import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface User {
   name?: string | null;
@@ -14,7 +15,7 @@ export function Header({ user }: { user: User }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState<string>("");
-  const { eventsCount, connectionsCount } = useDashboardStats();
+  const { eventsCount, connectionsCount, isLoading: statsLoading } = useDashboardStats();
 
   useEffect(() => {
     const updateTime = () => {
@@ -87,18 +88,34 @@ export function Header({ user }: { user: User }) {
         <div className="hidden lg:flex items-center gap-6">
           {/* Events status */}
           <div className="flex items-baseline gap-1.5">
-            <div className="status-dot status-dot--nominal status-dot--pulse relative top-[-1px]" />
+            {statsLoading ? (
+              <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0 mt-0.5" />
+            ) : (
+              <div className="status-dot status-dot--nominal status-dot--pulse relative top-[-1px]" />
+            )}
             <span className="text-[11px] text-tertiary leading-none">Events</span>
-            <span className="font-mono text-[13px] text-nominal font-medium tabular-nums leading-none">{eventsCount}</span>
+            {statsLoading ? (
+              <Skeleton className="h-3.5 w-5 shrink-0" />
+            ) : (
+              <span className="font-mono text-[13px] text-nominal font-medium tabular-nums leading-none">{eventsCount}</span>
+            )}
           </div>
           
           <div className="w-px h-4 bg-border-dim" />
           
           {/* Connections status */}
           <div className="flex items-baseline gap-1.5">
-            <div className={`status-dot relative top-[-1px] ${connectionsCount > 0 ? "status-dot--nominal status-dot--pulse" : "status-dot--data"}`} />
+            {statsLoading ? (
+              <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0 mt-0.5" />
+            ) : (
+              <div className={`status-dot relative top-[-1px] ${connectionsCount > 0 ? "status-dot--nominal status-dot--pulse" : "status-dot--data"}`} />
+            )}
             <span className="text-[11px] text-tertiary leading-none">Connections</span>
-            <span className="font-mono text-[13px] text-data font-medium tabular-nums leading-none">{connectionsCount}</span>
+            {statsLoading ? (
+              <Skeleton className="h-3.5 w-5 shrink-0" />
+            ) : (
+              <span className="font-mono text-[13px] text-data font-medium tabular-nums leading-none">{connectionsCount}</span>
+            )}
           </div>
           
           <div className="w-px h-4 bg-border-dim" />
@@ -106,7 +123,11 @@ export function Header({ user }: { user: User }) {
           {/* Uptime */}
           <div className="flex items-baseline gap-1.5">
             <span className="text-[11px] text-tertiary leading-none">Uptime</span>
-            <span className="font-mono text-[13px] text-primary font-medium tabular-nums leading-none">99.9%</span>
+            {statsLoading ? (
+              <Skeleton className="h-3.5 w-9 shrink-0" />
+            ) : (
+              <span className="font-mono text-[13px] text-primary font-medium tabular-nums leading-none">99.9%</span>
+            )}
           </div>
         </div>
 

@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
 
   if (payload.event === "CONNECTION_ERROR") {
     console.error("Pipedream connection error:", payload.error);
-    // We don't need to do anything here - the frontend will show the error
     return NextResponse.json({ received: true, event: "CONNECTION_ERROR" });
   }
 

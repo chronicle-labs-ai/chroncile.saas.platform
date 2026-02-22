@@ -5,6 +5,8 @@ export interface DashboardStats {
   connectionsCount: number;
   eventsTodayCount: number;
   sessionsCount: number;
+  runsCount: number;
+  runsTodayCount: number;
 }
 
 const fetcher = async (url: string): Promise<DashboardStats> => {
@@ -16,6 +18,8 @@ const fetcher = async (url: string): Promise<DashboardStats> => {
     connectionsCount: data.connectionsCount ?? 0,
     eventsTodayCount: data.eventsTodayCount ?? 0,
     sessionsCount: data.sessionsCount ?? 0,
+    runsCount: data.runsCount ?? 0,
+    runsTodayCount: data.runsTodayCount ?? 0,
   };
 };
 
@@ -34,6 +38,8 @@ export function useDashboardStats() {
     connectionsCount: data?.connectionsCount ?? 0,
     eventsTodayCount: data?.eventsTodayCount ?? 0,
     sessionsCount: data?.sessionsCount ?? 0,
+    runsCount: data?.runsCount ?? 0,
+    runsTodayCount: data?.runsTodayCount ?? 0,
     isLoading,
     error,
     mutate,

@@ -25,16 +25,105 @@ model User {
 }
 
 model Tenant {
-  id                String             @id @default(cuid())
-  name              String
-  slug              String             @unique
-  users             User[]
-  connections       Connection[]
-  pipedreamTriggers PipedreamTrigger[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id                     String               @id @default(cuid())
+  name                   String
+  slug                   String               @unique
+  stripeCustomerId       String?              @unique
+  stripeSubscriptionStatus String?           // active, canceled, past_due, trialing, etc.
+  stripePriceId         String?              // current plan price id
+  users                  User[]
+  connections            Connection[]
+  pipedreamTriggers      PipedreamTrigger[]
+  runs                   Run[]
+  auditLogs              AuditLog[]
+  agentEndpointConfig    AgentEndpointConfig?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
 
   @@index([slug])
+}
+
+model AgentEndpointConfig {
+  id                 String   @id @default(cuid())
+  tenantId           String   @unique
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  endpointUrl        String?
+  authType           String   @default("none") // "none" | "api_key" | "bearer" | "basic"
+  authHeaderName     String?
+  authSecretEncrypted String?
+  basicUsername      String?
+  customHeadersJson  Json?    // array of { name, value }
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Event {
+  eventId        String   @id @db.VarChar(26) @map("event_id")
+  tenantId       String   @map("tenant_id")
+  source         String
+  sourceEventId  String   @map("source_event_id")
+  eventType      String   @map("event_type")
+  conversationId String   @map("conversation_id")
+  ticketId       String?  @map("ticket_id")
+  customerId     String?  @map("customer_id")
+  accountId      String?  @map("account_id")
+  actorType      String   @map("actor_type")
+  actorId        String   @map("actor_id")
+  actorName      String?  @map("actor_name")
+  occurredAt     DateTime @map("occurred_at")
+  ingestedAt     DateTime @default(now()) @map("ingested_at")
+  schemaVersion  Int      @default(1) @map("schema_version")
+  payload        Json
+  piiFlags       Json     @map("pii_flags")
+  permissions    Json
+
+  @@map("events")
+  @@unique([tenantId, source, sourceEventId])
+}
+
+model Run {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workflowId      String?
+  eventId         String  
+  invocationId    String   @unique // idempotency key
+  mode            String   
+  status          String 
+  eventSnapshot   Json?
+  contextPointers Json?
+  agentRequest    Json?
+  agentResponse   Json?
+  humanDecision   Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  auditLogs      AuditLog[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([eventId])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  runId        String?
+  run          Run?     @relation(fields: [runId], references: [id], onDelete: SetNull)
+  eventId      String?
+  invocationId String?
+  action       String   
+  actor        String?
+  payload      Json?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([runId, createdAt])
+  @@index([eventId])
+  @@index([invocationId])
 }
 
 model Connection {

@@ -26,6 +26,7 @@ export default async function ConnectionsPage({
   searchParams: Promise<{
     success?: string;
     error?: string;
+    error_description?: string;
     pipedream_success?: string;
     pipedream_error?: string;
     app?: string;
@@ -71,6 +72,7 @@ export default async function ConnectionsPage({
       errorMessage={params.error}
       pipedreamSuccess={params.pipedream_success === "true"}
       pipedreamError={params.pipedream_error === "true"}
+      pipedreamErrorDetail={params.error_description || params.error}
       pipedreamApp={params.app}
     />
   );
