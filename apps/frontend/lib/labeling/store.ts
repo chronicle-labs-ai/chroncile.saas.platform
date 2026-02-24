@@ -226,8 +226,7 @@ let seeded = false;
 export async function getLabelingStore(): Promise<InMemoryLabelingStore> {
   if (!seeded) {
     seeded = true;
-    const { MOCK_TRACES } = await import("./mock-traces");
-    labelingStore.seed(MOCK_TRACES);
+    labelingStore.seed([]);
   }
   return labelingStore;
 }
