@@ -150,7 +150,7 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
       setError(null);
       
       const params = new URLSearchParams();
-      params.set("limit", "100");
+      params.set("limit", "500");
       params.set("tenant_id", tenantId);
       if (filter !== "all") {
         params.set("source", filter);
@@ -181,7 +181,7 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
     let closed = false;
     setTimelineLoading(true);
     const params = new URLSearchParams();
-    params.set("limit", "100");
+    params.set("limit", "500");
     params.set("tenant_id", tenantId);
     if (timelineFilter !== "all") params.set("source", timelineFilter);
     fetch(`${eventsManagerUrl}/api/events/query?${params}`)
