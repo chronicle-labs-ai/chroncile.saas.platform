@@ -7,7 +7,6 @@ import { StarRating } from "./StarRating";
 
 interface LabelingPanelProps {
   trace: Trace;
-  /** Current per-action annotations from the timeline */
   actionAnnotations: ActionAnnotation[];
   onSave: (audit: HumanActionAudit) => void;
   onSkip: () => void;
@@ -31,7 +30,6 @@ export function LabelingPanel({
 }: LabelingPanelProps) {
   const auto = trace.autoAudit;
 
-  // Initialize from human audit (if editing) or auto audit (if new)
   const existingAudit = trace.humanAudit;
   const [overallScore, setOverallScore] = useState(
     existingAudit?.overall_score ?? auto?.overall_score ?? 3
@@ -45,7 +43,6 @@ export function LabelingPanel({
   const [notes, setNotes] = useState(existingAudit?.notes ?? "");
   const [newError, setNewError] = useState("");
 
-  // Reset when trace changes
   useEffect(() => {
     const ea = trace.humanAudit;
     const aa = trace.autoAudit;
@@ -78,9 +75,12 @@ export function LabelingPanel({
     });
   };
 
-  // Count annotation stats
   const annotationCount = actionAnnotations.length;
   const autoAnnotationCount = auto?.action_annotations?.length ?? 0;
+
+  const ood = auto?.ood_score;
+  const ctxIntegrity = auto?.context_integrity;
+  const instrViolations = auto?.instruction_violations_summary ?? [];
 
   return (
     <div className="flex flex-col h-full">
@@ -114,6 +114,91 @@ export function LabelingPanel({
                 {autoAnnotationCount} actions annotated
               </span>
             </div>
+
+            {/* OOD Detection */}
+            {ood && (
+              <div>
+                <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider block mb-1.5">
+                  OOD Detection
+                </span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <OODBar label="Transition" value={ood.transition_deviation} />
+                  <OODBar label="Tool Freq" value={ood.tool_frequency_deviation} />
+                  <OODBar label="Temporal" value={ood.temporal_deviation} />
+                  <OODBar label="Embedding" value={ood.embedding_distance} />
+                </div>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="font-mono text-[10px] text-tertiary">
+                    Composite: {ood.composite_score.toFixed(2)}
+                  </span>
+                  {ood.flagged && (
+                    <span className="badge badge--caution text-[9px] py-0.5 px-1.5">
+                      FLAGGED
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Context Integrity */}
+            {ctxIntegrity && (
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider">
+                    Context Integrity
+                  </span>
+                  <span className={`badge text-[9px] py-0.5 px-1.5 ${
+                    ctxIntegrity.passed ? "badge--nominal" : "badge--critical"
+                  }`}>
+                    {ctxIntegrity.passed ? "PASSED" : "FAILED"}
+                  </span>
+                </div>
+                {ctxIntegrity.violations.length > 0 && (
+                  <div className="space-y-1">
+                    {ctxIntegrity.violations.map((v, i) => (
+                      <div
+                        key={i}
+                        className={`text-[11px] border border-border-dim rounded-sm px-2 py-1 ${
+                          v.severity === "critical" ? "text-critical bg-critical-bg" : "text-caution bg-caution-bg"
+                        }`}
+                      >
+                        <span className="font-mono text-[10px] font-medium">{v.type}</span>
+                        <span className="text-tertiary mx-1">·</span>
+                        <span className="font-mono text-[10px]">{v.field}</span>
+                        <span className="text-tertiary mx-1">—</span>
+                        {v.description}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Instruction Violations */}
+            {instrViolations.length > 0 && (
+              <div>
+                <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider block mb-1.5">
+                  Instruction Violations ({instrViolations.length})
+                </span>
+                <div className="space-y-1">
+                  {instrViolations.map((iv, i) => (
+                    <div
+                      key={i}
+                      className="text-[11px] text-critical bg-critical-bg border border-border-dim rounded-sm px-2 py-1"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[10px] font-medium">{iv.instruction_id}</span>
+                        <span className="text-tertiary italic truncate text-[10px]">{iv.instruction_text}</span>
+                      </div>
+                      <p className="mt-0.5">{iv.violation_description}</p>
+                      {iv.context_evidence && (
+                        <p className="text-tertiary mt-0.5 text-[10px]">Evidence: {iv.context_evidence}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Critical errors */}
             {auto.critical_errors.length > 0 && (
@@ -160,15 +245,10 @@ export function LabelingPanel({
           )}
         </div>
         <div className="p-4 space-y-4">
-          {/* Overall Agent Score */}
           <FormField label="Overall Agent Score">
-            <StarRating
-              value={overallScore}
-              onChange={setOverallScore}
-            />
+            <StarRating value={overallScore} onChange={setOverallScore} />
           </FormField>
 
-          {/* Critical Errors (editable tag list) */}
           <FormField label="Critical Errors">
             <div className="space-y-1.5">
               {criticalErrors.map((err, i) => (
@@ -212,7 +292,6 @@ export function LabelingPanel({
             </div>
           </FormField>
 
-          {/* Correction Summary */}
           <FormField label="Correction Summary">
             <textarea
               className="input text-sm resize-none"
@@ -223,7 +302,6 @@ export function LabelingPanel({
             />
           </FormField>
 
-          {/* Notes */}
           <FormField label="Reviewer Notes">
             <textarea
               className="input text-sm resize-none"
@@ -285,21 +363,26 @@ export function LabelingPanel({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
-/* ------------------------------------------------------------------ */
-
-function FormField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="label block mb-1.5">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function OODBar({ label, value }: { label: string; value: number }) {
+  const pct = Math.round(value * 100);
+  const color = value >= 0.7 ? "bg-critical" : value >= 0.4 ? "bg-caution" : "bg-nominal";
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-mono text-[9px] text-tertiary w-14 shrink-0 text-right">{label}</span>
+      <div className="flex-1 h-1.5 bg-elevated rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="font-mono text-[9px] text-tertiary w-7 tabular-nums">{pct}%</span>
     </div>
   );
 }

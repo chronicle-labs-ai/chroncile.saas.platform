@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const filters: TraceFilters = {};
   if (searchParams.get("status")) filters.status = searchParams.get("status") as TraceFilters["status"];
   if (searchParams.get("source")) filters.source = searchParams.get("source")!;
+  if (searchParams.get("agentId")) filters.agentId = searchParams.get("agentId")!;
   if (searchParams.get("minConfidence")) filters.minConfidence = parseFloat(searchParams.get("minConfidence")!);
   if (searchParams.get("maxConfidence")) filters.maxConfidence = parseFloat(searchParams.get("maxConfidence")!);
   if (searchParams.get("search")) filters.search = searchParams.get("search")!;

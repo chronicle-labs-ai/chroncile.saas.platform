@@ -47,6 +47,9 @@ class InMemoryLabelingStore {
     if (filters.source) {
       arr = arr.filter((t) => t.sources.includes(filters.source!));
     }
+    if (filters.agentId) {
+      arr = arr.filter((t) => t.agentId === filters.agentId);
+    }
     if (filters.minConfidence !== undefined) {
       arr = arr.filter((t) => (t.confidence ?? 0) >= filters.minConfidence!);
     }
@@ -79,6 +82,12 @@ class InMemoryLabelingStore {
           );
         case "events":
           return (a.eventCount - b.eventCount) * dir;
+        case "ood":
+          return (
+            ((a.autoAudit?.ood_score.composite_score ?? 0) -
+              (b.autoAudit?.ood_score.composite_score ?? 0)) *
+            dir
+          );
         default:
           return 0;
       }

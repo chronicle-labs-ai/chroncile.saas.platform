@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { Trace, ActionAnnotation, HumanActionAudit } from "@/lib/labeling/types";
+import type { Trace, ActionAnnotation, HumanActionAudit, AgentProfile } from "@/lib/labeling/types";
+import { getAgentProfile } from "@/lib/labeling/agents";
 import { ConfidenceBar } from "@/components/labeling/ConfidenceBar";
 import { EventTimeline } from "@/components/labeling/EventTimeline";
 import { LabelingPanel } from "@/components/labeling/LabelingPanel";
@@ -40,9 +41,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-
-  // Per-action annotation state (human overrides)
   const [actionAnnotations, setActionAnnotations] = useState<ActionAnnotation[]>([]);
+  const [agentProfileExpanded, setAgentProfileExpanded] = useState(false);
+  const [contextExpanded, setContextExpanded] = useState(false);
 
   const fetchTrace = useCallback(async () => {
     setLoading(true);
@@ -53,7 +54,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
         setTrace(data.trace);
         setPrevId(data.prevId);
         setNextId(data.nextId);
-        // Initialize action annotations from existing human audit or empty
         setActionAnnotations(data.trace.humanAudit?.action_annotations ?? []);
       }
     } catch (err) {
@@ -67,11 +67,10 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
     fetchTrace();
   }, [fetchTrace]);
 
-  // Keyboard shortcut: Cmd+Enter to save
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey && e.key === "Enter") {
-        // Trigger save via form submit would be complex; this is a hint
+        // Keyboard save hint
       }
     };
     window.addEventListener("keydown", handler);
@@ -83,7 +82,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
     setTimeout(() => setToast(null), 2000);
   };
 
-  /** Handle per-action annotation changes from EventCard */
   const handleAnnotationChange = useCallback((annotation: ActionAnnotation) => {
     setActionAnnotations((prev) => {
       const existing = prev.findIndex((a) => a.event_id === annotation.event_id);
@@ -96,7 +94,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
     });
   }, []);
 
-  /** Save the full audit (per-action annotations + trace-level audit) */
   const handleSave = async (audit: HumanActionAudit) => {
     setSaving(true);
     try {
@@ -107,7 +104,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
       });
       if (res.ok) {
         showToast("Audit saved");
-        // Auto-advance to next trace
         if (nextId) {
           router.push(`/dashboard/labeling/${nextId}`);
         } else {
@@ -187,11 +183,11 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
   }
 
   const statusInfo = STATUS_BADGE[trace.status] ?? STATUS_BADGE.pending;
-
-  // Audit stats for header
+  const agentProfile = getAgentProfile(trace.agentId);
   const autoAnnotations = trace.autoAudit?.action_annotations ?? [];
   const totalAutoActions = autoAnnotations.length;
   const correctAutoActions = autoAnnotations.filter((a) => a.verdict === "correct").length;
+  const ctx = trace.agentContext;
 
   return (
     <div className="space-y-4">
@@ -217,13 +213,17 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
       <div className="panel">
         <div className="p-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
+            {agentProfile && (
+              <span className="font-mono text-[10px] text-nominal bg-nominal-bg px-1.5 py-0.5 border border-border-dim">
+                {agentProfile.name}
+              </span>
+            )}
             <span className="font-mono text-sm text-primary font-medium">
               {trace.conversationId}
             </span>
             <span className={`badge ${statusInfo.class}`}>
               {statusInfo.label}
             </span>
-            {/* Action audit summary badges */}
             {totalAutoActions > 0 && (
               <span
                 className={`badge text-[9px] ${
@@ -270,7 +270,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
           </div>
         </div>
 
-        {/* Existing human audit badges (if labeled) */}
         {trace.humanAudit && (
           <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
             <LabelBadge label="Score" value={`${trace.humanAudit.overall_score}/5`} variant="data" />
@@ -281,11 +280,151 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
         )}
       </div>
 
+      {/* Agent Profile + Context Snapshot (collapsible) */}
+      {agentProfile && (
+        <div className="panel">
+          <button
+            className="panel__header w-full text-left cursor-pointer hover:bg-hover transition-colors"
+            onClick={() => setAgentProfileExpanded(!agentProfileExpanded)}
+          >
+            <span className="panel__title">Agent Profile</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-tertiary">
+                {agentProfile.instructions.length} rules · {agentProfile.required_context_fields.length} required fields
+              </span>
+              <span className="text-tertiary text-[10px]">
+                {agentProfileExpanded ? "▼" : "▶"}
+              </span>
+            </div>
+          </button>
+
+          {agentProfileExpanded && (
+            <div className="p-4 space-y-4 border-t border-border-dim">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-medium text-primary">{agentProfile.name}</span>
+                  <span className="font-mono text-[10px] text-tertiary bg-elevated px-1.5 py-0.5 border border-border-dim">
+                    {agentProfile.workflow_type}
+                  </span>
+                </div>
+                <p className="text-xs text-tertiary">{agentProfile.description}</p>
+              </div>
+
+              <AgentInstructions profile={agentProfile} violatedIds={
+                (trace.autoAudit?.instruction_violations_summary ?? []).map((v) => v.instruction_id)
+              } />
+
+              <div>
+                <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider block mb-1.5">
+                  Required Context Fields
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                  {agentProfile.required_context_fields.map((f) => {
+                    const isMissing = ctx.missing_fields.includes(f.field);
+                    return (
+                      <div
+                        key={f.field}
+                        className={`flex items-center gap-2 text-[11px] px-2 py-1 rounded-sm border ${
+                          isMissing
+                            ? "text-critical bg-critical-bg border-border-dim"
+                            : "text-secondary bg-surface border-border-dim"
+                        }`}
+                      >
+                        <span className="font-mono font-medium">{f.field}</span>
+                        {isMissing && (
+                          <span className="badge badge--critical text-[8px] py-0 px-1">MISSING</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Context Snapshot (collapsible) */}
+      <div className="panel">
+        <button
+          className="panel__header w-full text-left cursor-pointer hover:bg-hover transition-colors"
+          onClick={() => setContextExpanded(!contextExpanded)}
+        >
+          <span className="panel__title">Agent Context Snapshot</span>
+          <div className="flex items-center gap-2">
+            {ctx.missing_fields.length > 0 && (
+              <span className="badge badge--critical text-[9px] py-0.5 px-1.5">
+                {ctx.missing_fields.length} missing
+              </span>
+            )}
+            {ctx.stale_fields.length > 0 && (
+              <span className="badge badge--caution text-[9px] py-0.5 px-1.5">
+                {ctx.stale_fields.length} stale
+              </span>
+            )}
+            {ctx.missing_fields.length === 0 && ctx.stale_fields.length === 0 && (
+              <span className="badge badge--nominal text-[9px] py-0.5 px-1.5">
+                Clean
+              </span>
+            )}
+            <span className="text-tertiary text-[10px]">
+              {contextExpanded ? "▼" : "▶"}
+            </span>
+          </div>
+        </button>
+
+        {contextExpanded && (
+          <div className="p-4 border-t border-border-dim">
+            <div className="space-y-1">
+              {Object.entries(ctx.fields).map(([key, value]) => {
+                const staleEntry = ctx.stale_fields.find((s) => s.field === key);
+                const isStale = !!staleEntry;
+
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-start gap-3 text-[11px] px-2.5 py-1.5 rounded-sm border ${
+                      isStale
+                        ? "bg-caution-bg border-border-dim"
+                        : "bg-surface border-border-dim"
+                    }`}
+                  >
+                    <span className="font-mono font-medium text-secondary w-32 shrink-0">{key}</span>
+                    <span className="font-mono text-tertiary flex-1 break-all">
+                      {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                    </span>
+                    {isStale && (
+                      <div className="shrink-0 text-right">
+                        <span className="badge badge--caution text-[8px] py-0 px-1">STALE</span>
+                        <p className="text-[9px] text-caution mt-0.5">
+                          Correct: {typeof staleEntry.correct_value === "object"
+                            ? JSON.stringify(staleEntry.correct_value)
+                            : String(staleEntry.correct_value)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {ctx.missing_fields.map((field) => (
+                <div
+                  key={field}
+                  className="flex items-center gap-3 text-[11px] px-2.5 py-1.5 rounded-sm border bg-critical-bg border-border-dim"
+                >
+                  <span className="font-mono font-medium text-critical w-32 shrink-0">{field}</span>
+                  <span className="text-critical italic">Not present in agent context</span>
+                  <span className="badge badge--critical text-[8px] py-0 px-1 ml-auto">MISSING</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Main content: timeline + labeling panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left column: Event timeline + Reviewer recommendation */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Event timeline */}
           <div className="panel">
             <div className="panel__header">
               <span className="panel__title">Event Timeline</span>
@@ -309,7 +448,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             </div>
           </div>
 
-          {/* Reviewer recommendation */}
           <div className="panel">
             <ReviewerRecommendation
               trace={trace}
@@ -320,7 +458,6 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
           </div>
         </div>
 
-        {/* Right column: Labeling panel */}
         <div className="lg:col-span-1 panel flex flex-col max-h-[calc(100vh-260px)] overflow-hidden">
           <LabelingPanel
             trace={trace}
@@ -334,6 +471,52 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             saving={saving}
           />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AgentInstructions({
+  profile,
+  violatedIds,
+}: {
+  profile: AgentProfile;
+  violatedIds: string[];
+}) {
+  return (
+    <div>
+      <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider block mb-1.5">
+        Instructions (SOP)
+      </span>
+      <div className="space-y-1">
+        {profile.instructions.map((rule) => {
+          const isViolated = violatedIds.includes(rule.id);
+          return (
+            <div
+              key={rule.id}
+              className={`flex items-start gap-2 text-[11px] px-2.5 py-1.5 rounded-sm border ${
+                isViolated
+                  ? "bg-critical-bg border-border-dim"
+                  : "bg-surface border-border-dim"
+              }`}
+            >
+              <span className={`font-mono font-medium shrink-0 ${
+                isViolated ? "text-critical" : "text-tertiary"
+              }`}>
+                {rule.id}
+              </span>
+              <span className={isViolated ? "text-critical" : "text-secondary"}>
+                {rule.text}
+              </span>
+              <span className="font-mono text-[9px] text-disabled ml-auto shrink-0">
+                {rule.category}
+              </span>
+              {isViolated && (
+                <span className="badge badge--critical text-[8px] py-0 px-1 shrink-0">VIOLATED</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

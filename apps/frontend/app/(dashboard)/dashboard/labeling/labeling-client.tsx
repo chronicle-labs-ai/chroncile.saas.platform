@@ -2,13 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { TraceSummary, TraceStats, TraceStatus, ExportFormat } from "@/lib/labeling/types";
+import type { TraceSummary, TraceStats, ExportFormat } from "@/lib/labeling/types";
+import { getAllAgentProfiles } from "@/lib/labeling/agents";
 import { StatsBar } from "@/components/labeling/StatsBar";
 import { TraceRow } from "@/components/labeling/TraceRow";
 
 interface LabelingClientProps {
   tenantId: string;
 }
+
+const agentProfiles = getAllAgentProfiles();
 
 export function LabelingClient({ tenantId }: LabelingClientProps) {
   const router = useRouter();
@@ -17,9 +20,9 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
-  // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [agentFilter, setAgentFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("confidence");
   const [exportOpen, setExportOpen] = useState(false);
@@ -30,6 +33,7 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (sourceFilter !== "all") params.set("source", sourceFilter);
+      if (agentFilter !== "all") params.set("agentId", agentFilter);
       if (search) params.set("search", search);
       params.set("sortBy", sortBy);
       params.set("limit", "50");
@@ -45,7 +49,7 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, sourceFilter, search, sortBy]);
+  }, [statusFilter, sourceFilter, agentFilter, search, sortBy]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -82,7 +86,6 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
     }
   };
 
-  // Collect unique sources from traces
   const allSources = [...new Set(traces.flatMap((t) => t.sources))].sort();
 
   return (
@@ -94,7 +97,6 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
           <h1 className="text-xl font-semibold text-primary">Audit Queue</h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Export dropdown */}
           <div className="relative">
             <button
               className="btn btn--secondary"
@@ -145,7 +147,6 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
       {/* Filters */}
       <div className="panel">
         <div className="flex items-center gap-3 p-3 flex-wrap">
-          {/* Status */}
           <select
             className="input text-sm w-auto min-w-[140px]"
             value={statusFilter}
@@ -159,7 +160,17 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
             <option value="skipped">Skipped</option>
           </select>
 
-          {/* Source */}
+          <select
+            className="input text-sm w-auto min-w-[140px]"
+            value={agentFilter}
+            onChange={(e) => setAgentFilter(e.target.value)}
+          >
+            <option value="all">All Agents</option>
+            {agentProfiles.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+
           <select
             className="input text-sm w-auto min-w-[140px]"
             value={sourceFilter}
@@ -171,18 +182,17 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
             ))}
           </select>
 
-          {/* Sort */}
           <select
             className="input text-sm w-auto min-w-[160px]"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
             <option value="confidence">Sort: Confidence ↑</option>
+            <option value="ood">Sort: OOD Score ↑</option>
             <option value="date">Sort: Date</option>
             <option value="events">Sort: Event Count</option>
           </select>
 
-          {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tertiary"
@@ -202,7 +212,6 @@ export function LabelingClient({ tenantId }: LabelingClientProps) {
             />
           </div>
 
-          {/* Result count */}
           <span className="font-mono text-[10px] text-tertiary tabular-nums shrink-0">
             {total} traces
           </span>

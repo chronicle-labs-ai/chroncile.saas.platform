@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------ */
 /*  Labeling system types                                              */
-/*  Agent action audit for LLM training — per-action annotations,     */
-/*  trace-level audit summaries, and export formats                    */
+/*  Chronicle OOD + Context Integrity Detection — per-action           */
+/*  annotations, detection layer results, and export formats           */
 /* ------------------------------------------------------------------ */
 
 /** A single event within a trace (matches EventEnvelope shape) */
@@ -15,26 +15,111 @@ export interface TraceEvent {
     actor_id: string;
     name?: string;
   };
-  message?: string; // Human-readable summary / body
+  message?: string;
   payload?: Record<string, unknown>;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Agent profile types                                                */
+/* ------------------------------------------------------------------ */
+
+export interface InstructionRule {
+  id: string;        // e.g., "R1", "R2"
+  text: string;
+  category: string;  // "verification", "policy", "communication", etc.
+}
+
+export interface RequiredContextField {
+  field: string;
+  description: string;
+  source: string;    // where this data should come from
+}
+
+export interface AgentProfile {
+  id: string;
+  name: string;
+  workflow_type: string;
+  description: string;
+  instructions: InstructionRule[];
+  required_context_fields: RequiredContextField[];
+  tools_available: string[];
+}
+
+/* ------------------------------------------------------------------ */
+/*  Agent context snapshot                                             */
+/* ------------------------------------------------------------------ */
+
+export interface StaleField {
+  field: string;
+  value_in_context: unknown;
+  correct_value: unknown;
+  source: string;
+}
+
+export interface AgentContextSnapshot {
+  fields: Record<string, unknown>;
+  missing_fields: string[];
+  stale_fields: StaleField[];
+}
+
+/* ------------------------------------------------------------------ */
+/*  OOD scoring                                                        */
+/* ------------------------------------------------------------------ */
+
+export interface OODScoreBreakdown {
+  transition_deviation: number;       // 0-1
+  tool_frequency_deviation: number;   // 0-1
+  temporal_deviation: number;         // 0-1
+  embedding_distance: number;         // 0-1
+  composite_score: number;            // weighted sum
+  flagged: boolean;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Context integrity violations                                       */
+/* ------------------------------------------------------------------ */
+
+export type ContextViolationType =
+  | "missing_field"
+  | "stale_value"
+  | "data_mismatch"
+  | "event_context_inconsistency";
+
+export interface ContextIntegrityViolation {
+  type: ContextViolationType;
+  field: string;
+  description: string;
+  expected?: unknown;
+  actual?: unknown;
+  severity: "critical" | "warning";
+}
+
+/* ------------------------------------------------------------------ */
+/*  Instruction violations                                             */
+/* ------------------------------------------------------------------ */
+
+export interface InstructionViolation {
+  instruction_id: string;          // e.g., "R3"
+  instruction_text: string;
+  violation_description: string;
+  context_evidence?: string;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Action annotation types (per-event audit)                          */
 /* ------------------------------------------------------------------ */
 
-/** Possible verdicts for an agent/system action */
 export type ActionVerdict = "correct" | "partial" | "incorrect" | "unnecessary";
 
-/** Per-action annotation (attached to agent/system events) */
 export interface ActionAnnotation {
-  event_id: string; // which event this annotates
+  event_id: string;
   verdict: ActionVerdict;
-  should_have_done?: string; // free text: what the ideal action was
-  reasoning?: string; // why this verdict
+  should_have_done?: string;
+  reasoning?: string;
+  instruction_violations?: InstructionViolation[];
+  context_violations?: ContextIntegrityViolation[];
 }
 
-/** Verdict options for UI dropdowns */
 export const ACTION_VERDICTS = [
   { value: "correct", label: "Correct", color: "nominal" },
   { value: "partial", label: "Partially Correct", color: "caution" },
@@ -47,21 +132,28 @@ export const ACTION_VERDICTS = [
 /* ------------------------------------------------------------------ */
 
 export interface AutoActionAudit {
-  action_annotations: ActionAnnotation[]; // one per agent/system event
-  overall_score: number; // 1-5
-  critical_errors: string[]; // list of significant mistakes
-  correction_summary: string; // what should have been done differently
-  summary: string; // brief trace description
-  confidence: number; // 0.0-1.0
+  action_annotations: ActionAnnotation[];
+  overall_score: number;          // 1-5
+  critical_errors: string[];
+  correction_summary: string;
+  summary: string;
+  confidence: number;             // 0.0-1.0
+
+  ood_score: OODScoreBreakdown;
+  context_integrity: {
+    violations: ContextIntegrityViolation[];
+    passed: boolean;
+  };
+  instruction_violations_summary: InstructionViolation[];
 }
 
 /* ------------------------------------------------------------------ */
-/*  Human action audit (replaces humanLabels)                          */
+/*  Human action audit                                                 */
 /* ------------------------------------------------------------------ */
 
 export interface HumanActionAudit {
   action_annotations: ActionAnnotation[];
-  overall_score: number; // 1-5
+  overall_score: number;
   critical_errors: string[];
   correction_summary: string;
   notes: string;
@@ -71,7 +163,6 @@ export interface HumanActionAudit {
 /*  Trace                                                              */
 /* ------------------------------------------------------------------ */
 
-/** Trace statuses */
 export type TraceStatus =
   | "pending"
   | "auto_labeled"
@@ -79,19 +170,20 @@ export type TraceStatus =
   | "labeled"
   | "skipped";
 
-/** Full trace record */
 export interface Trace {
   id: string;
   tenantId: string;
   conversationId: string;
+  agentId: string;
+  agentContext: AgentContextSnapshot;
   status: TraceStatus;
   events: TraceEvent[];
   eventCount: number;
-  sources: string[]; // unique sources in this trace
+  sources: string[];
   firstEventAt: string;
   lastEventAt: string;
   autoAudit: AutoActionAudit | null;
-  confidence: number | null; // 0.0 - 1.0 overall
+  confidence: number | null;
   humanAudit: HumanActionAudit | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
@@ -99,7 +191,6 @@ export interface Trace {
   updatedAt: string;
 }
 
-/** Summary returned by the queue list (no events payload) */
 export type TraceSummary = Omit<Trace, "events">;
 
 /* ------------------------------------------------------------------ */
@@ -109,10 +200,11 @@ export type TraceSummary = Omit<Trace, "events">;
 export interface TraceFilters {
   status?: TraceStatus;
   source?: string;
+  agentId?: string;
   minConfidence?: number;
   maxConfidence?: number;
   search?: string;
-  sortBy?: "confidence" | "date" | "events";
+  sortBy?: "confidence" | "date" | "events" | "ood";
   sortDir?: "asc" | "desc";
   limit?: number;
   offset?: number;

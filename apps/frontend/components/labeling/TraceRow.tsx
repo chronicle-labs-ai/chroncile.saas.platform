@@ -1,6 +1,7 @@
 "use client";
 
 import type { TraceSummary } from "@/lib/labeling/types";
+import { getAgentProfile } from "@/lib/labeling/agents";
 import { ConfidenceBar } from "./ConfidenceBar";
 
 interface TraceRowProps {
@@ -36,14 +37,16 @@ function formatDuration(start: string, end: string): string {
 export function TraceRow({ trace, onClick }: TraceRowProps) {
   const duration = formatDuration(trace.firstEventAt, trace.lastEventAt);
   const summary = trace.autoAudit?.summary ?? "";
+  const agentProfile = getAgentProfile(trace.agentId);
 
-  // Action audit stats
   const annotations = trace.autoAudit?.action_annotations ?? [];
   const totalActions = annotations.length;
-  const correctActions = annotations.filter(
-    (a) => a.verdict === "correct"
-  ).length;
+  const correctActions = annotations.filter((a) => a.verdict === "correct").length;
   const errorCount = trace.autoAudit?.critical_errors?.length ?? 0;
+
+  const ood = trace.autoAudit?.ood_score;
+  const ctxViolations = trace.autoAudit?.context_integrity?.violations ?? [];
+  const instrViolations = trace.autoAudit?.instruction_violations_summary ?? [];
 
   return (
     <button
@@ -51,15 +54,20 @@ export function TraceRow({ trace, onClick }: TraceRowProps) {
       className="w-full text-left px-4 py-3.5 border-b border-border-dim
         hover:bg-hover transition-colors duration-fast group"
     >
-      {/* Row 1: status, conversation ID, action audit badge, confidence */}
+      {/* Row 1: status, agent name, conversation ID, badges, confidence */}
       <div className="flex items-center gap-3 mb-1.5">
         <div className={`status-dot ${STATUS_DOT[trace.status]}`} />
+
+        {agentProfile && (
+          <span className="font-mono text-[10px] text-nominal bg-nominal-bg px-1.5 py-0.5 border border-border-dim shrink-0">
+            {agentProfile.name}
+          </span>
+        )}
 
         <span className="font-mono text-xs text-secondary truncate max-w-[160px]">
           {trace.conversationId}
         </span>
 
-        {/* Action correctness count */}
         {totalActions > 0 && (
           <span
             className={`badge text-[9px] py-0.5 px-1.5 ${
@@ -74,7 +82,6 @@ export function TraceRow({ trace, onClick }: TraceRowProps) {
           </span>
         )}
 
-        {/* Critical error count */}
         {errorCount > 0 && (
           <span className="badge badge--critical text-[9px] py-0.5 px-1.5">
             {errorCount} {errorCount === 1 ? "error" : "errors"}
@@ -90,8 +97,25 @@ export function TraceRow({ trace, onClick }: TraceRowProps) {
         </div>
       </div>
 
-      {/* Row 2: sources, event count, duration */}
+      {/* Row 2: detection flags, sources, event count, duration */}
       <div className="flex items-center gap-3 ml-[18px]">
+        {/* Detection type flags */}
+        {ood?.flagged && (
+          <span className="font-mono text-[9px] text-caution bg-caution-bg px-1.5 py-0.5 border border-border-dim">
+            OOD
+          </span>
+        )}
+        {ctxViolations.length > 0 && (
+          <span className="font-mono text-[9px] text-critical bg-critical-bg px-1.5 py-0.5 border border-border-dim">
+            CTX
+          </span>
+        )}
+        {instrViolations.length > 0 && (
+          <span className="font-mono text-[9px] text-critical bg-critical-bg px-1.5 py-0.5 border border-border-dim">
+            SOP
+          </span>
+        )}
+
         <div className="flex items-center gap-1.5">
           {trace.sources.map((s) => (
             <span
