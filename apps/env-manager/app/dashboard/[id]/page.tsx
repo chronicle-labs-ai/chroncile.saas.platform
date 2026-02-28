@@ -46,6 +46,7 @@ interface Stats {
   events: number | null;
   runs: number | null;
   connections: number | null;
+  _note?: string | null;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -599,13 +600,18 @@ export default function EnvironmentDetailPage({
 
       {/* Stats metrics */}
       <div>
-        <span className="label block mb-3">Platform Metrics</span>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="label">Platform Metrics</span>
+          {stats?._note && (
+            <span className="font-mono text-[10px] text-caution">{stats._note}</span>
+          )}
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <StatCard label="Runs" value={stats?.runs ?? null} />
+          <StatCard label="Connections" value={stats?.connections ?? null} />
           <StatCard label="Tenants" value={stats?.tenants ?? null} />
           <StatCard label="Users" value={stats?.users ?? null} />
           <StatCard label="Events" value={stats?.events ?? null} />
-          <StatCard label="Runs" value={stats?.runs ?? null} />
-          <StatCard label="Connections" value={stats?.connections ?? null} />
         </div>
       </div>
 

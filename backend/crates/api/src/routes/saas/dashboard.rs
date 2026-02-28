@@ -1,9 +1,9 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, http::HeaderMap, Json};
 
 use chronicle_auth::types::AuthUser;
 use chronicle_domain::{DashboardActivityResponse, DashboardStatsResponse};
 
-use super::error::ApiResult;
+use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
 
 pub async fn stats(
@@ -24,6 +24,33 @@ pub async fn stats(
         total_connections: connections.len(),
         active_connections: connections.iter().filter(|c| c.status == "active").count(),
     }))
+}
+
+/// Aggregate stats for the env-manager admin dashboard.
+/// Authenticated via X-Service-Secret header (server-to-server only).
+/// Returns what's available without per-tenant scope.
+pub async fn admin_stats(
+    headers: HeaderMap,
+    _state: State<SaasAppState>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let expected = std::env::var("SERVICE_SECRET").unwrap_or_default();
+    let provided = headers
+        .get("x-service-secret")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if expected.is_empty() || provided != expected {
+        return Err(ApiError::unauthorized());
+    }
+
+    Ok(Json(serde_json::json!({
+        "tenants": null,
+        "users": null,
+        "events": null,
+        "runs": null,
+        "connections": null,
+        "_note": "Global aggregate stats not yet implemented — per-tenant stats require user auth"
+    })))
 }
 
 pub async fn activity(
