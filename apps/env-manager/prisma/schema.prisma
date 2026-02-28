@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EnvironmentType {
+  PRODUCTION
+  STAGING
+  DEVELOPMENT
+  EPHEMERAL
+}
+
+enum EnvironmentStatus {
+  RUNNING
+  STOPPED
+  PROVISIONING
+  DESTROYING
+  ERROR
+}
+
+model Environment {
+  id                 String            @id @default(cuid())
+  name               String            @unique
+  type               EnvironmentType
+  status             EnvironmentStatus @default(PROVISIONING)
+  gitBranch          String?
+  gitSha             String?
+  gitTag             String?
+  flyAppName         String?
+  flyAppUrl          String?
+  flyDbName          String?
+  vercelUrl          String?
+  vercelDeploymentId String?
+  vercelEnvVarId     String?
+  isHealthy          Boolean           @default(false)
+  lastHealthAt       DateTime?
+  provisionLog       String?
+  errorLog           String?
+  expiresAt          DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  healthChecks       HealthCheck[]
+
+  @@index([type])
+  @@index([status])
+}
+
+model HealthCheck {
+  id             String      @id @default(cuid())
+  environmentId  String
+  environment    Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  backendStatus  Int?
+  frontendStatus Int?
+  backendMs      Int?
+  frontendMs     Int?
+  gitSha         String?
+  checkedAt      DateTime    @default(now())
+
+  @@index([environmentId, checkedAt])
+}

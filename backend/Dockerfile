@@ -20,10 +20,18 @@ COPY --from=builder /app/target/release/chronicle-backend /usr/local/bin/chronic
 COPY --from=builder /app/migrations /app/migrations
 
 WORKDIR /app
+
+ARG GIT_SHA=""
+ARG GIT_TAG=""
+ARG ENVIRONMENT="production"
+
 ENV API_HOST=0.0.0.0
 ENV API_PORT=8080
 ENV RUST_LOG=info,tower_http=debug
 ENV BACKEND_MODE=real
+ENV GIT_SHA=${GIT_SHA}
+ENV GIT_TAG=${GIT_TAG}
+ENV ENVIRONMENT=${ENVIRONMENT}
 
 EXPOSE 8080
 CMD ["chronicle-backend"]
