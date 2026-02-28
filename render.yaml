@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: chronicle-backend
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: API_PORT
+        value: "8080"
+      - key: BACKEND_MODE
+        value: "real"
+      - key: RUST_LOG
+        value: "info,tower_http=info"
+      - key: PIPEDREAM_ENVIRONMENT
+        value: "production"
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+      - key: SERVICE_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: PIPEDREAM_CLIENT_ID
+        sync: false
+      - key: PIPEDREAM_CLIENT_SECRET
+        sync: false
+      - key: PIPEDREAM_PROJECT_ID
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
