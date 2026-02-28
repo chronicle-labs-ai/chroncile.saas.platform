@@ -1,5 +1,4 @@
-import type { NextAuthConfig, User } from "next-auth";
-import type { Account, Profile } from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
@@ -52,7 +51,7 @@ export const authConfig: NextAuthConfig = {
     newUser: "/signup",
   },
   callbacks: {
-    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         try {
           const res = await fetch(
