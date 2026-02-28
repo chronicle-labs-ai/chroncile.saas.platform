@@ -1,4 +1,4 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, User } from "next-auth";
 import type { Account, Profile } from "next-auth";
 
 const BACKEND_URL =
@@ -52,7 +52,7 @@ export const authConfig: NextAuthConfig = {
     newUser: "/signup",
   },
   callbacks: {
-    async signIn({ user, account, profile }: { user: any; account: Account | null; profile?: Profile }) {
+    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
       if (account?.provider === "google") {
         try {
           const res = await fetch(
