@@ -24,7 +24,8 @@ pub struct User {
     pub email: String,
     pub name: Option<String>,
     #[serde(skip_serializing)]
-    pub password: String,
+    pub password: Option<String>,
+    pub auth_provider: String,
     pub tenant_id: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -173,7 +174,8 @@ pub struct CreateTenantInput {
 pub struct CreateUserInput {
     pub email: String,
     pub name: Option<String>,
-    pub password_hash: String,
+    pub password_hash: Option<String>,
+    pub auth_provider: String,
     pub tenant_id: String,
 }
 
@@ -244,7 +246,8 @@ mod tests {
             id: "u1".to_string(),
             email: "test@example.com".to_string(),
             name: Some("Test".to_string()),
-            password: "hashed_secret".to_string(),
+            password: Some("hashed_secret".to_string()),
+            auth_provider: "credentials".to_string(),
             tenant_id: "t1".to_string(),
             created_at: Utc::now(),
             updated_at: Utc::now(),

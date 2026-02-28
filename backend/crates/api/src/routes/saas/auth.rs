@@ -55,7 +55,8 @@ pub async fn signup(
     let user = state.users.create(CreateUserInput {
         email: input.email,
         name: Some(input.name),
-        password_hash,
+        password_hash: Some(password_hash),
+        auth_provider: "credentials".to_string(),
         tenant_id: tenant.id.clone(),
     }).await?;
 
@@ -96,7 +97,17 @@ pub async fn login(
     let user = state.users.find_by_email(&input.email).await?
         .ok_or_else(ApiError::unauthorized)?;
 
-    let valid = verify_password(&input.password, &user.password)?;
+    if user.auth_provider != "credentials" {
+        return Err(ApiError::bad_request(format!(
+            "This account uses {} sign-in. Please use that provider instead.",
+            user.auth_provider
+        )));
+    }
+
+    let password_hash = user.password.as_deref()
+        .ok_or_else(ApiError::unauthorized)?;
+
+    let valid = verify_password(&input.password, password_hash)?;
     if !valid {
         return Err(ApiError::unauthorized());
     }
@@ -159,4 +170,96 @@ pub async fn exchange_token(
 
     let token = state.jwt.issue(&auth_user)?;
     Ok(Json(serde_json::json!({ "token": token })))
+}
+
+#[derive(serde::Deserialize)]
+pub struct OAuthSignupInput {
+    pub email: String,
+    pub name: Option<String>,
+    #[serde(rename = "orgName")]
+    pub org_name: Option<String>,
+    pub provider: String,
+    pub service_secret: String,
+}
+
+pub async fn oauth_signup(
+    State(state): State<SaasAppState>,
+    Json(input): Json<OAuthSignupInput>,
+) -> ApiResult<Json<AuthResponse>> {
+    let expected_secret = std::env::var("SERVICE_SECRET").unwrap_or_default();
+    if expected_secret.is_empty() || input.service_secret != expected_secret {
+        return Err(ApiError::unauthorized());
+    }
+
+    if input.email.trim().is_empty() || !input.email.contains('@') {
+        return Err(ApiError::bad_request("A valid email address is required"));
+    }
+
+    if let Some(existing_user) = state.users.find_by_email(&input.email).await? {
+        let tenant = state.tenants.find_by_id(&existing_user.tenant_id).await?
+            .ok_or_else(ApiError::internal)?;
+
+        let auth_user = AuthUser {
+            id: existing_user.id.clone(),
+            email: existing_user.email.clone(),
+            name: existing_user.name.clone(),
+            tenant_id: tenant.id.clone(),
+            tenant_name: tenant.name.clone(),
+            tenant_slug: tenant.slug.clone(),
+        };
+
+        let token = state.jwt.issue(&auth_user)?;
+
+        return Ok(Json(AuthResponse {
+            token,
+            user: AuthUserResponse {
+                id: existing_user.id,
+                email: existing_user.email,
+                name: existing_user.name,
+                tenant_id: tenant.id,
+                tenant_name: tenant.name,
+                tenant_slug: tenant.slug,
+            },
+        }));
+    }
+
+    let display_name = input.name.clone().unwrap_or_else(|| input.email.clone());
+    let org_name = input.org_name.unwrap_or_else(|| format!("{}'s Organization", display_name));
+    let slug = org_name.to_lowercase().replace(' ', "-");
+
+    let tenant = state.tenants.create(CreateTenantInput {
+        name: org_name,
+        slug,
+    }).await?;
+
+    let user = state.users.create(CreateUserInput {
+        email: input.email,
+        name: input.name,
+        password_hash: None,
+        auth_provider: input.provider,
+        tenant_id: tenant.id.clone(),
+    }).await?;
+
+    let auth_user = AuthUser {
+        id: user.id.clone(),
+        email: user.email.clone(),
+        name: user.name.clone(),
+        tenant_id: tenant.id.clone(),
+        tenant_name: tenant.name.clone(),
+        tenant_slug: tenant.slug.clone(),
+    };
+
+    let token = state.jwt.issue(&auth_user)?;
+
+    Ok(Json(AuthResponse {
+        token,
+        user: AuthUserResponse {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            tenant_id: tenant.id,
+            tenant_name: tenant.name,
+            tenant_slug: tenant.slug,
+        },
+    }))
 }

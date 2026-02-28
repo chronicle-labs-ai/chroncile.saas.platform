@@ -53,6 +53,7 @@ fn user_from_row(row: sqlx::postgres::PgRow) -> Result<User, sqlx::Error> {
         email: row.try_get("email")?,
         name: row.try_get("name")?,
         password: row.try_get("password")?,
+        auth_provider: row.try_get::<String, _>("authProvider").unwrap_or_else(|_| "credentials".to_string()),
         tenant_id: row.try_get("tenantId")?,
         created_at: naive_to_utc(created),
         updated_at: naive_to_utc(updated),
@@ -193,8 +194,8 @@ impl UserRepository for PgUserRepo {
     async fn create(&self, input: CreateUserInput) -> RepoResult<User> {
         let id = new_id();
         let now = Utc::now().naive_utc();
-        sqlx::query("INSERT INTO \"User\" (id, email, name, password, \"tenantId\", \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *")
-            .bind(&id).bind(&input.email).bind(&input.name).bind(&input.password_hash).bind(&input.tenant_id).bind(now).bind(now)
+        sqlx::query("INSERT INTO \"User\" (id, email, name, password, \"authProvider\", \"tenantId\", \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *")
+            .bind(&id).bind(&input.email).bind(&input.name).bind(&input.password_hash).bind(&input.auth_provider).bind(&input.tenant_id).bind(now).bind(now)
             .try_map(user_from_row)
             .fetch_one(&self.pool).await.map_err(to_repo_err)
     }

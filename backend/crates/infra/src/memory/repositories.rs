@@ -96,6 +96,7 @@ impl UserRepository for InMemoryUserRepo {
             email: input.email,
             name: input.name,
             password: input.password_hash,
+            auth_provider: input.auth_provider,
             tenant_id: input.tenant_id,
             created_at: now,
             updated_at: now,
@@ -443,7 +444,8 @@ mod tests {
         let user = repo.create(CreateUserInput {
             email: "test@example.com".to_string(),
             name: Some("Test".to_string()),
-            password_hash: "hashed".to_string(),
+            password_hash: Some("hashed".to_string()),
+            auth_provider: "credentials".to_string(),
             tenant_id: "t1".to_string(),
         }).await.unwrap();
 
@@ -460,14 +462,16 @@ mod tests {
         repo.create(CreateUserInput {
             email: "dupe@example.com".to_string(),
             name: None,
-            password_hash: "h1".to_string(),
+            password_hash: Some("h1".to_string()),
+            auth_provider: "credentials".to_string(),
             tenant_id: "t1".to_string(),
         }).await.unwrap();
 
         let result = repo.create(CreateUserInput {
             email: "dupe@example.com".to_string(),
             name: None,
-            password_hash: "h2".to_string(),
+            password_hash: Some("h2".to_string()),
+            auth_provider: "credentials".to_string(),
             tenant_id: "t2".to_string(),
         }).await;
 

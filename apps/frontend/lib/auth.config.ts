@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import type { Account, Profile } from "next-auth";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
@@ -51,6 +52,39 @@ export const authConfig: NextAuthConfig = {
     newUser: "/signup",
   },
   callbacks: {
+    async signIn({ user, account, profile }: { user: any; account: Account | null; profile?: Profile }) {
+      if (account?.provider === "google") {
+        try {
+          const res = await fetch(
+            `${BACKEND_URL}/api/platform/auth/oauth-signup`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: profile?.email ?? user.email,
+                name: profile?.name ?? user.name,
+                orgName: null,
+                provider: "google",
+                service_secret: SERVICE_SECRET,
+              }),
+            },
+          );
+          if (!res.ok) return false;
+
+          const data = await res.json();
+          const backendUser = data.user;
+
+          user.id = backendUser.id;
+          user.tenantId = backendUser.tenantId;
+          user.tenantName = backendUser.tenantName;
+          user.tenantSlug = backendUser.tenantSlug;
+          user.backendToken = data.token;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user && user.id) {
         token.id = user.id;

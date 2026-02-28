@@ -24,6 +24,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route("/api/platform/auth/signup", post(auth::signup))
         .route("/api/platform/auth/login", post(auth::login))
         .route("/api/platform/auth/token-exchange", post(auth::exchange_token))
+        .route("/api/platform/auth/oauth-signup", post(auth::oauth_signup))
         .route("/api/webhooks/pipedream/:tenantId", post(webhooks::pipedream_webhook))
         .route("/api/webhooks/stripe", post(webhooks::stripe_webhook))
         .with_state(state.clone());
