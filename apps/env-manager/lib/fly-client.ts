@@ -234,6 +234,67 @@ export async function deletePostgresCluster(name: string): Promise<void> {
   await deleteApp(name);
 }
 
+export async function forkPostgresCluster(
+  sourceName: string,
+  destName: string,
+  region = "ams"
+): Promise<{ appName: string; connectionString: string }> {
+  const { execFile } = await import("child_process");
+  const { promisify } = await import("util");
+  const exec = promisify(execFile);
+
+  try {
+    const { stdout, stderr } = await exec("flyctl", [
+      "postgres", "fork",
+      "--from", sourceName,
+      "--name", destName,
+      "--org", orgSlug(),
+      "--region", region,
+    ], {
+      env: { ...process.env },
+      timeout: 180_000,
+    });
+
+    const output = stdout + stderr;
+    const passwordMatch = output.match(/Password:\s*(\S+)/);
+    const password = passwordMatch?.[1] ?? "postgres";
+    const connStr = `postgresql://postgres:${password}@${destName}.internal:5432/postgres?sslmode=disable`;
+    return { appName: destName, connectionString: connStr };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`flyctl postgres fork failed: ${message}`);
+  }
+}
+
+export async function runSeedSql(
+  dbAppName: string,
+  seedSqlUrl: string
+): Promise<void> {
+  const { execFile } = await import("child_process");
+  const { promisify } = await import("util");
+  const exec = promisify(execFile);
+
+  // Download the seed SQL
+  const res = await fetch(seedSqlUrl, { signal: AbortSignal.timeout(30_000) });
+  if (!res.ok) throw new Error(`Failed to download seed SQL from ${seedSqlUrl}: ${res.status}`);
+  const sql = await res.text();
+
+  // Execute via flyctl postgres connect
+  try {
+    await exec("flyctl", [
+      "postgres", "connect",
+      "-a", dbAppName,
+      "-c", sql,
+    ], {
+      env: { ...process.env },
+      timeout: 60_000,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Seed SQL execution failed: ${message}`);
+  }
+}
+
 export async function waitForHealthy(
   appUrl: string,
   timeoutMs = 120_000,

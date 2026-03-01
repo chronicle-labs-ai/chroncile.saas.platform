@@ -39,6 +39,7 @@ model Environment {
   isHealthy          Boolean           @default(false)
   lastHealthAt       DateTime?
   serviceSecret      String?
+  dbTemplateId       String?
   provisionLog       String?
   errorLog           String?
   expiresAt          DateTime?
@@ -62,4 +63,23 @@ model HealthCheck {
   checkedAt      DateTime    @default(now())
 
   @@index([environmentId, checkedAt])
+}
+
+enum DbTemplateMode {
+  FLY_DB       // Fork from a named Fly Postgres app
+  ENVIRONMENT  // Fork from an existing environment's DB
+  SEED_ONLY    // Fresh empty DB + run seed SQL
+}
+
+model DbTemplate {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?
+  mode        DbTemplateMode
+  flyDbName   String?        // Fly Postgres app to fork from (FLY_DB mode)
+  sourceEnvId String?        // Environment ID to fork from (ENVIRONMENT mode)
+  seedSqlUrl  String?        // URL to a .sql file run after fork/create
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  lastUsedAt  DateTime?
 }

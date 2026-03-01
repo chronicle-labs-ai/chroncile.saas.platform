@@ -32,10 +32,11 @@ export function buildEnvName(branch: string, suffix: string): string {
 }
 
 export interface ProvisionOptions {
-  name: string;   // unique env name including suffix, e.g. "test-ep-a3f2"
+  name: string;
   branch: string;
   ttlHours: number;
   secrets: Record<string, string>;
+  dbTemplateId?: string | null;
 }
 
 export async function provisionEphemeral(
@@ -137,14 +138,40 @@ export async function provisionEphemeral(
     await failWith(new Error(`GitHub branch lookup failed: ${err instanceof Error ? err.message : String(err)}`));
   }
 
-  // 1. Postgres cluster
+  // 1. Postgres cluster — fork from template or create fresh
   let pgConnStr = "";
+  let dbTemplate: { id: string; name: string; flyDbName: string | null; sourceEnvId: string | null; seedSqlUrl: string | null; mode: string } | null = null;
+
+  if (opts.dbTemplateId) {
+    dbTemplate = await prisma.dbTemplate.findUnique({ where: { id: opts.dbTemplateId } });
+    if (dbTemplate) {
+      await prisma.environment.update({ where: { id: env.id }, data: { dbTemplateId: dbTemplate.id } });
+    }
+  }
+
   try {
     const existing = await fly.getApp(flyDbName);
     if (existing) {
       await log(`Postgres cluster already exists: ${flyDbName} — reusing`);
-      created.flyDb = true; // was previously created; register for rollback
+      created.flyDb = true;
+    } else if (dbTemplate && (dbTemplate.mode === "FLY_DB" || dbTemplate.mode === "ENVIRONMENT")) {
+      // Fork from template
+      let sourceDbName = dbTemplate.flyDbName;
+      if (dbTemplate.mode === "ENVIRONMENT" && dbTemplate.sourceEnvId) {
+        const srcEnv = await prisma.environment.findUnique({ where: { id: dbTemplate.sourceEnvId } });
+        sourceDbName = srcEnv?.flyDbName ?? null;
+      }
+      if (!sourceDbName) {
+        await failWith(new Error(`Template "${dbTemplate.name}" has no source DB to fork from`));
+      }
+      await log(`Forking Postgres from ${sourceDbName} → ${flyDbName} (template: ${dbTemplate.name})...`);
+      const pgResult = await fly.forkPostgresCluster(sourceDbName!, flyDbName, FLY_REGION);
+      pgConnStr = pgResult.connectionString;
+      created.flyDb = true;
+      await log(`Postgres forked from ${sourceDbName}`);
+      await prisma.dbTemplate.update({ where: { id: dbTemplate.id }, data: { lastUsedAt: new Date() } });
     } else {
+      // Fresh empty DB
       await log(`Creating Fly Postgres cluster: ${flyDbName}...`);
       const pgResult = await fly.createPostgresCluster(flyDbName, FLY_REGION);
       pgConnStr = pgResult.connectionString;
@@ -152,7 +179,8 @@ export async function provisionEphemeral(
       await log(`Postgres cluster created: ${flyDbName}`);
     }
   } catch (err) {
-    await failWith(new Error(`Postgres cluster creation failed: ${err instanceof Error ? err.message : String(err)}`));
+    if ((err as Error).message.includes("ROLLBACK")) throw err;
+    await failWith(new Error(`Postgres setup failed: ${err instanceof Error ? err.message : String(err)}`));
   }
 
   // 2. Fly app
@@ -191,6 +219,17 @@ export async function provisionEphemeral(
     } catch (err) {
       if ((err as Error).message.includes("DATABASE_URL")) throw err; // already failWith'd
       await failWith(new Error(`Postgres attach failed: ${err instanceof Error ? err.message : String(err)}`));
+    }
+  }
+
+  // 3.5. Run seed SQL if template has one
+  if (dbTemplate?.seedSqlUrl) {
+    try {
+      await log(`Running seed SQL from ${dbTemplate.seedSqlUrl}...`);
+      await fly.runSeedSql(flyDbName, dbTemplate.seedSqlUrl);
+      await log("Seed SQL executed successfully");
+    } catch (err) {
+      await log(`Seed SQL failed: ${err instanceof Error ? err.message : String(err)} — continuing without seed`, "warn");
     }
   }
 

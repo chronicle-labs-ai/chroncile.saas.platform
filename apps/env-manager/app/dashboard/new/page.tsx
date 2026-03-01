@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import useSWR from "swr";
 import { BranchPicker } from "@/components/ui/branch-picker";
 
@@ -11,6 +12,13 @@ interface Branch {
   name: string;
   sha: string;
   isDefault: boolean;
+}
+
+interface DbTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  mode: "FLY_DB" | "ENVIRONMENT" | "SEED_ONLY";
 }
 
 const SECRET_FIELDS = [
@@ -31,13 +39,12 @@ const TTL_OPTIONS = [
 
 export default function NewEnvironmentPage() {
   const router = useRouter();
-  const { data: branches, isLoading: branchesLoading } = useSWR<Branch[]>(
-    "/api/branches",
-    fetcher
-  );
+  const { data: branches, isLoading: branchesLoading } = useSWR<Branch[]>("/api/branches", fetcher);
+  const { data: templates } = useSWR<DbTemplate[]>("/api/db-templates", fetcher);
 
   const [selectedBranch, setSelectedBranch] = useState("");
   const [ttlHours, setTtlHours] = useState(24);
+  const [dbTemplateId, setDbTemplateId] = useState<string | null>(null);
   const [secrets, setSecrets] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +70,7 @@ export default function NewEnvironmentPage() {
           branch: selectedBranch,
           ttlHours,
           secrets: nonEmptySecrets,
+          dbTemplateId: dbTemplateId || undefined,
         }),
       });
 
@@ -135,6 +143,78 @@ export default function NewEnvironmentPage() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Database */}
+        <div className="panel">
+          <div className="panel__header">
+            <span className="panel__title">Database</span>
+            <Link href="/dashboard/templates" className="text-[10px] text-data font-mono hover:underline">
+              Manage Templates
+            </Link>
+          </div>
+          <div className="panel__content space-y-3">
+            {/* Fresh DB option */}
+            <label
+              className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
+                !dbTemplateId ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"
+              }`}
+            >
+              <input
+                type="radio"
+                name="dbTemplate"
+                checked={!dbTemplateId}
+                onChange={() => setDbTemplateId(null)}
+                className="mt-0.5"
+              />
+              <div>
+                <span className={`text-sm font-medium ${!dbTemplateId ? "text-data" : "text-primary"}`}>
+                  Fresh empty database
+                </span>
+                <p className="text-[10px] text-tertiary mt-0.5">
+                  New Fly Postgres cluster with only migrations applied
+                </p>
+              </div>
+            </label>
+
+            {/* Template options */}
+            {(templates ?? []).map((t) => (
+              <label
+                key={t.id}
+                className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
+                  dbTemplateId === t.id ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="dbTemplate"
+                  checked={dbTemplateId === t.id}
+                  onChange={() => setDbTemplateId(t.id)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${dbTemplateId === t.id ? "text-data" : "text-primary"}`}>
+                      {t.name}
+                    </span>
+                    <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-elevated text-tertiary">
+                      {t.mode === "FLY_DB" ? "Fork" : t.mode === "ENVIRONMENT" ? "Env" : "Seed"}
+                    </span>
+                  </div>
+                  {t.description && (
+                    <p className="text-[10px] text-tertiary mt-0.5">{t.description}</p>
+                  )}
+                </div>
+              </label>
+            ))}
+
+            {(templates ?? []).length === 0 && (
+              <p className="text-xs text-tertiary pl-7">
+                No templates created yet.{" "}
+                <Link href="/dashboard/templates" className="text-data hover:underline">Create one</Link>
+              </p>
+            )}
           </div>
         </div>
 

@@ -7,6 +7,7 @@ const ProvisionSchema = z.object({
   branch: z.string().min(1),
   ttlHours: z.number().min(1).max(720).default(24),
   secrets: z.record(z.string()).default({}),
+  dbTemplateId: z.string().optional().nullable(),
 });
 
 export async function POST(request: Request) {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
     branch: parsed.data.branch,
     ttlHours: parsed.data.ttlHours,
     secrets: mergedSecrets,
+    dbTemplateId: parsed.data.dbTemplateId ?? null,
   }).catch((err) => {
     console.error(`Provision failed for ${envName}:`, err);
   });
