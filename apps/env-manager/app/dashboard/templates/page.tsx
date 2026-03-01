@@ -115,9 +115,32 @@ function CreateTemplateModal({ envs, onClose, onCreated }: {
 
             {mode === "FLY_DB" && (
               <div>
-                <label className="label block mb-1.5">Fly Postgres App Name</label>
-                <input type="text" required value={flyDbName} onChange={(e) => setFlyDbName(e.target.value)} className="input font-mono text-sm" placeholder="chronicle-db-prod" />
-                <p className="text-[10px] text-tertiary mt-1">The Fly app name of the Postgres cluster to fork from.</p>
+                <label className="label block mb-1.5">Fly Postgres App</label>
+                <select
+                  required
+                  value={flyDbName}
+                  onChange={(e) => setFlyDbName(e.target.value)}
+                  className="input font-mono text-sm"
+                >
+                  <option value="">Select a Postgres app...</option>
+                  {envs
+                    .filter((e) => e.flyDbName)
+                    .map((e) => (
+                      <option key={e.flyDbName} value={e.flyDbName!}>
+                        {e.flyDbName} — {e.name} ({e.type.toLowerCase()})
+                      </option>
+                    ))}
+                </select>
+                <p className="text-[10px] text-tertiary mt-1">
+                  Or enter a custom Fly Postgres app name:
+                </p>
+                <input
+                  type="text"
+                  value={flyDbName}
+                  onChange={(e) => setFlyDbName(e.target.value)}
+                  className="input font-mono text-xs mt-1"
+                  placeholder="custom-fly-postgres-app"
+                />
               </div>
             )}
 
