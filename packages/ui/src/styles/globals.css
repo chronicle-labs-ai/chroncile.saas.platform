@@ -1,7 +1,7 @@
 /* ============================================
    CHRONICLE LABS — Shared Design System
-   Import in each app's globals.css after the
-   @tailwind directives.
+   Import in each app's globals.css BEFORE the
+   @tailwind directives (CSS spec / Turbopack).
    ============================================ */
 
 /* ============================================

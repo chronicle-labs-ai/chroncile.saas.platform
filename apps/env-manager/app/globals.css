@@ -1,3 +1,6 @@
+/* Design system tokens, base styles and component classes */
+@import "ui/styles/globals.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
