@@ -203,7 +203,8 @@ export async function provisionEphemeral(
     await failWith(err);
   }
 
-  // 5. Create machine
+  // 5. Create machine — generate a unique SERVICE_SECRET for this env
+  const ephemeralServiceSecret = `ephemeral-${slug}-svc-${generateSuffix()}${generateSuffix()}`;
   try {
     await log(`Creating machine in ${FLY_REGION}...`);
     const machineEnv: Record<string, string> = {
@@ -211,6 +212,8 @@ export async function provisionEphemeral(
       ENVIRONMENT: "ephemeral",
       GIT_SHA: branchSha,
       DATABASE_URL: pgConnStr,
+      SERVICE_SECRET: ephemeralServiceSecret,
+      AUTH_SECRET: opts.secrets.AUTH_SECRET ?? `ephemeral-auth-${generateSuffix()}-change-in-prod`,
       ...opts.secrets,
     };
     await fly.createMachine(flyAppName, { region: FLY_REGION, image: BACKEND_IMAGE, env: machineEnv });
@@ -277,6 +280,7 @@ export async function provisionEphemeral(
       isHealthy: true,
       vercelUrl,
       vercelEnvVarId: created.vercelEnvVarId,
+      serviceSecret: ephemeralServiceSecret,
       errorLog: null,
       provisionLog: logLines.join("\n"),
       lastHealthAt: new Date(),
