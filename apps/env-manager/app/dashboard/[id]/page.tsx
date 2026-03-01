@@ -322,7 +322,7 @@ function TenantsPanel({ envId }: { envId: string }) {
   const [inviteTenant, setInviteTenant] = useState<Tenant | null>(null);
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, mutate } = useSWR<{ tenants: Tenant[]; total: number; error?: string }>(
+  const { data, isLoading, mutate } = useSWR<{ tenants: Tenant[]; total: number; error?: string; pendingDeploy?: boolean }>(
     `/api/admin/${envId}/tenants`,
     fetcher,
     { refreshInterval: 60_000 }
@@ -366,6 +366,18 @@ function TenantsPanel({ envId }: { envId: string }) {
                 <div className="h-3 bg-elevated rounded animate-pulse w-8" />
               </div>
             ))}
+          </div>
+        ) : data?.pendingDeploy ? (
+          <div className="panel__content">
+            <div className="flex items-start gap-3 p-3 bg-data-bg border border-data-dim rounded-sm">
+              <svg className="w-4 h-4 text-data shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-data leading-relaxed">Tenant management is available once the backend is redeployed with the latest code.</p>
+                <p className="text-[10px] text-data/70 mt-1">Push to the branch to trigger a redeploy, or redeploy manually in Fly.io.</p>
+              </div>
+            </div>
           </div>
         ) : data?.error ? (
           <div className="panel__content">

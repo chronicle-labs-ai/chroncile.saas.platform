@@ -15,6 +15,16 @@ export async function GET(
   try {
     const res = await backendFetch(env.flyAppUrl, "/api/platform/admin/tenants", undefined, env.serviceSecret);
     if (!res.ok) {
+      if (res.status === 404) {
+        // Admin endpoints were added in a recent backend deploy.
+        // Old backend images don't have them yet — not an error, just not available.
+        return NextResponse.json({
+          tenants: [],
+          total: 0,
+          pendingDeploy: true,
+          error: "Tenant management requires the latest backend version. Redeploy the backend to enable this feature.",
+        });
+      }
       const body = await res.json().catch(() => ({}));
       const msg = body?.error ?? `Backend returned ${res.status}`;
       return NextResponse.json({ tenants: [], total: 0, error: msg });
