@@ -1049,6 +1049,39 @@ function EnvDetailTabs({ env, envId, stats, isProvisioning }: {
       {/* Tab content */}
       {activeTab === "deployment" && (
         <div className="space-y-6">
+          {/* Info bar */}
+          <div className="panel">
+            <div className="panel__content">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <span className="label block mb-1">Status</span>
+                  <span className="font-mono text-sm text-primary">{env.status}</span>
+                </div>
+                <div>
+                  <span className="label block mb-1">Branch</span>
+                  <span className="font-mono text-sm text-primary">{env.gitBranch ?? "—"}</span>
+                </div>
+                <div>
+                  <span className="label block mb-1">Commit</span>
+                  <span className="font-mono text-sm text-primary">{env.gitSha?.slice(0, 7) ?? "—"}</span>
+                </div>
+                <div>
+                  <span className="label block mb-1">Created</span>
+                  <span className="font-mono text-sm text-primary">{new Date(env.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Provisioning timeline */}
+          {(env.provisionLog || env.type === "EPHEMERAL") && (
+            <ProvisioningTimeline
+              provisionLog={env.provisionLog}
+              envStatus={env.status}
+              isProvisioning={isProvisioning}
+            />
+          )}
+
           {/* Endpoints */}
           <div className="panel">
             <div className="panel__header">
@@ -1240,41 +1273,6 @@ export default function EnvironmentDetailPage({
           </div>
         </div>
       </div>
-
-      {/* Info bar */}
-      <div className="panel">
-        <div className="panel__content">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <span className="label block mb-1">Status</span>
-              <span className="font-mono text-sm text-primary">{env.status}</span>
-            </div>
-            <div>
-              <span className="label block mb-1">Branch</span>
-              <span className="font-mono text-sm text-primary">{env.gitBranch ?? "—"}</span>
-            </div>
-            <div>
-              <span className="label block mb-1">Commit</span>
-              <span className="font-mono text-sm text-primary">{env.gitSha?.slice(0, 7) ?? "—"}</span>
-            </div>
-            <div>
-              <span className="label block mb-1">Created</span>
-              <span className="font-mono text-sm text-primary">
-                {new Date(env.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Provisioning timeline */}
-      {(env.provisionLog || env.type === "EPHEMERAL") && (
-        <ProvisioningTimeline
-          provisionLog={env.provisionLog}
-          envStatus={env.status}
-          isProvisioning={isProvisioning}
-        />
-      )}
 
       {/* ═══ Top-level tabs ═══ */}
       <EnvDetailTabs env={env} envId={id} stats={stats} isProvisioning={isProvisioning} />
