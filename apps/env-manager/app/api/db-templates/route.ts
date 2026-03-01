@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { ensureBuiltInTemplates } from "@/lib/seed-templates";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const appUrl = new URL(request.url).origin;
+  await ensureBuiltInTemplates(appUrl);
+
   const templates = await prisma.dbTemplate.findMany({
     orderBy: { createdAt: "desc" },
   });
