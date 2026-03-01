@@ -30,6 +30,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route("/api/platform/admin/tenants", get(admin::list_tenants))
         .route("/api/platform/admin/tenants/:tenant_id/users", get(admin::list_tenant_users))
         .route("/api/platform/admin/tenants/:tenant_id/invite", post(admin::invite_user))
+        .route("/api/platform/admin/orgs", post(admin::create_org))
         .route("/api/webhooks/pipedream/:tenantId", post(webhooks::pipedream_webhook))
         .route("/api/webhooks/stripe", post(webhooks::stripe_webhook))
         .with_state(state.clone());

@@ -3,7 +3,7 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use chronicle_domain::{CreateUserInput, Tenant, User};
+use chronicle_domain::{CreateTenantInput, CreateUserInput, Tenant, User};
 use serde::{Deserialize, Serialize};
 
 use super::error::{ApiError, ApiResult};
@@ -103,11 +103,9 @@ pub async fn invite_user(
 ) -> ApiResult<Json<InviteUserResponse>> {
     verify_service_secret(&headers)?;
 
-    // Verify the tenant exists
     state.tenants.find_by_id(&tenant_id).await?
         .ok_or_else(|| ApiError::not_found(&format!("tenant: {tenant_id}")))?;
 
-    // Check if user already exists
     if let Some(existing) = state.users.find_by_email(&input.email).await? {
         if existing.tenant_id == tenant_id {
             let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
@@ -120,7 +118,6 @@ pub async fn invite_user(
         return Err(ApiError::bad_request("Email already registered to a different org"));
     }
 
-    // Create user linked to the tenant (passwordless, google auth)
     let user = state.users.create(CreateUserInput {
         email: input.email.clone(),
         name: input.name,
@@ -134,4 +131,61 @@ pub async fn invite_user(
     let login_url = format!("{app_url}/login");
 
     Ok(Json(InviteUserResponse { user, login_url }))
+}
+
+// ── Create organization + first user ────────────────────────────────────────
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateOrgRequest {
+    pub org_name: String,
+    pub org_slug: String,
+    pub admin_email: String,
+    pub admin_name: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateOrgResponse {
+    pub tenant: Tenant,
+    pub user: User,
+    pub login_url: String,
+}
+
+pub async fn create_org(
+    headers: HeaderMap,
+    State(state): State<SaasAppState>,
+    Json(input): Json<CreateOrgRequest>,
+) -> ApiResult<Json<CreateOrgResponse>> {
+    verify_service_secret(&headers)?;
+
+    if let Some(_existing) = state.tenants.find_by_slug(&input.org_slug).await? {
+        return Err(ApiError::bad_request("An organization with this slug already exists"));
+    }
+
+    if let Some(_existing) = state.users.find_by_email(&input.admin_email).await? {
+        return Err(ApiError::bad_request("Email already registered to another organization"));
+    }
+
+    let tenant = state.tenants.create(CreateTenantInput {
+        name: input.org_name,
+        slug: input.org_slug,
+    }).await?;
+
+    let user = state.users.create(CreateUserInput {
+        email: input.admin_email,
+        name: input.admin_name,
+        password_hash: None,
+        auth_provider: "google".to_string(),
+        tenant_id: tenant.id.clone(),
+    }).await?;
+
+    let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
+        .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());
+
+    Ok(Json(CreateOrgResponse {
+        tenant,
+        user,
+        login_url: format!("{app_url}/login"),
+    }))
 }

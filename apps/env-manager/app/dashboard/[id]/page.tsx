@@ -7,6 +7,7 @@ import useSWR, { mutate as globalMutate } from "swr";
 import type { EnvironmentRecord, HealthCheckRecord } from "@/lib/types";
 import { ConfirmDestroyModal } from "@/components/ui/confirm-destroy-modal";
 import { ProvisioningTimeline } from "@/components/ui/provisioning-timeline";
+import { MetricCard } from "@/components/ui/metric-chart";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -186,8 +187,9 @@ function InviteModal({
 }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ loginUrl?: string; error?: string } | null>(null);
+  const [result, setResult] = useState<{ loginUrl?: string; emailSent?: boolean; emailError?: string | null; error?: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,12 +199,12 @@ function InviteModal({
       const res = await fetch(`/api/admin/${envId}/tenants/${tenant.id}/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name: name || undefined }),
+        body: JSON.stringify({ email, name: name || undefined, sendEmail }),
       });
       const data = await res.json();
       if (!res.ok) setResult({ error: data.error ?? "Invite failed" });
       else {
-        setResult({ loginUrl: data.loginUrl });
+        setResult({ loginUrl: data.loginUrl, emailSent: data.emailSent, emailError: data.emailError });
         globalMutate(`/api/admin/${envId}/tenants`);
       }
     } catch (err) {
@@ -233,9 +235,10 @@ function InviteModal({
                 <label className="label block mb-1.5">Name (optional)</label>
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input text-sm" placeholder="John Smith" />
               </div>
-              <p className="text-xs text-tertiary">
-                Creates a Google OAuth account linked to <strong className="text-secondary">{tenant.name}</strong>. Share the login link with them.
-              </p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="rounded border-border-bright bg-elevated text-data focus:ring-data" />
+                <span className="text-xs text-secondary">Send invite email via Resend</span>
+              </label>
               {result?.error && <div className="flex items-center gap-2"><span className="status-dot status-dot--critical" /><span className="text-xs text-critical">{result.error}</span></div>}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={onClose} className="btn btn--secondary btn--sm">Cancel</button>
@@ -245,8 +248,20 @@ function InviteModal({
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2"><span className="status-dot status-dot--nominal" /><span className="text-sm text-nominal">Account created</span></div>
+              {result.emailSent && (
+                <div className="flex items-center gap-2 p-2 bg-nominal-bg border border-nominal-dim rounded-sm">
+                  <svg className="w-4 h-4 text-nominal shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                  <span className="text-xs text-nominal">Invite email sent to {email}</span>
+                </div>
+              )}
+              {result.emailError && (
+                <div className="flex items-center gap-2 p-2 bg-caution-bg border border-caution-dim rounded-sm">
+                  <span className="status-dot status-dot--caution shrink-0" />
+                  <span className="text-xs text-caution">Email failed: {result.emailError}</span>
+                </div>
+              )}
               <div>
-                <span className="label block mb-1.5">Share this login link</span>
+                <span className="label block mb-1.5">Login link</span>
                 <div className="flex items-center gap-2 bg-elevated border border-border-default rounded-sm px-3 py-2">
                   <span className="font-mono text-xs text-data flex-1 truncate">{result.loginUrl}</span>
                   <button onClick={() => navigator.clipboard.writeText(result.loginUrl!)} className="text-tertiary hover:text-primary shrink-0" title="Copy">
@@ -254,6 +269,233 @@ function InviteModal({
                   </button>
                 </div>
               </div>
+              <button onClick={onClose} className="btn btn--primary btn--sm w-full">Done</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreateOrgModal({
+  envId,
+  onClose,
+}: {
+  envId: string;
+  onClose: () => void;
+}) {
+  const [orgName, setOrgName] = useState("");
+  const [orgSlug, setOrgSlug] = useState("");
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{
+    loginUrl?: string;
+    emailSent?: boolean;
+    emailError?: string | null;
+    tenant?: { name: string };
+    error?: string;
+  } | null>(null);
+
+  const deriveSlug = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  const handleNameChange = (value: string) => {
+    setOrgName(value);
+    if (!orgSlug || orgSlug === deriveSlug(orgName)) {
+      setOrgSlug(deriveSlug(value));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/admin/${envId}/orgs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orgName,
+          orgSlug: orgSlug || deriveSlug(orgName),
+          adminEmail: email,
+          adminName: name || undefined,
+          sendEmail,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setResult({ error: data.error ?? "Failed to create organization" });
+      } else {
+        setResult({
+          loginUrl: data.loginUrl,
+          emailSent: data.emailSent,
+          emailError: data.emailError,
+          tenant: data.tenant,
+        });
+        globalMutate(`/api/admin/${envId}/tenants`);
+      }
+    } catch (err) {
+      setResult({ error: String(err) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
+      <div className="relative w-full max-w-lg mx-4 panel">
+        <div className="panel__header">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-data" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21" />
+            </svg>
+            <span className="panel__title">Create Organization</span>
+          </div>
+          <button onClick={onClose} className="text-tertiary hover:text-primary">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="panel__content">
+          {!result?.loginUrl ? (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-data-bg border border-data-dim flex items-center justify-center shrink-0">
+                    <span className="font-mono text-[10px] text-data font-semibold">1</span>
+                  </span>
+                  <span className="label">Organization Details</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label block mb-1.5">Organization Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={orgName}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      className="input text-sm"
+                      placeholder="Acme Inc."
+                    />
+                  </div>
+                  <div>
+                    <label className="label block mb-1.5">Slug</label>
+                    <input
+                      type="text"
+                      required
+                      value={orgSlug}
+                      onChange={(e) => setOrgSlug(e.target.value)}
+                      className="input font-mono text-sm"
+                      placeholder="acme-inc"
+                      pattern="[a-z0-9\-]+"
+                      title="Lowercase letters, numbers, and hyphens only"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border-dim pt-4 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-data-bg border border-data-dim flex items-center justify-center shrink-0">
+                    <span className="font-mono text-[10px] text-data font-semibold">2</span>
+                  </span>
+                  <span className="label">Admin User</span>
+                </div>
+                <div>
+                  <label className="label block mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input font-mono text-sm"
+                    placeholder="admin@acme.com"
+                  />
+                </div>
+                <div>
+                  <label className="label block mb-1.5">Name (optional)</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="input text-sm"
+                    placeholder="Jane Doe"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-border-dim pt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sendEmail}
+                    onChange={(e) => setSendEmail(e.target.checked)}
+                    className="rounded border-border-bright bg-elevated text-data focus:ring-data"
+                  />
+                  <span className="text-xs text-secondary">Send invite email to admin user</span>
+                </label>
+                <p className="text-[10px] text-tertiary mt-1.5 ml-6">
+                  Uses Resend to deliver a branded invitation with a login link.
+                </p>
+              </div>
+
+              {result?.error && (
+                <div className="flex items-center gap-2 p-2 bg-critical-bg border border-critical-dim rounded-sm">
+                  <span className="status-dot status-dot--critical shrink-0" />
+                  <span className="text-xs text-critical">{result.error}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={onClose} className="btn btn--secondary btn--sm">Cancel</button>
+                <button type="submit" disabled={loading} className="btn btn--primary btn--sm disabled:opacity-40">
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full border-2 border-data/40 border-t-data animate-spin" />
+                      Creating...
+                    </span>
+                  ) : "Create & Invite"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="status-dot status-dot--nominal" />
+                <span className="text-sm text-nominal">
+                  Organization <strong>{result.tenant?.name}</strong> created
+                </span>
+              </div>
+
+              {result.emailSent && (
+                <div className="flex items-center gap-2 p-2 bg-nominal-bg border border-nominal-dim rounded-sm">
+                  <svg className="w-4 h-4 text-nominal shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                  <span className="text-xs text-nominal">Invite email sent to {email}</span>
+                </div>
+              )}
+
+              {result.emailError && (
+                <div className="flex items-center gap-2 p-2 bg-caution-bg border border-caution-dim rounded-sm">
+                  <span className="status-dot status-dot--caution shrink-0" />
+                  <span className="text-xs text-caution">Email failed: {result.emailError}</span>
+                </div>
+              )}
+
+              <div>
+                <span className="label block mb-1.5">Login link</span>
+                <div className="flex items-center gap-2 bg-elevated border border-border-default rounded-sm px-3 py-2">
+                  <span className="font-mono text-xs text-data flex-1 truncate">{result.loginUrl}</span>
+                  <button onClick={() => navigator.clipboard.writeText(result.loginUrl!)} className="text-tertiary hover:text-primary shrink-0" title="Copy">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>
+                  </button>
+                </div>
+              </div>
+
               <button onClick={onClose} className="btn btn--primary btn--sm w-full">Done</button>
             </div>
           )}
@@ -320,6 +562,7 @@ function UsersDrawer({ envId, tenant, onClose, onInvite }: { envId: string; tena
 function TenantsPanel({ envId }: { envId: string }) {
   const [expandedTenant, setExpandedTenant] = useState<Tenant | null>(null);
   const [inviteTenant, setInviteTenant] = useState<Tenant | null>(null);
+  const [showCreateOrg, setShowCreateOrg] = useState(false);
   const [search, setSearch] = useState("");
 
   const { data, isLoading, mutate } = useSWR<{ tenants: Tenant[]; total: number; error?: string; pendingDeploy?: boolean }>(
@@ -341,6 +584,9 @@ function TenantsPanel({ envId }: { envId: string }) {
       {inviteTenant && (
         <InviteModal envId={envId} tenant={inviteTenant} onClose={() => setInviteTenant(null)} />
       )}
+      {showCreateOrg && (
+        <CreateOrgModal envId={envId} onClose={() => setShowCreateOrg(false)} />
+      )}
 
       <div className="panel">
         <div className="panel__header">
@@ -348,9 +594,18 @@ function TenantsPanel({ envId }: { envId: string }) {
             <span className="panel__title">Tenants & Organizations</span>
             <span className="font-mono text-[10px] text-tertiary">{data?.total ?? 0} orgs · {totalUsers} users</span>
           </div>
-          <div className="relative">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="input font-mono text-xs pl-8 py-1.5 w-40" />
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="input font-mono text-xs pl-8 py-1.5 w-40" />
+            </div>
+            <button
+              onClick={() => setShowCreateOrg(true)}
+              className="btn btn--primary btn--sm flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+              Create Org
+            </button>
           </div>
         </div>
 
@@ -903,6 +1158,139 @@ interface ResourcesData {
   };
 }
 
+type TimeWindow = "30m" | "1h" | "6h" | "24h";
+const TIME_WINDOWS: { id: TimeWindow; label: string }[] = [
+  { id: "30m", label: "30m" },
+  { id: "1h", label: "1h" },
+  { id: "6h", label: "6h" },
+  { id: "24h", label: "24h" },
+];
+
+interface MetricsData {
+  window: string;
+  cpu: { series: Array<{ t: number; v: number | null }>; current: number | null };
+  memory: { series: Array<{ t: number; v: number | null }>; current: number | null };
+  disk: { series: Array<{ t: number; v: number | null }>; current: number | null };
+  requests: { series: Array<{ t: number; v: number | null }>; current: number | null };
+  netIn: { series: Array<{ t: number; v: number | null }>; current: number | null };
+  netOut: { series: Array<{ t: number; v: number | null }>; current: number | null };
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes.toFixed(0)} B/s`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
+}
+
+function UtilizationPanel({ envId }: { envId: string }) {
+  const [window, setWindow] = useState<TimeWindow>("1h");
+
+  const { data, isLoading } = useSWR<MetricsData>(
+    `/api/environments/${envId}/metrics?window=${window}`,
+    fetcher,
+    { refreshInterval: 1_000 }
+  );
+
+  const hasData = data && (
+    data.cpu.series.length > 0 ||
+    data.memory.series.length > 0 ||
+    data.disk.series.length > 0 ||
+    data.requests.series.length > 0
+  );
+
+  return (
+    <div className="panel">
+      <div className="panel__header">
+        <div className="flex items-center gap-2">
+          <span className="panel__title">Live Utilization</span>
+          {isLoading && (
+            <div className="w-3 h-3 rounded-full border-2 border-border-bright border-t-data animate-spin" />
+          )}
+        </div>
+        <div className="flex items-center gap-1 bg-elevated border border-border-dim rounded-sm p-0.5">
+          {TIME_WINDOWS.map((tw) => (
+            <button
+              key={tw.id}
+              onClick={() => setWindow(tw.id)}
+              className={`px-2.5 py-1 text-[10px] font-mono rounded-sm transition-colors ${
+                window === tw.id
+                  ? "bg-data-bg text-data border border-data-dim"
+                  : "text-tertiary hover:text-secondary border border-transparent"
+              }`}
+            >
+              {tw.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {!hasData && !isLoading ? (
+        <div className="panel__content text-center py-8">
+          <p className="text-xs text-tertiary font-mono">
+            No metrics data available for this window
+          </p>
+          <p className="text-[10px] text-disabled mt-1">
+            Metrics appear once the machine has been running for a few minutes
+          </p>
+        </div>
+      ) : (
+        <div className="panel__content">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <MetricCard
+              title="CPU"
+              current={data?.cpu.current ?? null}
+              unit="%"
+              series={data?.cpu.series ?? []}
+              color="#00d4ff"
+              yMax={100}
+            />
+            <MetricCard
+              title="Memory"
+              current={data?.memory.current ?? null}
+              unit="%"
+              series={data?.memory.series ?? []}
+              color="#a78bfa"
+              yMax={100}
+            />
+            <MetricCard
+              title="Disk"
+              current={data?.disk.current ?? null}
+              unit="%"
+              series={data?.disk.series ?? []}
+              color="#f59e0b"
+              yMax={100}
+            />
+            <MetricCard
+              title="Requests"
+              current={data?.requests.current ?? null}
+              unit="req/s"
+              series={data?.requests.series ?? []}
+              color="#34d399"
+              formatValue={(v) => v < 1 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.round(v).toString()}
+            />
+            <MetricCard
+              title="Net In"
+              current={data?.netIn.current ?? null}
+              unit=""
+              series={data?.netIn.series ?? []}
+              color="#60a5fa"
+              formatValue={formatBytes}
+            />
+            <MetricCard
+              title="Net Out"
+              current={data?.netOut.current ?? null}
+              unit=""
+              series={data?.netOut.series ?? []}
+              color="#fb923c"
+              formatValue={formatBytes}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ResourceMetricsPanel({ envId }: { envId: string }) {
   const { data, isLoading } = useSWR<ResourcesData>(
     `/api/environments/${envId}/resources`,
@@ -929,6 +1317,9 @@ function ResourceMetricsPanel({ envId }: { envId: string }) {
 
   return (
     <div className="space-y-6">
+      {/* Live utilization charts */}
+      <UtilizationPanel envId={envId} />
+
       {/* Summary metrics strip */}
       {m && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
