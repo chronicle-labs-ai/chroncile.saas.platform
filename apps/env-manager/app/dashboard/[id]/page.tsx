@@ -852,6 +852,287 @@ function HealthHistoryPanel({ envId }: { envId: string }) {
   );
 }
 
+// ── Resource Metrics Panel ─────────────────────────────────────────────────────
+
+interface MachineMetrics {
+  id: string;
+  name: string;
+  state: string;
+  region: string;
+  cpus: number | null;
+  memoryMb: number | null;
+}
+
+function ResourceMetricsPanel({ envId }: { envId: string }) {
+  const { data, isLoading } = useSWR<{
+    machines: MachineMetrics[];
+    volumes: Array<{ id: string; name: string; state: string; sizeGb: number | null; region: string }>;
+    ips: Array<{ address: string; type: string }>;
+    postgres: { name: string; url: string } | null;
+  }>(
+    `/api/environments/${envId}/resources`,
+    fetcher,
+    { refreshInterval: 15_000 }
+  );
+
+  const machines = data?.machines ?? [];
+  const volumes = data?.volumes ?? [];
+  const ips = data?.ips ?? [];
+
+  return (
+    <div className="space-y-6">
+      {/* Machine metrics */}
+      {machines.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {machines.map((m) => (
+            <div key={m.id} className="panel">
+              <div className="panel__header">
+                <div className="flex items-center gap-2">
+                  <span className={`status-dot ${m.state === "started" ? "status-dot--nominal status-dot--pulse" : "status-dot--offline"}`} />
+                  <span className="panel__title">{m.name || m.id.slice(0, 12)}</span>
+                </div>
+                <span className="font-mono text-[10px] text-tertiary">{m.region}</span>
+              </div>
+              <div className="panel__content">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="metric">
+                    <span className="metric__label">CPU</span>
+                    <span className="metric__value text-lg">{m.cpus ?? "—"}</span>
+                    <span className="text-[10px] text-tertiary">vCPUs (shared)</span>
+                  </div>
+                  <div className="metric">
+                    <span className="metric__label">Memory</span>
+                    <span className="metric__value text-lg">{m.memoryMb ?? "—"}</span>
+                    <span className="text-[10px] text-tertiary">MB allocated</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-border-dim">
+                  <div className="flex items-center justify-between">
+                    <span className="label">State</span>
+                    <span className={`font-mono text-xs ${m.state === "started" ? "text-nominal" : "text-caution"}`}>
+                      {m.state}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1,2,3].map((i) => (
+            <div key={i} className="panel"><div className="panel__content h-32 animate-pulse bg-elevated rounded" /></div>
+          ))}
+        </div>
+      )}
+
+      {/* Volumes + IPs + Postgres */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="panel">
+          <div className="panel__header">
+            <span className="panel__title">Volumes</span>
+            <span className="font-mono text-[10px] text-tertiary">{volumes.length}</span>
+          </div>
+          <div className="panel__content">
+            {volumes.length === 0 ? (
+              <p className="text-xs text-tertiary">None</p>
+            ) : (
+              <div className="space-y-2">
+                {volumes.map((v) => (
+                  <div key={v.id} className="flex items-center justify-between">
+                    <span className="font-mono text-xs text-primary">{v.name}</span>
+                    <span className="font-mono text-xs text-tertiary">{v.sizeGb ?? "?"}GB · {v.region}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel__header">
+            <span className="panel__title">IP Addresses</span>
+            <span className="font-mono text-[10px] text-tertiary">{ips.length}</span>
+          </div>
+          <div className="panel__content">
+            {ips.length === 0 ? (
+              <p className="text-xs text-tertiary">None allocated</p>
+            ) : (
+              <div className="space-y-1.5">
+                {ips.map((ip, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm ${ip.type === "v6" ? "bg-data-bg text-data" : "bg-caution-bg text-caution"}`}>{ip.type}</span>
+                    <span className="font-mono text-xs text-primary truncate">{ip.address}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel__header">
+            <span className="panel__title">Database</span>
+          </div>
+          <div className="panel__content">
+            {data?.postgres ? (
+              <a href={data.postgres.url} target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-data hover:underline">
+                {data.postgres.name}
+              </a>
+            ) : (
+              <p className="text-xs text-tertiary">No Postgres attached</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Health History */}
+      <HealthHistoryPanel envId={envId} />
+    </div>
+  );
+}
+
+// ── Top-Level Tabs ────────────────────────────────────────────────────────────
+
+type DetailTab = "deployment" | "users" | "resources";
+
+const DETAIL_TABS: { id: DetailTab; label: string; icon: React.ReactNode }[] = [
+  {
+    id: "deployment",
+    label: "Deployment",
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 010 1.954l-7.108 4.061A1.125 1.125 0 013 16.811V8.689zM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 010 1.954l-7.108 4.061a1.125 1.125 0 01-1.683-.977V8.689z" /></svg>,
+  },
+  {
+    id: "users",
+    label: "Users & Orgs",
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>,
+  },
+  {
+    id: "resources",
+    label: "Resources",
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" /></svg>,
+  },
+];
+
+function EnvDetailTabs({ env, envId, stats, isProvisioning }: {
+  env: EnvironmentRecord;
+  envId: string;
+  stats: Stats | undefined;
+  isProvisioning: boolean;
+}) {
+  const [activeTab, setActiveTab] = useState<DetailTab>("deployment");
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div className="flex border-b border-border-dim mb-6">
+        {DETAIL_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === tab.id
+                ? "text-data border-data"
+                : "text-tertiary hover:text-secondary border-transparent"
+            }`}
+          >
+            <span className={activeTab === tab.id ? "text-data" : "text-tertiary"}>
+              {tab.icon}
+            </span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {activeTab === "deployment" && (
+        <div className="space-y-6">
+          {/* Endpoints */}
+          <div className="panel">
+            <div className="panel__header">
+              <span className="panel__title">Endpoints</span>
+            </div>
+            <div className="divide-y divide-[var(--border-dim)]">
+              <EndpointRow label="Backend" url={env.flyAppUrl} badge="Fly.io" badgeClass="bg-[#7c3aed]/20 text-[#a78bfa]" extra={env.flyAppUrl ? `${env.flyAppUrl}/health` : null} extraLabel="Health" />
+              <EndpointRow label="Frontend" url={env.vercelUrl} badge="Vercel" badgeClass="bg-[#000]/30 text-[#e5e5e5]" pending={!env.vercelUrl && env.type === "EPHEMERAL"} pendingHint="Vercel preview will appear after the next branch push" extra={env.vercelUrl ? `${env.vercelUrl}/api/system/info` : null} extraLabel="Info" />
+              {env.expiresAt && (
+                <div className="flex items-center gap-4 px-4 py-3">
+                  <span className="label shrink-0 w-20">Expires</span>
+                  <span className="font-mono text-sm text-caution">{new Date(env.expiresAt).toLocaleString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Error log */}
+          {env.errorLog && (
+            <div className="panel border-[var(--critical-dim)]">
+              <div className="panel__header bg-[var(--critical-bg)]">
+                <div className="flex items-center gap-2">
+                  <span className="status-dot status-dot--critical" />
+                  <span className="panel__title text-critical">{env.status === "ERROR" ? "Provisioning Error" : "Warnings"}</span>
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto bg-[var(--critical-bg)]">
+                <pre className="px-4 py-3 text-xs font-mono text-critical/90 whitespace-pre-wrap break-all leading-relaxed">{env.errorLog}</pre>
+              </div>
+            </div>
+          )}
+
+          {/* Stats */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="label">Platform Metrics</span>
+              {stats?._note && <span className="font-mono text-[10px] text-caution">{stats._note}</span>}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <StatCard label="Runs" value={stats?.runs ?? null} />
+              <StatCard label="Connections" value={stats?.connections ?? null} />
+              <StatCard label="Tenants" value={stats?.tenants ?? null} />
+              <StatCard label="Users" value={stats?.users ?? null} />
+              <StatCard label="Events" value={stats?.events ?? null} />
+            </div>
+          </div>
+
+          {/* Logs */}
+          <LogsPanel envId={envId} />
+        </div>
+      )}
+
+      {activeTab === "users" && (
+        <div className="space-y-6">
+          {env.status === "RUNNING" && env.isHealthy ? (
+            <TenantsPanel envId={envId} />
+          ) : (
+            <div className="panel">
+              <div className="panel__content text-center py-8">
+                <p className="text-sm text-secondary">Backend must be running and healthy to view tenants</p>
+                <p className="text-xs text-tertiary mt-1">Current status: {env.status}{!env.isHealthy && " (unhealthy)"}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "resources" && (
+        <div className="space-y-6">
+          {env.status === "RUNNING" ? (
+            <ResourceMetricsPanel envId={envId} />
+          ) : (
+            <div className="panel">
+              <div className="panel__content text-center py-8">
+                <p className="text-sm text-secondary">Resources available once environment is running</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function EnvironmentDetailPage({
   params,
 }: {
@@ -995,92 +1276,8 @@ export default function EnvironmentDetailPage({
         />
       )}
 
-      {/* URLs */}
-      <div className="panel">
-        <div className="panel__header">
-          <span className="panel__title">Endpoints</span>
-        </div>
-        <div className="divide-y divide-[var(--border-dim)]">
-          <EndpointRow
-            label="Backend"
-            url={env.flyAppUrl}
-            badge="Fly.io"
-            badgeClass="bg-[#7c3aed]/20 text-[#a78bfa]"
-            extra={env.flyAppUrl ? `${env.flyAppUrl}/health` : null}
-            extraLabel="Health"
-          />
-          <EndpointRow
-            label="Frontend"
-            url={env.vercelUrl}
-            badge="Vercel"
-            badgeClass="bg-[#000]/30 text-[#e5e5e5]"
-            pending={!env.vercelUrl && env.type === "EPHEMERAL"}
-            pendingHint="Vercel preview will appear after the next branch push"
-            extra={env.vercelUrl ? `${env.vercelUrl}/api/system/info` : null}
-            extraLabel="Info"
-          />
-          {env.expiresAt && (
-            <div className="flex items-center gap-4 px-4 py-3">
-              <span className="label shrink-0 w-20">Expires</span>
-              <span className="font-mono text-sm text-caution">
-                {new Date(env.expiresAt).toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Error log */}
-      {env.errorLog && (
-        <div className="panel border-[var(--critical-dim)]">
-          <div className="panel__header bg-[var(--critical-bg)]">
-            <div className="flex items-center gap-2">
-              <span className="status-dot status-dot--critical" />
-              <span className="panel__title text-critical">
-                {env.status === "ERROR" ? "Provisioning Error" : "Warnings"}
-              </span>
-            </div>
-          </div>
-          <div className="max-h-48 overflow-y-auto bg-[var(--critical-bg)]">
-            <pre className="px-4 py-3 text-xs font-mono text-critical/90 whitespace-pre-wrap break-all leading-relaxed">
-              {env.errorLog}
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {/* Stats metrics */}
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <span className="label">Platform Metrics</span>
-          {stats?._note && (
-            <span className="font-mono text-[10px] text-caution">{stats._note}</span>
-          )}
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatCard label="Runs" value={stats?.runs ?? null} />
-          <StatCard label="Connections" value={stats?.connections ?? null} />
-          <StatCard label="Tenants" value={stats?.tenants ?? null} />
-          <StatCard label="Users" value={stats?.users ?? null} />
-          <StatCard label="Events" value={stats?.events ?? null} />
-        </div>
-      </div>
-
-      {/* Tenants & Organizations — only when backend is live */}
-      {env.status === "RUNNING" && env.isHealthy && (
-        <TenantsPanel envId={id} />
-      )}
-
-      {/* Live Resources — only when backend is live */}
-      {env.status === "RUNNING" && (
-        <LiveResourcesPanel envId={id} />
-      )}
-
-      {/* Logs (full width) + Health */}
-      <div className="grid grid-cols-1 gap-6">
-        <LogsPanel envId={id} />
-        <HealthHistoryPanel envId={id} />
-      </div>
+      {/* ═══ Top-level tabs ═══ */}
+      <EnvDetailTabs env={env} envId={id} stats={stats} isProvisioning={isProvisioning} />
     </div>
     </>
   );
