@@ -44,27 +44,45 @@ async function getServiceToken(backendUrl: string): Promise<string | null> {
   }
 }
 
+// Fly machines cold-start can take 30-45s; use a generous timeout
+const TIMEOUT_MS = 45_000;
+
 export async function backendFetch(
   backendUrl: string,
   path: string,
   init?: RequestInit
 ): Promise<Response> {
-  // Try x-service-secret first (new admin endpoints)
-  const adminRes = await fetch(`${backendUrl}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "x-service-secret": SERVICE_SECRET,
-      ...init?.headers,
-    },
-    signal: AbortSignal.timeout(10_000),
-  });
+  // Try x-service-secret first (new admin endpoints, available after latest deploy)
+  let adminRes: Response | null = null;
+  try {
+    adminRes = await fetch(`${backendUrl}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        "x-service-secret": SERVICE_SECRET,
+        ...init?.headers,
+      },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (adminRes.ok) return adminRes;
+    // 404 = endpoint not deployed yet; 401 = wrong secret → fall through to JWT
+    if (adminRes.status !== 404 && adminRes.status !== 401 && adminRes.status !== 403) {
+      return adminRes;
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`Backend unreachable at ${backendUrl} — ${msg}. The machine may be starting up; try again in a moment.`);
+  }
 
-  if (adminRes.ok || adminRes.status === 404) return adminRes;
-
-  // Fall back to JWT-based auth (existing protected endpoints)
+  // Fall back to JWT-based auth (works on all deployed backends)
   const token = await getServiceToken(backendUrl);
-  if (!token) throw new Error("Could not obtain service token");
+  if (!token) {
+    // If we got a 404 from the admin endpoint, surface a helpful message
+    if (adminRes?.status === 404) {
+      throw new Error("Admin endpoint not available — backend may need to be redeployed with the latest code");
+    }
+    throw new Error("Could not obtain service token — check SERVICE_SECRET");
+  }
 
   return fetch(`${backendUrl}${path}`, {
     ...init,
@@ -73,6 +91,6 @@ export async function backendFetch(
       Authorization: `Bearer ${token}`,
       ...init?.headers,
     },
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 }

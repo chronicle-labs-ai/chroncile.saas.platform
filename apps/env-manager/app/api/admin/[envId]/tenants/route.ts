@@ -15,10 +15,15 @@ export async function GET(
   try {
     const res = await backendFetch(env.flyAppUrl, "/api/platform/admin/tenants");
     if (!res.ok) {
-      return NextResponse.json({ tenants: [], total: 0, error: `Backend ${res.status}` });
+      const body = await res.json().catch(() => ({}));
+      const msg = body?.error ?? `Backend returned ${res.status}`;
+      return NextResponse.json({ tenants: [], total: 0, error: msg });
     }
     return NextResponse.json(await res.json());
   } catch (err) {
-    return NextResponse.json({ tenants: [], total: 0, error: String(err) });
+    const message = err instanceof Error ? err.message : String(err);
+    // Strip the "Error: " prefix for cleaner display
+    const clean = message.replace(/^Error:\s+/, "");
+    return NextResponse.json({ tenants: [], total: 0, error: clean });
   }
 }

@@ -322,7 +322,7 @@ function TenantsPanel({ envId }: { envId: string }) {
   const [inviteTenant, setInviteTenant] = useState<Tenant | null>(null);
   const [search, setSearch] = useState("");
 
-  const { data, isLoading } = useSWR<{ tenants: Tenant[]; total: number; error?: string }>(
+  const { data, isLoading, mutate } = useSWR<{ tenants: Tenant[]; total: number; error?: string }>(
     `/api/admin/${envId}/tenants`,
     fetcher,
     { refreshInterval: 60_000 }
@@ -368,9 +368,22 @@ function TenantsPanel({ envId }: { envId: string }) {
             ))}
           </div>
         ) : data?.error ? (
-          <div className="panel__content flex items-center gap-2">
-            <span className="status-dot status-dot--caution" />
-            <span className="text-xs text-caution">{data.error}</span>
+          <div className="panel__content">
+            <div className="flex items-start gap-3 p-3 bg-caution-bg border border-caution-dim rounded-sm">
+              <span className="status-dot status-dot--caution mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-caution leading-relaxed">{data.error}</p>
+                <p className="text-[10px] text-caution/70 mt-1">
+                  If the machine just started, it may take 30–45s to be ready.
+                </p>
+              </div>
+              <button
+                onClick={() => mutate()}
+                className="btn btn--secondary btn--sm shrink-0"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="panel__content text-center py-8 text-xs text-tertiary">
