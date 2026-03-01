@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Chronicle Labs shared design system — tokens, base styles, component classes */
-@import "ui/styles/globals.css";
 
 /* ============================================
    ENV-MANAGER FONT FACES
