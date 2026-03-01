@@ -854,96 +854,295 @@ function HealthHistoryPanel({ envId }: { envId: string }) {
 
 // ── Resource Metrics Panel ─────────────────────────────────────────────────────
 
-interface MachineMetrics {
+interface MachineResource {
   id: string;
   name: string;
   state: string;
   region: string;
   cpus: number | null;
+  cpuKind: string;
   memoryMb: number | null;
+  imageRef: string | null;
+  updatedAt: string;
+  createdAt: string;
+  checks: Array<{ name: string; status: string; output: string }>;
+  events: Array<{ type: string; status: string; timestamp: string; exitCode: number | null }>;
+}
+
+interface VolumeResource {
+  id: string;
+  name: string;
+  state: string;
+  sizeGb: number | null;
+  region: string;
+  encrypted: boolean;
+  attachedMachineId: string | null;
+}
+
+interface ResourcesData {
+  machines: MachineResource[];
+  volumes: VolumeResource[];
+  ips: Array<{ address: string; type: string; region: string }>;
+  postgres: {
+    name: string;
+    url: string;
+    storageGb: number;
+    volumes: Array<{ id: string; name: string; sizeGb: number | null; region: string }>;
+    machines: Array<{ id: string; state: string; region: string }>;
+  } | null;
+  metrics: {
+    totalCpus: number;
+    totalMemoryMb: number;
+    runningMachines: number;
+    stoppedMachines: number;
+    totalMachines: number;
+    totalVolumeGb: number;
+    totalIps: number;
+    dbStorageGb: number;
+    dbMachines: number;
+  };
 }
 
 function ResourceMetricsPanel({ envId }: { envId: string }) {
-  const { data, isLoading } = useSWR<{
-    machines: MachineMetrics[];
-    volumes: Array<{ id: string; name: string; state: string; sizeGb: number | null; region: string }>;
-    ips: Array<{ address: string; type: string }>;
-    postgres: { name: string; url: string } | null;
-  }>(
+  const { data, isLoading } = useSWR<ResourcesData>(
     `/api/environments/${envId}/resources`,
     fetcher,
     { refreshInterval: 15_000 }
   );
 
+  const m = data?.metrics;
   const machines = data?.machines ?? [];
   const volumes = data?.volumes ?? [];
   const ips = data?.ips ?? [];
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {[1,2,3,4,5,6].map((i) => (
+            <div key={i} className="panel"><div className="panel__content h-20 animate-pulse bg-elevated rounded" /></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Machine metrics */}
-      {machines.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {machines.map((m) => (
-            <div key={m.id} className="panel">
-              <div className="panel__header">
-                <div className="flex items-center gap-2">
-                  <span className={`status-dot ${m.state === "started" ? "status-dot--nominal status-dot--pulse" : "status-dot--offline"}`} />
-                  <span className="panel__title">{m.name || m.id.slice(0, 12)}</span>
-                </div>
-                <span className="font-mono text-[10px] text-tertiary">{m.region}</span>
-              </div>
-              <div className="panel__content">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="metric">
-                    <span className="metric__label">CPU</span>
-                    <span className="metric__value text-lg">{m.cpus ?? "—"}</span>
-                    <span className="text-[10px] text-tertiary">vCPUs (shared)</span>
-                  </div>
-                  <div className="metric">
-                    <span className="metric__label">Memory</span>
-                    <span className="metric__value text-lg">{m.memoryMb ?? "—"}</span>
-                    <span className="text-[10px] text-tertiary">MB allocated</span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t border-border-dim">
-                  <div className="flex items-center justify-between">
-                    <span className="label">State</span>
-                    <span className={`font-mono text-xs ${m.state === "started" ? "text-nominal" : "text-caution"}`}>
-                      {m.state}
-                    </span>
-                  </div>
-                </div>
+      {/* Summary metrics strip */}
+      {m && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="panel">
+            <div className="panel__content py-3">
+              <div className="metric">
+                <span className="metric__label">Total CPU</span>
+                <span className="metric__value metric__value--data text-xl">{m.totalCpus}</span>
+                <span className="text-[10px] text-tertiary">vCPUs</span>
               </div>
             </div>
-          ))}
+          </div>
+          <div className="panel">
+            <div className="panel__content py-3">
+              <div className="metric">
+                <span className="metric__label">Total RAM</span>
+                <span className="metric__value metric__value--data text-xl">{m.totalMemoryMb}</span>
+                <span className="text-[10px] text-tertiary">MB</span>
+              </div>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel__content py-3">
+              <div className="metric">
+                <span className="metric__label">Machines</span>
+                <span className="metric__value text-xl">
+                  <span className="text-nominal">{m.runningMachines}</span>
+                  <span className="text-tertiary text-sm">/{m.totalMachines}</span>
+                </span>
+                <span className="text-[10px] text-tertiary">running</span>
+              </div>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel__content py-3">
+              <div className="metric">
+                <span className="metric__label">App Storage</span>
+                <span className="metric__value metric__value--data text-xl">{m.totalVolumeGb}</span>
+                <span className="text-[10px] text-tertiary">GB</span>
+              </div>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel__content py-3">
+              <div className="metric">
+                <span className="metric__label">DB Storage</span>
+                <span className="metric__value metric__value--data text-xl">{m.dbStorageGb}</span>
+                <span className="text-[10px] text-tertiary">GB</span>
+              </div>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel__content py-3">
+              <div className="metric">
+                <span className="metric__label">Public IPs</span>
+                <span className="metric__value metric__value--data text-xl">{m.totalIps}</span>
+                <span className="text-[10px] text-tertiary">allocated</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1,2,3].map((i) => (
-            <div key={i} className="panel"><div className="panel__content h-32 animate-pulse bg-elevated rounded" /></div>
-          ))}
-        </div>
+      {/* Machine cards */}
+      {machines.length > 0 && (
+        <>
+          <span className="label">Machines</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {machines.map((machine) => (
+              <div key={machine.id} className="panel">
+                <div className="panel__header">
+                  <div className="flex items-center gap-2">
+                    <span className={`status-dot ${machine.state === "started" ? "status-dot--nominal status-dot--pulse" : "status-dot--offline"}`} />
+                    <span className="panel__title">{machine.name || machine.id.slice(0, 12)}</span>
+                  </div>
+                  <span className={`badge ${machine.state === "started" ? "badge--nominal" : "badge--neutral"}`}>{machine.state}</span>
+                </div>
+                <div className="panel__content space-y-3">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <span className="label block mb-1">CPU</span>
+                      <span className="font-mono text-sm text-primary">{machine.cpus ?? "—"} vCPU</span>
+                      <p className="text-[10px] text-tertiary">{machine.cpuKind}</p>
+                    </div>
+                    <div>
+                      <span className="label block mb-1">Memory</span>
+                      <span className="font-mono text-sm text-primary">{machine.memoryMb ?? "—"} MB</span>
+                    </div>
+                    <div>
+                      <span className="label block mb-1">Region</span>
+                      <span className="font-mono text-sm text-primary">{machine.region}</span>
+                    </div>
+                  </div>
+
+                  {/* Health checks */}
+                  {machine.checks.length > 0 && (
+                    <div className="pt-2 border-t border-border-dim">
+                      <span className="label block mb-1.5">Health Checks</span>
+                      <div className="space-y-1">
+                        {machine.checks.map((c, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className={`status-dot ${c.status === "passing" ? "status-dot--nominal" : c.status === "warning" ? "status-dot--caution" : "status-dot--critical"}`} />
+                            <span className="font-mono text-xs text-primary">{c.name}</span>
+                            <span className={`font-mono text-[10px] ${c.status === "passing" ? "text-nominal" : "text-caution"}`}>{c.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recent events */}
+                  {machine.events.length > 0 && (
+                    <div className="pt-2 border-t border-border-dim">
+                      <span className="label block mb-1.5">Recent Events</span>
+                      <div className="space-y-1 max-h-24 overflow-y-auto">
+                        {machine.events.slice(0, 5).map((ev, i) => (
+                          <div key={i} className="flex items-center gap-2 text-[10px] font-mono">
+                            <span className="text-tertiary w-14 shrink-0">
+                              {new Date(ev.timestamp).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            <span className={ev.exitCode !== null && ev.exitCode !== 0 ? "text-critical" : "text-secondary"}>
+                              {ev.type}: {ev.status}{ev.exitCode !== null ? ` (exit ${ev.exitCode})` : ""}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-border-dim text-[10px] text-tertiary font-mono">
+                    ID: {machine.id} · Updated: {new Date(machine.updatedAt).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* Volumes + IPs + Postgres */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Database */}
+      {data?.postgres && (
+        <>
+          <span className="label">Database (Postgres)</span>
+          <div className="panel">
+            <div className="panel__header">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#60a5fa]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
+                </svg>
+                <span className="panel__title">{data.postgres.name}</span>
+              </div>
+              <a href={data.postgres.url} target="_blank" rel="noopener noreferrer" className="text-data text-xs font-mono hover:underline">Open in Fly</a>
+            </div>
+            <div className="panel__content">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="metric">
+                  <span className="metric__label">Storage</span>
+                  <span className="metric__value metric__value--data text-lg">{data.postgres.storageGb}</span>
+                  <span className="text-[10px] text-tertiary">GB total</span>
+                </div>
+                <div className="metric">
+                  <span className="metric__label">Volumes</span>
+                  <span className="metric__value text-lg">{data.postgres.volumes.length}</span>
+                </div>
+                <div className="metric">
+                  <span className="metric__label">Machines</span>
+                  <span className="metric__value text-lg">{data.postgres.machines.length}</span>
+                </div>
+                <div className="metric">
+                  <span className="metric__label">Status</span>
+                  <span className={`font-mono text-sm ${data.postgres.machines.some((m) => m.state === "started") ? "text-nominal" : "text-caution"}`}>
+                    {data.postgres.machines.some((m) => m.state === "started") ? "Running" : "Stopped"}
+                  </span>
+                </div>
+              </div>
+              {data.postgres.volumes.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border-dim">
+                  <span className="label block mb-1.5">Volumes</span>
+                  <div className="space-y-1">
+                    {data.postgres.volumes.map((v) => (
+                      <div key={v.id} className="flex items-center justify-between font-mono text-xs">
+                        <span className="text-primary">{v.name}</span>
+                        <span className="text-tertiary">{v.sizeGb ?? "?"}GB · {v.region}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Networking */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="panel">
           <div className="panel__header">
-            <span className="panel__title">Volumes</span>
+            <span className="panel__title">App Volumes</span>
             <span className="font-mono text-[10px] text-tertiary">{volumes.length}</span>
           </div>
           <div className="panel__content">
             {volumes.length === 0 ? (
-              <p className="text-xs text-tertiary">None</p>
+              <p className="text-xs text-tertiary">No volumes attached</p>
             ) : (
               <div className="space-y-2">
                 {volumes.map((v) => (
                   <div key={v.id} className="flex items-center justify-between">
-                    <span className="font-mono text-xs text-primary">{v.name}</span>
-                    <span className="font-mono text-xs text-tertiary">{v.sizeGb ?? "?"}GB · {v.region}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`status-dot ${v.state === "created" ? "status-dot--nominal" : "status-dot--offline"}`} />
+                      <span className="font-mono text-xs text-primary">{v.name}</span>
+                    </div>
+                    <span className="font-mono text-xs text-tertiary">
+                      {v.sizeGb ?? "?"}GB · {v.region}{v.encrypted ? " · encrypted" : ""}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -964,25 +1163,11 @@ function ResourceMetricsPanel({ envId }: { envId: string }) {
                 {ips.map((ip, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-sm ${ip.type === "v6" ? "bg-data-bg text-data" : "bg-caution-bg text-caution"}`}>{ip.type}</span>
-                    <span className="font-mono text-xs text-primary truncate">{ip.address}</span>
+                    <span className="font-mono text-xs text-primary truncate flex-1">{ip.address}</span>
+                    <span className="font-mono text-[10px] text-tertiary">{ip.region}</span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Database</span>
-          </div>
-          <div className="panel__content">
-            {data?.postgres ? (
-              <a href={data.postgres.url} target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-data hover:underline">
-                {data.postgres.name}
-              </a>
-            ) : (
-              <p className="text-xs text-tertiary">No Postgres attached</p>
             )}
           </div>
         </div>
