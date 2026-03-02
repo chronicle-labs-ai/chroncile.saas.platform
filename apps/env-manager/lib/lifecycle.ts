@@ -203,12 +203,7 @@ export async function provisionEphemeral(
   if (!pgConnStr) {
     try {
       await log(`Attaching Postgres ${flyDbName} → ${flyAppName}...`);
-      const { execFile } = await import("child_process");
-      const { promisify } = await import("util");
-      const exec = promisify(execFile);
-      const { stdout } = await exec("flyctl", [
-        "postgres", "attach", flyDbName, "-a", flyAppName,
-      ], { env: { ...process.env }, timeout: 60_000 });
+      const { stdout } = await fly.attachPostgres(flyDbName, flyAppName);
       const connMatch = stdout.match(/DATABASE_URL=(\S+)/);
       if (connMatch) {
         pgConnStr = connMatch[1];

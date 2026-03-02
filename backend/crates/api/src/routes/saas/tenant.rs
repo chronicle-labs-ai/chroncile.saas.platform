@@ -1,9 +1,9 @@
 use axum::{extract::State, Json};
 
 use chronicle_auth::types::AuthUser;
-use chronicle_domain::{TenantResponse, UpdateStripeRequest};
+use chronicle_domain::{TenantResponse, UpdateStripeRequest, UserRole};
 
-use super::error::ApiResult;
+use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
 
 pub async fn get_tenant(
@@ -27,4 +27,41 @@ pub async fn update_tenant_stripe(
     ).await?;
 
     Ok(Json(TenantResponse { tenant: Some(tenant) }))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateTenantNameRequest {
+    pub name: String,
+}
+
+pub async fn update_tenant_name(
+    user: AuthUser,
+    State(state): State<SaasAppState>,
+    Json(input): Json<UpdateTenantNameRequest>,
+) -> ApiResult<Json<TenantResponse>> {
+    let role = UserRole::from_str(&user.role).unwrap_or(UserRole::Member);
+    if !role.is_owner() {
+        return Err(ApiError::forbidden("Only the organization owner can rename the organization"));
+    }
+
+    if input.name.trim().is_empty() {
+        return Err(ApiError::bad_request("Organization name cannot be empty"));
+    }
+
+    let tenant = state.tenants.update_name(&user.tenant_id, &input.name).await?;
+    Ok(Json(TenantResponse { tenant: Some(tenant) }))
+}
+
+pub async fn delete_tenant(
+    user: AuthUser,
+    State(state): State<SaasAppState>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let role = UserRole::from_str(&user.role).unwrap_or(UserRole::Member);
+    if !role.is_owner() {
+        return Err(ApiError::forbidden("Only the organization owner can delete the organization"));
+    }
+
+    state.tenants.delete(&user.tenant_id).await?;
+    Ok(Json(serde_json::json!({ "deleted": true })))
 }

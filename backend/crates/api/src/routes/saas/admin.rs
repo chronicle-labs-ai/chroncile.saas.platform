@@ -3,7 +3,7 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use chronicle_domain::{CreateTenantInput, CreateUserInput, Tenant, User};
+use chronicle_domain::{CreateTenantInput, CreateUserInput, Tenant, User, UserRole};
 use serde::{Deserialize, Serialize};
 
 use super::error::{ApiError, ApiResult};
@@ -123,6 +123,7 @@ pub async fn invite_user(
         name: input.name,
         password_hash: None,
         auth_provider: "google".to_string(),
+        role: UserRole::Member,
         tenant_id: tenant_id.clone(),
     }).await?;
 
@@ -177,6 +178,7 @@ pub async fn create_org(
         name: input.admin_name,
         password_hash: None,
         auth_provider: "google".to_string(),
+        role: UserRole::Owner,
         tenant_id: tenant.id.clone(),
     }).await?;
 

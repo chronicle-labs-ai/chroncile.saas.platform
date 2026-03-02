@@ -22,7 +22,9 @@ chronicle-source-mock-stripe = { workspace = true }
 chronicle-sources-core = { workspace = true }
 chronicle-api = { workspace = true }
 chronicle-auth = { workspace = true }
+chronicle-integrations = { workspace = true }
 pipedream-connect = { workspace = true }
+serde_json = { workspace = true }
 
 sqlx = { version = "0.7", features = ["postgres", "runtime-tokio"] }
 tokio = { workspace = true }

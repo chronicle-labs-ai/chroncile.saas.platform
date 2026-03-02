@@ -1,9 +1,13 @@
+import { execFile as _execFile } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(_execFile);
+
 const FLY_API_BASE = "https://api.machines.dev/v1";
 
 function flyHeaders(): HeadersInit {
   const token = process.env.FLY_API_TOKEN;
   if (!token) throw new Error("FLY_API_TOKEN is not set");
-  // Fly Machines API uses FlyV1 scheme; GraphQL API uses Bearer
   const scheme = token.startsWith("FlyV1 ") ? token : `FlyV1 ${token}`;
   return {
     Authorization: scheme,
@@ -14,7 +18,6 @@ function flyHeaders(): HeadersInit {
 function bearerToken(): string {
   const token = process.env.FLY_API_TOKEN;
   if (!token) throw new Error("FLY_API_TOKEN is not set");
-  // Strip FlyV1 prefix for GraphQL API which still uses Bearer
   return token.replace(/^FlyV1\s+/, "");
 }
 
@@ -22,6 +25,16 @@ function orgSlug(): string {
   const slug = process.env.FLY_ORG_SLUG;
   if (!slug) throw new Error("FLY_ORG_SLUG is not set");
   return slug;
+}
+
+async function flyExec(
+  args: string[],
+  opts?: { timeout?: number }
+): Promise<{ stdout: string; stderr: string }> {
+  return execAsync("flyctl", args, {
+    env: { ...process.env },
+    timeout: opts?.timeout ?? 120_000,
+  });
 }
 
 async function flyFetch(
@@ -96,16 +109,12 @@ export async function createMachine(
     env?: Record<string, string>;
   }
 ): Promise<FlyMachine | null> {
-  const { execFile } = await import("child_process");
-  const { promisify } = await import("util");
-  const exec = promisify(execFile);
-
   const envArgs: string[] = [];
   for (const [key, value] of Object.entries(config.env ?? {})) {
     envArgs.push("-e", `${key}=${value}`);
   }
 
-  const { stdout } = await exec("flyctl", [
+  const { stdout } = await flyExec([
     "machine", "run",
     config.image,
     "-a", appName,
@@ -117,10 +126,7 @@ export async function createMachine(
     "--restart", "always",
     "--autostart",
     ...envArgs,
-  ], {
-    env: { ...process.env },
-    timeout: 120_000,
-  });
+  ]);
 
   const idMatch = stdout.match(/Machine ID:\s*(\S+)/);
   const id = idMatch?.[1] ?? "unknown";
@@ -128,17 +134,9 @@ export async function createMachine(
 }
 
 export async function allocatePublicIps(appName: string): Promise<void> {
-  const { execFile } = await import("child_process");
-  const { promisify } = await import("util");
-  const exec = promisify(execFile);
-
   await Promise.allSettled([
-    exec("flyctl", ["ips", "allocate-v4", "--shared", "-a", appName], {
-      env: { ...process.env },
-    }),
-    exec("flyctl", ["ips", "allocate-v6", "-a", appName], {
-      env: { ...process.env },
-    }),
+    flyExec(["ips", "allocate-v4", "--shared", "-a", appName]),
+    flyExec(["ips", "allocate-v6", "-a", appName]),
   ]);
 }
 
@@ -198,14 +196,8 @@ export async function createPostgresCluster(
   name: string,
   region = "ams"
 ): Promise<{ appName: string; connectionString: string }> {
-  const { execFile } = await import("child_process");
-  const { promisify } = await import("util");
-  const exec = promisify(execFile);
-
-  const token = process.env.FLY_API_TOKEN ?? "";
-
   try {
-    const { stdout, stderr } = await exec("flyctl", [
+    const { stdout, stderr } = await flyExec([
       "postgres", "create",
       "--name", name,
       "--org", orgSlug(),
@@ -213,10 +205,7 @@ export async function createPostgresCluster(
       "--vm-size", "shared-cpu-1x",
       "--volume-size", "1",
       "--initial-cluster-size", "1",
-    ], {
-      env: { ...process.env, FLY_API_TOKEN: token },
-      timeout: 120_000,
-    });
+    ]);
 
     const output = stdout + stderr;
     // flyctl prints: Username: postgres  Password: XXXX  Hostname: name.internal
@@ -230,6 +219,16 @@ export async function createPostgresCluster(
   }
 }
 
+export async function attachPostgres(
+  dbName: string,
+  appName: string
+): Promise<{ stdout: string; stderr: string }> {
+  return flyExec(
+    ["postgres", "attach", dbName, "-a", appName],
+    { timeout: 60_000 }
+  );
+}
+
 export async function deletePostgresCluster(name: string): Promise<void> {
   await deleteApp(name);
 }
@@ -239,21 +238,14 @@ export async function forkPostgresCluster(
   destName: string,
   region = "ams"
 ): Promise<{ appName: string; connectionString: string }> {
-  const { execFile } = await import("child_process");
-  const { promisify } = await import("util");
-  const exec = promisify(execFile);
-
   try {
-    const { stdout, stderr } = await exec("flyctl", [
+    const { stdout, stderr } = await flyExec([
       "postgres", "fork",
       "--from", sourceName,
       "--name", destName,
       "--org", orgSlug(),
       "--region", region,
-    ], {
-      env: { ...process.env },
-      timeout: 180_000,
-    });
+    ], { timeout: 180_000 });
 
     const output = stdout + stderr;
     const passwordMatch = output.match(/Password:\s*(\S+)/);
@@ -270,23 +262,19 @@ export async function runSeedSql(
   dbAppName: string,
   seedSqlUrl: string
 ): Promise<void> {
-  const { execFile, spawn } = await import("child_process");
-  const { promisify } = await import("util");
-  const exec = promisify(execFile);
+  const { spawn } = await import("child_process");
 
   const res = await fetch(seedSqlUrl, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`Failed to download seed SQL from ${seedSqlUrl}: ${res.status}`);
   const sql = await res.text();
 
-  // Get the Postgres operator password from the DB machine
-  const { stdout: pwOut } = await exec("flyctl", [
+  const { stdout: pwOut } = await flyExec([
     "ssh", "console", "-a", dbAppName,
     "-C", "printenv OPERATOR_PASSWORD",
-  ], { env: { ...process.env }, timeout: 30_000 });
+  ], { timeout: 30_000 });
   const password = pwOut.trim();
   if (!password) throw new Error("Could not retrieve OPERATOR_PASSWORD from DB machine");
 
-  // Start a local proxy to the Fly Postgres
   const proxyPort = 10000 + Math.floor(Math.random() * 50000);
   const proxy = spawn("flyctl", [
     "proxy", `${proxyPort}:5433`, "-a", dbAppName,

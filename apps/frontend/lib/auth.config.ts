@@ -10,6 +10,7 @@ async function refreshBackendToken(token: {
   id: string;
   email?: string | null;
   name?: string | null;
+  role: string;
   tenantId: string;
   tenantName: string;
   tenantSlug: string;
@@ -25,6 +26,7 @@ async function refreshBackendToken(token: {
           user_id: token.id,
           email: token.email,
           name: token.name,
+          role: token.role,
           tenant_id: token.tenantId,
           tenant_name: token.tenantName,
           tenant_slug: token.tenantSlug,
@@ -74,6 +76,7 @@ export const authConfig: NextAuthConfig = {
           const backendUser = data.user;
 
           user.id = backendUser.id;
+          user.role = backendUser.role;
           user.tenantId = backendUser.tenantId;
           user.tenantName = backendUser.tenantName;
           user.tenantSlug = backendUser.tenantSlug;
@@ -87,6 +90,7 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user && user.id) {
         token.id = user.id;
+        token.role = user.role;
         token.tenantId = user.tenantId;
         token.tenantName = user.tenantName;
         token.tenantSlug = user.tenantSlug;
@@ -111,6 +115,7 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id;
+        session.user.role = token.role;
         session.user.tenantId = token.tenantId;
         session.user.tenantName = token.tenantName;
         session.user.tenantSlug = token.tenantSlug;

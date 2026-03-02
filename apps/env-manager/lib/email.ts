@@ -3,7 +3,7 @@ import { OrgInviteEmail } from "@/emails/org-invite";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? "Chronicle Labs <noreply@chronicle-labs.com>";
+const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? "Chronicle Labs <noreply@notify.chronicle-labs.com>";
 
 interface SendOrgInviteParams {
   to: string;

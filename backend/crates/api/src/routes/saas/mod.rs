@@ -6,12 +6,13 @@ pub mod settings;
 pub mod connections;
 pub mod runs;
 pub mod audit;
+pub mod team;
 pub mod tenant;
 pub mod pipedream;
 pub mod webhooks;
 
 use axum::{
-    routing::{get, post, put, delete},
+    routing::{get, post, put, delete, patch},
     Router,
     middleware as axum_mw,
 };
@@ -33,6 +34,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route("/api/platform/admin/orgs", post(admin::create_org))
         .route("/api/webhooks/pipedream/:tenantId", post(webhooks::pipedream_webhook))
         .route("/api/webhooks/stripe", post(webhooks::stripe_webhook))
+        .route("/api/platform/auth/accept-invite/:token", post(team::accept_invite))
         .with_state(state.clone());
 
     let protected = Router::new()
@@ -48,7 +50,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route("/api/platform/runs/:id", get(runs::get_run))
         .route("/api/platform/runs/:id", put(runs::update_run_status))
         .route("/api/platform/audit", get(audit::list_audit_logs))
-        .route("/api/platform/tenant", get(tenant::get_tenant))
+        .route("/api/platform/tenant", get(tenant::get_tenant).patch(tenant::update_tenant_name).delete(tenant::delete_tenant))
         .route("/api/platform/tenant/stripe", put(tenant::update_tenant_stripe))
         .route("/api/platform/pipedream/apps", get(pipedream::list_apps))
         .route("/api/platform/pipedream/triggers", get(pipedream::list_triggers))
@@ -57,6 +59,10 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route("/api/platform/pipedream/triggers/deployed/:deployment_id", get(pipedream::get_deployed).put(pipedream::update_deployed).delete(pipedream::delete_deployed))
         .route("/api/platform/pipedream/token", post(pipedream::create_token))
         .route("/api/platform/pipedream/accounts", get(pipedream::list_accounts))
+        .route("/api/platform/team/members", get(team::list_members))
+        .route("/api/platform/team/invite", post(team::invite_member))
+        .route("/api/platform/team/members/:user_id", delete(team::remove_member))
+        .route("/api/platform/team/members/:user_id/role", patch(team::update_member_role))
         .layer(axum_mw::from_fn(move |mut req: axum::extract::Request, next: axum_mw::Next| {
             let jwt = jwt.clone();
             async move {

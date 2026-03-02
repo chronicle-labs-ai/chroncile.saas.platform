@@ -7,13 +7,14 @@ fn naive_to_utc(naive: NaiveDateTime) -> chrono::DateTime<Utc> {
 }
 
 use chronicle_domain::{
-    AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateRunInput,
-    CreateTenantInput, CreateUserInput, PipedreamTrigger, Run, Tenant, User,
+    AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
+    CreateRunInput, CreateTenantInput, CreateUserInput, Invitation, PipedreamTrigger, Run,
+    Tenant, User, UserRole,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository,
-    PipedreamTriggerRepository, RepoError, RepoResult, RunRepository, TenantRepository,
-    UserRepository,
+    InvitationRepository, PipedreamTriggerRepository, RepoError, RepoResult, RunRepository,
+    TenantRepository, UserRepository,
 };
 
 fn new_id() -> String {
@@ -46,14 +47,17 @@ fn tenant_from_row(row: sqlx::postgres::PgRow) -> Result<Tenant, sqlx::Error> {
 }
 
 fn user_from_row(row: sqlx::postgres::PgRow) -> Result<User, sqlx::Error> {
+    use chronicle_domain::UserRole;
     let created: NaiveDateTime = row.try_get("createdAt")?;
     let updated: NaiveDateTime = row.try_get("updatedAt")?;
+    let role_str: String = row.try_get::<String, _>("role").unwrap_or_else(|_| "member".to_string());
     Ok(User {
         id: row.try_get("id")?,
         email: row.try_get("email")?,
         name: row.try_get("name")?,
         password: row.try_get("password")?,
         auth_provider: row.try_get::<String, _>("authProvider").unwrap_or_else(|_| "credentials".to_string()),
+        role: UserRole::from_str(&role_str).unwrap_or(UserRole::Member),
         tenant_id: row.try_get("tenantId")?,
         created_at: naive_to_utc(created),
         updated_at: naive_to_utc(updated),
@@ -189,6 +193,23 @@ impl TenantRepository for PgTenantRepo {
             .fetch_all(&self.pool).await.map_err(to_repo_err)
     }
 
+    async fn update_name(&self, id: &str, name: &str) -> RepoResult<Tenant> {
+        sqlx::query("UPDATE \"Tenant\" SET name = $1, \"updatedAt\" = $3 WHERE id = $2 RETURNING *")
+            .bind(name).bind(id).bind(Utc::now().naive_utc())
+            .try_map(tenant_from_row)
+            .fetch_one(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn delete(&self, id: &str) -> RepoResult<()> {
+        let result = sqlx::query("DELETE FROM \"Tenant\" WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool).await.map_err(to_repo_err)?;
+        if result.rows_affected() == 0 {
+            return Err(RepoError::NotFound(format!("tenant: {id}")));
+        }
+        Ok(())
+    }
+
     async fn count_all(&self) -> RepoResult<usize> {
         let row = sqlx::query("SELECT COUNT(*) AS count FROM \"Tenant\"")
             .fetch_one(&self.pool).await.map_err(to_repo_err)?;
@@ -208,8 +229,9 @@ impl UserRepository for PgUserRepo {
     async fn create(&self, input: CreateUserInput) -> RepoResult<User> {
         let id = new_id();
         let now = Utc::now().naive_utc();
-        sqlx::query("INSERT INTO \"User\" (id, email, name, password, \"authProvider\", \"tenantId\", \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *")
-            .bind(&id).bind(&input.email).bind(&input.name).bind(&input.password_hash).bind(&input.auth_provider).bind(&input.tenant_id).bind(now).bind(now)
+        let role_str = input.role.as_str();
+        sqlx::query("INSERT INTO \"User\" (id, email, name, password, \"authProvider\", role, \"tenantId\", \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
+            .bind(&id).bind(&input.email).bind(&input.name).bind(&input.password_hash).bind(&input.auth_provider).bind(role_str).bind(&input.tenant_id).bind(now).bind(now)
             .try_map(user_from_row)
             .fetch_one(&self.pool).await.map_err(to_repo_err)
     }
@@ -229,6 +251,102 @@ impl UserRepository for PgUserRepo {
             .bind(tenant_id)
             .try_map(user_from_row)
             .fetch_all(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn delete(&self, id: &str) -> RepoResult<()> {
+        let result = sqlx::query("DELETE FROM \"User\" WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool).await.map_err(to_repo_err)?;
+        if result.rows_affected() == 0 {
+            return Err(RepoError::NotFound(format!("user: {id}")));
+        }
+        Ok(())
+    }
+
+    async fn update_role(&self, id: &str, role: &str) -> RepoResult<User> {
+        sqlx::query("UPDATE \"User\" SET role = $1, \"updatedAt\" = $3 WHERE id = $2 RETURNING *")
+            .bind(role)
+            .bind(id)
+            .bind(Utc::now().naive_utc())
+            .try_map(user_from_row)
+            .fetch_one(&self.pool).await.map_err(to_repo_err)
+    }
+}
+
+// === Invitation ===
+
+fn invitation_from_row(row: sqlx::postgres::PgRow) -> Result<Invitation, sqlx::Error> {
+    let expires: NaiveDateTime = row.try_get("expiresAt")?;
+    let accepted: Option<NaiveDateTime> = row.try_get("acceptedAt")?;
+    let created: NaiveDateTime = row.try_get("createdAt")?;
+    let role_str: String = row.try_get::<String, _>("role").unwrap_or_else(|_| "member".to_string());
+    Ok(Invitation {
+        id: row.try_get("id")?,
+        tenant_id: row.try_get("tenantId")?,
+        email: row.try_get("email")?,
+        role: UserRole::from_str(&role_str).unwrap_or(UserRole::Member),
+        token: row.try_get("token")?,
+        invited_by: row.try_get("invitedBy")?,
+        expires_at: naive_to_utc(expires),
+        accepted_at: accepted.map(naive_to_utc),
+        created_at: naive_to_utc(created),
+    })
+}
+
+#[derive(Clone)]
+pub struct PgInvitationRepo { pool: PgPool }
+impl PgInvitationRepo { pub fn new(pool: PgPool) -> Self { Self { pool } } }
+
+#[async_trait]
+impl InvitationRepository for PgInvitationRepo {
+    async fn create(&self, input: CreateInvitationInput) -> RepoResult<Invitation> {
+        let id = new_id();
+        let now = Utc::now().naive_utc();
+        let expires = (Utc::now() + chrono::Duration::days(7)).naive_utc();
+        let token = format!("inv_{}", new_id());
+        let role_str = input.role.as_str();
+        sqlx::query(
+            "INSERT INTO \"Invitation\" (id, \"tenantId\", email, role, token, \"invitedBy\", \"expiresAt\", \"createdAt\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
+        )
+            .bind(&id).bind(&input.tenant_id).bind(&input.email).bind(role_str)
+            .bind(&token).bind(&input.invited_by).bind(expires).bind(now)
+            .try_map(invitation_from_row)
+            .fetch_one(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn find_by_token(&self, token: &str) -> RepoResult<Option<Invitation>> {
+        sqlx::query("SELECT * FROM \"Invitation\" WHERE token = $1").bind(token)
+            .try_map(invitation_from_row).fetch_optional(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn find_by_email_and_tenant(&self, email: &str, tenant_id: &str) -> RepoResult<Option<Invitation>> {
+        sqlx::query("SELECT * FROM \"Invitation\" WHERE email = $1 AND \"tenantId\" = $2 AND \"acceptedAt\" IS NULL ORDER BY \"createdAt\" DESC LIMIT 1")
+            .bind(email).bind(tenant_id)
+            .try_map(invitation_from_row).fetch_optional(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Invitation>> {
+        sqlx::query("SELECT * FROM \"Invitation\" WHERE \"tenantId\" = $1 ORDER BY \"createdAt\" DESC")
+            .bind(tenant_id)
+            .try_map(invitation_from_row)
+            .fetch_all(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn mark_accepted(&self, id: &str) -> RepoResult<Invitation> {
+        sqlx::query("UPDATE \"Invitation\" SET \"acceptedAt\" = $1 WHERE id = $2 RETURNING *")
+            .bind(Utc::now().naive_utc()).bind(id)
+            .try_map(invitation_from_row)
+            .fetch_one(&self.pool).await.map_err(to_repo_err)
+    }
+
+    async fn delete(&self, id: &str) -> RepoResult<()> {
+        let result = sqlx::query("DELETE FROM \"Invitation\" WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool).await.map_err(to_repo_err)?;
+        if result.rows_affected() == 0 {
+            return Err(RepoError::NotFound(format!("invitation: {id}")));
+        }
+        Ok(())
     }
 }
 

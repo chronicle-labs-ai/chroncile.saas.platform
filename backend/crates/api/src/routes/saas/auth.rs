@@ -4,7 +4,7 @@ use chronicle_auth::{
     password::{hash_password, verify_password},
     types::{AuthResponse, AuthUser, AuthUserResponse},
 };
-use chronicle_domain::{CreateTenantInput, CreateUserInput};
+use chronicle_domain::{CreateTenantInput, CreateUserInput, UserRole};
 
 use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
@@ -57,6 +57,7 @@ pub async fn signup(
         name: Some(input.name),
         password_hash: Some(password_hash),
         auth_provider: "credentials".to_string(),
+        role: UserRole::Owner,
         tenant_id: tenant.id.clone(),
     }).await?;
 
@@ -64,6 +65,7 @@ pub async fn signup(
         id: user.id.clone(),
         email: user.email.clone(),
         name: user.name.clone(),
+        role: user.role.as_str().to_string(),
         tenant_id: tenant.id.clone(),
         tenant_name: tenant.name.clone(),
         tenant_slug: tenant.slug.clone(),
@@ -77,6 +79,7 @@ pub async fn signup(
             id: user.id,
             email: user.email,
             name: user.name,
+            role: user.role.as_str().to_string(),
             tenant_id: tenant.id,
             tenant_name: tenant.name,
             tenant_slug: tenant.slug,
@@ -119,6 +122,7 @@ pub async fn login(
         id: user.id.clone(),
         email: user.email.clone(),
         name: user.name.clone(),
+        role: user.role.as_str().to_string(),
         tenant_id: tenant.id.clone(),
         tenant_name: tenant.name.clone(),
         tenant_slug: tenant.slug.clone(),
@@ -132,6 +136,7 @@ pub async fn login(
             id: user.id,
             email: user.email,
             name: user.name,
+            role: user.role.as_str().to_string(),
             tenant_id: tenant.id,
             tenant_name: tenant.name,
             tenant_slug: tenant.slug,
@@ -145,6 +150,7 @@ pub struct TokenExchangeRequest {
     pub user_id: String,
     pub email: String,
     pub name: Option<String>,
+    pub role: Option<String>,
     pub tenant_id: String,
     pub tenant_name: String,
     pub tenant_slug: String,
@@ -163,6 +169,7 @@ pub async fn exchange_token(
         id: input.user_id,
         email: input.email,
         name: input.name,
+        role: input.role.unwrap_or_else(|| "member".to_string()),
         tenant_id: input.tenant_id,
         tenant_name: input.tenant_name,
         tenant_slug: input.tenant_slug,
@@ -203,6 +210,7 @@ pub async fn oauth_signup(
             id: existing_user.id.clone(),
             email: existing_user.email.clone(),
             name: existing_user.name.clone(),
+            role: existing_user.role.as_str().to_string(),
             tenant_id: tenant.id.clone(),
             tenant_name: tenant.name.clone(),
             tenant_slug: tenant.slug.clone(),
@@ -216,6 +224,7 @@ pub async fn oauth_signup(
                 id: existing_user.id,
                 email: existing_user.email,
                 name: existing_user.name,
+                role: existing_user.role.as_str().to_string(),
                 tenant_id: tenant.id,
                 tenant_name: tenant.name,
                 tenant_slug: tenant.slug,
@@ -237,6 +246,7 @@ pub async fn oauth_signup(
         name: input.name,
         password_hash: None,
         auth_provider: input.provider,
+        role: UserRole::Owner,
         tenant_id: tenant.id.clone(),
     }).await?;
 
@@ -244,6 +254,7 @@ pub async fn oauth_signup(
         id: user.id.clone(),
         email: user.email.clone(),
         name: user.name.clone(),
+        role: user.role.as_str().to_string(),
         tenant_id: tenant.id.clone(),
         tenant_name: tenant.name.clone(),
         tenant_slug: tenant.slug.clone(),
@@ -257,6 +268,7 @@ pub async fn oauth_signup(
             id: user.id,
             email: user.email,
             name: user.name,
+            role: user.role.as_str().to_string(),
             tenant_id: tenant.id,
             tenant_name: tenant.name,
             tenant_slug: tenant.slug,

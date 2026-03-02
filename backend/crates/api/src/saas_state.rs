@@ -4,7 +4,8 @@ use chronicle_auth::jwt::JwtService;
 use chronicle_infra::{StoreBackend, StreamBackend};
 use chronicle_interfaces::{
     AuditLogRepository, AgentEndpointConfigRepository, ConnectionRepository,
-    PipedreamTriggerRepository, RunRepository, TenantRepository, UserRepository,
+    EmailService, InvitationRepository, PipedreamTriggerRepository, RunRepository,
+    TenantRepository, UserRepository,
 };
 use pipedream_connect::PipedreamClient;
 
@@ -18,7 +19,9 @@ pub struct SaasAppState {
     pub audit_logs: Arc<dyn AuditLogRepository>,
     pub agent_configs: Arc<dyn AgentEndpointConfigRepository>,
     pub pipedream_triggers: Arc<dyn PipedreamTriggerRepository>,
+    pub invitations: Arc<dyn InvitationRepository>,
     pub pipedream: Option<Arc<PipedreamClient>>,
+    pub email: Arc<dyn EmailService>,
     pub event_store: Arc<StoreBackend>,
     pub event_stream: Arc<StreamBackend>,
 }
@@ -34,7 +37,9 @@ impl SaasAppState {
         audit_logs: Arc<dyn AuditLogRepository>,
         agent_configs: Arc<dyn AgentEndpointConfigRepository>,
         pipedream_triggers: Arc<dyn PipedreamTriggerRepository>,
+        invitations: Arc<dyn InvitationRepository>,
         pipedream: Option<Arc<PipedreamClient>>,
+        email: Arc<dyn EmailService>,
         event_store: Arc<StoreBackend>,
         event_stream: Arc<StreamBackend>,
     ) -> Self {
@@ -47,7 +52,9 @@ impl SaasAppState {
             audit_logs,
             agent_configs,
             pipedream_triggers,
+            invitations,
             pipedream,
+            email,
             event_store,
             event_stream,
         }

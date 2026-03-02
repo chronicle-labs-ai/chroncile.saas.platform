@@ -5,13 +5,13 @@ use std::sync::Arc;
 
 use chronicle_domain::{
     AuditLog, AgentEndpointConfig, Connection, CreateConnectionInput,
-    CreateRunInput, CreateTenantInput, CreateUserInput, PipedreamTrigger,
-    Run, Tenant, User,
+    CreateInvitationInput, CreateRunInput, CreateTenantInput, CreateUserInput,
+    Invitation, PipedreamTrigger, Run, Tenant, User, UserRole,
 };
 use chronicle_interfaces::{
     AuditLogRepository, AgentEndpointConfigRepository, ConnectionRepository,
-    PipedreamTriggerRepository, RepoError, RepoResult, RunRepository,
-    TenantRepository, UserRepository,
+    InvitationRepository, PipedreamTriggerRepository, RepoError, RepoResult,
+    RunRepository, TenantRepository, UserRepository,
 };
 
 fn new_id() -> String {
@@ -82,6 +82,20 @@ impl TenantRepository for InMemoryTenantRepo {
         Ok(tenants.into_iter().skip(offset).take(limit).collect())
     }
 
+    async fn update_name(&self, id: &str, name: &str) -> RepoResult<Tenant> {
+        let mut entry = self.store.get_mut(id)
+            .ok_or_else(|| RepoError::NotFound(format!("tenant: {id}")))?;
+        entry.name = name.to_string();
+        entry.updated_at = Utc::now();
+        Ok(entry.clone())
+    }
+
+    async fn delete(&self, id: &str) -> RepoResult<()> {
+        self.store.remove(id)
+            .ok_or_else(|| RepoError::NotFound(format!("tenant: {id}")))?;
+        Ok(())
+    }
+
     async fn count_all(&self) -> RepoResult<usize> {
         Ok(self.store.len())
     }
@@ -107,6 +121,7 @@ impl UserRepository for InMemoryUserRepo {
             name: input.name,
             password: input.password_hash,
             auth_provider: input.auth_provider,
+            role: input.role,
             tenant_id: input.tenant_id,
             created_at: now,
             updated_at: now,
@@ -130,6 +145,82 @@ impl UserRepository for InMemoryUserRepo {
             .collect();
         users.sort_by_key(|u| u.created_at);
         Ok(users)
+    }
+
+    async fn delete(&self, id: &str) -> RepoResult<()> {
+        self.store.remove(id)
+            .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
+        Ok(())
+    }
+
+    async fn update_role(&self, id: &str, role: &str) -> RepoResult<User> {
+        let mut entry = self.store.get_mut(id)
+            .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
+        let parsed_role = UserRole::from_str(role)
+            .ok_or_else(|| RepoError::Internal(format!("invalid role: {role}")))?;
+        entry.role = parsed_role;
+        entry.updated_at = Utc::now();
+        Ok(entry.clone())
+    }
+}
+
+// === Invitation ===
+
+#[derive(Clone, Default)]
+pub struct InMemoryInvitationRepo {
+    store: Arc<DashMap<String, Invitation>>,
+}
+
+#[async_trait]
+impl InvitationRepository for InMemoryInvitationRepo {
+    async fn create(&self, input: CreateInvitationInput) -> RepoResult<Invitation> {
+        let now = Utc::now();
+        let token = format!("inv_{}", new_id());
+        let invitation = Invitation {
+            id: new_id(),
+            tenant_id: input.tenant_id,
+            email: input.email,
+            role: input.role,
+            token,
+            invited_by: input.invited_by,
+            expires_at: now + chrono::Duration::days(7),
+            accepted_at: None,
+            created_at: now,
+        };
+        self.store.insert(invitation.id.clone(), invitation.clone());
+        Ok(invitation)
+    }
+
+    async fn find_by_token(&self, token: &str) -> RepoResult<Option<Invitation>> {
+        Ok(self.store.iter().find(|e| e.value().token == token).map(|e| e.value().clone()))
+    }
+
+    async fn find_by_email_and_tenant(&self, email: &str, tenant_id: &str) -> RepoResult<Option<Invitation>> {
+        Ok(self.store.iter()
+            .find(|e| e.value().email == email && e.value().tenant_id == tenant_id && e.value().accepted_at.is_none())
+            .map(|e| e.value().clone()))
+    }
+
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Invitation>> {
+        let mut invitations: Vec<Invitation> = self.store.iter()
+            .filter(|e| e.value().tenant_id == tenant_id)
+            .map(|e| e.value().clone())
+            .collect();
+        invitations.sort_by_key(|i| std::cmp::Reverse(i.created_at));
+        Ok(invitations)
+    }
+
+    async fn mark_accepted(&self, id: &str) -> RepoResult<Invitation> {
+        let mut entry = self.store.get_mut(id)
+            .ok_or_else(|| RepoError::NotFound(format!("invitation: {id}")))?;
+        entry.accepted_at = Some(Utc::now());
+        Ok(entry.clone())
+    }
+
+    async fn delete(&self, id: &str) -> RepoResult<()> {
+        self.store.remove(id)
+            .ok_or_else(|| RepoError::NotFound(format!("invitation: {id}")))?;
+        Ok(())
     }
 }
 

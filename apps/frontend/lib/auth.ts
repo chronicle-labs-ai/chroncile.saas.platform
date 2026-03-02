@@ -46,6 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
           tenantId: user.tenantId,
           tenantName: user.tenantName,
           tenantSlug: user.tenantSlug,
@@ -58,6 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
 declare module "next-auth" {
   interface User {
+    role: string;
     tenantId: string;
     tenantName: string;
     tenantSlug: string;
@@ -66,6 +68,7 @@ declare module "next-auth" {
   interface Session {
     user: User & {
       id: string;
+      role: string;
       tenantId: string;
       tenantName: string;
       tenantSlug: string;
@@ -77,6 +80,7 @@ declare module "next-auth" {
 declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
+    role: string;
     tenantId: string;
     tenantName: string;
     tenantSlug: string;

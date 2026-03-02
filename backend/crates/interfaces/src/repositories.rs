@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use chronicle_domain::{
     AuditLog, AgentEndpointConfig, Connection, CreateConnectionInput,
-    CreateRunInput, CreateTenantInput, CreateUserInput, PipedreamTrigger,
-    Run, Tenant, User,
+    CreateInvitationInput, CreateRunInput, CreateTenantInput, CreateUserInput,
+    Invitation, PipedreamTrigger, Run, Tenant, User,
 };
 
 pub type RepoResult<T> = Result<T, RepoError>;
@@ -29,6 +29,8 @@ pub trait TenantRepository: Send + Sync {
         subscription_status: Option<&str>,
         price_id: Option<&str>,
     ) -> RepoResult<Tenant>;
+    async fn update_name(&self, id: &str, name: &str) -> RepoResult<Tenant>;
+    async fn delete(&self, id: &str) -> RepoResult<()>;
     async fn list_all(&self, limit: usize, offset: usize) -> RepoResult<Vec<Tenant>>;
     async fn count_all(&self) -> RepoResult<usize>;
 }
@@ -39,6 +41,18 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<User>>;
     async fn find_by_email(&self, email: &str) -> RepoResult<Option<User>>;
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<User>>;
+    async fn delete(&self, id: &str) -> RepoResult<()>;
+    async fn update_role(&self, id: &str, role: &str) -> RepoResult<User>;
+}
+
+#[async_trait]
+pub trait InvitationRepository: Send + Sync {
+    async fn create(&self, input: CreateInvitationInput) -> RepoResult<Invitation>;
+    async fn find_by_token(&self, token: &str) -> RepoResult<Option<Invitation>>;
+    async fn find_by_email_and_tenant(&self, email: &str, tenant_id: &str) -> RepoResult<Option<Invitation>>;
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Invitation>>;
+    async fn mark_accepted(&self, id: &str) -> RepoResult<Invitation>;
+    async fn delete(&self, id: &str) -> RepoResult<()>;
 }
 
 #[async_trait]

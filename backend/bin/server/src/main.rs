@@ -171,6 +171,18 @@ fn build_pipedream_client() -> Option<Arc<pipedream_connect::PipedreamClient>> {
     )))
 }
 
+fn build_email_service() -> Arc<dyn chronicle_interfaces::EmailService> {
+    let template_map = parse_template_map();
+    Arc::from(chronicle_integrations::resend::build_email_service(template_map))
+}
+
+fn parse_template_map() -> std::collections::HashMap<String, String> {
+    std::env::var("RESEND_TEMPLATES_JSON")
+        .ok()
+        .and_then(|json| serde_json::from_str(&json).ok())
+        .unwrap_or_default()
+}
+
 fn build_saas_state_postgres(
     pool: sqlx::PgPool,
     event_store: Arc<StoreBackend>,
@@ -189,8 +201,10 @@ fn build_saas_state_postgres(
         Arc::new(PgConnectionRepo::new(pool.clone())),
         Arc::new(PgAuditLogRepo::new(pool.clone())),
         Arc::new(PgAgentEndpointConfigRepo::new(pool.clone())),
-        Arc::new(PgPipedreamTriggerRepo::new(pool)),
+        Arc::new(PgPipedreamTriggerRepo::new(pool.clone())),
+        Arc::new(PgInvitationRepo::new(pool)),
         build_pipedream_client(),
+        build_email_service(),
         event_store,
         event_stream,
     )
@@ -214,7 +228,9 @@ fn build_saas_state_memory(
         Arc::new(InMemoryAuditLogRepo::default()),
         Arc::new(InMemoryAgentEndpointConfigRepo::default()),
         Arc::new(InMemoryPipedreamTriggerRepo::default()),
+        Arc::new(InMemoryInvitationRepo::default()),
         build_pipedream_client(),
+        build_email_service(),
         event_store,
         event_stream,
     )

@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
+import { fetcher } from "@/lib/constants";
 import { BranchPicker } from "@/components/ui/branch-picker";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface Branch {
   name: string;

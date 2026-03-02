@@ -6,6 +6,7 @@ pub struct AuthUser {
     pub id: String,
     pub email: String,
     pub name: Option<String>,
+    pub role: String,
     pub tenant_id: String,
     pub tenant_name: String,
     pub tenant_slug: String,
@@ -16,6 +17,7 @@ pub struct Claims {
     pub sub: String,
     pub email: String,
     pub name: Option<String>,
+    pub role: String,
     pub tenant_id: String,
     pub tenant_name: String,
     pub tenant_slug: String,
@@ -51,6 +53,7 @@ pub struct AuthUserResponse {
     pub id: String,
     pub email: String,
     pub name: Option<String>,
+    pub role: String,
     #[serde(rename = "tenantId")]
     pub tenant_id: String,
     #[serde(rename = "tenantName")]

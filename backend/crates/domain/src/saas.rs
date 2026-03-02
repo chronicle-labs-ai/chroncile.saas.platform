@@ -1,6 +1,58 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use ts_rs::TS;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub enum UserRole {
+    #[serde(rename = "owner")]
+    Owner,
+    #[serde(rename = "admin")]
+    Admin,
+    #[serde(rename = "member")]
+    Member,
+}
+
+impl UserRole {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Owner => "owner",
+            Self::Admin => "admin",
+            Self::Member => "member",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "owner" => Some(Self::Owner),
+            "admin" => Some(Self::Admin),
+            "member" => Some(Self::Member),
+            _ => None,
+        }
+    }
+
+    pub fn has_admin_access(&self) -> bool {
+        matches!(self, Self::Owner | Self::Admin)
+    }
+
+    pub fn is_owner(&self) -> bool {
+        matches!(self, Self::Owner)
+    }
+}
+
+impl Default for UserRole {
+    fn default() -> Self {
+        Self::Member
+    }
+}
+
+impl fmt::Display for UserRole {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -26,6 +78,7 @@ pub struct User {
     #[serde(skip_serializing)]
     pub password: Option<String>,
     pub auth_provider: String,
+    pub role: UserRole,
     pub tenant_id: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -176,7 +229,31 @@ pub struct CreateUserInput {
     pub name: Option<String>,
     pub password_hash: Option<String>,
     pub auth_provider: String,
+    pub role: UserRole,
     pub tenant_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct Invitation {
+    pub id: String,
+    pub tenant_id: String,
+    pub email: String,
+    pub role: UserRole,
+    pub token: String,
+    pub invited_by: String,
+    pub expires_at: DateTime<Utc>,
+    pub accepted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateInvitationInput {
+    pub tenant_id: String,
+    pub email: String,
+    pub role: UserRole,
+    pub invited_by: String,
 }
 
 #[derive(Debug, Clone)]
@@ -248,6 +325,7 @@ mod tests {
             name: Some("Test".to_string()),
             password: Some("hashed_secret".to_string()),
             auth_provider: "credentials".to_string(),
+            role: UserRole::Member,
             tenant_id: "t1".to_string(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -255,6 +333,25 @@ mod tests {
 
         let json = serde_json::to_string(&user).unwrap();
         assert!(!json.contains("hashed_secret"));
+        assert!(json.contains("\"role\":\"member\""));
+    }
+
+    #[test]
+    fn test_user_role_hierarchy() {
+        assert!(UserRole::Owner.has_admin_access());
+        assert!(UserRole::Admin.has_admin_access());
+        assert!(!UserRole::Member.has_admin_access());
+        assert!(UserRole::Owner.is_owner());
+        assert!(!UserRole::Admin.is_owner());
+    }
+
+    #[test]
+    fn test_user_role_roundtrip() {
+        for role in [UserRole::Owner, UserRole::Admin, UserRole::Member] {
+            let s = role.as_str();
+            let parsed = UserRole::from_str(s).unwrap();
+            assert_eq!(parsed, role);
+        }
     }
 
     #[test]

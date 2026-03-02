@@ -4,31 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import type { EnvironmentRecord } from "@/lib/types";
+import { TYPE_LABELS, BADGE_CLASS, STATUS_DOT_CLASS, fetcher } from "@/lib/constants";
 import { ConfirmDestroyModal } from "@/components/ui/confirm-destroy-modal";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-
-const TYPE_LABELS: Record<string, string> = {
-  PRODUCTION: "PROD",
-  STAGING: "STG",
-  DEVELOPMENT: "DEV",
-  EPHEMERAL: "EPH",
-};
-
-const BADGE_CLASS: Record<string, string> = {
-  PRODUCTION: "badge--critical",
-  STAGING: "badge--caution",
-  DEVELOPMENT: "badge--data",
-  EPHEMERAL: "badge--neutral",
-};
-
-const STATUS_DOT_CLASS: Record<string, string> = {
-  RUNNING: "status-dot--nominal",
-  STOPPED: "status-dot--offline",
-  PROVISIONING: "status-dot--caution status-dot--pulse",
-  DESTROYING: "status-dot--critical status-dot--pulse",
-  ERROR: "status-dot--critical",
-};
 
 function Skeleton({ className }: { className?: string }) {
   return (

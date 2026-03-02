@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import type { EnvironmentRecord } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/constants";
 
 interface DbTemplate {
   id: string;
