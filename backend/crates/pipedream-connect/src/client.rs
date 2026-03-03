@@ -113,21 +113,15 @@ impl PipedreamClient {
             }
             s if s >= 400 => {
                 let message = resp.text().await.unwrap_or_default();
-                Err(PipedreamError::ApiError {
-                    status: s,
-                    message,
-                })
+                Err(PipedreamError::ApiError { status: s, message })
             }
             _ => Ok(resp),
         }
     }
 
-    async fn parse_response<T: serde::de::DeserializeOwned>(
-        resp: reqwest::Response,
-    ) -> Result<T> {
+    async fn parse_response<T: serde::de::DeserializeOwned>(resp: reqwest::Response) -> Result<T> {
         let text = resp.text().await.map_err(PipedreamError::Network)?;
-        serde_json::from_str(&text)
-            .map_err(|e| PipedreamError::Deserialize(format!("{e}: {text}")))
+        serde_json::from_str(&text).map_err(|e| PipedreamError::Deserialize(format!("{e}: {text}")))
     }
 
     fn project_url(&self, path: &str) -> String {
@@ -136,11 +130,7 @@ impl PipedreamClient {
 
     // === Apps ===
 
-    pub async fn list_apps(
-        &self,
-        query: Option<&str>,
-        limit: Option<u64>,
-    ) -> Result<AppsResponse> {
+    pub async fn list_apps(&self, query: Option<&str>, limit: Option<u64>) -> Result<AppsResponse> {
         let mut url = format!("{}/connect/apps", self.base_url);
         let mut params = Vec::new();
         if let Some(q) = query {
@@ -220,7 +210,10 @@ impl PipedreamClient {
         Self::parse_response(resp).await
     }
 
-    pub async fn deploy_trigger(&self, req: DeployTriggerRequest) -> Result<DeployedTriggerResponse> {
+    pub async fn deploy_trigger(
+        &self,
+        req: DeployTriggerRequest,
+    ) -> Result<DeployedTriggerResponse> {
         let url = self.project_url("/triggers/deploy");
         let resp = self.request(self.http.post(&url).json(&req)).await?;
         Self::parse_response(resp).await

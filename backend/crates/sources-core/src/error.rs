@@ -144,4 +144,3 @@ pub enum OAuthError {
     #[error("Authorization denied: {0}")]
     Denied(String),
 }
-

@@ -56,17 +56,11 @@ pub fn build_routes(state: AppState) -> Router {
         .route("/api/events/sources", get(stream::list_sources))
         .route("/api/events/types", get(stream::list_event_types))
         // Legacy conversation-based timeline
-        .route(
-            "/api/conversations/:id/timeline",
-            get(stream::get_timeline),
-        )
+        .route("/api/conversations/:id/timeline", get(stream::get_timeline))
         // Replay
         .route("/api/replay", post(replay::create_replay))
         .route("/api/replay/:session_id", get(replay::get_replay_status))
-        .route(
-            "/api/replay/:session_id/stream",
-            get(replay::stream_replay),
-        )
+        .route("/api/replay/:session_id/stream", get(replay::stream_replay))
         .route("/api/replay/:session_id/step", post(replay::step_replay))
         .route(
             "/api/replay/:session_id/control",
@@ -74,7 +68,10 @@ pub fn build_routes(state: AppState) -> Router {
         )
         // Scenarios
         .route("/api/scenarios", get(connections::list_scenarios))
-        .route("/api/scenarios/:name/load", post(connections::load_scenario))
+        .route(
+            "/api/scenarios/:name/load",
+            post(connections::load_scenario),
+        )
         // Sources API - Discovery and management
         .route("/api/sources", get(sources::list_sources))
         .route("/api/sources/:id", get(sources::get_source_by_id))
@@ -86,7 +83,10 @@ pub fn build_routes(state: AppState) -> Router {
         )
         // Generators - control mock/simulation event sources
         .route("/api/generators", get(generators::list_generators))
-        .route("/api/generators/running", get(generators::list_running_generators))
+        .route(
+            "/api/generators/running",
+            get(generators::list_running_generators),
+        )
         .route(
             "/api/generators/:source_id",
             get(generators::get_generator_status),

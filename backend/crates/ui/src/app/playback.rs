@@ -46,9 +46,7 @@ impl EventsManagerApp {
 
         #[cfg(target_arch = "wasm32")]
         {
-            self.add_toast(Toast::warning(
-                "MCAP file loading not yet supported on web",
-            ));
+            self.add_toast(Toast::warning("MCAP file loading not yet supported on web"));
         }
     }
 
@@ -98,18 +96,26 @@ impl EventsManagerApp {
     fn envelope_to_dto(envelope: EventEnvelope, stream_id: &str) -> EventDto {
         // Extract actor info
         let (actor_type, actor_id, actor_name) = match &envelope.actor.actor_type {
-            chronicle_domain::ActorType::Customer => {
-                ("customer".to_string(), envelope.actor.actor_id.clone(), envelope.actor.display_name.clone())
-            }
-            chronicle_domain::ActorType::Agent => {
-                ("agent".to_string(), envelope.actor.actor_id.clone(), envelope.actor.display_name.clone())
-            }
-            chronicle_domain::ActorType::System => {
-                ("system".to_string(), envelope.actor.actor_id.clone(), envelope.actor.display_name.clone())
-            }
-            chronicle_domain::ActorType::Bot => {
-                ("bot".to_string(), envelope.actor.actor_id.clone(), envelope.actor.display_name.clone())
-            }
+            chronicle_domain::ActorType::Customer => (
+                "customer".to_string(),
+                envelope.actor.actor_id.clone(),
+                envelope.actor.display_name.clone(),
+            ),
+            chronicle_domain::ActorType::Agent => (
+                "agent".to_string(),
+                envelope.actor.actor_id.clone(),
+                envelope.actor.display_name.clone(),
+            ),
+            chronicle_domain::ActorType::System => (
+                "system".to_string(),
+                envelope.actor.actor_id.clone(),
+                envelope.actor.display_name.clone(),
+            ),
+            chronicle_domain::ActorType::Bot => (
+                "bot".to_string(),
+                envelope.actor.actor_id.clone(),
+                envelope.actor.display_name.clone(),
+            ),
         };
 
         // Parse payload from RawValue to Value
@@ -134,4 +140,3 @@ impl EventsManagerApp {
         }
     }
 }
-

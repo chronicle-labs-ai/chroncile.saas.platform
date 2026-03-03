@@ -180,11 +180,7 @@ impl StreamsPanel {
 
     /// Toggle a stream for recording selection
     pub fn toggle_stream_for_recording(&mut self, stream_id: &StreamId) {
-        if let Some(pos) = self
-            .streams_to_record
-            .iter()
-            .position(|id| id == stream_id)
-        {
+        if let Some(pos) = self.streams_to_record.iter().position(|id| id == stream_id) {
             self.streams_to_record.remove(pos);
         } else {
             self.streams_to_record.push(stream_id.clone());
@@ -304,9 +300,13 @@ impl StreamsPanel {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 // View mode toggle
                 let mode_btn = egui::Button::new(
-                    RichText::new(format!("{} {}", self.view_mode.icon(), self.view_mode.label()))
-                        .font(typography::caption())
-                        .color(colors::ACCENT_TEAL),
+                    RichText::new(format!(
+                        "{} {}",
+                        self.view_mode.icon(),
+                        self.view_mode.label()
+                    ))
+                    .font(typography::caption())
+                    .color(colors::ACCENT_TEAL),
                 )
                 .frame(false);
 
@@ -319,9 +319,7 @@ impl StreamsPanel {
                 if ui
                     .add(
                         egui::Button::new(
-                            RichText::new("+")
-                                .color(colors::TEXT_SECONDARY)
-                                .size(14.0),
+                            RichText::new("+").color(colors::TEXT_SECONDARY).size(14.0),
                         )
                         .frame(false),
                     )
@@ -373,4 +371,3 @@ impl StreamsPanel {
         response
     }
 }
-

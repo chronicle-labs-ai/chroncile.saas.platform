@@ -92,9 +92,9 @@ impl SseStream {
         // Spawn the event handler
         wasm_bindgen_futures::spawn_local(async move {
             while let Some(Ok((_, msg))) = subscription.next().await {
-                if let Ok(dto) = serde_json::from_str::<EventDto>(
-                    &msg.data().as_string().unwrap_or_default(),
-                ) {
+                if let Ok(dto) =
+                    serde_json::from_str::<EventDto>(&msg.data().as_string().unwrap_or_default())
+                {
                     if sender.send(dto).is_err() {
                         break;
                     }
@@ -105,4 +105,3 @@ impl SseStream {
         Self { _es: es }
     }
 }
-

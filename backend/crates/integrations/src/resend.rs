@@ -144,13 +144,14 @@ impl ResendEmailService {
                 return Ok(data.id);
             }
 
-            let error_body = response
-                .json::<ResendErrorResponse>()
-                .await
-                .unwrap_or(ResendErrorResponse {
-                    message: Some("unknown error".to_string()),
-                    name: None,
-                });
+            let error_body =
+                response
+                    .json::<ResendErrorResponse>()
+                    .await
+                    .unwrap_or(ResendErrorResponse {
+                        message: Some("unknown error".to_string()),
+                        name: None,
+                    });
             let msg = error_body
                 .message
                 .unwrap_or_else(|| "unknown error".to_string());
@@ -161,12 +162,21 @@ impl ResendEmailService {
                 409 => return Err(EmailError::IdempotencyConflict(msg)),
                 429 => EmailError::RateLimit,
                 500..=599 => EmailError::Server(msg),
-                _ => return Err(EmailError::Other(format!("unexpected status {status}: {msg}"))),
+                _ => {
+                    return Err(EmailError::Other(format!(
+                        "unexpected status {status}: {msg}"
+                    )))
+                }
             };
 
             if attempt < MAX_RETRIES && matches!(status, 429 | 500..=599) {
                 let delay = std::time::Duration::from_secs(1 << attempt);
-                warn!(attempt, status, ?delay, "Resend returned retryable error, retrying");
+                warn!(
+                    attempt,
+                    status,
+                    ?delay,
+                    "Resend returned retryable error, retrying"
+                );
                 tokio::time::sleep(delay).await;
                 continue;
             }
@@ -241,10 +251,7 @@ impl EmailService for NoopEmailService {
             variables = ?params.variables,
             "NoopEmailService: would send template email"
         );
-        Ok(format!(
-            "noop-{}",
-            chrono::Utc::now().timestamp_millis()
-        ))
+        Ok(format!("noop-{}", chrono::Utc::now().timestamp_millis()))
     }
 
     async fn send_html_email(&self, params: HtmlEmailParams) -> Result<String, EmailError> {
@@ -253,23 +260,16 @@ impl EmailService for NoopEmailService {
             subject = %params.subject,
             "NoopEmailService: would send html email"
         );
-        Ok(format!(
-            "noop-{}",
-            chrono::Utc::now().timestamp_millis()
-        ))
+        Ok(format!("noop-{}", chrono::Utc::now().timestamp_millis()))
     }
 }
 
-pub fn build_email_service(
-    template_map: HashMap<String, String>,
-) -> Box<dyn EmailService> {
+pub fn build_email_service(template_map: HashMap<String, String>) -> Box<dyn EmailService> {
     match std::env::var("RESEND_API_KEY") {
         Ok(api_key) if !api_key.is_empty() => {
             let from = std::env::var("RESEND_FROM_ADDRESS").ok();
             info!("Resend email service configured");
-            Box::new(
-                ResendEmailService::new(api_key, from).with_template_map(template_map),
-            )
+            Box::new(ResendEmailService::new(api_key, from).with_template_map(template_map))
         }
         _ => {
             info!("RESEND_API_KEY not set, using NoopEmailService");

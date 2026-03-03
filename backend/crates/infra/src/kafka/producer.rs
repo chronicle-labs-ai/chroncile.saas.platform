@@ -40,15 +40,13 @@ impl KafkaProducer {
 impl EventStreamProducer for KafkaProducer {
     async fn publish(&self, event: EventEnvelope) -> StreamResult<()> {
         // Serialize the event
-        let payload = serde_json::to_string(&event)
-            .map_err(|e| StreamError::PublishFailed(e.to_string()))?;
+        let payload =
+            serde_json::to_string(&event).map_err(|e| StreamError::PublishFailed(e.to_string()))?;
 
         // Use conversation_id as partition key for ordering
         let key = event.subject.conversation_id.as_str();
 
-        let record = FutureRecord::to(&self.topic)
-            .key(key)
-            .payload(&payload);
+        let record = FutureRecord::to(&self.topic).key(key).payload(&payload);
 
         self.producer
             .send(record, Duration::from_secs(5))

@@ -3,9 +3,9 @@ use std::sync::Arc;
 use chronicle_auth::jwt::JwtService;
 use chronicle_infra::{StoreBackend, StreamBackend};
 use chronicle_interfaces::{
-    AuditLogRepository, AgentEndpointConfigRepository, ConnectionRepository,
-    EmailService, InvitationRepository, PipedreamTriggerRepository, RunRepository,
-    TenantRepository, UserRepository,
+    AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, EmailService,
+    InvitationRepository, PipedreamTriggerRepository, RunRepository, TenantRepository,
+    UserRepository,
 };
 use pipedream_connect::PipedreamClient;
 

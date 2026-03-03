@@ -73,13 +73,13 @@ pub fn render_stream_row(
                 );
 
                 // Stream name (clickable for selection in isolated mode)
-                let name_text = RichText::new(&stream.name)
-                    .font(typography::small())
-                    .color(if stream.enabled {
+                let name_text = RichText::new(&stream.name).font(typography::small()).color(
+                    if stream.enabled {
                         colors::TEXT_PRIMARY
                     } else {
                         colors::TEXT_MUTED
-                    });
+                    },
+                );
 
                 let name_response = ui.add(egui::Label::new(name_text).sense(egui::Sense::click()));
                 if name_response.clicked() && view_mode == StreamViewMode::Isolated {
@@ -111,13 +111,12 @@ pub fn render_stream_row(
                                 .frame(false),
                             )
                             .clicked()
-                        {
-                            response.remove_requested = true;
-                        }
+                    {
+                        response.remove_requested = true;
+                    }
                 });
             });
         });
 
     response
 }
-

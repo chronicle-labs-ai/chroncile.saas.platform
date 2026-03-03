@@ -109,7 +109,9 @@ impl GeneratorManager {
 }
 
 /// List all available generators
-pub async fn list_generators(State(_state): State<AppState>) -> ApiResult<Json<Vec<GeneratorInfo>>> {
+pub async fn list_generators(
+    State(_state): State<AppState>,
+) -> ApiResult<Json<Vec<GeneratorInfo>>> {
     let generators: Vec<GeneratorInfo> = all_sources()
         .filter(|source| source.manifest().capabilities.generator)
         .map(|source| {
@@ -234,7 +236,7 @@ pub async fn start_generator(
     // For now, we'll start a simple generation loop
     let config_clone = config.clone();
     let source_id_for_task = source_id.clone();
-    
+
     // Create a stop channel
     let (stop_tx, mut stop_rx) = mpsc::channel::<()>(1);
     let handle = GeneratorHandle::new(stop_tx);
@@ -358,4 +360,3 @@ pub async fn list_running_generators(
 
     Ok(Json(statuses))
 }
-

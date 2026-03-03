@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use chronicle_domain::{
-    AuditLog, AgentEndpointConfig, Connection, CreateConnectionInput,
-    CreateInvitationInput, CreateRunInput, CreateTenantInput, CreateUserInput,
-    Invitation, PipedreamTrigger, Run, Tenant, User,
+    AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
+    CreateRunInput, CreateTenantInput, CreateUserInput, Invitation, PipedreamTrigger, Run, Tenant,
+    User,
 };
 
 pub type RepoResult<T> = Result<T, RepoError>;
@@ -49,7 +49,11 @@ pub trait UserRepository: Send + Sync {
 pub trait InvitationRepository: Send + Sync {
     async fn create(&self, input: CreateInvitationInput) -> RepoResult<Invitation>;
     async fn find_by_token(&self, token: &str) -> RepoResult<Option<Invitation>>;
-    async fn find_by_email_and_tenant(&self, email: &str, tenant_id: &str) -> RepoResult<Option<Invitation>>;
+    async fn find_by_email_and_tenant(
+        &self,
+        email: &str,
+        tenant_id: &str,
+    ) -> RepoResult<Option<Invitation>>;
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Invitation>>;
     async fn mark_accepted(&self, id: &str) -> RepoResult<Invitation>;
     async fn delete(&self, id: &str) -> RepoResult<()>;
@@ -67,11 +71,8 @@ pub trait RunRepository: Send + Sync {
         offset: usize,
     ) -> RepoResult<Vec<Run>>;
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<Run>;
-    async fn update_response(
-        &self,
-        id: &str,
-        agent_response: serde_json::Value,
-    ) -> RepoResult<Run>;
+    async fn update_response(&self, id: &str, agent_response: serde_json::Value)
+        -> RepoResult<Run>;
     async fn count_by_tenant(&self, tenant_id: &str) -> RepoResult<usize>;
     async fn count_by_status(&self, tenant_id: &str, status: &str) -> RepoResult<usize>;
 }
@@ -131,7 +132,10 @@ pub trait PipedreamTriggerRepository: Send + Sync {
         deployment_id: &str,
         configured_props: Option<serde_json::Value>,
     ) -> RepoResult<PipedreamTrigger>;
-    async fn find_by_deployment_id(&self, deployment_id: &str) -> RepoResult<Option<PipedreamTrigger>>;
+    async fn find_by_deployment_id(
+        &self,
+        deployment_id: &str,
+    ) -> RepoResult<Option<PipedreamTrigger>>;
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>>;
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger>;
     async fn delete(&self, id: &str) -> RepoResult<()>;

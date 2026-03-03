@@ -37,13 +37,13 @@ mod web {
     #[wasm_bindgen]
     pub async fn start_app(canvas_id: &str) -> Result<(), JsValue> {
         let web_options = eframe::WebOptions::default();
-        
+
         // Get the canvas element by ID
         let document = web_sys::window()
             .ok_or_else(|| JsValue::from_str("No window"))?
             .document()
             .ok_or_else(|| JsValue::from_str("No document"))?;
-        
+
         let canvas: HtmlCanvasElement = document
             .get_element_by_id(canvas_id)
             .ok_or_else(|| JsValue::from_str(&format!("Canvas '{}' not found", canvas_id)))?

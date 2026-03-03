@@ -52,6 +52,8 @@ pub trait EmailService: Send + Sync {
     /// Send raw HTML (e.g. for trace escalation). Default returns error.
     async fn send_html_email(&self, params: HtmlEmailParams) -> Result<String, EmailError> {
         let _ = params;
-        Err(EmailError::Other("send_html_email not supported".to_string()))
+        Err(EmailError::Other(
+            "send_html_email not supported".to_string(),
+        ))
     }
 }

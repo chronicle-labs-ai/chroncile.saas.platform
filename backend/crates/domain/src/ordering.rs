@@ -133,9 +133,9 @@ pub fn compare_events(a: &EventEnvelope, b: &EventEnvelope) -> std::cmp::Orderin
 
 /// Check if events are in valid replay order
 pub fn is_valid_order(events: &[EventEnvelope]) -> bool {
-    events.windows(2).all(|w| {
-        compare_events(&w[0], &w[1]) != std::cmp::Ordering::Greater
-    })
+    events
+        .windows(2)
+        .all(|w| compare_events(&w[0], &w[1]) != std::cmp::Ordering::Greater)
 }
 
 /// Find the insertion index for a new event to maintain order
@@ -262,10 +262,7 @@ mod tests {
             make_test_event(now),
         ];
 
-        let merged = merge_sorted(
-            sort_for_replay(left),
-            sort_for_replay(right),
-        );
+        let merged = merge_sorted(sort_for_replay(left), sort_for_replay(right));
 
         assert!(is_valid_order(&merged));
         assert_eq!(merged.len(), 4);

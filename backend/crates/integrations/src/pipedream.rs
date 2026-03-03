@@ -26,11 +26,8 @@ pub trait PipedreamClient: Send + Sync {
         props: serde_json::Value,
     ) -> anyhow::Result<String>;
     async fn delete_deployment(&self, deployment_id: &str) -> anyhow::Result<()>;
-    async fn exchange_token(
-        &self,
-        code: &str,
-        redirect_uri: &str,
-    ) -> anyhow::Result<TokenResponse>;
+    async fn exchange_token(&self, code: &str, redirect_uri: &str)
+        -> anyhow::Result<TokenResponse>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -49,11 +46,7 @@ pub struct HttpPipedreamClient {
 }
 
 impl HttpPipedreamClient {
-    pub fn new(
-        client_id: String,
-        client_secret: String,
-        project_id: String,
-    ) -> Self {
+    pub fn new(client_id: String, client_secret: String, project_id: String) -> Self {
         Self {
             client: reqwest::Client::new(),
             base_url: "https://api.pipedream.com/v1".to_string(),

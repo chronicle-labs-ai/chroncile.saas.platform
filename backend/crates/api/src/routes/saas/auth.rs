@@ -41,25 +41,33 @@ pub async fn signup(
 
     let existing = state.users.find_by_email(&input.email).await?;
     if existing.is_some() {
-        return Err(ApiError::conflict("An account with this email already exists"));
+        return Err(ApiError::conflict(
+            "An account with this email already exists",
+        ));
     }
 
     let slug = input.org_name.to_lowercase().replace(' ', "-");
-    let tenant = state.tenants.create(CreateTenantInput {
-        name: input.org_name,
-        slug,
-    }).await?;
+    let tenant = state
+        .tenants
+        .create(CreateTenantInput {
+            name: input.org_name,
+            slug,
+        })
+        .await?;
 
     let password_hash = hash_password(&input.password)?;
 
-    let user = state.users.create(CreateUserInput {
-        email: input.email,
-        name: Some(input.name),
-        password_hash: Some(password_hash),
-        auth_provider: "credentials".to_string(),
-        role: UserRole::Owner,
-        tenant_id: tenant.id.clone(),
-    }).await?;
+    let user = state
+        .users
+        .create(CreateUserInput {
+            email: input.email,
+            name: Some(input.name),
+            password_hash: Some(password_hash),
+            auth_provider: "credentials".to_string(),
+            role: UserRole::Owner,
+            tenant_id: tenant.id.clone(),
+        })
+        .await?;
 
     let auth_user = AuthUser {
         id: user.id.clone(),
@@ -73,18 +81,21 @@ pub async fn signup(
 
     let token = state.jwt.issue(&auth_user)?;
 
-    Ok((StatusCode::CREATED, Json(AuthResponse {
-        token,
-        user: AuthUserResponse {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role.as_str().to_string(),
-            tenant_id: tenant.id,
-            tenant_name: tenant.name,
-            tenant_slug: tenant.slug,
-        },
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(AuthResponse {
+            token,
+            user: AuthUserResponse {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role.as_str().to_string(),
+                tenant_id: tenant.id,
+                tenant_name: tenant.name,
+                tenant_slug: tenant.slug,
+            },
+        }),
+    ))
 }
 
 #[derive(serde::Deserialize)]
@@ -97,7 +108,10 @@ pub async fn login(
     State(state): State<SaasAppState>,
     Json(input): Json<LoginInput>,
 ) -> ApiResult<Json<AuthResponse>> {
-    let user = state.users.find_by_email(&input.email).await?
+    let user = state
+        .users
+        .find_by_email(&input.email)
+        .await?
         .ok_or_else(ApiError::unauthorized)?;
 
     if user.auth_provider != "credentials" {
@@ -107,7 +121,9 @@ pub async fn login(
         )));
     }
 
-    let password_hash = user.password.as_deref()
+    let password_hash = user
+        .password
+        .as_deref()
         .ok_or_else(ApiError::unauthorized)?;
 
     let valid = verify_password(&input.password, password_hash)?;
@@ -115,7 +131,10 @@ pub async fn login(
         return Err(ApiError::unauthorized());
     }
 
-    let tenant = state.tenants.find_by_id(&user.tenant_id).await?
+    let tenant = state
+        .tenants
+        .find_by_id(&user.tenant_id)
+        .await?
         .ok_or_else(ApiError::internal)?;
 
     let auth_user = AuthUser {
@@ -203,7 +222,10 @@ pub async fn oauth_signup(
     }
 
     if let Some(existing_user) = state.users.find_by_email(&input.email).await? {
-        let tenant = state.tenants.find_by_id(&existing_user.tenant_id).await?
+        let tenant = state
+            .tenants
+            .find_by_id(&existing_user.tenant_id)
+            .await?
             .ok_or_else(ApiError::internal)?;
 
         let auth_user = AuthUser {
@@ -233,22 +255,30 @@ pub async fn oauth_signup(
     }
 
     let display_name = input.name.clone().unwrap_or_else(|| input.email.clone());
-    let org_name = input.org_name.unwrap_or_else(|| format!("{}'s Organization", display_name));
+    let org_name = input
+        .org_name
+        .unwrap_or_else(|| format!("{}'s Organization", display_name));
     let slug = org_name.to_lowercase().replace(' ', "-");
 
-    let tenant = state.tenants.create(CreateTenantInput {
-        name: org_name,
-        slug,
-    }).await?;
+    let tenant = state
+        .tenants
+        .create(CreateTenantInput {
+            name: org_name,
+            slug,
+        })
+        .await?;
 
-    let user = state.users.create(CreateUserInput {
-        email: input.email,
-        name: input.name,
-        password_hash: None,
-        auth_provider: input.provider,
-        role: UserRole::Owner,
-        tenant_id: tenant.id.clone(),
-    }).await?;
+    let user = state
+        .users
+        .create(CreateUserInput {
+            email: input.email,
+            name: input.name,
+            password_hash: None,
+            auth_provider: input.provider,
+            role: UserRole::Owner,
+            tenant_id: tenant.id.clone(),
+        })
+        .await?;
 
     let auth_user = AuthUser {
         id: user.id.clone(),

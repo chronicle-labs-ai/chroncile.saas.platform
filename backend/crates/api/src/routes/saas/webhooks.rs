@@ -5,9 +5,7 @@ use axum::{
 };
 use serde_json::Value;
 
-use chronicle_domain::{
-    Actor, CreateRunInput, EventEnvelope, Subject, TenantId,
-};
+use chronicle_domain::{Actor, CreateRunInput, EventEnvelope, Subject, TenantId};
 
 use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
@@ -20,7 +18,10 @@ pub async fn pipedream_webhook(
     headers: HeaderMap,
     Json(body): Json<Value>,
 ) -> ApiResult<Json<Value>> {
-    let tenant = state.tenants.find_by_id(&tenant_id).await?
+    let tenant = state
+        .tenants
+        .find_by_id(&tenant_id)
+        .await?
         .ok_or_else(|| ApiError::not_found("Tenant"))?;
 
     let deployment_id = extract_deployment_id(&headers, &body);
@@ -38,7 +39,8 @@ pub async fn pipedream_webhook(
 
     let entity_id = extract_entity_id(&inner_event, &provider);
     let actor = extract_actor(&inner_event, &provider);
-    let event_type = normalize_event_type(&provider, inner_event.get("type").and_then(|v| v.as_str()));
+    let event_type =
+        normalize_event_type(&provider, inner_event.get("type").and_then(|v| v.as_str()));
 
     let source_event_id = inner_event
         .get("id")
@@ -48,15 +50,19 @@ pub async fn pipedream_webhook(
 
     let mut payload = inner_event.clone();
     if let Some(obj) = payload.as_object_mut() {
-        obj.insert("_pipedream".to_string(), serde_json::json!({
-            "deployment_id": deployment_id,
-            "received_at": chrono::Utc::now().to_rfc3339(),
-        }));
+        obj.insert(
+            "_pipedream".to_string(),
+            serde_json::json!({
+                "deployment_id": deployment_id,
+                "received_at": chrono::Utc::now().to_rfc3339(),
+            }),
+        );
     }
 
     let raw_payload = serde_json::value::RawValue::from_string(
-        serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string())
-    ).unwrap_or_else(|_| serde_json::value::RawValue::from_string("{}".to_string()).unwrap());
+        serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string()),
+    )
+    .unwrap_or_else(|_| serde_json::value::RawValue::from_string("{}".to_string()).unwrap());
 
     let domain_actor = match actor.actor_type.as_str() {
         "customer" => Actor::customer(&actor.id),
@@ -90,15 +96,19 @@ pub async fn pipedream_webhook(
     }
 
     let invocation_id = format!("inv_{event_id}");
-    if let Ok(run) = state.runs.create(CreateRunInput {
-        tenant_id: tenant_id.clone(),
-        workflow_id: None,
-        event_id: event_id.clone(),
-        invocation_id: invocation_id.clone(),
-        mode: "shadow".to_string(),
-        event_snapshot: Some(payload),
-        context_pointers: None,
-    }).await {
+    if let Ok(run) = state
+        .runs
+        .create(CreateRunInput {
+            tenant_id: tenant_id.clone(),
+            workflow_id: None,
+            event_id: event_id.clone(),
+            invocation_id: invocation_id.clone(),
+            mode: "shadow".to_string(),
+            event_snapshot: Some(payload),
+            context_pointers: None,
+        })
+        .await
+    {
         state.audit_logs.create(
             &tenant_id, "run_created", Some("webhook"),
             Some(&run.id), Some(&event_id), Some(&invocation_id),
@@ -116,7 +126,10 @@ pub async fn pipedream_webhook(
 }
 
 fn extract_deployment_id(headers: &HeaderMap, body: &Value) -> Option<String> {
-    if let Some(v) = headers.get("x-pd-deployment-id").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers
+        .get("x-pd-deployment-id")
+        .and_then(|v| v.to_str().ok())
+    {
         return Some(v.to_string());
     }
     if let Some(v) = headers.get("x-pd-emitter-id").and_then(|v| v.to_str().ok()) {
@@ -152,8 +165,14 @@ struct ExtractedActor {
 fn extract_actor(event: &Value, provider: &str) -> ExtractedActor {
     match provider {
         "slack" => {
-            let id = event.get("user").and_then(|v| v.as_str()).unwrap_or("slack");
-            let name = event.get("user_name").or_else(|| event.get("username")).and_then(|v| v.as_str());
+            let id = event
+                .get("user")
+                .and_then(|v| v.as_str())
+                .unwrap_or("slack");
+            let name = event
+                .get("user_name")
+                .or_else(|| event.get("username"))
+                .and_then(|v| v.as_str());
             ExtractedActor {
                 actor_type: if id != "slack" { "agent" } else { "system" }.to_string(),
                 id: id.to_string(),
@@ -161,21 +180,37 @@ fn extract_actor(event: &Value, provider: &str) -> ExtractedActor {
             }
         }
         "intercom" => {
-            let author = event.get("author")
+            let author = event
+                .get("author")
                 .or_else(|| event.get("source").and_then(|s| s.get("author")));
             if let Some(a) = author {
                 let atype = a.get("type").and_then(|v| v.as_str()).unwrap_or("system");
                 let is_customer = atype == "user" || atype == "lead";
                 ExtractedActor {
                     actor_type: if is_customer { "customer" } else { "agent" }.to_string(),
-                    id: a.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
-                    name: a.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    id: a
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                        .to_string(),
+                    name: a
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
                 }
             } else {
-                ExtractedActor { actor_type: "system".to_string(), id: "intercom".to_string(), name: None }
+                ExtractedActor {
+                    actor_type: "system".to_string(),
+                    id: "intercom".to_string(),
+                    name: None,
+                }
             }
         }
-        _ => ExtractedActor { actor_type: "system".to_string(), id: provider.to_string(), name: None },
+        _ => ExtractedActor {
+            actor_type: "system".to_string(),
+            id: provider.to_string(),
+            name: None,
+        },
     }
 }
 
@@ -216,7 +251,8 @@ pub async fn stripe_webhook(
     let webhook_secret = std::env::var("STRIPE_WEBHOOK_SECRET")
         .map_err(|_| ApiError::bad_request("Stripe webhook secret not configured"))?;
 
-    let signature = headers.get("stripe-signature")
+    let signature = headers
+        .get("stripe-signature")
         .and_then(|v| v.to_str().ok())
         .ok_or_else(|| ApiError::bad_request("Missing stripe-signature header"))?;
 
@@ -233,9 +269,12 @@ pub async fn stripe_webhook(
         "checkout.session.completed" => {
             if let Some(session) = data_object {
                 let mode = session.get("mode").and_then(|v| v.as_str()).unwrap_or("");
-                if mode != "subscription" { return Ok(Json(serde_json::json!({ "received": true }))); }
+                if mode != "subscription" {
+                    return Ok(Json(serde_json::json!({ "received": true })));
+                }
 
-                let tenant_id = session.get("metadata")
+                let tenant_id = session
+                    .get("metadata")
                     .and_then(|m| m.get("tenantId"))
                     .or_else(|| session.get("client_reference_id"))
                     .and_then(|v| v.as_str());
@@ -244,8 +283,16 @@ pub async fn stripe_webhook(
                 let sub_id = session.get("subscription").and_then(|v| v.as_str());
 
                 if let (Some(tid), Some(cid)) = (tenant_id, customer_id) {
-                    let status = if sub_id.is_some() { "active" } else { "incomplete" };
-                    state.tenants.update_stripe_fields(tid, Some(cid), Some(status), None).await.ok();
+                    let status = if sub_id.is_some() {
+                        "active"
+                    } else {
+                        "incomplete"
+                    };
+                    state
+                        .tenants
+                        .update_stripe_fields(tid, Some(cid), Some(status), None)
+                        .await
+                        .ok();
                     tracing::info!("Stripe checkout completed for tenant {tid}");
                 }
             }
@@ -254,7 +301,8 @@ pub async fn stripe_webhook(
             if let Some(sub) = data_object {
                 let customer_id = sub.get("customer").and_then(|v| v.as_str());
                 let status = sub.get("status").and_then(|v| v.as_str());
-                let price_id = sub.get("items")
+                let price_id = sub
+                    .get("items")
                     .and_then(|i| i.get("data"))
                     .and_then(|d| d.get(0))
                     .and_then(|item| item.get("price"))

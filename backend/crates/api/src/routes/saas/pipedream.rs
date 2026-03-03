@@ -6,8 +6,8 @@ use axum::{
 
 use chronicle_auth::types::AuthUser;
 use chronicle_domain::{
-    DeployTriggerRequest, DeployedTriggersResponse, ListAppsParams,
-    ListTriggersParams, PipedreamTokenRequest,
+    DeployTriggerRequest, DeployedTriggersResponse, ListAppsParams, ListTriggersParams,
+    PipedreamTokenRequest,
 };
 use pipedream_connect::types::UpdateDeploymentRequest;
 
@@ -73,7 +73,10 @@ pub async fn deploy_trigger(
         .await
         .map_err(|e| ApiError::bad_request(e.to_string()))?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "data": result.data }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "data": result.data })),
+    ))
 }
 
 pub async fn list_deployed(
@@ -86,7 +89,10 @@ pub async fn list_deployed(
         .await
         .map_err(|e| ApiError::bad_request(e.to_string()))?;
 
-    let triggers = state.pipedream_triggers.list_by_tenant(&user.tenant_id).await?;
+    let triggers = state
+        .pipedream_triggers
+        .list_by_tenant(&user.tenant_id)
+        .await?;
 
     Ok(Json(DeployedTriggersResponse {
         data: serde_json::to_value(result.data).unwrap_or_default(),

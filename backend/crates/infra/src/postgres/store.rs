@@ -229,11 +229,7 @@ impl EventStore for PostgresStore {
         Ok(row.get::<i64, _>("count") as usize)
     }
 
-    async fn query(
-        &self,
-        tenant_id: &TenantId,
-        query: &EventQuery,
-    ) -> StoreResult<QueryResult> {
+    async fn query(&self, tenant_id: &TenantId, query: &EventQuery) -> StoreResult<QueryResult> {
         let all_events = self.fetch_all(tenant_id).await?;
         let available_sources: std::collections::HashSet<String> =
             all_events.iter().map(|e| e.source.clone()).collect();
@@ -251,16 +247,16 @@ impl EventStore for PostgresStore {
                 if !query.sources.is_empty() && !query.sources.contains(&event.source) {
                     return false;
                 }
-                if !query.event_types.is_empty()
-                    && !query.event_types.contains(&event.event_type)
-                {
+                if !query.event_types.is_empty() && !query.event_types.contains(&event.event_type) {
                     return false;
                 }
                 if !query.actors.is_empty() && !query.actors.contains(&event.actor.actor_id) {
                     return false;
                 }
                 if !query.subjects.is_empty()
-                    && !query.subjects.contains(&event.subject.conversation_id.to_string())
+                    && !query
+                        .subjects
+                        .contains(&event.subject.conversation_id.to_string())
                 {
                     return false;
                 }
@@ -292,7 +288,10 @@ impl EventStore for PostgresStore {
         .fetch_all(&self.pool)
         .await
         .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-        Ok(rows.into_iter().map(|r| r.get::<String, _>("source")).collect())
+        Ok(rows
+            .into_iter()
+            .map(|r| r.get::<String, _>("source"))
+            .collect())
     }
 
     async fn list_event_types(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>> {

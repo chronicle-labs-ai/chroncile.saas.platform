@@ -18,8 +18,13 @@ async fn setup() -> (MockServer, PipedreamClient) {
         .mount(&server)
         .await;
 
-    let client = PipedreamClient::new("client_id", "client_secret", "proj_test", Environment::Development)
-        .with_base_url(server.uri());
+    let client = PipedreamClient::new(
+        "client_id",
+        "client_secret",
+        "proj_test",
+        Environment::Development,
+    )
+    .with_base_url(server.uri());
 
     (server, client)
 }
@@ -250,11 +255,19 @@ async fn test_unauthorized() {
         .mount(&server)
         .await;
 
-    let client = PipedreamClient::new("bad_id", "bad_secret", "proj_test", Environment::Development)
-        .with_base_url(server.uri());
+    let client = PipedreamClient::new(
+        "bad_id",
+        "bad_secret",
+        "proj_test",
+        Environment::Development,
+    )
+    .with_base_url(server.uri());
 
     let result = client.list_apps(None::<&str>, None).await;
-    assert!(matches!(result, Err(pipedream_connect::PipedreamError::Unauthorized)));
+    assert!(matches!(
+        result,
+        Err(pipedream_connect::PipedreamError::Unauthorized)
+    ));
 }
 
 #[tokio::test]
@@ -263,10 +276,7 @@ async fn test_rate_limited() {
 
     Mock::given(method("GET"))
         .and(path("/connect/apps"))
-        .respond_with(
-            ResponseTemplate::new(429)
-                .insert_header("retry-after", "30"),
-        )
+        .respond_with(ResponseTemplate::new(429).insert_header("retry-after", "30"))
         .mount(&server)
         .await;
 

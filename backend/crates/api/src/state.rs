@@ -10,8 +10,8 @@ use chronicle_domain::{EventEnvelope, ReplayMode, ReplaySession, ReplayState, Te
 use chronicle_infra::{StoreBackend, StreamBackend};
 use chronicle_mock_connector::MockOAuthConnection;
 
-use crate::routes::GeneratorManager;
 use crate::routes::sandbox::SandboxSessionSummary;
+use crate::routes::GeneratorManager;
 
 /// Sandbox session with metadata
 pub struct SandboxSession {
@@ -112,10 +112,7 @@ impl AppState {
     }
 
     /// Get a replay session
-    pub fn get_replay_session(
-        &self,
-        session_id: &str,
-    ) -> Option<Arc<RwLock<ReplaySession>>> {
+    pub fn get_replay_session(&self, session_id: &str) -> Option<Arc<RwLock<ReplaySession>>> {
         self.replay_sessions.get(session_id).map(|v| v.clone())
     }
 
@@ -133,7 +130,7 @@ impl AppState {
         events: Vec<EventEnvelope>,
     ) -> String {
         let session_id = format!("sandbox_{}", chronicle_domain::new_session_id());
-        
+
         // Create replay session with realtime mode
         let mut replay_session = ReplaySession::new(
             session_id.clone(),
@@ -141,15 +138,15 @@ impl AppState {
             chronicle_domain::SubjectId::new("sandbox"),
             ReplayMode::Realtime,
         );
-        
+
         // Load events into the session
         replay_session.load_events(events);
-        
+
         let sandbox = SandboxSession {
             name: name.to_string(),
             session: Arc::new(RwLock::new(replay_session)),
         };
-        
+
         self.sandbox_sessions.insert(session_id.clone(), sandbox);
         session_id
     }

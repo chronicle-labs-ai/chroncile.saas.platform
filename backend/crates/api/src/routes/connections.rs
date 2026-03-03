@@ -7,8 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use chronicle_mock_connector::{
-    all_scenarios, ConnectionResponse, MockEventGenerator,
-    MockOAuthConnection, MockService,
+    all_scenarios, ConnectionResponse, MockEventGenerator, MockOAuthConnection, MockService,
 };
 
 use crate::{ApiError, ApiResult, AppState};
@@ -148,7 +147,11 @@ pub async fn generate_events(
 
     Ok(Json(GenerateEventsResponse {
         generated,
-        message: format!("Generated {} events across {} conversations", generated, conversations.len()),
+        message: format!(
+            "Generated {} events across {} conversations",
+            generated,
+            conversations.len()
+        ),
     }))
 }
 
@@ -193,6 +196,9 @@ pub async fn load_scenario(
 
     Ok(Json(GenerateEventsResponse {
         generated: event_count,
-        message: format!("Loaded scenario '{}' with {} events", scenario.name, event_count),
+        message: format!(
+            "Loaded scenario '{}' with {} events",
+            scenario.name, event_count
+        ),
     }))
 }

@@ -2,8 +2,8 @@
 //!
 //! Event filtering based on source, type, stream, and other criteria.
 
+use super::{StreamId, TimelineView};
 use crate::types::EventDto;
-use super::{TimelineView, StreamId};
 
 impl TimelineView {
     /// Filter events based on current filter panel and stream settings
@@ -27,17 +27,21 @@ impl TimelineView {
 
         // Source filter - if specific sources are selected, check membership
         let sources = &self.filter_panel.selected_sources;
-        if !sources.is_empty() && sources.len() < self.filter_panel.available_sources.len()
-            && !sources.contains(&event.source) {
-                return false;
-            }
+        if !sources.is_empty()
+            && sources.len() < self.filter_panel.available_sources.len()
+            && !sources.contains(&event.source)
+        {
+            return false;
+        }
 
         // Event type filter - if specific types are selected, check membership
         let types = &self.filter_panel.selected_types;
-        if !types.is_empty() && types.len() < self.filter_panel.available_types.len()
-            && !types.contains(&event.event_type) {
-                return false;
-            }
+        if !types.is_empty()
+            && types.len() < self.filter_panel.available_types.len()
+            && !types.contains(&event.event_type)
+        {
+            return false;
+        }
 
         true
     }
@@ -64,4 +68,3 @@ impl TimelineView {
         self.matches_display_filter(event)
     }
 }
-

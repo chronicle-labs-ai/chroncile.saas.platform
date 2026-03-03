@@ -14,27 +14,31 @@ pub fn extract_jsonpath(payload: &Value, path: &str) -> Option<Value> {
         format!("$.{}", path)
     };
 
-    payload.clone().path(&normalized_path).ok().and_then(|results| {
-        // Handle null results
-        if results.is_null() {
-            return None;
-        }
-        
-        if results.is_array() {
-            let arr = results.as_array().unwrap();
-            // Filter out null values
-            let non_null: Vec<_> = arr.iter().filter(|v| !v.is_null()).cloned().collect();
-            if non_null.len() == 1 {
-                Some(non_null[0].clone())
-            } else if non_null.is_empty() {
-                None
-            } else {
-                Some(Value::Array(non_null))
+    payload
+        .clone()
+        .path(&normalized_path)
+        .ok()
+        .and_then(|results| {
+            // Handle null results
+            if results.is_null() {
+                return None;
             }
-        } else {
-            Some(results)
-        }
-    })
+
+            if results.is_array() {
+                let arr = results.as_array().unwrap();
+                // Filter out null values
+                let non_null: Vec<_> = arr.iter().filter(|v| !v.is_null()).cloned().collect();
+                if non_null.len() == 1 {
+                    Some(non_null[0].clone())
+                } else if non_null.is_empty() {
+                    None
+                } else {
+                    Some(Value::Array(non_null))
+                }
+            } else {
+                Some(results)
+            }
+        })
 }
 
 /// Extract a string value from JSON
@@ -124,4 +128,3 @@ mod tests {
         assert_eq!(items.unwrap().len(), 3);
     }
 }
-

@@ -58,7 +58,8 @@ pub async fn ingest_event(
     State(state): State<AppState>,
     Json(req): Json<IngestEventRequest>,
 ) -> ApiResult<Json<IngestResponse>> {
-    let tenant_id = req.tenant_id
+    let tenant_id = req
+        .tenant_id
         .map(|t| TenantId::new(t))
         .unwrap_or_else(|| state.default_tenant.clone());
 
@@ -140,7 +141,8 @@ pub async fn ingest_batch(
     let mut duplicates = 0;
 
     for req in events {
-        let tenant_id = req.tenant_id
+        let tenant_id = req
+            .tenant_id
             .map(|t| TenantId::new(t))
             .unwrap_or_else(|| state.default_tenant.clone());
 

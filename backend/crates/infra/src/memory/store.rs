@@ -199,11 +199,7 @@ impl EventStore for MemoryStore {
             .unwrap_or(0))
     }
 
-    async fn query(
-        &self,
-        tenant_id: &TenantId,
-        query: &EventQuery,
-    ) -> StoreResult<QueryResult> {
+    async fn query(&self, tenant_id: &TenantId, query: &EventQuery) -> StoreResult<QueryResult> {
         // Get all events for tenant first
         let all_events = self
             .events_by_tenant
@@ -247,8 +243,10 @@ impl EventStore for MemoryStore {
                 }
 
                 // Subject filter (conversation_id)
-                if !query.subjects.is_empty() 
-                    && !query.subjects.contains(&event.subject.conversation_id.to_string()) 
+                if !query.subjects.is_empty()
+                    && !query
+                        .subjects
+                        .contains(&event.subject.conversation_id.to_string())
                 {
                     return false;
                 }
@@ -276,12 +274,7 @@ impl EventStore for MemoryStore {
         let sources: HashSet<String> = self
             .events_by_tenant
             .get(tenant_id.as_str())
-            .map(|entry| {
-                entry.value()
-                    .iter()
-                    .map(|e| e.source.clone())
-                    .collect()
-            })
+            .map(|entry| entry.value().iter().map(|e| e.source.clone()).collect())
             .unwrap_or_default();
 
         let mut sources: Vec<String> = sources.into_iter().collect();
@@ -293,12 +286,7 @@ impl EventStore for MemoryStore {
         let types: HashSet<String> = self
             .events_by_tenant
             .get(tenant_id.as_str())
-            .map(|entry| {
-                entry.value()
-                    .iter()
-                    .map(|e| e.event_type.clone())
-                    .collect()
-            })
+            .map(|entry| entry.value().iter().map(|e| e.event_type.clone()).collect())
             .unwrap_or_default();
 
         let mut types: Vec<String> = types.into_iter().collect();
@@ -310,8 +298,8 @@ impl EventStore for MemoryStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
     use chronicle_domain::Actor;
+    use chrono::Utc;
     use serde_json::value::RawValue;
 
     fn make_test_event(tenant: &str, conv: &str, source_id: &str) -> EventEnvelope {
@@ -379,9 +367,18 @@ mod tests {
         let event = make_test_event("t1", "c1", "e1");
         store.append(&[event]).await.unwrap();
 
-        assert!(store.exists(&TenantId::new("t1"), "test", "e1").await.unwrap());
-        assert!(!store.exists(&TenantId::new("t1"), "test", "e2").await.unwrap());
-        assert!(!store.exists(&TenantId::new("t2"), "test", "e1").await.unwrap());
+        assert!(store
+            .exists(&TenantId::new("t1"), "test", "e1")
+            .await
+            .unwrap());
+        assert!(!store
+            .exists(&TenantId::new("t1"), "test", "e2")
+            .await
+            .unwrap());
+        assert!(!store
+            .exists(&TenantId::new("t2"), "test", "e1")
+            .await
+            .unwrap());
     }
 
     #[tokio::test]

@@ -75,4 +75,3 @@ pub struct OAuthConfig {
     #[serde(default)]
     pub expires_at: Option<i64>,
 }
-

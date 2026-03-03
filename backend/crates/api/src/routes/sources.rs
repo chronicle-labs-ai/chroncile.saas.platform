@@ -64,9 +64,7 @@ pub struct GetSourceResponse {
 /// Get a specific source by ID
 ///
 /// GET /api/sources/:id
-pub async fn get_source_by_id(
-    Path(source_id): Path<String>,
-) -> ApiResult<Json<GetSourceResponse>> {
+pub async fn get_source_by_id(Path(source_id): Path<String>) -> ApiResult<Json<GetSourceResponse>> {
     let source = get_source(&source_id)
         .ok_or_else(|| ApiError::NotFound(format!("Source not found: {}", source_id)))?;
 
@@ -114,10 +112,7 @@ pub async fn get_source_catalog(
         })
         .collect();
 
-    Ok(Json(GetCatalogResponse {
-        source_id,
-        events,
-    }))
+    Ok(Json(GetCatalogResponse { source_id, events }))
 }
 
 /// Response for webhook handling
@@ -205,11 +200,7 @@ pub async fn handle_webhook(
         // Check for duplicate
         let exists = state
             .store
-            .exists(
-                &event.tenant_id,
-                &event.source,
-                &event.source_event_id,
-            )
+            .exists(&event.tenant_id, &event.source, &event.source_event_id)
             .await?;
 
         if exists {
@@ -254,9 +245,7 @@ pub async fn handle_webhook(
 /// Verify webhook endpoint (for providers that send HEAD/GET to verify)
 ///
 /// HEAD /api/webhooks/:source_id
-pub async fn verify_webhook(
-    Path(source_id): Path<String>,
-) -> StatusCode {
+pub async fn verify_webhook(Path(source_id): Path<String>) -> StatusCode {
     // Check if source exists and supports webhooks
     if let Some(source) = get_source(&source_id) {
         if source.as_webhook_handler().is_some() {
@@ -266,4 +255,3 @@ pub async fn verify_webhook(
 
     StatusCode::NOT_FOUND
 }
-

@@ -11,9 +11,21 @@ pub async fn stats(
     State(state): State<SaasAppState>,
 ) -> ApiResult<Json<DashboardStatsResponse>> {
     let total_runs = state.runs.count_by_tenant(&user.tenant_id).await?;
-    let pending_runs = state.runs.count_by_status(&user.tenant_id, "pending").await.unwrap_or(0);
-    let completed_runs = state.runs.count_by_status(&user.tenant_id, "completed").await.unwrap_or(0);
-    let failed_runs = state.runs.count_by_status(&user.tenant_id, "failed").await.unwrap_or(0);
+    let pending_runs = state
+        .runs
+        .count_by_status(&user.tenant_id, "pending")
+        .await
+        .unwrap_or(0);
+    let completed_runs = state
+        .runs
+        .count_by_status(&user.tenant_id, "completed")
+        .await
+        .unwrap_or(0);
+    let failed_runs = state
+        .runs
+        .count_by_status(&user.tenant_id, "failed")
+        .await
+        .unwrap_or(0);
     let connections = state.connections.list_by_tenant(&user.tenant_id).await?;
 
     Ok(Json(DashboardStatsResponse {
@@ -58,6 +70,9 @@ pub async fn activity(
     user: AuthUser,
     State(state): State<SaasAppState>,
 ) -> ApiResult<Json<DashboardActivityResponse>> {
-    let logs = state.audit_logs.list_by_tenant(&user.tenant_id, 20, 0).await?;
+    let logs = state
+        .audit_logs
+        .list_by_tenant(&user.tenant_id, 20, 0)
+        .await?;
     Ok(Json(DashboardActivityResponse { activity: logs }))
 }

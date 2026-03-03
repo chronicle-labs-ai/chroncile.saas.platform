@@ -3,9 +3,9 @@
 //! Implements the EventGenerator trait to produce synthetic Stripe events.
 
 use async_trait::async_trait;
-use chrono::Utc;
 use chronicle_domain::{Actor, EventEnvelope, Subject, TenantId};
 use chronicle_sources_core::{EventGenerator, GeneratorConfig, GeneratorError};
+use chrono::Utc;
 
 use crate::templates::{StripeEventTemplate, StripeEventType};
 
@@ -204,4 +204,3 @@ mod tests {
         assert!(types.contains(&"charge.succeeded".to_string()));
     }
 }
-

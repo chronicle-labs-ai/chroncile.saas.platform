@@ -56,7 +56,9 @@ async fn main() -> Result<()> {
                 .map_err(|e| anyhow::anyhow!("Failed to connect to Postgres: {e}"))?;
 
             tracing::info!("Running event store migrations...");
-            postgres_store.migrate().await
+            postgres_store
+                .migrate()
+                .await
                 .map_err(|e| anyhow::anyhow!("Failed to run migrations: {e}"))?;
 
             tracing::info!("Running SaaS schema migrations...");
@@ -68,7 +70,8 @@ async fn main() -> Result<()> {
             let store = Arc::new(StoreBackend::Postgres(postgres_store));
             let stream = Arc::new(StreamBackend::Memory(memory_stream));
 
-            let pool = sqlx::PgPool::connect(&db_url).await
+            let pool = sqlx::PgPool::connect(&db_url)
+                .await
                 .map_err(|e| anyhow::anyhow!("Failed to create connection pool: {e}"))?;
 
             let saas = build_saas_state_postgres(pool, Arc::clone(&store), Arc::clone(&stream));
@@ -79,10 +82,13 @@ async fn main() -> Result<()> {
             tracing::info!("Using in-memory backends");
 
             if let Some(ref db_url) = database_url {
-                tracing::info!("DATABASE_URL set -- running SaaS migrations and using Postgres repos");
+                tracing::info!(
+                    "DATABASE_URL set -- running SaaS migrations and using Postgres repos"
+                );
                 run_saas_migrations(db_url).await?;
 
-                let pool = sqlx::PgPool::connect(db_url).await
+                let pool = sqlx::PgPool::connect(db_url)
+                    .await
                     .map_err(|e| anyhow::anyhow!("Failed to create connection pool: {e}"))?;
 
                 let memory_stream =
@@ -112,7 +118,8 @@ async fn main() -> Result<()> {
         }
     };
 
-    let events_state = AppState::new_from_arcs(Arc::clone(&store_backend), Arc::clone(&stream_backend));
+    let events_state =
+        AppState::new_from_arcs(Arc::clone(&store_backend), Arc::clone(&stream_backend));
 
     let sim_config = simulation::SimulationConfig::from_env();
     if sim_config.enabled {
@@ -173,7 +180,9 @@ fn build_pipedream_client() -> Option<Arc<pipedream_connect::PipedreamClient>> {
 
 fn build_email_service() -> Arc<dyn chronicle_interfaces::EmailService> {
     let template_map = parse_template_map();
-    Arc::from(chronicle_integrations::resend::build_email_service(template_map))
+    Arc::from(chronicle_integrations::resend::build_email_service(
+        template_map,
+    ))
 }
 
 fn parse_template_map() -> std::collections::HashMap<String, String> {
@@ -239,7 +248,8 @@ fn build_saas_state_memory(
 }
 
 async fn run_saas_migrations(database_url: &str) -> Result<()> {
-    let pool = sqlx::PgPool::connect(database_url).await
+    let pool = sqlx::PgPool::connect(database_url)
+        .await
         .map_err(|e| anyhow::anyhow!("Migration pool connect failed: {e}"))?;
 
     let migrations_dir = std::path::Path::new("migrations");
@@ -258,7 +268,9 @@ async fn run_saas_migrations(database_url: &str) -> Result<()> {
         let path = entry.path();
         let sql = std::fs::read_to_string(&path)?;
         tracing::info!("Running migration: {}", path.display());
-        sqlx::raw_sql(&sql).execute(&pool).await
+        sqlx::raw_sql(&sql)
+            .execute(&pool)
+            .await
             .map_err(|e| anyhow::anyhow!("Migration {} failed: {e}", path.display()))?;
     }
 

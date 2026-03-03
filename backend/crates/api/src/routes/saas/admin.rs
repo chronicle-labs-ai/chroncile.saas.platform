@@ -50,14 +50,21 @@ pub async fn list_tenants(
 
     let mut entries: Vec<AdminTenantEntry> = Vec::with_capacity(tenants.len());
     for tenant in tenants {
-        let users = state.users.list_by_tenant(&tenant.id).await.unwrap_or_default();
+        let users = state
+            .users
+            .list_by_tenant(&tenant.id)
+            .await
+            .unwrap_or_default();
         entries.push(AdminTenantEntry {
             user_count: users.len(),
             tenant,
         });
     }
 
-    Ok(Json(AdminTenantsResponse { tenants: entries, total }))
+    Ok(Json(AdminTenantsResponse {
+        tenants: entries,
+        total,
+    }))
 }
 
 // ── List users for a tenant ──────────────────────────────────────────────────
@@ -75,7 +82,11 @@ pub async fn list_tenant_users(
 ) -> ApiResult<Json<AdminUsersResponse>> {
     verify_service_secret(&headers)?;
 
-    let users = state.users.list_by_tenant(&tenant_id).await.unwrap_or_default();
+    let users = state
+        .users
+        .list_by_tenant(&tenant_id)
+        .await
+        .unwrap_or_default();
     Ok(Json(AdminUsersResponse { users }))
 }
 
@@ -103,7 +114,10 @@ pub async fn invite_user(
 ) -> ApiResult<Json<InviteUserResponse>> {
     verify_service_secret(&headers)?;
 
-    state.tenants.find_by_id(&tenant_id).await?
+    state
+        .tenants
+        .find_by_id(&tenant_id)
+        .await?
         .ok_or_else(|| ApiError::not_found(&format!("tenant: {tenant_id}")))?;
 
     if let Some(existing) = state.users.find_by_email(&input.email).await? {
@@ -115,17 +129,22 @@ pub async fn invite_user(
                 user: existing,
             }));
         }
-        return Err(ApiError::bad_request("Email already registered to a different org"));
+        return Err(ApiError::bad_request(
+            "Email already registered to a different org",
+        ));
     }
 
-    let user = state.users.create(CreateUserInput {
-        email: input.email.clone(),
-        name: input.name,
-        password_hash: None,
-        auth_provider: "google".to_string(),
-        role: UserRole::Member,
-        tenant_id: tenant_id.clone(),
-    }).await?;
+    let user = state
+        .users
+        .create(CreateUserInput {
+            email: input.email.clone(),
+            name: input.name,
+            password_hash: None,
+            auth_provider: "google".to_string(),
+            role: UserRole::Member,
+            tenant_id: tenant_id.clone(),
+        })
+        .await?;
 
     let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
         .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());
@@ -161,26 +180,36 @@ pub async fn create_org(
     verify_service_secret(&headers)?;
 
     if let Some(_existing) = state.tenants.find_by_slug(&input.org_slug).await? {
-        return Err(ApiError::bad_request("An organization with this slug already exists"));
+        return Err(ApiError::bad_request(
+            "An organization with this slug already exists",
+        ));
     }
 
     if let Some(_existing) = state.users.find_by_email(&input.admin_email).await? {
-        return Err(ApiError::bad_request("Email already registered to another organization"));
+        return Err(ApiError::bad_request(
+            "Email already registered to another organization",
+        ));
     }
 
-    let tenant = state.tenants.create(CreateTenantInput {
-        name: input.org_name,
-        slug: input.org_slug,
-    }).await?;
+    let tenant = state
+        .tenants
+        .create(CreateTenantInput {
+            name: input.org_name,
+            slug: input.org_slug,
+        })
+        .await?;
 
-    let user = state.users.create(CreateUserInput {
-        email: input.admin_email,
-        name: input.admin_name,
-        password_hash: None,
-        auth_provider: "google".to_string(),
-        role: UserRole::Owner,
-        tenant_id: tenant.id.clone(),
-    }).await?;
+    let user = state
+        .users
+        .create(CreateUserInput {
+            email: input.admin_email,
+            name: input.admin_name,
+            password_hash: None,
+            auth_provider: "google".to_string(),
+            role: UserRole::Owner,
+            tenant_id: tenant.id.clone(),
+        })
+        .await?;
 
     let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
         .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());

@@ -39,7 +39,11 @@ mod tests {
         let password = "TestPass123!";
         let hash = hash_password(password).unwrap();
 
-        assert!(hash.starts_with("$2b$12$"), "Expected $2b$12$ prefix, got: {}", &hash[..7]);
+        assert!(
+            hash.starts_with("$2b$12$"),
+            "Expected $2b$12$ prefix, got: {}",
+            &hash[..7]
+        );
 
         // Verify we can validate the hash we produced
         assert!(verify_password(password, &hash).unwrap());

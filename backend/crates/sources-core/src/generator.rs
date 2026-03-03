@@ -9,8 +9,8 @@
 //! actively produce events on a schedule or trigger.
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use chronicle_domain::EventEnvelope;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -104,8 +104,7 @@ impl GeneratorConfig {
 }
 
 /// Status of a running generator
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct GeneratorStatus {
     /// Whether the generator is currently running
     pub running: bool,
@@ -120,7 +119,6 @@ pub struct GeneratorStatus {
     /// Any error message
     pub error: Option<String>,
 }
-
 
 /// Handle to control a running generator
 pub struct GeneratorHandle {
@@ -168,7 +166,10 @@ pub trait EventGenerator: Send + Sync {
     ///
     /// This is called repeatedly based on the configured rate.
     /// The implementation should return a fully-formed EventEnvelope.
-    async fn generate_event(&self, config: &GeneratorConfig) -> Result<EventEnvelope, GeneratorError>;
+    async fn generate_event(
+        &self,
+        config: &GeneratorConfig,
+    ) -> Result<EventEnvelope, GeneratorError>;
 
     /// Get available event types this generator can produce
     fn available_event_types(&self) -> Vec<String>;
@@ -274,4 +275,3 @@ mod tests {
         assert_eq!(config.event_types, vec!["payment.created"]);
     }
 }
-

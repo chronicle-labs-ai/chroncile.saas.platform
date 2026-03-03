@@ -50,20 +50,34 @@ impl IntoResponse for ApiError {
             ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, "not_found", msg.clone()),
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "bad_request", msg.clone()),
             ApiError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, "unauthorized", msg.clone()),
-            ApiError::Validation(msg) => {
-                (StatusCode::UNPROCESSABLE_ENTITY, "validation_error", msg.clone())
-            }
+            ApiError::Validation(msg) => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "validation_error",
+                msg.clone(),
+            ),
             ApiError::Stream(msg) => {
                 tracing::error!(error = %msg, "stream_error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "stream_error", msg.clone())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "stream_error",
+                    msg.clone(),
+                )
             }
             ApiError::Store(msg) => {
                 tracing::error!(error = %msg, "store_error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "store_error", msg.clone())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "store_error",
+                    msg.clone(),
+                )
             }
             ApiError::Internal(msg) => {
                 tracing::error!(error = %msg, "internal_error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg.clone())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "internal_error",
+                    msg.clone(),
+                )
             }
         };
 

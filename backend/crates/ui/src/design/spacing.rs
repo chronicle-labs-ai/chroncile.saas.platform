@@ -18,4 +18,3 @@ pub const XL: f32 = 24.0;
 pub const PANEL: f32 = 12.0;
 /// Card padding
 pub const CARD: f32 = 16.0;
-

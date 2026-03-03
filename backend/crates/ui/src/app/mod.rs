@@ -263,8 +263,7 @@ impl eframe::App for EventsManagerApp {
                             // Status dot - square for industrial feel
                             let (rect, _) =
                                 ui.allocate_exact_size(egui::vec2(6.0, 6.0), egui::Sense::hover());
-                            ui.painter()
-                                .rect_filled(rect, rounding::NONE, status_color);
+                            ui.painter().rect_filled(rect, rounding::NONE, status_color);
 
                             ui.label(
                                 egui::RichText::new(status_text)
@@ -350,4 +349,3 @@ impl eframe::App for EventsManagerApp {
         self.render_toasts(ctx);
     }
 }
-

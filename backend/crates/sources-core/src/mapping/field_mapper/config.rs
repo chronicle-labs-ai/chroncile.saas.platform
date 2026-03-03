@@ -153,4 +153,3 @@ pub struct FieldMapperDefaults {
     #[serde(default)]
     pub mappings: Vec<FieldMapping>,
 }
-

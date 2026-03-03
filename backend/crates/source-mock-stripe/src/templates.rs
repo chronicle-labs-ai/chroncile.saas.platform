@@ -99,12 +99,14 @@ impl StripeEventType {
 
     /// Get a random "success" event type (more likely in demos)
     pub fn random_success() -> Self {
-        let success_types = [Self::PaymentIntentSucceeded,
+        let success_types = [
+            Self::PaymentIntentSucceeded,
             Self::CustomerCreated,
             Self::CustomerUpdated,
             Self::InvoicePaid,
             Self::SubscriptionCreated,
-            Self::ChargeSucceeded];
+            Self::ChargeSucceeded,
+        ];
         let idx = rand::thread_rng().gen_range(0..success_types.len());
         success_types[idx]
     }
@@ -405,14 +407,48 @@ fn random_amount() -> i64 {
 
 fn random_name() -> (&'static str, &'static str) {
     let first_names = [
-        "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "David",
-        "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas",
-        "Sarah", "Christopher", "Karen",
+        "James",
+        "Mary",
+        "John",
+        "Patricia",
+        "Robert",
+        "Jennifer",
+        "Michael",
+        "Linda",
+        "David",
+        "Elizabeth",
+        "William",
+        "Barbara",
+        "Richard",
+        "Susan",
+        "Joseph",
+        "Jessica",
+        "Thomas",
+        "Sarah",
+        "Christopher",
+        "Karen",
     ];
     let last_names = [
-        "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez",
-        "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor",
-        "Moore", "Jackson", "Martin",
+        "Smith",
+        "Johnson",
+        "Williams",
+        "Brown",
+        "Jones",
+        "Garcia",
+        "Miller",
+        "Davis",
+        "Rodriguez",
+        "Martinez",
+        "Hernandez",
+        "Lopez",
+        "Gonzalez",
+        "Wilson",
+        "Anderson",
+        "Thomas",
+        "Taylor",
+        "Moore",
+        "Jackson",
+        "Martin",
     ];
     let first = first_names[rand::thread_rng().gen_range(0..first_names.len())];
     let last = last_names[rand::thread_rng().gen_range(0..last_names.len())];
@@ -462,8 +498,25 @@ fn random_state() -> &'static str {
 
 fn random_street_name() -> &'static str {
     let streets = [
-        "Main", "Oak", "Maple", "Cedar", "Pine", "Elm", "Washington", "Lake", "Hill", "Park",
-        "Forest", "River", "Church", "Market", "Union", "Spring", "High", "Center", "School",
+        "Main",
+        "Oak",
+        "Maple",
+        "Cedar",
+        "Pine",
+        "Elm",
+        "Washington",
+        "Lake",
+        "Hill",
+        "Park",
+        "Forest",
+        "River",
+        "Church",
+        "Market",
+        "Union",
+        "Spring",
+        "High",
+        "Center",
+        "School",
         "Mill",
     ];
     streets[rand::thread_rng().gen_range(0..streets.len())]
@@ -491,26 +544,27 @@ mod tests {
 
     #[test]
     fn test_generate_payment_intent() {
-        let event = StripeEventTemplate::generate(
-            StripeEventType::PaymentIntentSucceeded,
-            Utc::now(),
-        );
-        
+        let event =
+            StripeEventTemplate::generate(StripeEventType::PaymentIntentSucceeded, Utc::now());
+
         assert!(event["id"].as_str().unwrap().starts_with("evt_"));
         assert_eq!(event["type"], "payment_intent.succeeded");
-        assert!(event["data"]["object"]["id"].as_str().unwrap().starts_with("pi_"));
+        assert!(event["data"]["object"]["id"]
+            .as_str()
+            .unwrap()
+            .starts_with("pi_"));
     }
 
     #[test]
     fn test_generate_customer() {
-        let event = StripeEventTemplate::generate(
-            StripeEventType::CustomerCreated,
-            Utc::now(),
-        );
-        
+        let event = StripeEventTemplate::generate(StripeEventType::CustomerCreated, Utc::now());
+
         assert!(event["id"].as_str().unwrap().starts_with("evt_"));
         assert_eq!(event["type"], "customer.created");
-        assert!(event["data"]["object"]["id"].as_str().unwrap().starts_with("cus_"));
+        assert!(event["data"]["object"]["id"]
+            .as_str()
+            .unwrap()
+            .starts_with("cus_"));
         assert!(event["data"]["object"]["email"].as_str().is_some());
     }
 
@@ -523,4 +577,3 @@ mod tests {
         }
     }
 }
-

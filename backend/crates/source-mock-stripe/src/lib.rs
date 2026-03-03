@@ -51,4 +51,3 @@ inventory::submit! {
         factory: || Box::new(MockStripeAdapter::new())
     }
 }
-

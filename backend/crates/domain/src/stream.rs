@@ -124,8 +124,7 @@ impl StreamKind {
 }
 
 /// Connection/playback status of a stream
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum StreamStatus {
     /// Stream is connected and receiving events
     Connected,
@@ -188,7 +187,6 @@ impl StreamStatus {
     }
 }
 
-
 /// A stream delivers events from one or more sources
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Stream {
@@ -236,9 +234,11 @@ impl Stream {
     /// Create an MCAP file stream
     pub fn mcap_file(path: impl Into<PathBuf>, filename: Option<String>) -> Self {
         let path = path.into();
-        let name = filename
-            .clone()
-            .unwrap_or_else(|| path.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "MCAP Recording".to_string()));
+        let name = filename.clone().unwrap_or_else(|| {
+            path.file_name()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "MCAP Recording".to_string())
+        });
         Self::new(
             StreamId::generate(),
             name,
@@ -357,7 +357,10 @@ mod tests {
         assert!(StreamStatus::Connected.is_active());
         assert!(StreamStatus::Connecting.is_active());
         assert!(!StreamStatus::Paused.is_active());
-        assert!(StreamStatus::Error { message: "test".into() }.is_error());
+        assert!(StreamStatus::Error {
+            message: "test".into()
+        }
+        .is_error());
     }
 
     #[test]
@@ -376,4 +379,3 @@ mod tests {
         assert_eq!(stream_color(STREAM_COLORS.len()), STREAM_COLORS[0]);
     }
 }
-

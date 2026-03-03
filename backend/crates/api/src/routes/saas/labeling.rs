@@ -22,7 +22,14 @@ fn next_id() -> String {
     use std::sync::atomic::{AtomicU64, Ordering};
     static SEQ: AtomicU64 = AtomicU64::new(0);
     let n = SEQ.fetch_add(1, Ordering::Relaxed);
-    format!("esc_{}_{}", std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(), n)
+    format!(
+        "esc_{}_{}",
+        std::time::SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis(),
+        n
+    )
 }
 
 fn find_duplicate<'a>(
@@ -75,7 +82,9 @@ pub async fn notify(
     Json(req): Json<NotifyRequest>,
 ) -> ApiResult<Json<NotifyResponse>> {
     if req.member_id.is_empty() || req.trace_id.is_empty() || req.channel.is_empty() {
-        return Err(ApiError::bad_request("memberId, traceId, and channel are required"));
+        return Err(ApiError::bad_request(
+            "memberId, traceId, and channel are required",
+        ));
     }
 
     let channel_log = match req.channel.as_str() {
@@ -102,28 +111,46 @@ pub async fn notify(
     drop(log_guard);
 
     if channel_log == "email" {
-        let to_email = req.to_email.as_deref().ok_or_else(|| {
-            ApiError::bad_request("toEmail is required when channel is email")
-        })?;
+        let to_email = req
+            .to_email
+            .as_deref()
+            .ok_or_else(|| ApiError::bad_request("toEmail is required when channel is email"))?;
         let subject = req.subject.as_deref().unwrap_or("Trace requires review");
         let html = req.html_content.as_deref().ok_or_else(|| {
             ApiError::bad_request("htmlContent is required when channel is email")
         })?;
 
         let id = next_id();
-        let now = std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string();
+        let now = std::time::SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
+            .to_string();
 
-        let message_id = state.email.send_html_email(HtmlEmailParams {
-            to: to_email.to_string(),
-            subject: subject.to_string(),
-            html: html.to_string(),
-            idempotency_key: Some(format!("escalation/{}", id)),
-            tags: vec![
-                EmailTag { name: "type".into(), value: "trace_escalation".into() },
-                EmailTag { name: "trace_id".into(), value: req.trace_id.clone() },
-                EmailTag { name: "escalation_id".into(), value: id.clone() },
-            ],
-        }).await.ok();
+        let message_id = state
+            .email
+            .send_html_email(HtmlEmailParams {
+                to: to_email.to_string(),
+                subject: subject.to_string(),
+                html: html.to_string(),
+                idempotency_key: Some(format!("escalation/{}", id)),
+                tags: vec![
+                    EmailTag {
+                        name: "type".into(),
+                        value: "trace_escalation".into(),
+                    },
+                    EmailTag {
+                        name: "trace_id".into(),
+                        value: req.trace_id.clone(),
+                    },
+                    EmailTag {
+                        name: "escalation_id".into(),
+                        value: id.clone(),
+                    },
+                ],
+            })
+            .await
+            .ok();
 
         let mut log_guard = state.escalation_log.write().await;
         log_guard.push(EscalationEntry {
@@ -147,7 +174,11 @@ pub async fn notify(
     }
 
     let id = next_id();
-    let now = std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string();
+    let now = std::time::SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        .to_string();
     let mut log_guard = state.escalation_log.write().await;
     log_guard.push(EscalationEntry {
         id: id.clone(),
@@ -171,7 +202,8 @@ pub async fn notify(
 
 fn get_signing_key() -> Result<Vec<u8>, ApiError> {
     use base64::Engine;
-    let key = std::env::var("ENCRYPTION_KEY").or_else(|_| std::env::var("EMAIL_ACTION_SECRET"))
+    let key = std::env::var("ENCRYPTION_KEY")
+        .or_else(|_| std::env::var("EMAIL_ACTION_SECRET"))
         .map_err(|_| ApiError::internal())?;
     if key.len() == 64 {
         hex::decode(&key).map_err(|_| ApiError::internal())
@@ -211,8 +243,12 @@ fn verify_token(token: &str) -> Result<ActionPayload, ApiError> {
     let payload_json = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(payload_b64)
         .map_err(|_| ApiError::unauthorized())?;
-    let payload: ActionPayload = serde_json::from_slice(&payload_json).map_err(|_| ApiError::unauthorized())?;
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    let payload: ActionPayload =
+        serde_json::from_slice(&payload_json).map_err(|_| ApiError::unauthorized())?;
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     if payload.exp < now {
         return Err(ApiError::unauthorized());
     }
@@ -223,12 +259,17 @@ pub async fn email_action(
     Path(token): Path<String>,
     State(state): State<SaasAppState>,
 ) -> Result<Response, ApiError> {
-    let base_url = std::env::var("NEXT_PUBLIC_APP_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let base_url = std::env::var("NEXT_PUBLIC_APP_URL")
+        .unwrap_or_else(|_| "http://localhost:3000".to_string());
 
     let payload = match verify_token(&token) {
         Ok(p) => p,
         Err(_) => {
-            return Ok(Redirect::temporary(&format!("{}/dashboard/labeling?error=invalid_or_expired_link", base_url)).into_response());
+            return Ok(Redirect::temporary(&format!(
+                "{}/dashboard/labeling?error=invalid_or_expired_link",
+                base_url
+            ))
+            .into_response());
         }
     };
 

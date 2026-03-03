@@ -198,6 +198,9 @@ mod tests {
     #[test]
     fn test_service_display() {
         assert_eq!(MockService::MockZendesk.as_str(), "mock-zendesk");
-        assert_eq!(MockService::Custom("my-service".into()).as_str(), "my-service");
+        assert_eq!(
+            MockService::Custom("my-service".into()).as_str(),
+            "my-service"
+        );
     }
 }

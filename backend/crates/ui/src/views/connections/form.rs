@@ -11,11 +11,7 @@ use super::types::{ConnectionAction, ConnectionsView};
 
 impl ConnectionsView {
     /// Render the new connection form
-    pub(crate) fn render_new_connection_form(
-        &mut self,
-        ui: &mut Ui,
-        sources: &[SourceSummary],
-    ) {
+    pub(crate) fn render_new_connection_form(&mut self, ui: &mut Ui, sources: &[SourceSummary]) {
         egui::Frame::none()
             .fill(colors::BG_ELEVATED)
             .rounding(rounding::SM)
@@ -103,10 +99,11 @@ impl ConnectionsView {
                         } else {
                             self.new_name.clone()
                         };
-                        self.pending_actions.push(ConnectionAction::CreateConnection(
-                            self.new_service.clone(),
-                            name,
-                        ));
+                        self.pending_actions
+                            .push(ConnectionAction::CreateConnection(
+                                self.new_service.clone(),
+                                name,
+                            ));
                         self.new_name.clear();
                         self.show_new_connection_form = false;
                     }
@@ -114,4 +111,3 @@ impl ConnectionsView {
             });
     }
 }
-

@@ -59,11 +59,8 @@ impl EventStreamConsumer for KafkaConsumer {
         let mut stream = self.consumer.stream();
 
         // Poll for messages with a timeout
-        while let Ok(Some(result)) = tokio::time::timeout(
-            std::time::Duration::from_millis(100),
-            stream.next(),
-        )
-        .await
+        while let Ok(Some(result)) =
+            tokio::time::timeout(std::time::Duration::from_millis(100), stream.next()).await
         {
             match result {
                 Ok(msg) => {

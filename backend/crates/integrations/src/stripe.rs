@@ -55,7 +55,11 @@ pub fn verify_webhook_signature(
         return Err(StripeWebhookError::TimestampOutOfRange);
     }
 
-    let signed_payload = format!("{}.{}", timestamp, std::str::from_utf8(payload).unwrap_or(""));
+    let signed_payload = format!(
+        "{}.{}",
+        timestamp,
+        std::str::from_utf8(payload).unwrap_or("")
+    );
 
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
         .map_err(|_| StripeWebhookError::InvalidSignature)?;
@@ -75,11 +79,7 @@ mod tests {
 
     fn make_sig(payload: &[u8], secret: &str) -> String {
         let timestamp = chrono::Utc::now().timestamp();
-        let signed_payload = format!(
-            "{}.{}",
-            timestamp,
-            std::str::from_utf8(payload).unwrap()
-        );
+        let signed_payload = format!("{}.{}", timestamp, std::str::from_utf8(payload).unwrap());
 
         let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
         mac.update(signed_payload.as_bytes());

@@ -23,9 +23,7 @@ pub use timeline::{EventLane, LaneGrouping, TimeRangeMapper};
 
 // Re-export timeline-core types for convenience
 pub use chronicle_timeline_core::{
-    source_color, event_path_color, TopicPath, TopicTree, TopicTreeNode,
-    TimeView, PlaybackState, DisplayTimezone, TimelineEventData, TimelineTheme,
-    TimelinePanel, TimelinePanelConfig, TimelinePanelResponse,
-    format_duration, format_duration_precise,
+    event_path_color, format_duration, format_duration_precise, source_color, DisplayTimezone,
+    PlaybackState, TimeView, TimelineEventData, TimelinePanel, TimelinePanelConfig,
+    TimelinePanelResponse, TimelineTheme, TopicPath, TopicTree, TopicTreeNode,
 };
-

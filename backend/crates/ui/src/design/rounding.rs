@@ -12,4 +12,3 @@ pub const SM: Rounding = Rounding::same(2.0);
 pub const MD: Rounding = Rounding::same(4.0);
 /// Larger rounding (rare use)
 pub const LG: Rounding = Rounding::same(6.0);
-

@@ -13,10 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use chronicle_domain::{sort_for_replay, ReplayMode, SubjectId, TenantId};
 
-use crate::{
-    routes::stream::EventEnvelopeDto,
-    ApiError, ApiResult, AppState,
-};
+use crate::{routes::stream::EventEnvelopeDto, ApiError, ApiResult, AppState};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateReplayRequest {
@@ -80,10 +77,11 @@ pub async fn create_replay(
     State(state): State<AppState>,
     Json(req): Json<CreateReplayRequest>,
 ) -> ApiResult<Json<ReplayResponse>> {
-    let tenant_id = req.tenant_id
+    let tenant_id = req
+        .tenant_id
         .map(|t| TenantId::new(t))
         .unwrap_or_else(|| state.default_tenant.clone());
-    
+
     // Parse mode
     let mode = match req.mode.as_str() {
         "instant" => ReplayMode::Instant,
@@ -96,11 +94,8 @@ pub async fn create_replay(
     };
 
     // Create session
-    let session_id = state.create_replay_session(
-        tenant_id.clone(),
-        req.conversation_id.clone(),
-        mode.clone(),
-    );
+    let session_id =
+        state.create_replay_session(tenant_id.clone(), req.conversation_id.clone(), mode.clone());
 
     // Load events into the session
     let events = state
@@ -168,7 +163,12 @@ pub async fn control_replay(
     let success = match req.action.as_str() {
         "start" | "resume" => session.start(),
         "pause" => session.pause(),
-        _ => return Err(ApiError::BadRequest(format!("Invalid action: {}", req.action))),
+        _ => {
+            return Err(ApiError::BadRequest(format!(
+                "Invalid action: {}",
+                req.action
+            )))
+        }
     };
 
     Ok(Json(ReplayControlResponse {

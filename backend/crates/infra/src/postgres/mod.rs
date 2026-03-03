@@ -2,11 +2,11 @@
 //!
 //! Feature-gated Postgres storage backend using sqlx.
 
-mod store;
 pub mod repositories;
+mod store;
 
-pub use store::PostgresStore;
 pub use repositories::*;
+pub use store::PostgresStore;
 
 /// Postgres-specific errors
 #[derive(Debug, thiserror::Error)]

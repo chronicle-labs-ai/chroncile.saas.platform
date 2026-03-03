@@ -46,4 +46,3 @@ pub fn value_to_timestamp(value: &serde_json::Value) -> Option<DateTime<Utc>> {
         _ => None,
     }
 }
-

@@ -29,9 +29,7 @@ thread_local! {
 /// ```
 pub fn new_event_id() -> Ulid {
     ULID_GEN.with(|gen| {
-        gen.borrow_mut()
-            .generate()
-            .unwrap_or_else(|_| Ulid::new()) // Fallback if monotonic overflow (very rare)
+        gen.borrow_mut().generate().unwrap_or_else(|_| Ulid::new()) // Fallback if monotonic overflow (very rare)
     })
 }
 

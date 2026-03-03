@@ -12,7 +12,9 @@ use chrono::{DateTime, Utc};
 use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
 
-use chronicle_domain::{sort_for_replay, EventEnvelope, EventQuery, SubjectId, TenantId, TimeRange};
+use chronicle_domain::{
+    sort_for_replay, EventEnvelope, EventQuery, SubjectId, TenantId, TimeRange,
+};
 
 use crate::{ApiError, ApiResult, AppState};
 
@@ -154,7 +156,7 @@ pub async fn list_events(
     Query(params): Query<StreamParams>,
 ) -> Json<EventsListResponse> {
     let buffered = state.stream.get_buffer();
-    
+
     let events: Vec<EventEnvelopeDto> = buffered
         .into_iter()
         .filter(|e| {
@@ -172,7 +174,7 @@ pub async fn list_events(
         })
         .map(EventEnvelopeDto::from)
         .collect();
-    
+
     let count = events.len();
     Json(EventsListResponse { events, count })
 }
@@ -200,23 +202,24 @@ pub async fn query_events(
     State(state): State<AppState>,
     Query(params): Query<EventQueryParams>,
 ) -> ApiResult<Json<EventsQueryResponse>> {
-    let tenant_id = params.tenant_id
+    let tenant_id = params
+        .tenant_id
         .clone()
         .map(|t| TenantId::new(t))
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
-    
+
     let query = params.to_event_query();
-    
+
     let result = state.store.query(&tenant_id, &query).await?;
-    
+
     let events: Vec<EventEnvelopeDto> = result
         .events
         .into_iter()
         .map(EventEnvelopeDto::from)
         .collect();
-    
+
     let count = events.len();
-    
+
     Ok(Json(EventsQueryResponse {
         events,
         count,
@@ -230,7 +233,8 @@ pub async fn list_sources(
     State(state): State<AppState>,
     Query(params): Query<EventQueryParams>,
 ) -> ApiResult<Json<Vec<String>>> {
-    let tenant_id = params.tenant_id
+    let tenant_id = params
+        .tenant_id
         .map(|t| TenantId::new(t))
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
     let sources = state.store.list_sources(&tenant_id).await?;
@@ -242,7 +246,8 @@ pub async fn list_event_types(
     State(state): State<AppState>,
     Query(params): Query<EventQueryParams>,
 ) -> ApiResult<Json<Vec<String>>> {
-    let tenant_id = params.tenant_id
+    let tenant_id = params
+        .tenant_id
         .map(|t| TenantId::new(t))
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
     let event_types = state.store.list_event_types(&tenant_id).await?;
@@ -256,12 +261,16 @@ pub async fn stream_events(
     State(state): State<AppState>,
     Query(params): Query<StreamParams>,
 ) -> ApiResult<Sse<impl Stream<Item = Result<Event, Infallible>> + Send>> {
-    let tenant_id = params.tenant_id
+    let tenant_id = params
+        .tenant_id
         .map(|t| TenantId::new(t))
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
-    
-    tracing::info!("SSE client connected to /api/stream for tenant: {}", tenant_id.as_str());
-    
+
+    tracing::info!(
+        "SSE client connected to /api/stream for tenant: {}",
+        tenant_id.as_str()
+    );
+
     // Subscribe to the broadcast channel
     let mut receiver = state.stream.subscribe();
 
@@ -276,7 +285,7 @@ pub async fn stream_events(
             if event.tenant_id != tenant_id {
                 continue;
             }
-            
+
             // Apply filters
             if let Some(ref et) = event_type_filter {
                 if !event.event_type.contains(et) {
@@ -303,7 +312,7 @@ pub async fn stream_events(
                     if event.tenant_id != tenant_id {
                         continue;
                     }
-                    
+
                     // Apply filters
                     if let Some(ref et) = event_type_filter {
                         if !event.event_type.contains(et) {
@@ -346,11 +355,12 @@ pub async fn get_timeline(
     Path(conversation_id): Path<String>,
     Query(params): Query<TimelineParams>,
 ) -> ApiResult<Json<TimelineResponse>> {
-    let tenant_id = params.tenant_id
+    let tenant_id = params
+        .tenant_id
         .clone()
         .map(|t| TenantId::new(t))
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
-    
+
     let range = TimeRange::last_hours(params.hours);
 
     let events = state
@@ -367,7 +377,8 @@ pub async fn get_timeline(
     let sorted = sort_for_replay(filtered);
     let count = sorted.len();
 
-    let event_dtos: Vec<EventEnvelopeDto> = sorted.into_iter().map(EventEnvelopeDto::from).collect();
+    let event_dtos: Vec<EventEnvelopeDto> =
+        sorted.into_iter().map(EventEnvelopeDto::from).collect();
 
     Ok(Json(TimelineResponse {
         conversation_id,

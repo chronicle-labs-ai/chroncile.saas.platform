@@ -225,7 +225,8 @@ impl TopicTree {
         let child = if let Some(idx) = child_idx {
             &mut node.children[idx]
         } else {
-            let mut new_child = TopicTreeNode::new(partial_path.clone(), event_path_color(&partial_path, color));
+            let mut new_child =
+                TopicTreeNode::new(partial_path.clone(), event_path_color(&partial_path, color));
             // Only set event_count if this is the leaf path
             if segment_idx == full_path.segments.len() - 1 {
                 new_child.event_count = *leaf_counts.get(&full_path.display()).unwrap_or(&0);
@@ -315,16 +316,18 @@ impl Default for TopicTree {
 /// Get color for a source
 pub fn source_color(source: &str) -> Color32 {
     match source.to_lowercase().as_str() {
-        "intercom" => Color32::from_rgb(64, 180, 166),      // Teal
+        "intercom" => Color32::from_rgb(64, 180, 166), // Teal
         "stripe" | "mock-stripe" => Color32::from_rgb(99, 91, 255), // Purple/Blue
-        "zendesk" => Color32::from_rgb(3, 54, 61),          // Dark teal
-        "slack" => Color32::from_rgb(74, 21, 75),           // Purple
-        "hubspot" => Color32::from_rgb(255, 122, 89),       // Orange
-        "github" => Color32::from_rgb(110, 84, 148),        // Purple
-        "salesforce" => Color32::from_rgb(0, 161, 224),     // Blue
+        "zendesk" => Color32::from_rgb(3, 54, 61),     // Dark teal
+        "slack" => Color32::from_rgb(74, 21, 75),      // Purple
+        "hubspot" => Color32::from_rgb(255, 122, 89),  // Orange
+        "github" => Color32::from_rgb(110, 84, 148),   // Purple
+        "salesforce" => Color32::from_rgb(0, 161, 224), // Blue
         _ => {
             // Generate consistent color from name
-            let hash = source.bytes().fold(0u32, |acc, b| acc.wrapping_add(b as u32));
+            let hash = source
+                .bytes()
+                .fold(0u32, |acc, b| acc.wrapping_add(b as u32));
             let hue = (hash % 360) as f32;
             hsl_to_rgb(hue, 0.6, 0.5)
         }
@@ -334,7 +337,10 @@ pub fn source_color(source: &str) -> Color32 {
 /// Get color for a topic path (uses base color with variations)
 pub fn event_path_color(path: &TopicPath, base_color: Color32) -> Color32 {
     // Slightly vary the color based on path depth/content
-    let hash = path.display().bytes().fold(0u8, |acc, b| acc.wrapping_add(b));
+    let hash = path
+        .display()
+        .bytes()
+        .fold(0u8, |acc, b| acc.wrapping_add(b));
     let variation = (hash as f32 / 255.0) * 0.2 - 0.1; // -10% to +10%
     Color32::from_rgb(
         ((base_color.r() as f32 * (1.0 + variation)).clamp(0.0, 255.0)) as u8,

@@ -4,14 +4,14 @@ use dashmap::DashMap;
 use std::sync::Arc;
 
 use chronicle_domain::{
-    AuditLog, AgentEndpointConfig, Connection, CreateConnectionInput,
-    CreateInvitationInput, CreateRunInput, CreateTenantInput, CreateUserInput,
-    Invitation, PipedreamTrigger, Run, Tenant, User, UserRole,
+    AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
+    CreateRunInput, CreateTenantInput, CreateUserInput, Invitation, PipedreamTrigger, Run, Tenant,
+    User, UserRole,
 };
 use chronicle_interfaces::{
-    AuditLogRepository, AgentEndpointConfigRepository, ConnectionRepository,
-    InvitationRepository, PipedreamTriggerRepository, RepoError, RepoResult,
-    RunRepository, TenantRepository, UserRepository,
+    AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, InvitationRepository,
+    PipedreamTriggerRepository, RepoError, RepoResult, RunRepository, TenantRepository,
+    UserRepository,
 };
 
 fn new_id() -> String {
@@ -51,7 +51,11 @@ impl TenantRepository for InMemoryTenantRepo {
     }
 
     async fn find_by_slug(&self, slug: &str) -> RepoResult<Option<Tenant>> {
-        Ok(self.store.iter().find(|e| e.value().slug == slug).map(|e| e.value().clone()))
+        Ok(self
+            .store
+            .iter()
+            .find(|e| e.value().slug == slug)
+            .map(|e| e.value().clone()))
     }
 
     async fn update_stripe_fields(
@@ -61,7 +65,9 @@ impl TenantRepository for InMemoryTenantRepo {
         subscription_status: Option<&str>,
         price_id: Option<&str>,
     ) -> RepoResult<Tenant> {
-        let mut tenant = self.store.get_mut(id)
+        let mut tenant = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("tenant: {id}")))?;
         if let Some(cid) = customer_id {
             tenant.stripe_customer_id = Some(cid.to_string());
@@ -83,7 +89,9 @@ impl TenantRepository for InMemoryTenantRepo {
     }
 
     async fn update_name(&self, id: &str, name: &str) -> RepoResult<Tenant> {
-        let mut entry = self.store.get_mut(id)
+        let mut entry = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("tenant: {id}")))?;
         entry.name = name.to_string();
         entry.updated_at = Utc::now();
@@ -91,7 +99,8 @@ impl TenantRepository for InMemoryTenantRepo {
     }
 
     async fn delete(&self, id: &str) -> RepoResult<()> {
-        self.store.remove(id)
+        self.store
+            .remove(id)
             .ok_or_else(|| RepoError::NotFound(format!("tenant: {id}")))?;
         Ok(())
     }
@@ -135,11 +144,17 @@ impl UserRepository for InMemoryUserRepo {
     }
 
     async fn find_by_email(&self, email: &str) -> RepoResult<Option<User>> {
-        Ok(self.store.iter().find(|e| e.value().email == email).map(|e| e.value().clone()))
+        Ok(self
+            .store
+            .iter()
+            .find(|e| e.value().email == email)
+            .map(|e| e.value().clone()))
     }
 
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<User>> {
-        let mut users: Vec<User> = self.store.iter()
+        let mut users: Vec<User> = self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
             .map(|e| e.value().clone())
             .collect();
@@ -148,13 +163,16 @@ impl UserRepository for InMemoryUserRepo {
     }
 
     async fn delete(&self, id: &str) -> RepoResult<()> {
-        self.store.remove(id)
+        self.store
+            .remove(id)
             .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
         Ok(())
     }
 
     async fn update_role(&self, id: &str, role: &str) -> RepoResult<User> {
-        let mut entry = self.store.get_mut(id)
+        let mut entry = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
         let parsed_role = UserRole::from_str(role)
             .ok_or_else(|| RepoError::Internal(format!("invalid role: {role}")))?;
@@ -192,17 +210,33 @@ impl InvitationRepository for InMemoryInvitationRepo {
     }
 
     async fn find_by_token(&self, token: &str) -> RepoResult<Option<Invitation>> {
-        Ok(self.store.iter().find(|e| e.value().token == token).map(|e| e.value().clone()))
+        Ok(self
+            .store
+            .iter()
+            .find(|e| e.value().token == token)
+            .map(|e| e.value().clone()))
     }
 
-    async fn find_by_email_and_tenant(&self, email: &str, tenant_id: &str) -> RepoResult<Option<Invitation>> {
-        Ok(self.store.iter()
-            .find(|e| e.value().email == email && e.value().tenant_id == tenant_id && e.value().accepted_at.is_none())
+    async fn find_by_email_and_tenant(
+        &self,
+        email: &str,
+        tenant_id: &str,
+    ) -> RepoResult<Option<Invitation>> {
+        Ok(self
+            .store
+            .iter()
+            .find(|e| {
+                e.value().email == email
+                    && e.value().tenant_id == tenant_id
+                    && e.value().accepted_at.is_none()
+            })
             .map(|e| e.value().clone()))
     }
 
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Invitation>> {
-        let mut invitations: Vec<Invitation> = self.store.iter()
+        let mut invitations: Vec<Invitation> = self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
             .map(|e| e.value().clone())
             .collect();
@@ -211,14 +245,17 @@ impl InvitationRepository for InMemoryInvitationRepo {
     }
 
     async fn mark_accepted(&self, id: &str) -> RepoResult<Invitation> {
-        let mut entry = self.store.get_mut(id)
+        let mut entry = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("invitation: {id}")))?;
         entry.accepted_at = Some(Utc::now());
         Ok(entry.clone())
     }
 
     async fn delete(&self, id: &str) -> RepoResult<()> {
-        self.store.remove(id)
+        self.store
+            .remove(id)
             .ok_or_else(|| RepoError::NotFound(format!("invitation: {id}")))?;
         Ok(())
     }
@@ -234,9 +271,14 @@ pub struct InMemoryRunRepo {
 #[async_trait]
 impl RunRepository for InMemoryRunRepo {
     async fn create(&self, input: CreateRunInput) -> RepoResult<Run> {
-        if self.store.iter().any(|e| e.value().invocation_id == input.invocation_id) {
+        if self
+            .store
+            .iter()
+            .any(|e| e.value().invocation_id == input.invocation_id)
+        {
             return Err(RepoError::AlreadyExists(format!(
-                "invocation_id: {}", input.invocation_id
+                "invocation_id: {}",
+                input.invocation_id
             )));
         }
         let now = Utc::now();
@@ -271,7 +313,9 @@ impl RunRepository for InMemoryRunRepo {
         limit: usize,
         offset: usize,
     ) -> RepoResult<Vec<Run>> {
-        let mut runs: Vec<Run> = self.store.iter()
+        let mut runs: Vec<Run> = self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
             .filter(|e| status.map_or(true, |s| e.value().status == s))
             .map(|e| e.value().clone())
@@ -281,15 +325,23 @@ impl RunRepository for InMemoryRunRepo {
     }
 
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<Run> {
-        let mut run = self.store.get_mut(id)
+        let mut run = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("run: {id}")))?;
         run.status = status.to_string();
         run.updated_at = Utc::now();
         Ok(run.clone())
     }
 
-    async fn update_response(&self, id: &str, agent_response: serde_json::Value) -> RepoResult<Run> {
-        let mut run = self.store.get_mut(id)
+    async fn update_response(
+        &self,
+        id: &str,
+        agent_response: serde_json::Value,
+    ) -> RepoResult<Run> {
+        let mut run = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("run: {id}")))?;
         run.agent_response = Some(agent_response);
         run.updated_at = Utc::now();
@@ -297,11 +349,17 @@ impl RunRepository for InMemoryRunRepo {
     }
 
     async fn count_by_tenant(&self, tenant_id: &str) -> RepoResult<usize> {
-        Ok(self.store.iter().filter(|e| e.value().tenant_id == tenant_id).count())
+        Ok(self
+            .store
+            .iter()
+            .filter(|e| e.value().tenant_id == tenant_id)
+            .count())
     }
 
     async fn count_by_status(&self, tenant_id: &str, status: &str) -> RepoResult<usize> {
-        Ok(self.store.iter()
+        Ok(self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id && e.value().status == status)
             .count())
     }
@@ -317,11 +375,14 @@ pub struct InMemoryConnectionRepo {
 #[async_trait]
 impl ConnectionRepository for InMemoryConnectionRepo {
     async fn create(&self, input: CreateConnectionInput) -> RepoResult<Connection> {
-        if self.store.iter().any(|e| {
-            e.value().tenant_id == input.tenant_id && e.value().provider == input.provider
-        }) {
+        if self
+            .store
+            .iter()
+            .any(|e| e.value().tenant_id == input.tenant_id && e.value().provider == input.provider)
+        {
             return Err(RepoError::AlreadyExists(format!(
-                "tenant_id: {}, provider: {}", input.tenant_id, input.provider
+                "tenant_id: {}, provider: {}",
+                input.tenant_id, input.provider
             )));
         }
         let now = Utc::now();
@@ -346,21 +407,31 @@ impl ConnectionRepository for InMemoryConnectionRepo {
         Ok(self.store.get(id).map(|e| e.value().clone()))
     }
 
-    async fn find_by_tenant_provider(&self, tenant_id: &str, provider: &str) -> RepoResult<Option<Connection>> {
-        Ok(self.store.iter()
+    async fn find_by_tenant_provider(
+        &self,
+        tenant_id: &str,
+        provider: &str,
+    ) -> RepoResult<Option<Connection>> {
+        Ok(self
+            .store
+            .iter()
             .find(|e| e.value().tenant_id == tenant_id && e.value().provider == provider)
             .map(|e| e.value().clone()))
     }
 
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Connection>> {
-        Ok(self.store.iter()
+        Ok(self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
             .map(|e| e.value().clone())
             .collect())
     }
 
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<Connection> {
-        let mut conn = self.store.get_mut(id)
+        let mut conn = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("connection: {id}")))?;
         conn.status = status.to_string();
         conn.updated_at = Utc::now();
@@ -368,7 +439,8 @@ impl ConnectionRepository for InMemoryConnectionRepo {
     }
 
     async fn delete(&self, id: &str) -> RepoResult<()> {
-        self.store.remove(id)
+        self.store
+            .remove(id)
             .ok_or_else(|| RepoError::NotFound(format!("connection: {id}")))?;
         Ok(())
     }
@@ -408,8 +480,15 @@ impl AuditLogRepository for InMemoryAuditLogRepo {
         Ok(log)
     }
 
-    async fn list_by_tenant(&self, tenant_id: &str, limit: usize, offset: usize) -> RepoResult<Vec<AuditLog>> {
-        let mut logs: Vec<AuditLog> = self.store.iter()
+    async fn list_by_tenant(
+        &self,
+        tenant_id: &str,
+        limit: usize,
+        offset: usize,
+    ) -> RepoResult<Vec<AuditLog>> {
+        let mut logs: Vec<AuditLog> = self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
             .map(|e| e.value().clone())
             .collect();
@@ -418,7 +497,9 @@ impl AuditLogRepository for InMemoryAuditLogRepo {
     }
 
     async fn list_by_run(&self, run_id: &str) -> RepoResult<Vec<AuditLog>> {
-        let mut logs: Vec<AuditLog> = self.store.iter()
+        let mut logs: Vec<AuditLog> = self
+            .store
+            .iter()
             .filter(|e| e.value().run_id.as_deref() == Some(run_id))
             .map(|e| e.value().clone())
             .collect();
@@ -436,7 +517,11 @@ pub struct InMemoryAgentEndpointConfigRepo {
 
 #[async_trait]
 impl AgentEndpointConfigRepository for InMemoryAgentEndpointConfigRepo {
-    async fn upsert(&self, tenant_id: &str, config: AgentEndpointConfig) -> RepoResult<AgentEndpointConfig> {
+    async fn upsert(
+        &self,
+        tenant_id: &str,
+        config: AgentEndpointConfig,
+    ) -> RepoResult<AgentEndpointConfig> {
         self.store.insert(tenant_id.to_string(), config.clone());
         Ok(config)
     }
@@ -463,8 +548,14 @@ impl PipedreamTriggerRepository for InMemoryPipedreamTriggerRepo {
         deployment_id: &str,
         configured_props: Option<serde_json::Value>,
     ) -> RepoResult<PipedreamTrigger> {
-        if self.store.iter().any(|e| e.value().deployment_id == deployment_id) {
-            return Err(RepoError::AlreadyExists(format!("deployment_id: {deployment_id}")));
+        if self
+            .store
+            .iter()
+            .any(|e| e.value().deployment_id == deployment_id)
+        {
+            return Err(RepoError::AlreadyExists(format!(
+                "deployment_id: {deployment_id}"
+            )));
         }
         let now = Utc::now();
         let trigger = PipedreamTrigger {
@@ -482,21 +573,30 @@ impl PipedreamTriggerRepository for InMemoryPipedreamTriggerRepo {
         Ok(trigger)
     }
 
-    async fn find_by_deployment_id(&self, deployment_id: &str) -> RepoResult<Option<PipedreamTrigger>> {
-        Ok(self.store.iter()
+    async fn find_by_deployment_id(
+        &self,
+        deployment_id: &str,
+    ) -> RepoResult<Option<PipedreamTrigger>> {
+        Ok(self
+            .store
+            .iter()
             .find(|e| e.value().deployment_id == deployment_id)
             .map(|e| e.value().clone()))
     }
 
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>> {
-        Ok(self.store.iter()
+        Ok(self
+            .store
+            .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
             .map(|e| e.value().clone())
             .collect())
     }
 
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger> {
-        let mut trigger = self.store.get_mut(id)
+        let mut trigger = self
+            .store
+            .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("trigger: {id}")))?;
         trigger.status = status.to_string();
         trigger.updated_at = Utc::now();
@@ -504,7 +604,8 @@ impl PipedreamTriggerRepository for InMemoryPipedreamTriggerRepo {
     }
 
     async fn delete(&self, id: &str) -> RepoResult<()> {
-        self.store.remove(id)
+        self.store
+            .remove(id)
             .ok_or_else(|| RepoError::NotFound(format!("trigger: {id}")))?;
         Ok(())
     }
@@ -517,10 +618,13 @@ mod tests {
     #[tokio::test]
     async fn test_tenant_create_and_find() {
         let repo = InMemoryTenantRepo::default();
-        let tenant = repo.create(CreateTenantInput {
-            name: "Test Org".to_string(),
-            slug: "test-org".to_string(),
-        }).await.unwrap();
+        let tenant = repo
+            .create(CreateTenantInput {
+                name: "Test Org".to_string(),
+                slug: "test-org".to_string(),
+            })
+            .await
+            .unwrap();
 
         assert_eq!(tenant.name, "Test Org");
         assert_eq!(tenant.slug, "test-org");
@@ -538,12 +642,16 @@ mod tests {
         repo.create(CreateTenantInput {
             name: "Org A".to_string(),
             slug: "same-slug".to_string(),
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
-        let result = repo.create(CreateTenantInput {
-            name: "Org B".to_string(),
-            slug: "same-slug".to_string(),
-        }).await;
+        let result = repo
+            .create(CreateTenantInput {
+                name: "Org B".to_string(),
+                slug: "same-slug".to_string(),
+            })
+            .await;
 
         assert!(matches!(result, Err(RepoError::AlreadyExists(_))));
     }
@@ -551,15 +659,22 @@ mod tests {
     #[tokio::test]
     async fn test_user_create_and_find_by_email() {
         let repo = InMemoryUserRepo::default();
-        let user = repo.create(CreateUserInput {
-            email: "test@example.com".to_string(),
-            name: Some("Test".to_string()),
-            password_hash: Some("hashed".to_string()),
-            auth_provider: "credentials".to_string(),
-            tenant_id: "t1".to_string(),
-        }).await.unwrap();
+        let user = repo
+            .create(CreateUserInput {
+                email: "test@example.com".to_string(),
+                name: Some("Test".to_string()),
+                password_hash: Some("hashed".to_string()),
+                auth_provider: "credentials".to_string(),
+                tenant_id: "t1".to_string(),
+            })
+            .await
+            .unwrap();
 
-        let found = repo.find_by_email("test@example.com").await.unwrap().unwrap();
+        let found = repo
+            .find_by_email("test@example.com")
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(found.id, user.id);
 
         let not_found = repo.find_by_email("other@example.com").await.unwrap();
@@ -575,15 +690,19 @@ mod tests {
             password_hash: Some("h1".to_string()),
             auth_provider: "credentials".to_string(),
             tenant_id: "t1".to_string(),
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
-        let result = repo.create(CreateUserInput {
-            email: "dupe@example.com".to_string(),
-            name: None,
-            password_hash: Some("h2".to_string()),
-            auth_provider: "credentials".to_string(),
-            tenant_id: "t2".to_string(),
-        }).await;
+        let result = repo
+            .create(CreateUserInput {
+                email: "dupe@example.com".to_string(),
+                name: None,
+                password_hash: Some("h2".to_string()),
+                auth_provider: "credentials".to_string(),
+                tenant_id: "t2".to_string(),
+            })
+            .await;
 
         assert!(matches!(result, Err(RepoError::AlreadyExists(_))));
     }
@@ -591,15 +710,18 @@ mod tests {
     #[tokio::test]
     async fn test_run_lifecycle() {
         let repo = InMemoryRunRepo::default();
-        let run = repo.create(CreateRunInput {
-            tenant_id: "t1".to_string(),
-            workflow_id: None,
-            event_id: "evt_1".to_string(),
-            invocation_id: "inv_1".to_string(),
-            mode: "auto".to_string(),
-            event_snapshot: None,
-            context_pointers: None,
-        }).await.unwrap();
+        let run = repo
+            .create(CreateRunInput {
+                tenant_id: "t1".to_string(),
+                workflow_id: None,
+                event_id: "evt_1".to_string(),
+                invocation_id: "inv_1".to_string(),
+                mode: "auto".to_string(),
+                event_snapshot: None,
+                context_pointers: None,
+            })
+            .await
+            .unwrap();
 
         assert_eq!(run.status, "pending");
 
@@ -614,15 +736,18 @@ mod tests {
     async fn test_run_list_with_status_filter() {
         let repo = InMemoryRunRepo::default();
         for i in 0..5 {
-            let run = repo.create(CreateRunInput {
-                tenant_id: "t1".to_string(),
-                workflow_id: None,
-                event_id: format!("evt_{i}"),
-                invocation_id: format!("inv_{i}"),
-                mode: "auto".to_string(),
-                event_snapshot: None,
-                context_pointers: None,
-            }).await.unwrap();
+            let run = repo
+                .create(CreateRunInput {
+                    tenant_id: "t1".to_string(),
+                    workflow_id: None,
+                    event_id: format!("evt_{i}"),
+                    invocation_id: format!("inv_{i}"),
+                    mode: "auto".to_string(),
+                    event_snapshot: None,
+                    context_pointers: None,
+                })
+                .await
+                .unwrap();
 
             if i < 3 {
                 repo.update_status(&run.id, "completed").await.unwrap();
@@ -632,29 +757,42 @@ mod tests {
         let all = repo.list_by_tenant("t1", None, 100, 0).await.unwrap();
         assert_eq!(all.len(), 5);
 
-        let completed = repo.list_by_tenant("t1", Some("completed"), 100, 0).await.unwrap();
+        let completed = repo
+            .list_by_tenant("t1", Some("completed"), 100, 0)
+            .await
+            .unwrap();
         assert_eq!(completed.len(), 3);
 
-        let pending = repo.list_by_tenant("t1", Some("pending"), 100, 0).await.unwrap();
+        let pending = repo
+            .list_by_tenant("t1", Some("pending"), 100, 0)
+            .await
+            .unwrap();
         assert_eq!(pending.len(), 2);
     }
 
     #[tokio::test]
     async fn test_connection_crud() {
         let repo = InMemoryConnectionRepo::default();
-        let conn = repo.create(CreateConnectionInput {
-            tenant_id: "t1".to_string(),
-            provider: "intercom".to_string(),
-            access_token: Some("at_123".to_string()),
-            refresh_token: None,
-            expires_at: None,
-            pipedream_auth_id: None,
-            metadata: None,
-        }).await.unwrap();
+        let conn = repo
+            .create(CreateConnectionInput {
+                tenant_id: "t1".to_string(),
+                provider: "intercom".to_string(),
+                access_token: Some("at_123".to_string()),
+                refresh_token: None,
+                expires_at: None,
+                pipedream_auth_id: None,
+                metadata: None,
+            })
+            .await
+            .unwrap();
 
         assert_eq!(conn.status, "active");
 
-        let found = repo.find_by_tenant_provider("t1", "intercom").await.unwrap().unwrap();
+        let found = repo
+            .find_by_tenant_provider("t1", "intercom")
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(found.id, conn.id);
 
         let list = repo.list_by_tenant("t1").await.unwrap();
@@ -676,17 +814,21 @@ mod tests {
             expires_at: None,
             pipedream_auth_id: None,
             metadata: None,
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
-        let result = repo.create(CreateConnectionInput {
-            tenant_id: "t1".to_string(),
-            provider: "slack".to_string(),
-            access_token: None,
-            refresh_token: None,
-            expires_at: None,
-            pipedream_auth_id: None,
-            metadata: None,
-        }).await;
+        let result = repo
+            .create(CreateConnectionInput {
+                tenant_id: "t1".to_string(),
+                provider: "slack".to_string(),
+                access_token: None,
+                refresh_token: None,
+                expires_at: None,
+                pipedream_auth_id: None,
+                metadata: None,
+            })
+            .await;
 
         assert!(matches!(result, Err(RepoError::AlreadyExists(_))));
     }
@@ -694,9 +836,39 @@ mod tests {
     #[tokio::test]
     async fn test_audit_log_create_and_list() {
         let repo = InMemoryAuditLogRepo::default();
-        repo.create("t1", "run.created", Some("user_1"), Some("run_1"), None, None, None).await.unwrap();
-        repo.create("t1", "run.completed", Some("system"), Some("run_1"), None, None, None).await.unwrap();
-        repo.create("t2", "run.created", Some("user_2"), Some("run_2"), None, None, None).await.unwrap();
+        repo.create(
+            "t1",
+            "run.created",
+            Some("user_1"),
+            Some("run_1"),
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+        repo.create(
+            "t1",
+            "run.completed",
+            Some("system"),
+            Some("run_1"),
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+        repo.create(
+            "t2",
+            "run.created",
+            Some("user_2"),
+            Some("run_2"),
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
 
         let t1_logs = repo.list_by_tenant("t1", 100, 0).await.unwrap();
         assert_eq!(t1_logs.len(), 2);
@@ -716,7 +888,9 @@ mod tests {
             mode: "auto".to_string(),
             event_snapshot: None,
             context_pointers: None,
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
         repo.create(CreateRunInput {
             tenant_id: "t2".to_string(),
             workflow_id: None,
@@ -725,7 +899,9 @@ mod tests {
             mode: "auto".to_string(),
             event_snapshot: None,
             context_pointers: None,
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
         let t1_runs = repo.list_by_tenant("t1", None, 100, 0).await.unwrap();
         assert_eq!(t1_runs.len(), 1);

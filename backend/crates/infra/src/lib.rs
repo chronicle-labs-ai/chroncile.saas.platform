@@ -144,7 +144,11 @@ impl StoreBackend {
         use chronicle_interfaces::EventStore;
         match self {
             #[cfg(feature = "memory")]
-            Self::Memory(store) => store.fetch_by_conversation(tenant_id, conversation_id).await,
+            Self::Memory(store) => {
+                store
+                    .fetch_by_conversation(tenant_id, conversation_id)
+                    .await
+            }
             #[cfg(feature = "postgres")]
             Self::Postgres(store) => {
                 store

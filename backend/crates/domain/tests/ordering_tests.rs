@@ -7,8 +7,8 @@ use proptest::prelude::*;
 use serde_json::value::RawValue;
 
 use chronicle_domain::{
-    compare_events, is_valid_order, merge_sorted, sort_for_replay,
-    Actor, EventEnvelope, Permissions, PiiFlags, Subject, TenantId,
+    compare_events, is_valid_order, merge_sorted, sort_for_replay, Actor, EventEnvelope,
+    Permissions, PiiFlags, Subject, TenantId,
 };
 
 fn make_event_at(tenant: &str, conv: &str, offset_secs: i64) -> EventEnvelope {
@@ -83,7 +83,7 @@ proptest! {
     #[test]
     fn ordering_tiebreaks_by_event_id(count in 2..20usize) {
         let base_time = Utc::now();
-        
+
         let mut events: Vec<EventEnvelope> = (0..count)
             .map(|_| {
                 let mut e = make_event_at("tenant", "conv", 0);

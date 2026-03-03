@@ -193,7 +193,10 @@ impl<T: TimelineEventData> TimelinePanel<T> {
     fn group_events_by_source<'a>(&self, events: &'a [T]) -> HashMap<String, Vec<&'a T>> {
         let mut groups: HashMap<String, Vec<&T>> = HashMap::new();
         for event in events {
-            groups.entry(event.source().to_string()).or_default().push(event);
+            groups
+                .entry(event.source().to_string())
+                .or_default()
+                .push(event);
         }
         groups
     }
@@ -230,10 +233,11 @@ impl<T: TimelineEventData> TimelinePanel<T> {
         let node_event_data: Vec<(TopicTreeNode, Vec<String>)> = visible_nodes
             .iter()
             .map(|node| {
-                let event_ids: Vec<String> = Self::events_for_node_static(node, &events_by_path, &events_by_source)
-                    .iter()
-                    .map(|e| e.id().to_string())
-                    .collect();
+                let event_ids: Vec<String> =
+                    Self::events_for_node_static(node, &events_by_path, &events_by_source)
+                        .iter()
+                        .map(|e| e.id().to_string())
+                        .collect();
                 (node.clone(), event_ids)
             })
             .collect();
@@ -253,7 +257,8 @@ impl<T: TimelineEventData> TimelinePanel<T> {
                 let painter = ui.painter_at(full_rect);
 
                 // Header row (time axis)
-                let header_rect = Rect::from_min_size(full_rect.min, Vec2::new(available_width, header_height));
+                let header_rect =
+                    Rect::from_min_size(full_rect.min, Vec2::new(available_width, header_height));
                 self.paint_time_axis(&painter, header_rect, label_width, timeline_width);
 
                 // Content area
@@ -303,7 +308,13 @@ impl<T: TimelineEventData> TimelinePanel<T> {
                 self.paint_playhead(&painter, content_rect, label_width, timeline_width);
 
                 // Handle pan/zoom interactions
-                self.handle_interactions(ui, content_rect, label_width, timeline_width, &mut response);
+                self.handle_interactions(
+                    ui,
+                    content_rect,
+                    label_width,
+                    timeline_width,
+                    &mut response,
+                );
             });
 
         // Apply toggled paths after the closure
@@ -314,7 +325,12 @@ impl<T: TimelineEventData> TimelinePanel<T> {
         response
     }
 
-    fn render_controls_bar(&mut self, ui: &mut Ui, events: &[T], response: &mut TimelinePanelResponse) {
+    fn render_controls_bar(
+        &mut self,
+        ui: &mut Ui,
+        events: &[T],
+        response: &mut TimelinePanelResponse,
+    ) {
         ui.horizontal(|ui| {
             // Playback controls
             let play_text = match self.playback_state {
@@ -437,7 +453,8 @@ impl<T: TimelineEventData> TimelinePanel<T> {
             painter.vline(x, rect.y_range(), Stroke::new(2.0, self.theme.playhead));
 
             // Playhead handle
-            let handle_rect = Rect::from_center_size(Pos2::new(x, rect.top()), Vec2::new(12.0, 8.0));
+            let handle_rect =
+                Rect::from_center_size(Pos2::new(x, rect.top()), Vec2::new(12.0, 8.0));
             painter.rect_filled(handle_rect, self.theme.rounding_sm, self.theme.playhead);
         }
     }
@@ -481,13 +498,28 @@ impl<T: TimelineEventData> TimelinePanel<T> {
         painter.rect_filled(rect, self.theme.rounding_none, bg_color);
 
         // Separator lines
-        painter.hline(rect.x_range(), rect.bottom(), Stroke::new(1.0, self.theme.separator));
-        painter.vline(rect.left() + label_width, rect.y_range(), Stroke::new(1.0, self.theme.separator));
+        painter.hline(
+            rect.x_range(),
+            rect.bottom(),
+            Stroke::new(1.0, self.theme.separator),
+        );
+        painter.vline(
+            rect.left() + label_width,
+            rect.y_range(),
+            Stroke::new(1.0, self.theme.separator),
+        );
 
         // Indent guide
         if depth > 0 {
-            let guide_x = rect.left() + self.theme.spacing_sm + (depth as f32 - 1.0) * self.config.indent_size + 4.0;
-            painter.vline(guide_x, rect.y_range(), Stroke::new(1.0, self.theme.indent_guide));
+            let guide_x = rect.left()
+                + self.theme.spacing_sm
+                + (depth as f32 - 1.0) * self.config.indent_size
+                + 4.0;
+            painter.vline(
+                guide_x,
+                rect.y_range(),
+                Stroke::new(1.0, self.theme.indent_guide),
+            );
         }
 
         // Chevron for expandable nodes
@@ -495,7 +527,8 @@ impl<T: TimelineEventData> TimelinePanel<T> {
         let chevron_size = 10.0;
 
         if !node.children.is_empty() {
-            let chevron_center = Pos2::new(rect.left() + indent + chevron_size / 2.0, rect.center().y);
+            let chevron_center =
+                Pos2::new(rect.left() + indent + chevron_size / 2.0, rect.center().y);
             let chevron_text = if node.expanded { "▾" } else { "▸" };
             painter.text(
                 chevron_center,
@@ -505,8 +538,11 @@ impl<T: TimelineEventData> TimelinePanel<T> {
                 self.theme.chevron,
             );
 
-            let chevron_rect = Rect::from_center_size(chevron_center, Vec2::splat(chevron_size + 4.0));
-            let chevron_id = egui::Id::new("timeline_chevron").with(row_idx).with(&node.name);
+            let chevron_rect =
+                Rect::from_center_size(chevron_center, Vec2::splat(chevron_size + 4.0));
+            let chevron_id = egui::Id::new("timeline_chevron")
+                .with(row_idx)
+                .with(&node.name);
             let chevron_response = ui.interact(chevron_rect, chevron_id, Sense::click());
             if chevron_response.clicked() {
                 chevron_clicked = true;
@@ -541,7 +577,11 @@ impl<T: TimelineEventData> TimelinePanel<T> {
             Align2::LEFT_CENTER,
             format!("{} {}", icon, name_label),
             self.theme.font_small.clone(),
-            if is_hovered { self.theme.text_primary } else { self.theme.text_secondary },
+            if is_hovered {
+                self.theme.text_primary
+            } else {
+                self.theme.text_secondary
+            },
         );
 
         // Event markers in timeline area
@@ -551,7 +591,10 @@ impl<T: TimelineEventData> TimelinePanel<T> {
         );
 
         for event in events {
-            let x = self.time_view.time_to_x(event.occurred_at(), timeline_width) + timeline_rect.left();
+            let x = self
+                .time_view
+                .time_to_x(event.occurred_at(), timeline_width)
+                + timeline_rect.left();
             if x >= timeline_rect.left() && x <= timeline_rect.right() {
                 let marker_rect = Rect::from_center_size(
                     Pos2::new(x, rect.center().y),
@@ -561,13 +604,16 @@ impl<T: TimelineEventData> TimelinePanel<T> {
                 let ui_event_id = egui::Id::new("timeline_event").with(event.id());
                 let event_response = ui.interact(marker_rect, ui_event_id, Sense::click());
 
-                let marker_color = if self.selected_event.as_ref() == Some(&event.id().to_string()) {
+                let marker_color = if self.selected_event.as_ref() == Some(&event.id().to_string())
+                {
                     self.theme.accent
                 } else if event_response.hovered() {
                     self.hovered_event = Some(event.id().to_string());
                     self.theme.accent_hover
                 } else {
-                    event.color().unwrap_or_else(|| source_color(event.source()))
+                    event
+                        .color()
+                        .unwrap_or_else(|| source_color(event.source()))
                 };
 
                 painter.rect_filled(marker_rect, self.theme.rounding_sm, marker_color);
@@ -654,9 +700,15 @@ impl<T: TimelineEventData> TimelinePanel<T> {
         events_by_source: &'a HashMap<String, Vec<&'a T>>,
     ) -> Vec<&'a T> {
         if node.path.depth() == 1 {
-            events_by_source.get(&node.name).cloned().unwrap_or_default()
+            events_by_source
+                .get(&node.name)
+                .cloned()
+                .unwrap_or_default()
         } else if node.children.is_empty() {
-            events_by_path.get(&node.path.display()).cloned().unwrap_or_default()
+            events_by_path
+                .get(&node.path.display())
+                .cloned()
+                .unwrap_or_default()
         } else {
             let mut result = Vec::new();
             Self::collect_events_recursive(node, events_by_path, &mut result);
