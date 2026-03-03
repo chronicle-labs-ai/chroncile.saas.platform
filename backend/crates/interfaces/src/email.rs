@@ -36,7 +36,22 @@ pub struct TemplateEmailParams {
     pub tags: Vec<EmailTag>,
 }
 
+#[derive(Debug, Clone)]
+pub struct HtmlEmailParams {
+    pub to: String,
+    pub subject: String,
+    pub html: String,
+    pub idempotency_key: Option<String>,
+    pub tags: Vec<EmailTag>,
+}
+
 #[async_trait]
 pub trait EmailService: Send + Sync {
     async fn send_template_email(&self, params: TemplateEmailParams) -> Result<String, EmailError>;
+
+    /// Send raw HTML (e.g. for trace escalation). Default returns error.
+    async fn send_html_email(&self, params: HtmlEmailParams) -> Result<String, EmailError> {
+        let _ = params;
+        Err(EmailError::Other("send_html_email not supported".to_string()))
+    }
 }

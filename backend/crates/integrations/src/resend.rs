@@ -1,5 +1,7 @@
 use async_trait::async_trait;
-use chronicle_interfaces::email::{EmailError, EmailService, EmailTag, TemplateEmailParams};
+use chronicle_interfaces::email::{
+    EmailError, EmailService, EmailTag, HtmlEmailParams, TemplateEmailParams,
+};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,6 +17,16 @@ struct ResendSendRequest {
     to: Vec<String>,
     subject: String,
     template: ResendTemplate,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    tags: Vec<ResendTag>,
+}
+
+#[derive(Serialize)]
+struct ResendHtmlSendRequest {
+    from: String,
+    to: Vec<String>,
+    subject: String,
+    html: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     tags: Vec<ResendTag>,
 }
@@ -164,12 +176,56 @@ impl ResendEmailService {
 
         Err(last_error)
     }
+
+    pub async fn send_html(&self, params: &HtmlEmailParams) -> Result<String, EmailError> {
+        let tags: Vec<ResendTag> = params
+            .tags
+            .iter()
+            .map(|t| ResendTag {
+                name: t.name.clone(),
+                value: t.value.clone(),
+            })
+            .collect();
+        let body = ResendHtmlSendRequest {
+            from: self.from_address.clone(),
+            to: vec![params.to.clone()],
+            subject: params.subject.clone(),
+            html: params.html.clone(),
+            tags,
+        };
+        let mut request = self
+            .client
+            .post(RESEND_API_URL)
+            .bearer_auth(&self.api_key)
+            .json(&body);
+        if let Some(key) = &params.idempotency_key {
+            request = request.header("Idempotency-Key", key.as_str());
+        }
+        let response = request
+            .send()
+            .await
+            .map_err(|e| EmailError::Other(format!("request failed: {e}")))?;
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            return Err(EmailError::Server(format!("{} {}", status, text)));
+        }
+        let res: ResendSendResponse = response
+            .json()
+            .await
+            .map_err(|e| EmailError::Other(format!("parse response: {e}")))?;
+        Ok(res.id)
+    }
 }
 
 #[async_trait]
 impl EmailService for ResendEmailService {
     async fn send_template_email(&self, params: TemplateEmailParams) -> Result<String, EmailError> {
         self.send_with_retry(&params).await
+    }
+
+    async fn send_html_email(&self, params: HtmlEmailParams) -> Result<String, EmailError> {
+        self.send_html(&params).await
     }
 }
 
@@ -184,6 +240,18 @@ impl EmailService for NoopEmailService {
             idempotency_key = ?params.idempotency_key,
             variables = ?params.variables,
             "NoopEmailService: would send template email"
+        );
+        Ok(format!(
+            "noop-{}",
+            chrono::Utc::now().timestamp_millis()
+        ))
+    }
+
+    async fn send_html_email(&self, params: HtmlEmailParams) -> Result<String, EmailError> {
+        info!(
+            to = %params.to,
+            subject = %params.subject,
+            "NoopEmailService: would send html email"
         );
         Ok(format!(
             "noop-{}",
