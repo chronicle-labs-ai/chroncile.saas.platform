@@ -34,9 +34,10 @@ tracing = { workspace = true }
 parking_lot = { workspace = true }
 dashmap = { workspace = true }
 
-# Cryptography (for webhook signature verification)
+# Cryptography (for webhook signature verification and email action tokens)
 hmac = { workspace = true }
 sha1 = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
+base64 = { workspace = true }
 cuid2 = { workspace = true }
