@@ -1,6 +1,3 @@
-//! Labeling / trace escalation API (notify, email-actions).
-//! Frontend renders HTML and sends payload; backend sends email and stores escalation log.
-
 use axum::{
     extract::{Path, State},
     response::{IntoResponse, Redirect, Response},

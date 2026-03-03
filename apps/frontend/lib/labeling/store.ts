@@ -4,7 +4,6 @@
 /* ------------------------------------------------------------------ */
 
 import type { Trace, TraceSummary, TraceFilters, TraceStats, HumanActionAudit } from "./types";
-import { MOCK_TRACES } from "./traces";
 
 class InMemoryLabelingStore {
   private traces = new Map<string, Trace>();
@@ -138,20 +137,6 @@ class InMemoryLabelingStore {
     return updated;
   }
 
-  /* ---------- claim (for email action "claim") ---------- */
-
-  async claimTrace(traceId: string, userId: string): Promise<Trace | null> {
-    const t = this.traces.get(traceId);
-    if (!t) return null;
-    const updated: Trace = {
-      ...t,
-      status: "in_review",
-      updatedAt: new Date().toISOString(),
-    };
-    this.traces.set(traceId, updated);
-    return updated;
-  }
-
   /* ---------- skip ---------- */
 
   async skip(traceId: string, userId: string): Promise<Trace | null> {
@@ -241,7 +226,7 @@ let seeded = false;
 export async function getLabelingStore(): Promise<InMemoryLabelingStore> {
   if (!seeded) {
     seeded = true;
-    labelingStore.seed(MOCK_TRACES);
+    labelingStore.seed([]);
   }
   return labelingStore;
 }

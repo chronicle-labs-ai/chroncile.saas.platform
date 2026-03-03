@@ -1,8 +1,3 @@
-/**
- * Primary trace escalation email (design §2.1).
- * Rendered via React Email and sent with Resend.
- */
-
 import {
   Body,
   Button,

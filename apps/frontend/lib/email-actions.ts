@@ -1,12 +1,7 @@
-/**
- * Signed action tokens for email deep links (design §3.2).
- * HMAC-SHA256, 48h expiry. Uses ENCRYPTION_KEY for signing.
- */
-
 import crypto from "crypto";
 
 const ALG = "sha256";
-const EXPIRY_SECS = 48 * 60 * 60; // 48 hours
+const EXPIRY_SECS = 48 * 60 * 60; 
 
 function getSigningKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;

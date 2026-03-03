@@ -1,7 +1,3 @@
-/**
- * Trace summary shape for Slack and Email notifications (design §1).
- */
-
 import type { Trace } from "./types";
 
 export interface TraceSummaryForNotification {
@@ -13,7 +9,7 @@ export interface TraceSummaryForNotification {
   firstEventAt: string;
   lastEventAt: string;
   incorrectActionsCount: number;
-  shortId: string; // last 8 chars of trace id for display
+  shortId: string;
 }
 
 export function buildTraceSummaryForNotification(

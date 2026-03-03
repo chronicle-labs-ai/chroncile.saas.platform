@@ -1,5 +1,3 @@
-//! In-memory escalation log for trace escalation (notify, email-actions).
-
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
