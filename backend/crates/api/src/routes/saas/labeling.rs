@@ -189,6 +189,7 @@ fn get_signing_key() -> Result<Vec<u8>, ApiError> {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ActionPayload {
     action: String,
     trace_id: String,

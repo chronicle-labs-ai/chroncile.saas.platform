@@ -6,7 +6,7 @@
 import crypto from "crypto";
 
 const ALG = "sha256";
-const EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
+const EXPIRY_SECS = 48 * 60 * 60; // 48 hours
 
 function getSigningKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;
@@ -27,7 +27,7 @@ export interface EmailActionPayload {
 }
 
 export function createActionToken(payload: Omit<EmailActionPayload, "exp">): string {
-  const exp = Date.now() + EXPIRY_MS;
+  const exp = Math.floor(Date.now() / 1000) + EXPIRY_SECS;
   const data: EmailActionPayload = { ...payload, exp };
   const payloadStr = JSON.stringify(data);
   const payloadB64 = Buffer.from(payloadStr, "utf8").toString("base64url");
@@ -45,7 +45,7 @@ export function verifyActionToken(token: string): EmailActionPayload | null {
     if (sig !== expectedSig) return null;
     const payloadStr = Buffer.from(payloadB64, "base64url").toString("utf8");
     const data = JSON.parse(payloadStr) as EmailActionPayload;
-    if (data.exp < Date.now()) return null;
+    if (data.exp < Math.floor(Date.now() / 1000)) return null;
     if (!data.action || !data.traceId || !data.escalationId || !data.toUserId) return null;
     return data;
   } catch {
