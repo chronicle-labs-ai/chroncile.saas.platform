@@ -2,18 +2,19 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { ORG_MEMBERS } from "@/lib/labeling/org";
 import { getLabelingStore } from "@/lib/labeling/store";
-import { buildTraceSummaryForNotification } from "@/lib/labeling/notification-summary";
+import {
+  buildTraceSummaryForNotification,
+  formatConfidenceLabel,
+  formatDuration,
+} from "@/lib/labeling/notification-summary";
 import { createActionToken } from "@/lib/email-actions";
-import { TraceEscalationEmail } from "@/lib/email-templates/trace-escalation";
-import { render } from "@react-email/render";
-import React from "react";
 import { fetchFromBackend } from "@/lib/backend";
 
 export const dynamic = "force-dynamic";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-/** POST /api/labeling/notify — proxy to backend (Rust) for send + escalation log. Frontend builds HTML. */
+/** POST /api/labeling/notify — build template variables, proxy to backend for send + log. */
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.tenantId) {
@@ -55,37 +56,29 @@ export async function POST(request: Request) {
       }
 
       const summary = buildTraceSummaryForNotification(trace, message ?? undefined);
-      const viewToken = createActionToken({
-        action: "view",
-        traceId,
-        escalationId: "esc_frontend",
-        toUserId: memberId,
-      });
-      const claimToken = createActionToken({
-        action: "claim",
-        traceId,
-        escalationId: "esc_frontend",
-        toUserId: memberId,
-      });
-      const escalateToken = createActionToken({
-        action: "escalate",
-        traceId,
-        escalationId: "esc_frontend",
-        toUserId: memberId,
-      });
-      const viewUrl = `${BASE_URL}/api/email-actions/${viewToken}`;
-      const claimUrl = `${BASE_URL}/api/email-actions/${claimToken}`;
-      const escalateUrl = `${BASE_URL}/api/email-actions/${escalateToken}`;
 
-      const html = await render(
-        React.createElement(TraceEscalationEmail, {
-          summary,
-          viewUrl,
-          claimUrl,
-          escalateUrl,
-          customMessage: message ?? null,
-        })
-      );
+      const viewToken = createActionToken({ action: "view", traceId, escalationId: "esc_frontend", toUserId: memberId });
+      const claimToken = createActionToken({ action: "claim", traceId, escalationId: "esc_frontend", toUserId: memberId });
+      const escalateToken = createActionToken({ action: "escalate", traceId, escalationId: "esc_frontend", toUserId: memberId });
+
+      const incorrectCount = summary.incorrectActionsCount;
+      const incorrectText = incorrectCount > 0
+        ? `${incorrectCount}. Critical errors may be present.`
+        : `${incorrectCount}.`;
+
+      const variables: Record<string, string> = {
+        TRACE_ID: summary.id,
+        CONVERSATION_ID: summary.conversationId,
+        SOURCES: summary.sources.join(", ") || "—",
+        CONFIDENCE: formatConfidenceLabel(summary.confidence),
+        EVENT_COUNT: String(summary.eventCount),
+        DURATION: formatDuration(summary.firstEventAt, summary.lastEventAt),
+        INCORRECT_ACTIONS: incorrectText,
+        CUSTOM_MESSAGE: message ?? "",
+        VIEW_URL: `${BASE_URL}/api/email-actions/${viewToken}`,
+        CLAIM_URL: `${BASE_URL}/api/email-actions/${claimToken}`,
+        ESCALATE_URL: `${BASE_URL}/api/email-actions/${escalateToken}`,
+      };
 
       const result = await fetchFromBackend<{
         success: boolean;
@@ -101,7 +94,7 @@ export async function POST(request: Request) {
           message: message ?? undefined,
           toEmail: member.email,
           subject: `Trace requires review — #${summary.id}`,
-          htmlContent: html,
+          variables,
         }),
       });
 
@@ -113,7 +106,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Slack: proxy same body to backend (backend creates log, no email)
     const result = await fetchFromBackend<{
       success: boolean;
       escalationId: string;

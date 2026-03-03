@@ -10,8 +10,6 @@
     "stripe:sync-plans": "node scripts/stripe-sync-plans.mjs"
   },
   "dependencies": {
-    "@react-email/components": "^1.0.8",
-    "@react-email/render": "^1.0.4",
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
     "@remotion/player": "^4.0.410",
