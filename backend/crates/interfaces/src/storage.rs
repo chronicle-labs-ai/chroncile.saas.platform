@@ -43,7 +43,11 @@ pub trait EventStore: Send + Sync {
 
     /// Query events with advanced filtering
     /// Returns events matching the query along with available filter options
-    async fn query(&self, tenant_id: &TenantId, query: &EventQuery) -> StoreResult<QueryResult>;
+    async fn query(
+        &self,
+        tenant_id: &TenantId,
+        query: &EventQuery,
+    ) -> StoreResult<QueryResult>;
 
     /// Get available sources for a tenant
     async fn list_sources(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>>;
@@ -52,12 +56,7 @@ pub trait EventStore: Send + Sync {
     async fn list_event_types(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>>;
 
     /// Check if an event already exists (for deduplication)
-    async fn exists(
-        &self,
-        tenant_id: &TenantId,
-        source: &str,
-        source_event_id: &str,
-    ) -> StoreResult<bool>;
+    async fn exists(&self, tenant_id: &TenantId, source: &str, source_event_id: &str) -> StoreResult<bool>;
 
     /// Get event count for a tenant
     async fn count(&self, tenant_id: &TenantId) -> StoreResult<usize>;
@@ -105,9 +104,7 @@ impl MemoryStoreHandle {
         tenant_id: &TenantId,
         conversation_id: &SubjectId,
     ) -> StoreResult<Vec<EventEnvelope>> {
-        self.inner
-            .fetch_by_conversation(tenant_id, conversation_id)
-            .await
+        self.inner.fetch_by_conversation(tenant_id, conversation_id).await
     }
 
     pub async fn query(
@@ -126,12 +123,7 @@ impl MemoryStoreHandle {
         self.inner.list_event_types(tenant_id).await
     }
 
-    pub async fn exists(
-        &self,
-        tenant_id: &TenantId,
-        source: &str,
-        source_event_id: &str,
-    ) -> StoreResult<bool> {
+    pub async fn exists(&self, tenant_id: &TenantId, source: &str, source_event_id: &str) -> StoreResult<bool> {
         self.inner.exists(tenant_id, source, source_event_id).await
     }
 
@@ -208,11 +200,7 @@ impl StoreBackend {
         conversation_id: &SubjectId,
     ) -> StoreResult<Vec<EventEnvelope>> {
         match self {
-            Self::Memory(handle) => {
-                handle
-                    .fetch_by_conversation(tenant_id, conversation_id)
-                    .await
-            }
+            Self::Memory(handle) => handle.fetch_by_conversation(tenant_id, conversation_id).await,
             #[cfg(feature = "postgres")]
             Self::Postgres(_handle) => {
                 unimplemented!("Postgres backend not yet implemented")
@@ -262,12 +250,7 @@ impl StoreBackend {
 
     /// Check if event exists
     #[inline]
-    pub async fn exists(
-        &self,
-        tenant_id: &TenantId,
-        source: &str,
-        source_event_id: &str,
-    ) -> StoreResult<bool> {
+    pub async fn exists(&self, tenant_id: &TenantId, source: &str, source_event_id: &str) -> StoreResult<bool> {
         match self {
             Self::Memory(handle) => handle.exists(tenant_id, source, source_event_id).await,
             #[cfg(feature = "postgres")]

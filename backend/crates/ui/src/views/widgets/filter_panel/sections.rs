@@ -135,11 +135,7 @@ impl FilterPanel {
     }
 
     /// Render the search filters section
-    pub(crate) fn render_search_section(
-        &mut self,
-        ui: &mut Ui,
-        response: &mut FilterPanelResponse,
-    ) {
+    pub(crate) fn render_search_section(&mut self, ui: &mut Ui, response: &mut FilterPanelResponse) {
         ui.set_min_width(200.0);
 
         ui.label(
@@ -184,3 +180,4 @@ impl FilterPanel {
         });
     }
 }
+

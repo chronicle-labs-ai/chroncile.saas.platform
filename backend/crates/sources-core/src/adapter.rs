@@ -126,7 +126,11 @@ pub struct SourceManifest {
 
 impl SourceManifest {
     /// Create a new source manifest
-    pub fn new(id: impl Into<SourceId>, name: impl Into<String>, version: semver::Version) -> Self {
+    pub fn new(
+        id: impl Into<SourceId>,
+        name: impl Into<String>,
+        version: semver::Version,
+    ) -> Self {
         Self {
             id: id.into(),
             name: name.into(),
@@ -215,3 +219,4 @@ pub trait SourceAdapter: Send + Sync + 'static {
         None
     }
 }
+

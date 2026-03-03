@@ -61,8 +61,7 @@ pub trait OAuthProvider: Send + Sync {
     /// Get the OAuth authorization URL
     ///
     /// Returns the URL to redirect the user to for authorization.
-    fn authorization_url(&self, context: &IngestContext)
-        -> Result<AuthorizationParams, OAuthError>;
+    fn authorization_url(&self, context: &IngestContext) -> Result<AuthorizationParams, OAuthError>;
 
     /// Exchange authorization code for tokens
     ///
@@ -83,7 +82,11 @@ pub trait OAuthProvider: Send + Sync {
     ) -> Result<OAuthTokens, OAuthError>;
 
     /// Revoke tokens (disconnect integration)
-    async fn revoke_token(&self, token: &str, context: &IngestContext) -> Result<(), OAuthError>;
+    async fn revoke_token(
+        &self,
+        token: &str,
+        context: &IngestContext,
+    ) -> Result<(), OAuthError>;
 
     /// Get required OAuth scopes for this source
     fn required_scopes(&self) -> &[&str];
@@ -93,3 +96,4 @@ pub trait OAuthProvider: Send + Sync {
         false
     }
 }
+

@@ -5,7 +5,8 @@
 use std::path::PathBuf;
 
 /// Replay playback modes
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq)]
+#[derive(Default)]
 pub enum ReplayMode {
     /// Emit events as fast as possible
     #[default]
@@ -18,8 +19,10 @@ pub enum ReplayMode {
     Step,
 }
 
+
 /// Source of events for replay
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
+#[derive(Default)]
 pub enum ReplaySource {
     /// Events loaded from memory store (default)
     #[default]
@@ -27,6 +30,7 @@ pub enum ReplaySource {
     /// Events loaded from an MCAP bag file
     Bag(PathBuf),
 }
+
 
 impl ReplaySource {
     /// Create a bag source from a path
@@ -47,3 +51,4 @@ impl ReplaySource {
         }
     }
 }
+

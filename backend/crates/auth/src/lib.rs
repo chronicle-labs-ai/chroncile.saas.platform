@@ -1,5 +1,5 @@
-pub mod error;
+pub mod password;
 pub mod jwt;
 pub mod middleware;
-pub mod password;
+pub mod error;
 pub mod types;

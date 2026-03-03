@@ -8,3 +8,4 @@ mod sse;
 
 pub use endpoints::ApiClient;
 pub use sse::SseStream;
+

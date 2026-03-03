@@ -193,6 +193,7 @@ pub enum PlaybackStateJs {
     Paused,
 }
 
+
 impl From<chronicle_timeline_core::PlaybackState> for PlaybackStateJs {
     fn from(state: chronicle_timeline_core::PlaybackState) -> Self {
         match state {

@@ -2,9 +2,9 @@
 //!
 //! Event DTO and filtering types.
 
-use chronicle_timeline_core::TimelineEventData;
 use chrono::{DateTime, Utc};
 use egui::Color32;
+use chronicle_timeline_core::TimelineEventData;
 use serde::{Deserialize, Serialize};
 
 /// Event envelope as received from API
@@ -111,7 +111,9 @@ impl TimelineEventData for EventDto {
     }
 
     fn message(&self) -> Option<&str> {
-        self.payload.get("text").and_then(|v| v.as_str())
+        self.payload
+            .get("text")
+            .and_then(|v| v.as_str())
     }
 
     fn color(&self) -> Option<Color32> {
@@ -167,3 +169,4 @@ impl EventFilter {
         }
     }
 }
+

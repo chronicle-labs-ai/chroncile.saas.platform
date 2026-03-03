@@ -9,7 +9,7 @@
 
 use std::collections::HashMap;
 
-use crate::{stream_color, EventEnvelope, Stream, StreamId, StreamStatus, StreamViewMode};
+use crate::{EventEnvelope, Stream, StreamId, StreamStatus, StreamViewMode, stream_color};
 
 /// Manages multiple concurrent event streams
 #[derive(Debug, Default)]
@@ -128,11 +128,7 @@ impl StreamManager {
     }
 
     /// Push multiple events to a stream's buffer
-    pub fn push_events(
-        &mut self,
-        stream_id: &StreamId,
-        events: impl IntoIterator<Item = EventEnvelope>,
-    ) {
+    pub fn push_events(&mut self, stream_id: &StreamId, events: impl IntoIterator<Item = EventEnvelope>) {
         if let Some(buffer) = self.buffers.get_mut(stream_id) {
             for event in events {
                 buffer.push(event);
@@ -154,12 +150,7 @@ impl StreamManager {
             .streams
             .iter()
             .filter(|(_, stream)| stream.enabled)
-            .flat_map(|(id, _)| {
-                self.buffers
-                    .get(id)
-                    .map(|v| v.iter())
-                    .unwrap_or_else(|| [].iter())
-            })
+            .flat_map(|(id, _)| self.buffers.get(id).map(|v| v.iter()).unwrap_or_else(|| [].iter()))
             .collect();
 
         events.sort_by_key(|e| e.occurred_at);
@@ -258,7 +249,7 @@ impl StreamManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Actor, StreamKind, Subject, TenantId};
+    use crate::{Actor, Subject, TenantId, StreamKind};
     use chrono::Utc;
     use serde_json::value::RawValue;
 
@@ -388,3 +379,4 @@ mod tests {
         assert_eq!(visible.len(), 1);
     }
 }
+

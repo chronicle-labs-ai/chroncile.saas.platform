@@ -289,3 +289,4 @@ mod tests {
         assert!(migrated.get("old_field").is_none());
     }
 }
+

@@ -276,3 +276,4 @@ impl EventsManagerApp {
         }
     }
 }
+

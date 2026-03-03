@@ -144,3 +144,4 @@ pub struct StreamRowResponse {
     pub selected: bool,
     pub remove_requested: bool,
 }
+

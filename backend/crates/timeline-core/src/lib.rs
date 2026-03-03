@@ -13,11 +13,11 @@ pub mod timezone;
 pub mod topic_tree;
 pub mod utils;
 
-pub use event::{SimpleEvent, TimelineEventData};
+pub use event::{TimelineEventData, SimpleEvent};
 pub use panel::{TimelinePanel, TimelinePanelConfig, TimelinePanelResponse};
-pub use playback::{LoopSelection, PlaybackSpeed, PlaybackState};
+pub use playback::{PlaybackState, PlaybackSpeed, LoopSelection};
 pub use theme::TimelineTheme;
 pub use time_view::TimeView;
 pub use timezone::DisplayTimezone;
-pub use topic_tree::{event_path_color, source_color, TopicPath, TopicTree, TopicTreeNode};
+pub use topic_tree::{TopicPath, TopicTree, TopicTreeNode, source_color, event_path_color};
 pub use utils::{format_duration, format_duration_precise, format_relative_time};

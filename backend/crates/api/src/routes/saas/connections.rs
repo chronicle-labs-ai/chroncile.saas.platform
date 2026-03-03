@@ -23,10 +23,7 @@ pub async fn get_connection(
     State(state): State<SaasAppState>,
     Path(id): Path<String>,
 ) -> ApiResult<Json<ConnectionResponse>> {
-    let conn = state
-        .connections
-        .find_by_id(&id)
-        .await?
+    let conn = state.connections.find_by_id(&id).await?
         .ok_or_else(|| ApiError::not_found("Connection"))?;
 
     if conn.tenant_id != user.tenant_id {
@@ -41,10 +38,7 @@ pub async fn delete_connection(
     State(state): State<SaasAppState>,
     Path(id): Path<String>,
 ) -> ApiResult<StatusCode> {
-    let conn = state
-        .connections
-        .find_by_id(&id)
-        .await?
+    let conn = state.connections.find_by_id(&id).await?
         .ok_or_else(|| ApiError::not_found("Connection"))?;
 
     if conn.tenant_id != user.tenant_id {

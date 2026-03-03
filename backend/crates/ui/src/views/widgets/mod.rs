@@ -28,6 +28,5 @@ pub use chronicle_domain::{Stream, StreamId, StreamKind, StreamStatus, StreamVie
 
 // Re-export timeline-core types
 pub use chronicle_timeline_core::{
-    format_duration, format_duration_precise, DisplayTimezone, PlaybackState, TimeView,
-    TimelineTheme,
+    format_duration, format_duration_precise, DisplayTimezone, PlaybackState, TimeView, TimelineTheme,
 };

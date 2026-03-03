@@ -7,12 +7,14 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use chronicle_domain::EventEnvelope;
+use chrono::Utc;
 use chronicle_infra::{StoreBackend, StreamBackend};
-use chronicle_mock_connector::{all_scenarios, generate_random_events, ConversationScenario};
+use chronicle_mock_connector::{
+    all_scenarios, generate_random_events, ConversationScenario,
+};
 use chronicle_source_mock_stripe::MockStripeGenerator;
 use chronicle_sources_core::{EventGenerator, GeneratorConfig};
-use chrono::Utc;
+use chronicle_domain::EventEnvelope;
 use tokio::task::JoinHandle;
 
 // ---------------------------------------------------------------------------
@@ -66,8 +68,9 @@ impl SimulationConfig {
             .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
             .unwrap_or(false);
 
-        let mode =
-            SimMode::from_str(&std::env::var("SIM_TIMING").unwrap_or_else(|_| "scenario".into()));
+        let mode = SimMode::from_str(
+            &std::env::var("SIM_TIMING").unwrap_or_else(|_| "scenario".into()),
+        );
 
         let events_per_second: f64 = std::env::var("SIM_RATE")
             .unwrap_or_else(|_| "2.0".into())
@@ -92,7 +95,8 @@ impl SimulationConfig {
             .map(|v| !v.eq_ignore_ascii_case("false") && v != "0")
             .unwrap_or(true);
 
-        let tenant_id = std::env::var("SIM_TENANT").unwrap_or_else(|_| "demo_tenant".into());
+        let tenant_id = std::env::var("SIM_TENANT")
+            .unwrap_or_else(|_| "demo_tenant".into());
 
         Self {
             enabled,
@@ -209,12 +213,7 @@ async fn run_random_mode(
         // Alternate between mock-connector and stripe if both are enabled
         let event = if include_stripe && stripe_gen.is_some() && count % 3 == 0 {
             // Every 3rd event comes from Stripe
-            match stripe_gen
-                .as_ref()
-                .unwrap()
-                .generate_event(&stripe_config)
-                .await
-            {
+            match stripe_gen.as_ref().unwrap().generate_event(&stripe_config).await {
                 Ok(e) => e,
                 Err(err) => {
                     tracing::error!(error = %err, "Failed to generate Stripe event");

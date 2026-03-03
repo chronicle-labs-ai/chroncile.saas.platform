@@ -212,3 +212,4 @@ mod tests {
         assert_eq!(capitalize_source_id("my-cool-source"), "My Cool Source");
     }
 }
+

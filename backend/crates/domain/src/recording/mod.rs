@@ -157,3 +157,4 @@ mod tests {
         assert!(metadata.duration.is_none());
     }
 }
+

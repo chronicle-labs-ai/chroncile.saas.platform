@@ -35,7 +35,5 @@ pub async fn update_agent_endpoint(
     };
 
     let saved = state.agent_configs.upsert(&user.tenant_id, config).await?;
-    Ok(Json(AgentEndpointResponse {
-        config: Some(saved),
-    }))
+    Ok(Json(AgentEndpointResponse { config: Some(saved) }))
 }

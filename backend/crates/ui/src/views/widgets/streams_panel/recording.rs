@@ -44,13 +44,7 @@ impl StreamsPanel {
                 duration_secs,
                 recorded_streams,
             } => {
-                self.render_save_prompt(
-                    ui,
-                    response,
-                    event_count,
-                    duration_secs,
-                    &recorded_streams,
-                );
+                self.render_save_prompt(ui, response, event_count, duration_secs, &recorded_streams);
             }
         }
     }
@@ -176,13 +170,15 @@ impl StreamsPanel {
                             }
 
                             // Stream name
-                            ui.label(RichText::new(name).font(typography::small()).color(
-                                if *is_selected {
-                                    colors::TEXT_PRIMARY
-                                } else {
-                                    colors::TEXT_MUTED
-                                },
-                            ));
+                            ui.label(
+                                RichText::new(name)
+                                    .font(typography::small())
+                                    .color(if *is_selected {
+                                        colors::TEXT_PRIMARY
+                                    } else {
+                                        colors::TEXT_MUTED
+                                    }),
+                            );
 
                             // Kind badge
                             ui.label(
@@ -399,10 +395,8 @@ impl StreamsPanel {
                                     .as_ref()
                                     .and_then(|c| parse_hex_color(c))
                                     .unwrap_or_else(|| stream_color(0));
-                                let (rect, _) = ui.allocate_exact_size(
-                                    egui::vec2(10.0, 10.0),
-                                    egui::Sense::hover(),
-                                );
+                                let (rect, _) = ui
+                                    .allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
                                 ui.painter().rect_filled(rect, 2.0, color);
                             }
                         }
@@ -442,3 +436,4 @@ impl StreamsPanel {
             });
     }
 }
+
