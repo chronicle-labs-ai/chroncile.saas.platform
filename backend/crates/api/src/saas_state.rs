@@ -9,6 +9,8 @@ use chronicle_interfaces::{
 };
 use pipedream_connect::PipedreamClient;
 
+use crate::escalation::EscalationLog;
+
 #[derive(Clone)]
 pub struct SaasAppState {
     pub jwt: Arc<JwtService>,
@@ -24,6 +26,7 @@ pub struct SaasAppState {
     pub email: Arc<dyn EmailService>,
     pub event_store: Arc<StoreBackend>,
     pub event_stream: Arc<StreamBackend>,
+    pub escalation_log: EscalationLog,
 }
 
 impl SaasAppState {
@@ -42,6 +45,7 @@ impl SaasAppState {
         email: Arc<dyn EmailService>,
         event_store: Arc<StoreBackend>,
         event_stream: Arc<StreamBackend>,
+        escalation_log: EscalationLog,
     ) -> Self {
         Self {
             jwt: Arc::new(JwtService::new(jwt_secret)),
@@ -57,6 +61,7 @@ impl SaasAppState {
             email,
             event_store,
             event_stream,
+            escalation_log,
         }
     }
 }

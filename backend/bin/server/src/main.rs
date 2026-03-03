@@ -11,7 +11,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use chronicle_api::{build_router, build_saas_router, AppState, SaasAppState};
+use chronicle_api::{build_router, build_saas_router, escalation, AppState, SaasAppState};
 use chronicle_infra::{StoreBackend, StreamBackend};
 
 mod simulation;
@@ -207,6 +207,7 @@ fn build_saas_state_postgres(
         build_email_service(),
         event_store,
         event_stream,
+        escalation::new_escalation_log(),
     )
 }
 
@@ -233,6 +234,7 @@ fn build_saas_state_memory(
         build_email_service(),
         event_store,
         event_stream,
+        escalation::new_escalation_log(),
     )
 }
 

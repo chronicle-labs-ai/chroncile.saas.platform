@@ -3,6 +3,7 @@
 //! Axum-based HTTP server with SSE streaming endpoints.
 
 pub mod error;
+pub mod escalation;
 pub mod routes;
 pub mod saas_state;
 pub mod state;
