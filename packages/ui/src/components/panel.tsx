@@ -48,8 +48,7 @@ export function PanelHeader({
   );
 }
 
-export interface PanelContentProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export type PanelContentProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function PanelContent({
   className = "",

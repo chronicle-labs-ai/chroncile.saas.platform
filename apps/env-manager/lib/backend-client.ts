@@ -8,7 +8,7 @@
 const GLOBAL_SERVICE_SECRET = process.env.SERVICE_SECRET ?? "";
 const SERVICE_USER_ID = process.env.SERVICE_USER_ID ?? "env-manager-service-account";
 
-let cachedTokens: Map<string, { token: string; expiresAt: number }> = new Map();
+const cachedTokens: Map<string, { token: string; expiresAt: number }> = new Map();
 
 async function getServiceToken(backendUrl: string, secret: string): Promise<string | null> {
   const cacheKey = `${backendUrl}:${secret.slice(0, 8)}`;

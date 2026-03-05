@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -190,7 +191,7 @@ export function Header({ user }: { user: User }) {
                 
                 {/* Menu items */}
                 <div className="py-1">
-                  <a
+                  <Link
                     href="/dashboard/settings"
                     className="flex items-center gap-3 px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-hover transition-colors"
                   >
@@ -199,7 +200,7 @@ export function Header({ user }: { user: User }) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Settings
-                  </a>
+                  </Link>
                 </div>
                 
                 {/* Sign out */}
