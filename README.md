@@ -41,6 +41,13 @@ yarn dev
 yarn dev:frontend
 ```
 
+**Optional: Doppler (secrets from dashboard)**  
+For env vars, run once from repo root: `doppler login` and `doppler setup --no-interactive`, then start apps with secrets injected:
+
+- Frontend: `cd apps/frontend && doppler run -- yarn dev`
+- Backend: `cd backend && doppler run -- cargo run --bin chronicle-backend`
+- Env-manager: `cd apps/env-manager && doppler run -- yarn dev`
+
 ### Build
 
 ```bash

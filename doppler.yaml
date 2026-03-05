@@ -1,0 +1,11 @@
+# Doppler CLI config for Chronicle Platform monorepo (local dev only).
+setup:
+  - project: chronicle-platform
+    config: dev
+    path: apps/frontend
+  - project: chronicle-platform
+    config: dev
+    path: backend
+  - project: chronicle-platform
+    config: dev
+    path: apps/env-manager
