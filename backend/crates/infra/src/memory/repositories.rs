@@ -6,7 +6,7 @@ use std::sync::Arc;
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
     CreateRunInput, CreateTenantInput, CreateUserInput, Invitation, PipedreamTrigger, Run, Tenant,
-    User, UserRole,
+    User,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, InvitationRepository,
