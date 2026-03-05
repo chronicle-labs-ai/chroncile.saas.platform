@@ -215,7 +215,7 @@ pub async fn handle_webhook(
         let event_type = event.event_type.clone();
 
         // Store and publish
-        state.store.append(&[event.clone()]).await?;
+        state.store.append(std::slice::from_ref(&event)).await?;
         state.stream.publish(event).await?;
 
         tracing::info!(

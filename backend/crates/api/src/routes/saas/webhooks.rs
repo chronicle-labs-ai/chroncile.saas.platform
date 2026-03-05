@@ -18,7 +18,7 @@ pub async fn pipedream_webhook(
     headers: HeaderMap,
     Json(body): Json<Value>,
 ) -> ApiResult<Json<Value>> {
-    let tenant = state
+    let _tenant = state
         .tenants
         .find_by_id(&tenant_id)
         .await?
@@ -87,7 +87,7 @@ pub async fn pipedream_webhook(
 
     let event_id = event.event_id.to_string();
 
-    if let Err(e) = state.event_store.append(&[event.clone()]).await {
+    if let Err(e) = state.event_store.append(std::slice::from_ref(&event)).await {
         tracing::error!("Failed to store event: {e}");
     }
 

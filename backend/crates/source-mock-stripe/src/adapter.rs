@@ -239,7 +239,7 @@ impl SourceAdapter for MockStripeAdapter {
             if let Some(types_arr) = types.as_array() {
                 for t in types_arr {
                     if let Some(t_str) = t.as_str() {
-                        if StripeEventType::from_str(t_str).is_none() {
+                        if t_str.parse::<StripeEventType>().is_err() {
                             return Err(ConfigError::InvalidValue {
                                 field: "event_types".to_string(),
                                 message: format!("Unknown event type: {}", t_str),

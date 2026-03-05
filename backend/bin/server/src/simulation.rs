@@ -207,19 +207,17 @@ async fn run_random_mode(
         timer.tick().await;
 
         // Alternate between mock-connector and stripe if both are enabled
-        let event = if include_stripe && stripe_gen.is_some() && count % 3 == 0 {
+        let event = if include_stripe && count.is_multiple_of(3) {
             // Every 3rd event comes from Stripe
-            match stripe_gen
-                .as_ref()
-                .unwrap()
-                .generate_event(&stripe_config)
-                .await
-            {
-                Ok(e) => e,
-                Err(err) => {
-                    tracing::error!(error = %err, "Failed to generate Stripe event");
-                    continue;
-                }
+            match stripe_gen.as_ref() {
+                Some(gen) => match gen.generate_event(&stripe_config).await {
+                    Ok(e) => e,
+                    Err(err) => {
+                        tracing::error!(error = %err, "Failed to generate Stripe event");
+                        continue;
+                    }
+                },
+                None => unreachable!("stripe_gen checked by include_stripe"),
             }
         } else {
             // Use pre-generated mock-connector events, cycling through them
@@ -386,7 +384,7 @@ async fn publish_event(
     let event_type = event.event_type.clone();
     let source = event.source.clone();
 
-    if let Err(e) = store.append(&[event.clone()]).await {
+    if let Err(e) = store.append(std::slice::from_ref(&event)).await {
         tracing::error!(error = %e, "Simulation: failed to store event");
     }
 

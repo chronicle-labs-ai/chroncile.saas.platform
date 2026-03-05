@@ -258,7 +258,7 @@ async fn run_saas_migrations(database_url: &str) -> Result<()> {
 
     let mut migration_files: Vec<_> = std::fs::read_dir(migrations_dir)?
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map_or(false, |ext| ext == "sql"))
+        .filter(|e| e.path().extension().is_some_and(|ext| ext == "sql"))
         .collect();
     migration_files.sort_by_key(|e| e.file_name());
 

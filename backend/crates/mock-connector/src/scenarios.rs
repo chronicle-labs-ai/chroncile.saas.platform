@@ -16,6 +16,7 @@ pub struct ConversationScenario {
 }
 
 /// Generate a refund request scenario
+#[allow(clippy::vec_init_then_push)]
 pub fn refund_request_scenario(tenant_id: &str) -> ConversationScenario {
     let conn = MockOAuthConnection::new(tenant_id, MockService::MockZendesk);
     let mut gen = MockEventGenerator::new(conn);
@@ -131,6 +132,7 @@ pub fn refund_request_scenario(tenant_id: &str) -> ConversationScenario {
 }
 
 /// Generate an escalation scenario
+#[allow(clippy::vec_init_then_push)]
 pub fn escalation_scenario(tenant_id: &str) -> ConversationScenario {
     let conn = MockOAuthConnection::new(tenant_id, MockService::MockZendesk);
     let mut gen = MockEventGenerator::new(conn);

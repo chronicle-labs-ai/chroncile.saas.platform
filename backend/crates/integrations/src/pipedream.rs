@@ -42,6 +42,7 @@ pub struct HttpPipedreamClient {
     base_url: String,
     client_id: String,
     client_secret: String,
+    #[allow(dead_code)]
     project_id: String,
 }
 

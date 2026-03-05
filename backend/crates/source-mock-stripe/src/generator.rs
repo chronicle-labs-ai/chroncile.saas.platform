@@ -37,7 +37,7 @@ impl MockStripeGenerator {
         // If specific event types are configured, pick from those
         if !config.event_types.is_empty() {
             let type_str = &config.event_types[rand::random::<usize>() % config.event_types.len()];
-            if let Some(et) = StripeEventType::from_str(type_str) {
+            if let Ok(et) = type_str.parse::<StripeEventType>() {
                 return et;
             }
         }
@@ -118,7 +118,7 @@ impl EventGenerator for MockStripeGenerator {
     fn validate_config(&self, config: &GeneratorConfig) -> Result<(), GeneratorError> {
         // Validate event types if specified
         for event_type in &config.event_types {
-            if StripeEventType::from_str(event_type).is_none() {
+            if event_type.parse::<StripeEventType>().is_err() {
                 return Err(GeneratorError::Config(format!(
                     "Unknown Stripe event type: {}. Valid types: {:?}",
                     event_type,

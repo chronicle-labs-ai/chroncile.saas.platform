@@ -92,6 +92,7 @@ pub trait ConnectionRepository: Send + Sync {
 }
 
 #[async_trait]
+#[allow(clippy::too_many_arguments)]
 pub trait AuditLogRepository: Send + Sync {
     async fn create(
         &self,

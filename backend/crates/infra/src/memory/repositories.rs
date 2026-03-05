@@ -6,7 +6,7 @@ use std::sync::Arc;
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
     CreateRunInput, CreateTenantInput, CreateUserInput, Invitation, PipedreamTrigger, Run, Tenant,
-    User, UserRole,
+    User,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, InvitationRepository,
@@ -318,7 +318,7 @@ impl RunRepository for InMemoryRunRepo {
             .store
             .iter()
             .filter(|e| e.value().tenant_id == tenant_id)
-            .filter(|e| status.map_or(true, |s| e.value().status == s))
+            .filter(|e| status.is_none_or(|s| e.value().status == s))
             .map(|e| e.value().clone())
             .collect();
         runs.sort_by(|a, b| b.created_at.cmp(&a.created_at));

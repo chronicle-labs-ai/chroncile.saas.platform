@@ -3,6 +3,8 @@
 //! Realistic templates for Stripe webhook events. These templates
 //! generate events that closely match the structure of real Stripe webhooks.
 
+use std::str::FromStr;
+
 use chrono::{DateTime, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -59,24 +61,6 @@ impl StripeEventType {
         }
     }
 
-    /// Parse from string
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "payment_intent.succeeded" => Some(Self::PaymentIntentSucceeded),
-            "payment_intent.failed" => Some(Self::PaymentIntentFailed),
-            "customer.created" => Some(Self::CustomerCreated),
-            "customer.updated" => Some(Self::CustomerUpdated),
-            "invoice.paid" => Some(Self::InvoicePaid),
-            "invoice.payment_failed" => Some(Self::InvoicePaymentFailed),
-            "customer.subscription.created" => Some(Self::SubscriptionCreated),
-            "customer.subscription.updated" => Some(Self::SubscriptionUpdated),
-            "customer.subscription.deleted" => Some(Self::SubscriptionDeleted),
-            "charge.succeeded" => Some(Self::ChargeSucceeded),
-            "charge.failed" => Some(Self::ChargeFailed),
-            _ => None,
-        }
-    }
-
     /// Get event category for swim lanes
     pub fn category(&self) -> &'static str {
         match self {
@@ -115,6 +99,27 @@ impl StripeEventType {
 impl std::fmt::Display for StripeEventType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+impl FromStr for StripeEventType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "payment_intent.succeeded" => Ok(Self::PaymentIntentSucceeded),
+            "payment_intent.failed" => Ok(Self::PaymentIntentFailed),
+            "customer.created" => Ok(Self::CustomerCreated),
+            "customer.updated" => Ok(Self::CustomerUpdated),
+            "invoice.paid" => Ok(Self::InvoicePaid),
+            "invoice.payment_failed" => Ok(Self::InvoicePaymentFailed),
+            "customer.subscription.created" => Ok(Self::SubscriptionCreated),
+            "customer.subscription.updated" => Ok(Self::SubscriptionUpdated),
+            "customer.subscription.deleted" => Ok(Self::SubscriptionDeleted),
+            "charge.succeeded" => Ok(Self::ChargeSucceeded),
+            "charge.failed" => Ok(Self::ChargeFailed),
+            _ => Err(()),
+        }
     }
 }
 
@@ -572,7 +577,7 @@ mod tests {
     fn test_event_type_roundtrip() {
         for event_type in StripeEventType::all() {
             let str_repr = event_type.as_str();
-            let parsed = StripeEventType::from_str(str_repr);
+            let parsed = str_repr.parse().ok();
             assert_eq!(parsed, Some(event_type));
         }
     }

@@ -208,9 +208,10 @@ pub async fn update_member_role(
         return Err(ApiError::not_found("User"));
     }
 
-    let new_role = input.role.parse().map_err(|_| {
-        ApiError::bad_request("Invalid role. Must be: owner, admin, or member")
-    })?;
+    let new_role: UserRole = input
+        .role
+        .parse()
+        .map_err(|_| ApiError::bad_request("Invalid role. Must be: owner, admin, or member"))?;
 
     let updated = state.users.update_role(&user_id, new_role.as_str()).await?;
     Ok(Json(updated))

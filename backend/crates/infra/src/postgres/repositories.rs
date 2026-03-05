@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::{NaiveDateTime, TimeZone, Utc};
-use sqlx::{FromRow, PgPool, Row};
+use sqlx::{PgPool, Row};
 
 fn naive_to_utc(naive: NaiveDateTime) -> chrono::DateTime<Utc> {
     Utc.from_utc_datetime(&naive)
@@ -532,7 +532,7 @@ impl ConnectionRepository for PgConnectionRepo {
         let now = Utc::now().naive_utc();
         sqlx::query("INSERT INTO \"Connection\" (id, \"tenantId\", provider, \"accessToken\", \"refreshToken\", \"expiresAt\", \"pipedreamAuthId\", metadata, status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10) RETURNING *")
             .bind(&id).bind(&input.tenant_id).bind(&input.provider).bind(&input.access_token)
-            .bind(&input.refresh_token).bind(&input.expires_at).bind(&input.pipedream_auth_id)
+            .bind(&input.refresh_token).bind(input.expires_at).bind(&input.pipedream_auth_id)
             .bind(&input.metadata).bind(now).bind(now)
             .try_map(connection_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
     }

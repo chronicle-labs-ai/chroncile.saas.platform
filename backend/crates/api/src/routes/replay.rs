@@ -79,7 +79,7 @@ pub async fn create_replay(
 ) -> ApiResult<Json<ReplayResponse>> {
     let tenant_id = req
         .tenant_id
-        .map(|t| TenantId::new(t))
+        .map(TenantId::new)
         .unwrap_or_else(|| state.default_tenant.clone());
 
     // Parse mode

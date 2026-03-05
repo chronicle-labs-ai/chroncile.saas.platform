@@ -205,7 +205,7 @@ pub async fn query_events(
     let tenant_id = params
         .tenant_id
         .clone()
-        .map(|t| TenantId::new(t))
+        .map(TenantId::new)
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
 
     let query = params.to_event_query();
@@ -235,7 +235,7 @@ pub async fn list_sources(
 ) -> ApiResult<Json<Vec<String>>> {
     let tenant_id = params
         .tenant_id
-        .map(|t| TenantId::new(t))
+        .map(TenantId::new)
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
     let sources = state.store.list_sources(&tenant_id).await?;
     Ok(Json(sources))
@@ -248,7 +248,7 @@ pub async fn list_event_types(
 ) -> ApiResult<Json<Vec<String>>> {
     let tenant_id = params
         .tenant_id
-        .map(|t| TenantId::new(t))
+        .map(TenantId::new)
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
     let event_types = state.store.list_event_types(&tenant_id).await?;
     Ok(Json(event_types))
@@ -263,7 +263,7 @@ pub async fn stream_events(
 ) -> ApiResult<Sse<impl Stream<Item = Result<Event, Infallible>> + Send>> {
     let tenant_id = params
         .tenant_id
-        .map(|t| TenantId::new(t))
+        .map(TenantId::new)
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
 
     tracing::info!(
@@ -358,7 +358,7 @@ pub async fn get_timeline(
     let tenant_id = params
         .tenant_id
         .clone()
-        .map(|t| TenantId::new(t))
+        .map(TenantId::new)
         .ok_or_else(|| ApiError::BadRequest("tenant_id is required".to_string()))?;
 
     let range = TimeRange::last_hours(params.hours);
