@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::str::FromStr;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "generated/")]
 pub enum UserRole {
@@ -12,6 +13,7 @@ pub enum UserRole {
     #[serde(rename = "admin")]
     Admin,
     #[serde(rename = "member")]
+    #[default]
     Member,
 }
 
@@ -24,15 +26,6 @@ impl UserRole {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "owner" => Some(Self::Owner),
-            "admin" => Some(Self::Admin),
-            "member" => Some(Self::Member),
-            _ => None,
-        }
-    }
-
     pub fn has_admin_access(&self) -> bool {
         matches!(self, Self::Owner | Self::Admin)
     }
@@ -42,9 +35,16 @@ impl UserRole {
     }
 }
 
-impl Default for UserRole {
-    fn default() -> Self {
-        Self::Member
+impl FromStr for UserRole {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "owner" => Ok(Self::Owner),
+            "admin" => Ok(Self::Admin),
+            "member" => Ok(Self::Member),
+            _ => Err(()),
+        }
     }
 }
 
@@ -126,17 +126,6 @@ impl RunStatus {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "pending" => Some(Self::Pending),
-            "processing" => Some(Self::Processing),
-            "completed" => Some(Self::Completed),
-            "failed" => Some(Self::Failed),
-            "requires_human" => Some(Self::RequiresHuman),
-            _ => None,
-        }
-    }
-
     pub fn can_transition_to(&self, target: &Self) -> bool {
         matches!(
             (self, target),
@@ -147,6 +136,21 @@ impl RunStatus {
                 | (Self::RequiresHuman, Self::Completed)
                 | (Self::RequiresHuman, Self::Failed)
         )
+    }
+}
+
+impl FromStr for RunStatus {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(Self::Pending),
+            "processing" => Ok(Self::Processing),
+            "completed" => Ok(Self::Completed),
+            "failed" => Ok(Self::Failed),
+            "requires_human" => Ok(Self::RequiresHuman),
+            _ => Err(()),
+        }
     }
 }
 
@@ -307,14 +311,14 @@ mod tests {
 
         for status in statuses {
             let s = status.as_str();
-            let parsed = RunStatus::from_str(s).unwrap();
+            let parsed: RunStatus = s.parse().unwrap();
             assert_eq!(parsed, status);
         }
     }
 
     #[test]
     fn test_run_status_unknown_returns_none() {
-        assert!(RunStatus::from_str("unknown").is_none());
+        assert!("unknown".parse::<RunStatus>().is_err());
     }
 
     #[test]
@@ -349,7 +353,7 @@ mod tests {
     fn test_user_role_roundtrip() {
         for role in [UserRole::Owner, UserRole::Admin, UserRole::Member] {
             let s = role.as_str();
-            let parsed = UserRole::from_str(s).unwrap();
+            let parsed: UserRole = s.parse().unwrap();
             assert_eq!(parsed, role);
         }
     }

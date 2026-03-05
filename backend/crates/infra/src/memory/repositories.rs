@@ -174,8 +174,9 @@ impl UserRepository for InMemoryUserRepo {
             .store
             .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
-        let parsed_role = UserRole::from_str(role)
-            .ok_or_else(|| RepoError::Internal(format!("invalid role: {role}")))?;
+        let parsed_role = role
+            .parse()
+            .map_err(|_| RepoError::Internal(format!("invalid role: {role}")))?;
         entry.role = parsed_role;
         entry.updated_at = Utc::now();
         Ok(entry.clone())

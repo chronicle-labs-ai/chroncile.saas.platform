@@ -45,7 +45,7 @@ pub async fn update_tenant_name(
     State(state): State<SaasAppState>,
     Json(input): Json<UpdateTenantNameRequest>,
 ) -> ApiResult<Json<TenantResponse>> {
-    let role = UserRole::from_str(&user.role).unwrap_or(UserRole::Member);
+    let role = user.role.parse().unwrap_or(UserRole::Member);
     if !role.is_owner() {
         return Err(ApiError::forbidden(
             "Only the organization owner can rename the organization",
@@ -69,7 +69,7 @@ pub async fn delete_tenant(
     user: AuthUser,
     State(state): State<SaasAppState>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let role = UserRole::from_str(&user.role).unwrap_or(UserRole::Member);
+    let role = user.role.parse().unwrap_or(UserRole::Member);
     if !role.is_owner() {
         return Err(ApiError::forbidden(
             "Only the organization owner can delete the organization",

@@ -61,7 +61,7 @@ fn user_from_row(row: sqlx::postgres::PgRow) -> Result<User, sqlx::Error> {
         auth_provider: row
             .try_get::<String, _>("authProvider")
             .unwrap_or_else(|_| "credentials".to_string()),
-        role: UserRole::from_str(&role_str).unwrap_or(UserRole::Member),
+        role: role_str.parse().unwrap_or(UserRole::Member),
         tenant_id: row.try_get("tenantId")?,
         created_at: naive_to_utc(created),
         updated_at: naive_to_utc(updated),
@@ -338,7 +338,7 @@ fn invitation_from_row(row: sqlx::postgres::PgRow) -> Result<Invitation, sqlx::E
         id: row.try_get("id")?,
         tenant_id: row.try_get("tenantId")?,
         email: row.try_get("email")?,
-        role: UserRole::from_str(&role_str).unwrap_or(UserRole::Member),
+        role: role_str.parse().unwrap_or(UserRole::Member),
         token: row.try_get("token")?,
         invited_by: row.try_get("invitedBy")?,
         expires_at: naive_to_utc(expires),

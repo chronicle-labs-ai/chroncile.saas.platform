@@ -12,7 +12,7 @@ use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
 
 fn require_admin(user: &AuthUser) -> Result<(), ApiError> {
-    let role = UserRole::from_str(&user.role).unwrap_or(UserRole::Member);
+    let role = user.role.parse().unwrap_or(UserRole::Member);
     if !role.has_admin_access() {
         return Err(ApiError::forbidden("Admin or Owner role required"));
     }
@@ -20,7 +20,7 @@ fn require_admin(user: &AuthUser) -> Result<(), ApiError> {
 }
 
 fn require_owner(user: &AuthUser) -> Result<(), ApiError> {
-    let role = UserRole::from_str(&user.role).unwrap_or(UserRole::Member);
+    let role = user.role.parse().unwrap_or(UserRole::Member);
     if !role.is_owner() {
         return Err(ApiError::forbidden("Owner role required"));
     }
@@ -84,7 +84,7 @@ pub async fn invite_member(
 
     let role = input
         .role
-        .and_then(|r| UserRole::from_str(&r))
+        .and_then(|r| r.parse().ok())
         .unwrap_or(UserRole::Member);
 
     if role.is_owner() {
@@ -208,8 +208,9 @@ pub async fn update_member_role(
         return Err(ApiError::not_found("User"));
     }
 
-    let new_role = UserRole::from_str(&input.role)
-        .ok_or_else(|| ApiError::bad_request("Invalid role. Must be: owner, admin, or member"))?;
+    let new_role = input.role.parse().map_err(|_| {
+        ApiError::bad_request("Invalid role. Must be: owner, admin, or member")
+    })?;
 
     let updated = state.users.update_role(&user_id, new_role.as_str()).await?;
     Ok(Json(updated))
