@@ -17,7 +17,6 @@ This is the Next.js frontend application for Chronicle Labs.
    ```bash
    doppler run -- yarn dev
    ```
-   See [docs/DOPPLER_SETUP.md](../../docs/DOPPLER_SETUP.md) for creating projects and secrets in the Doppler dashboard.
 
    **Option B — Local `.env`:**  
    Create a `.env` file in the `apps/frontend` directory with:

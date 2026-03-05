@@ -1,8 +1,5 @@
-# Doppler CLI config for Chronicle Platform monorepo.
-# Run once: doppler login && doppler setup --no-interactive
-# Then from each app dir: doppler run -- <your-command>
-# See docs/DOPPLER_SETUP.md for full setup and env inventory.
-setup:
+# Doppler CLI config for Chronicle Platform monorepo (local dev only).
+# Run once: doppler login && doppler setup --no-interactivesetup:
   - project: chronicle-platform-frontend
     config: dev
     path: apps/frontend

@@ -99,8 +99,6 @@ cp env.example .env
 cargo run --bin chronicle-backend
 ```
 
-The server starts at `http://127.0.0.1:3000` (or `API_PORT` from env) and serves the web UI. See [docs/DOPPLER_SETUP.md](../docs/DOPPLER_SETUP.md) for Doppler project setup.
-
 ### Running the Native egui UI
 
 ```bash
