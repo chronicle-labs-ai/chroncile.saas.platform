@@ -1,3 +1,9 @@
+import type {
+  FeatureAccessSnapshot,
+  FeatureFlagDefinition,
+  FeatureFlagOverride,
+} from "shared/generated";
+
 // ── Environment ──────────────────────────────────────────────────────────────
 
 export type EnvironmentType = "PRODUCTION" | "STAGING" | "DEVELOPMENT" | "LOCAL" | "EPHEMERAL";
@@ -125,6 +131,16 @@ export interface OrgUser {
   name: string | null;
   authProvider: string;
   createdAt: string;
+}
+
+export interface TenantFeatureAccessResponse {
+  tenant: Tenant | null;
+  access: FeatureAccessSnapshot;
+  overrides: FeatureFlagOverride[];
+}
+
+export interface FeatureFlagDefinitionsResponse {
+  flags: FeatureFlagDefinition[];
 }
 
 // ── Live Resources ───────────────────────────────────────────────────────────

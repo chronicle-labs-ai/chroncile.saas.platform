@@ -17,5 +17,11 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const sandboxCreateSchema = z.object({
+  name: z.string().trim().min(1, "Sandbox name is required"),
+  description: z.string().trim(),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type SandboxCreateInput = z.infer<typeof sandboxCreateSchema>;

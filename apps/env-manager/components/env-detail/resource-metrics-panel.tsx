@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import type { ResourcesData, MetricsData, TimeWindow, HealthCheckRecord } from "@/lib/types";
-import { fetcher } from "@/lib/constants";
-import { MetricCard } from "@/components/ui/metric-chart";
+import type { ResourcesData, MetricsData, TimeWindow, HealthCheckRecord } from "@/shared/types";
+import { fetcher } from "@/shared/fetcher";
+import { MetricCard } from "@/shared/components/metric-chart";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

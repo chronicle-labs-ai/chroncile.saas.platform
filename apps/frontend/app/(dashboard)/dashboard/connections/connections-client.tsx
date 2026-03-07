@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ConfirmModal } from "@/components/ui/modal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmModal, Skeleton } from "ui";
 import { AddEventSourcesModal } from "@/components/connections/AddEventSourcesModal";
-import { usePlatformApi } from "@/lib/hooks/use-platform-api";
+import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 
 interface ConnectionData {
   id: string;

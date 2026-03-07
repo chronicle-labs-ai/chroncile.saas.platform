@@ -3,13 +3,17 @@
 //! Axum-based HTTP server with SSE streaming endpoints.
 
 pub mod error;
+pub mod feature_access;
 pub mod routes;
 pub mod runtime_config;
 pub mod saas_state;
 pub mod state;
 
 pub use error::{ApiError, ApiResult};
-pub use runtime_config::{EventsRuntimeConfig, HealthMetadata, SaasRuntimeConfig};
+pub use feature_access::{FeatureAccessService, ResolvedFeatureAccess};
+pub use runtime_config::{
+    EventsRuntimeConfig, FeatureAccessRuntimeConfig, HealthMetadata, SaasRuntimeConfig,
+};
 pub use saas_state::SaasAppState;
 pub use state::AppState;
 

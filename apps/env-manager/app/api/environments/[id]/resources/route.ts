@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/data/db";
 
 const FLY_API_BASE = "https://api.machines.dev/v1";
 

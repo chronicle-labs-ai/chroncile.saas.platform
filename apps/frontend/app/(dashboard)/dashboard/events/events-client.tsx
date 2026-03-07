@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import type { EventEnvelopeDto } from "@/lib/events-manager-sse";
-import { eventEnvelopeToTimelineEvent } from "@/components/timeline/mapEvent";
-import type { TimelineEvent } from "@/components/timeline/types";
-import { TimelinePanel } from "@/components/timeline/TimelinePanel";
-import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
-import { StreamsPanel } from "@/components/streams-panel/StreamsPanel";
-import type { RecordingState } from "@/components/streams-panel/types";
-import { REC_IDLE } from "@/components/streams-panel/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import type { EventEnvelopeDto } from "@/features/events/lib/events-manager-sse";
+import { eventEnvelopeToTimelineEvent } from "@/features/events/timeline/map-event";
+import type { TimelineEvent } from "@/features/events/timeline/types";
+import { TimelinePanel } from "@/features/events/timeline/TimelinePanel";
+import { EventDetailPanel } from "@/features/events/timeline/EventDetailPanel";
+import { StreamsPanel } from "@/features/events/streams/StreamsPanel";
+import type { RecordingState } from "@/features/events/streams/types";
+import { REC_IDLE } from "@/features/events/streams/types";
+import { Skeleton } from "ui";
 import Link from "next/link";
 
 type EventEnvelope = EventEnvelopeDto;

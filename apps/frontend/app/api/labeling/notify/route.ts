@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { simulateNotification } from "@/lib/labeling/org";
+import { auth } from "@/server/auth/auth";
+import { simulateNotification } from "@/features/labeling/server/org";
 
 export const dynamic = "force-dynamic";
 

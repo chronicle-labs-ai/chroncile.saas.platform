@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import type { Sandbox, SandboxStatus } from "@/components/sandbox/types";
+import type { Sandbox, SandboxStatus } from "@/features/sandbox/components/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -31,7 +31,7 @@ const STATUS_STYLES: Record<
   },
 };
 
-export function SandboxListClient({ tenantId }: { tenantId: string }) {
+export function SandboxListClient() {
   const router = useRouter();
   const { data, mutate, isLoading } = useSWR<{ sandboxes: Sandbox[] }>(
     "/api/sandbox",

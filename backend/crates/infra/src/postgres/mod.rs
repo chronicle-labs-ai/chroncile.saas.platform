@@ -2,9 +2,11 @@
 //!
 //! Feature-gated Postgres storage backend using sqlx.
 
+pub mod feature_flag_repositories;
 pub mod repositories;
 mod store;
 
+pub use feature_flag_repositories::*;
 pub use repositories::*;
 pub use store::PostgresStore;
 

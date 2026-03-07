@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { ensurePermanentEnvsExist } from "@/lib/sync";
-import { syncLocalEnvironment } from "@/lib/local-env";
+import { prisma } from "@/server/data/db";
+import { ensurePermanentEnvsExist } from "@/server/environments/sync";
+import { syncLocalEnvironment } from "@/server/environments/local-env";
 
 export async function GET() {
   await Promise.all([

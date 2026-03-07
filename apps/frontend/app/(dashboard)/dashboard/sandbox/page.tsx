@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { redirect } from "next/navigation";
-import { SandboxListClient } from "./sandbox-list-client";
+import { SandboxListClient } from "@/features/sandbox/client/sandbox-list-client";
 
 export default async function SandboxPage() {
   const session = await auth();
@@ -9,5 +9,5 @@ export default async function SandboxPage() {
     redirect("/login");
   }
 
-  return <SandboxListClient tenantId={session.user.tenantId} />;
+  return <SandboxListClient />;
 }

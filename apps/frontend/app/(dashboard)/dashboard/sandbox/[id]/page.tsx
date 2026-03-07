@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { redirect } from "next/navigation";
-import { SandboxEditorClient } from "./sandbox-editor-client";
+import { SandboxEditorClient } from "@/features/sandbox/client/sandbox-editor-client";
 
 export default async function SandboxEditorPage({
   params,

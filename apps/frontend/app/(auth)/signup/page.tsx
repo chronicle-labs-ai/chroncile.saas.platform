@@ -1,57 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { getBackendUrl } from "platform-api";
+import { FormField, Input } from "ui";
 import { AydeaIcon } from "@/components/icons/AydeaIcon";
-
-type FieldErrors = {
-  name?: string[];
-  email?: string[];
-  password?: string[];
-  organizationName?: string[];
-};
-
-const baseInputClass =
-  "w-full px-3 py-2.5 bg-transparent border rounded-[0.75rem] text-base text-[hsl(0,0%,8%)] placeholder:text-[hsl(0,0%,45%)] focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors";
+import { signupSchema, type SignupInput } from "@/lib/validations";
 
 export default function SignupPage() {
   const router = useRouter();
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    organizationName: "",
+  const form = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      organizationName: "",
+    },
   });
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [generalError, setGeneralError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof FieldErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setGeneralError("");
-    setLoading(true);
+  const handleSubmit = form.handleSubmit(async (values) => {
+    form.clearErrors();
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/platform/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-          orgName: formData.organizationName,
+          email: values.email,
+          password: values.password,
+          name: values.name,
+          orgName: values.organizationName,
         }),
       });
 
@@ -59,27 +41,33 @@ export default function SignupPage() {
 
       if (!response.ok) {
         if (data.details) {
-          setErrors(data.details);
+          const details = data.details as Partial<Record<keyof SignupInput, string[]>>;
+          const fields: Array<keyof SignupInput> = [
+            "name",
+            "email",
+            "password",
+            "organizationName",
+          ];
+
+          for (const field of fields) {
+            const message = details[field]?.[0];
+            if (message) {
+              form.setError(field, { type: "server", message });
+            }
+          }
         } else {
-          setGeneralError(data.error || "Registration failed");
+          form.setError("root", {
+            message: data.error || "Registration failed",
+          });
         }
-        setLoading(false);
         return;
       }
 
       router.push("/login?registered=true");
     } catch {
-      setGeneralError("Connection error");
-      setLoading(false);
+      form.setError("root", { message: "Connection error" });
     }
-  };
-
-  const inputClass = (hasError: boolean) =>
-    `${baseInputClass} ${
-      hasError
-        ? "border-[#ff3b3b] focus:ring-[#ff3b3b]"
-        : "border-[hsl(0,0%,90%)] focus:ring-[hsl(0,0%,8%)]"
-    }`;
+  });
 
   return (
     <div className="space-y-8">
@@ -99,102 +87,91 @@ export default function SignupPage() {
         </p>
       </div>
 
-      {generalError && (
-        <p className="text-sm text-[#ff3b3b]">{generalError}</p>
+      {form.formState.errors.root?.message && (
+        <p className="text-sm text-[#ff3b3b]">{form.formState.errors.root.message}</p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
-              Name
-            </label>
-            <input
+          <FormField
+            tone="auth"
+            label="Name"
+            htmlFor="name"
+            error={form.formState.errors.name?.message}
+          >
+            <Input
               id="name"
-              name="name"
               type="text"
-              value={formData.name}
-              onChange={handleChange}
-              required
               autoComplete="name"
-              className={inputClass(!!errors.name)}
               placeholder="Your name"
+              variant="auth"
+              invalid={!!form.formState.errors.name}
+              {...form.register("name")}
             />
-            {errors.name && (
-              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.name[0]}</p>
-            )}
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
-              Email
-            </label>
-            <input
+          <FormField
+            tone="auth"
+            label="Email"
+            htmlFor="email"
+            error={form.formState.errors.email?.message}
+          >
+            <Input
               id="email"
-              name="email"
               type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
               autoComplete="email"
-              className={inputClass(!!errors.email)}
               placeholder="you@company.com"
+              variant="auth"
+              invalid={!!form.formState.errors.email}
+              {...form.register("email")}
             />
-            {errors.email && (
-              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.email[0]}</p>
-            )}
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
-              Password
-            </label>
-            <input
+          <FormField
+            tone="auth"
+            label="Password"
+            htmlFor="password"
+            description={
+              !form.formState.errors.password?.message
+                ? "8+ chars, mixed case, number"
+                : undefined
+            }
+            error={form.formState.errors.password?.message}
+          >
+            <Input
               id="password"
-              name="password"
               type="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
               autoComplete="new-password"
-              className={inputClass(!!errors.password)}
               placeholder="••••••••"
+              variant="auth"
+              invalid={!!form.formState.errors.password}
+              {...form.register("password")}
             />
-            {errors.password ? (
-              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.password[0]}</p>
-            ) : (
-              <p className="mt-2 text-xs text-[hsl(0,0%,45%)]">
-                8+ chars, mixed case, number
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="organizationName" className="block text-sm font-medium text-[hsl(0,0%,8%)] mb-1.5">
-              Organization
-            </label>
-            <input
+          <FormField
+            tone="auth"
+            label="Organization"
+            htmlFor="organizationName"
+            error={form.formState.errors.organizationName?.message}
+          >
+            <Input
               id="organizationName"
-              name="organizationName"
               type="text"
-              value={formData.organizationName}
-              onChange={handleChange}
-              required
-              className={inputClass(!!errors.organizationName)}
               placeholder="Company name"
+              variant="auth"
+              invalid={!!form.formState.errors.organizationName}
+              {...form.register("organizationName")}
             />
-            {errors.organizationName && (
-              <p className="mt-2 text-xs text-[#ff3b3b]">{errors.organizationName[0]}</p>
-            )}
-          </div>
+          </FormField>
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={form.formState.isSubmitting}
           className="w-full bg-[hsl(0,0%,8%)] text-white py-3.5 text-sm font-medium rounded-[0.75rem] hover:bg-[hsl(0,0%,12%)] focus:outline-none focus:ring-2 focus:ring-[hsl(0,0%,8%)] focus:ring-offset-2 transition-colors disabled:opacity-50 mt-2"
         >
-          {loading ? "..." : "Continue"}
+          {form.formState.isSubmitting ? "..." : "Continue"}
         </button>
       </form>
 

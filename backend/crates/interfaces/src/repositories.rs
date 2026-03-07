@@ -1,8 +1,9 @@
 use async_trait::async_trait;
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
-    CreateRunInput, CreateTenantInput, CreateUserInput, Invitation, PipedreamTrigger, Run, Tenant,
-    User,
+    CreateRunInput, CreateTenantInput, CreateUserInput, FeatureFlagDefinition, FeatureFlagKey,
+    FeatureFlagOverride, FeatureFlagScope, Invitation, PipedreamTrigger, Run, Tenant,
+    UpsertFeatureFlagDefinitionInput, UpsertFeatureFlagOverrideInput, User,
 };
 
 pub type RepoResult<T> = Result<T, RepoError>;
@@ -141,4 +142,32 @@ pub trait PipedreamTriggerRepository: Send + Sync {
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>>;
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger>;
     async fn delete(&self, id: &str) -> RepoResult<()>;
+}
+
+#[async_trait]
+pub trait FeatureFlagRepository: Send + Sync {
+    async fn upsert_definition(
+        &self,
+        input: UpsertFeatureFlagDefinitionInput,
+    ) -> RepoResult<FeatureFlagDefinition>;
+    async fn list_definitions(&self) -> RepoResult<Vec<FeatureFlagDefinition>>;
+    async fn find_definition(
+        &self,
+        key: FeatureFlagKey,
+    ) -> RepoResult<Option<FeatureFlagDefinition>>;
+    async fn upsert_override(
+        &self,
+        input: UpsertFeatureFlagOverrideInput,
+    ) -> RepoResult<FeatureFlagOverride>;
+    async fn list_overrides_for_scope(
+        &self,
+        scope_type: FeatureFlagScope,
+        scope_id: &str,
+    ) -> RepoResult<Vec<FeatureFlagOverride>>;
+    async fn delete_override(
+        &self,
+        flag_key: FeatureFlagKey,
+        scope_type: FeatureFlagScope,
+        scope_id: &str,
+    ) -> RepoResult<()>;
 }

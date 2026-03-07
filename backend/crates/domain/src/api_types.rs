@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{AgentEndpointConfig, AuditLog, Connection, PipedreamTrigger, Run, Tenant};
+use crate::{
+    AgentEndpointConfig, AuditLog, Connection, FeatureAccessSnapshot, FeatureFlagDefinition,
+    FeatureFlagOverride, PipedreamTrigger, Run, Tenant,
+};
 
 // ── Dashboard ──
 
@@ -149,6 +152,39 @@ pub struct UpdateStripeRequest {
     pub stripe_customer_id: Option<String>,
     pub stripe_subscription_status: Option<String>,
     pub stripe_price_id: Option<String>,
+}
+
+// ── Feature Access ──
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct FeatureAccessResponse {
+    pub access: FeatureAccessSnapshot,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct FeatureFlagDefinitionsResponse {
+    pub flags: Vec<FeatureFlagDefinition>,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct AdminTenantFeatureAccessResponse {
+    pub tenant: Option<Tenant>,
+    pub access: FeatureAccessSnapshot,
+    pub overrides: Vec<FeatureFlagOverride>,
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct UpsertFeatureFlagOverrideRequest {
+    pub enabled: bool,
+    pub reason: Option<String>,
 }
 
 // ── Pipedream ──

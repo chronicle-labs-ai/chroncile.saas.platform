@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useApiSwr } from "@/lib/hooks/use-api-swr";
+import { useApiSwr } from "@/shared/hooks/use-api-swr";
 import type { ListRunsResponse } from "shared/generated";
 
 function formatDate(dateStr: string) {

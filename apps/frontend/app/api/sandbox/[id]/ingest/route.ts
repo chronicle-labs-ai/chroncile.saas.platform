@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSandboxStore } from "@/lib/sandbox/repository";
+import { getSandboxStore } from "@/features/sandbox/server/repository";
 
 export const dynamic = "force-dynamic";
 

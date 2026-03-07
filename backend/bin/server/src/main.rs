@@ -12,8 +12,8 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use chronicle_api::{
-    build_router, build_saas_router, AppState, EventsRuntimeConfig, HealthMetadata, SaasAppState,
-    SaasRuntimeConfig,
+    build_router, build_saas_router, AppState, EventsRuntimeConfig, FeatureAccessRuntimeConfig,
+    HealthMetadata, SaasAppState, SaasRuntimeConfig,
 };
 use chronicle_infra::{StoreBackend, StreamBackend};
 
@@ -101,6 +101,9 @@ async fn main() -> Result<()> {
         app_url: launch_config.urls.app_url.clone(),
         service_secret: launch_config.security.service_secret.clone(),
         stripe_webhook_secret: launch_config.webhooks.stripe_secret.clone(),
+        feature_access: FeatureAccessRuntimeConfig {
+            plan_price_ids: launch_config.feature_access.plan_price_ids.clone(),
+        },
     };
 
     let saas_state = match launch_config.storage.saas.backend {
@@ -229,7 +232,7 @@ fn build_saas_state_postgres(
     launch_config: &config::LaunchConfig,
     runtime_config: SaasRuntimeConfig,
 ) -> SaasAppState {
-    use chronicle_infra::postgres::repositories::*;
+    use chronicle_infra::postgres::{repositories::*, PgFeatureFlagRepo};
 
     SaasAppState::new(
         &launch_config.security.auth_secret,
@@ -240,6 +243,7 @@ fn build_saas_state_postgres(
         Arc::new(PgAuditLogRepo::new(pool.clone())),
         Arc::new(PgAgentEndpointConfigRepo::new(pool.clone())),
         Arc::new(PgPipedreamTriggerRepo::new(pool.clone())),
+        Arc::new(PgFeatureFlagRepo::new(pool.clone())),
         Arc::new(PgInvitationRepo::new(pool)),
         build_pipedream_client(launch_config),
         build_email_service(launch_config),
@@ -255,7 +259,7 @@ fn build_saas_state_memory(
     launch_config: &config::LaunchConfig,
     runtime_config: SaasRuntimeConfig,
 ) -> SaasAppState {
-    use chronicle_infra::memory::repositories::*;
+    use chronicle_infra::memory::{repositories::*, InMemoryFeatureFlagRepo};
 
     SaasAppState::new(
         &launch_config.security.auth_secret,
@@ -266,6 +270,7 @@ fn build_saas_state_memory(
         Arc::new(InMemoryAuditLogRepo::default()),
         Arc::new(InMemoryAgentEndpointConfigRepo::default()),
         Arc::new(InMemoryPipedreamTriggerRepo::default()),
+        Arc::new(InMemoryFeatureFlagRepo::default()),
         Arc::new(InMemoryInvitationRepo::default()),
         build_pipedream_client(launch_config),
         build_email_service(launch_config),

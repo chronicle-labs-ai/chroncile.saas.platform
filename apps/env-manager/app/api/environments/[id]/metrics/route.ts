@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/data/db";
 
 const FLY_ORG = process.env.FLY_ORG_SLUG ?? "personal";
 const PROM_BASE = `https://api.fly.io/prometheus/${FLY_ORG}`;

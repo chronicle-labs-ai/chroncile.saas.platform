@@ -1,10 +1,10 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { redirect } from "next/navigation";
-import { CopyButton } from "@/components/ui/copy-button";
+import { CopyButton } from "ui";
 import { AgentEndpointPanel } from "@/components/settings/AgentEndpointPanel";
 import { PlanBillingPanel } from "@/components/settings/PlanBillingPanel";
-import { fetchFromBackend } from "@/lib/backend";
-import { getPlans, getPlansForTenant, getRecommendedPlanId } from "@/lib/plans";
+import { fetchFromBackend } from "@/server/backend/fetch-from-backend";
+import { getPlans, getPlansForTenant, getRecommendedPlanId } from "plans";
 import { getStripePriceIdsByLookupKeys } from "@/lib/stripe-server";
 
 interface TenantData {

@@ -20,22 +20,25 @@ import type {
   SandboxNodeType,
   SandboxEvent,
   AgentAction,
-} from "@/components/sandbox/types";
+} from "@/features/sandbox/components/types";
 import {
   DEFAULT_EVENT_SOURCE_CONFIG,
   DEFAULT_FILTER_CONFIG,
   DEFAULT_OUTPUT_CONFIG,
   DEFAULT_GENERATOR_CONFIG,
   NODE_COLORS,
-} from "@/components/sandbox/constants";
-import { SandboxCanvas } from "@/components/sandbox/SandboxCanvas";
-import { NodeConfigDrawer } from "@/components/sandbox/panels/NodeConfigDrawer";
-import { AgentRecorder } from "@/components/sandbox/panels/AgentRecorder";
-import { GenerativePrompt } from "@/components/sandbox/panels/GenerativePrompt";
-import { useSandboxSimulation } from "@/components/sandbox/useSandboxSimulation";
-import { TimelinePanel } from "@/components/timeline/TimelinePanel";
-import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
-import type { TimelineEvent, PlaybackState } from "@/components/timeline/types";
+} from "@/features/sandbox/components/constants";
+import { SandboxCanvas } from "@/features/sandbox/components/SandboxCanvas";
+import { NodeConfigDrawer } from "@/features/sandbox/components/panels/NodeConfigDrawer";
+import { AgentRecorder } from "@/features/sandbox/components/panels/AgentRecorder";
+import { GenerativePrompt } from "@/features/sandbox/components/panels/GenerativePrompt";
+import { useSandboxSimulation } from "@/features/sandbox/components/use-sandbox-simulation";
+import { TimelinePanel } from "@/features/events/timeline/TimelinePanel";
+import { EventDetailPanel } from "@/features/events/timeline/EventDetailPanel";
+import type {
+  TimelineEvent,
+  PlaybackState,
+} from "@/features/events/timeline/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 

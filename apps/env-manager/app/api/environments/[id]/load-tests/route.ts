@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/server/data/db";
 import {
   launchCloudTest,
   getTestRun,
-} from "@/lib/k6-client";
+} from "@/server/integrations/k6-client";
 
 const CreateSchema = z.object({
   name: z.string().min(1).max(200),

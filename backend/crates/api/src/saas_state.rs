@@ -4,11 +4,12 @@ use chronicle_auth::jwt::JwtService;
 use chronicle_infra::{StoreBackend, StreamBackend};
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, EmailService,
-    InvitationRepository, PipedreamTriggerRepository, RunRepository, TenantRepository,
-    UserRepository,
+    FeatureFlagRepository, InvitationRepository, PipedreamTriggerRepository, RunRepository,
+    TenantRepository, UserRepository,
 };
 use chronicle_pipedream_connect::PipedreamClient;
 
+use crate::feature_access::FeatureAccessService;
 use crate::runtime_config::SaasRuntimeConfig;
 
 #[derive(Clone)]
@@ -26,6 +27,7 @@ pub struct SaasAppState {
     pub email: Arc<dyn EmailService>,
     pub event_store: Arc<StoreBackend>,
     pub event_stream: Arc<StreamBackend>,
+    pub feature_access: Arc<FeatureAccessService>,
     pub config: Arc<SaasRuntimeConfig>,
 }
 
@@ -40,6 +42,7 @@ impl SaasAppState {
         audit_logs: Arc<dyn AuditLogRepository>,
         agent_configs: Arc<dyn AgentEndpointConfigRepository>,
         pipedream_triggers: Arc<dyn PipedreamTriggerRepository>,
+        feature_flags: Arc<dyn FeatureFlagRepository>,
         invitations: Arc<dyn InvitationRepository>,
         pipedream: Option<Arc<PipedreamClient>>,
         email: Arc<dyn EmailService>,
@@ -49,7 +52,7 @@ impl SaasAppState {
     ) -> Self {
         Self {
             jwt: Arc::new(JwtService::new(jwt_secret)),
-            tenants,
+            tenants: Arc::clone(&tenants),
             users,
             runs,
             connections,
@@ -61,6 +64,11 @@ impl SaasAppState {
             email,
             event_store,
             event_stream,
+            feature_access: Arc::new(FeatureAccessService::new(
+                Arc::clone(&tenants),
+                feature_flags,
+                config.feature_access.clone(),
+            )),
             config: Arc::new(config),
         }
     }

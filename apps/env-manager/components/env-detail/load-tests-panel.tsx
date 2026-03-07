@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import type { StressTestRecord } from "@/lib/types";
-import { fetcher } from "@/lib/constants";
+import type { StressTestRecord } from "@/shared/types";
+import { fetcher } from "@/shared/fetcher";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

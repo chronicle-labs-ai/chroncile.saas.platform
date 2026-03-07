@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useApiSwr } from "@/lib/hooks/use-api-swr";
+import { Skeleton } from "ui";
+import { useApiSwr } from "@/shared/hooks/use-api-swr";
 import type { AuditLog, DashboardActivityResponse } from "shared/generated";
 
 function formatTime(dateStr: string) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getResend } from "@/lib/email";
+import { getResend } from "@/server/integrations/email";
 
 export async function GET(
   _request: Request,

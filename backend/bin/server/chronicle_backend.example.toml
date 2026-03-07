@@ -1,0 +1,75 @@
+# Optional Chronicle backend launch config.
+#
+# Start with:
+#   cargo run -p chronicle_backend -- --config bin/server/chronicle_backend.example.toml
+# Inspect the resolved config with:
+#   cargo run -p chronicle_backend -- --config bin/server/chronicle_backend.example.toml --print-config
+
+[server]
+host = "0.0.0.0"
+port = 8080
+rust_log = "info,tower_http=debug"
+
+[storage.events]
+backend = "memory"
+# database_url = "postgres://postgres:postgres@localhost/chronicle_events"
+run_migrations = true
+
+[storage.saas]
+backend = "memory"
+# database_url = "postgres://postgres:postgres@localhost/chronicle_saas"
+run_migrations = true
+
+[stream]
+channel_capacity = 10000
+buffer_capacity = 100000
+
+[events]
+default_tenant_id = "demo_tenant"
+
+[feature_access.plan_price_ids]
+starter = []
+pro = []
+enterprise = []
+customEnterprise = []
+
+[security]
+auth_secret = "dev-secret-change-in-production-min-32-chars!!"
+# service_secret = "replace-me"
+
+[urls]
+app_url = "https://app.chronicle-labs.com"
+
+[integrations.pipedream]
+# client_id = "pd_client_id"
+# client_secret = "pd_client_secret"
+# project_id = "pd_project_id"
+environment = "development"
+
+[integrations.resend]
+# api_key = "re_xxx"
+# from_address = "Chronicle Labs <noreply@example.com>"
+
+[integrations.resend.templates]
+# team-invite = "tmpl_123"
+
+[webhooks]
+# stripe_secret = "whsec_xxx"
+
+[webhooks.source_secrets]
+# intercom = "secret"
+# github = "secret"
+
+[health]
+environment = "local"
+# git_sha = "abc123"
+# git_tag = "v0.1.0"
+
+[simulation]
+enabled = false
+mode = "scenario"
+events_per_second = 2.0
+scenarios = ["all"]
+sources = ["mock-connector"]
+loop_forever = true
+tenant_id = "demo_tenant"

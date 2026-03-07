@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Logo } from "@/components/ui/logo";
+import { Logo } from "@/shared/components/logo";
 
 export default function LoginPage() {
   return (

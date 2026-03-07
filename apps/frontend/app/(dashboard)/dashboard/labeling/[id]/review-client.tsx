@@ -3,13 +3,18 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { Trace, ActionAnnotation, HumanActionAudit, AgentProfile } from "@/lib/labeling/types";
-import { getAgentProfile } from "@/lib/labeling/agents";
-import { ConfidenceBar } from "@/components/labeling/ConfidenceBar";
-import { EventTimeline } from "@/components/labeling/EventTimeline";
-import { LabelingPanel } from "@/components/labeling/LabelingPanel";
-import { LabelBadge } from "@/components/labeling/LabelBadge";
-import { ReviewerRecommendation } from "@/components/labeling/ReviewerRecommendation";
+import type {
+  ActionAnnotation,
+  AgentProfile,
+  HumanActionAudit,
+  Trace,
+} from "@/features/labeling/lib/types";
+import { getAgentProfile } from "@/features/labeling/lib/agents";
+import { ConfidenceBar } from "@/features/labeling/components/ConfidenceBar";
+import { EventTimeline } from "@/features/labeling/components/EventTimeline";
+import { LabelingPanel } from "@/features/labeling/components/LabelingPanel";
+import { LabelBadge } from "@/features/labeling/components/LabelBadge";
+import { ReviewerRecommendation } from "@/features/labeling/components/ReviewerRecommendation";
 
 interface ReviewClientProps {
   traceId: string;

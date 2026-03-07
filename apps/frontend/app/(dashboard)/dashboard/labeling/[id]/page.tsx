@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { redirect } from "next/navigation";
-import { ReviewClient } from "./review-client";
+import { ReviewClient } from "@/features/labeling/client/review-client";
 
 export default async function ReviewPage({
   params,

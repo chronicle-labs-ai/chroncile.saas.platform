@@ -198,7 +198,7 @@ export async function getSandboxStore(): Promise<SandboxRepository> {
   if (!seeded) {
     seeded = true;
     // Dynamic import to avoid circular deps
-    const { seedStore } = await import("@/components/sandbox/mock-data");
+    const { seedStore } = await import("@/shared/testing/fixtures/sandbox/mock-data");
     seedStore(sandboxStore);
   }
   return sandboxStore;

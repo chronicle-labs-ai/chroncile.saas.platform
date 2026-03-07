@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useApiSwr } from "@/lib/hooks/use-api-swr";
-import { usePlatformApi } from "@/lib/hooks/use-platform-api";
+import { Skeleton } from "ui";
+import { useApiSwr } from "@/shared/hooks/use-api-swr";
+import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 import type { AuditLog, Run, RunDetailResponse } from "shared/generated";
 
 function formatDate(dateStr: string) {

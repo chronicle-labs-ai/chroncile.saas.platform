@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import type { LogEntry, LogsResponse, LogTab } from "@/lib/types";
-import { fetcher } from "@/lib/constants";
+import type { LogEntry, LogsResponse, LogTab } from "@/shared/types";
+import { fetcher } from "@/shared/fetcher";
 
 // ── Service tag detection ─────────────────────────────────────────────────────
 

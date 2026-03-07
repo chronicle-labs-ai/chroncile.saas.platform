@@ -16,6 +16,7 @@
     "test:k6": "tsx scripts/test-k6-integration.mts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@octokit/rest": "^21.0.0",
     "@prisma/client": "^6.4.1",
     "@react-email/components": "^1.0.8",
@@ -24,7 +25,9 @@
     "pg": "^8.19.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.71.2",
     "resend": "^6.9.3",
+    "shared": "workspace:*",
     "swr": "^2.2.5",
     "ui": "workspace:*",
     "zod": "^3.24.1"

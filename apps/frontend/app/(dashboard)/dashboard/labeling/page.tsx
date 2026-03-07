@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { redirect } from "next/navigation";
-import { LabelingClient } from "./labeling-client";
+import { LabelingClient } from "@/features/labeling/client/labeling-client";
 
 export default async function LabelingPage() {
   const session = await auth();
@@ -9,5 +9,5 @@ export default async function LabelingPage() {
     redirect("/login");
   }
 
-  return <LabelingClient tenantId={session.user.tenantId} />;
+  return <LabelingClient />;
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { usePlatformApi } from "@/lib/hooks/use-platform-api";
+import { Skeleton } from "ui";
+import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 import type { AgentEndpointResponse } from "shared/generated";
 
 const AUTH_TYPES = [

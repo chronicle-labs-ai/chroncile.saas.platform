@@ -6,6 +6,12 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from "./components/button
 
 export { CopyButton } from "./components/copy-button";
 
+export { Checkbox } from "./components/checkbox";
+export type { CheckboxProps } from "./components/checkbox";
+
+export { FormField } from "./components/form-field";
+export type { FormFieldProps } from "./components/form-field";
+
 export { Input } from "./components/input";
 export type { InputProps } from "./components/input";
 
@@ -26,3 +32,9 @@ export type { SkeletonProps } from "./components/skeleton";
 
 export { StatusDot } from "./components/status-dot";
 export type { StatusDotProps, StatusDotVariant } from "./components/status-dot";
+
+export { Select } from "./components/select";
+export type { SelectProps } from "./components/select";
+
+export { Textarea } from "./components/textarea";
+export type { TextareaProps } from "./components/textarea";

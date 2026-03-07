@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getResend } from "@/lib/email";
+import { getResend } from "@/server/integrations/email";
 
 const FROM_ADDRESS =
   process.env.RESEND_FROM_ADDRESS ??

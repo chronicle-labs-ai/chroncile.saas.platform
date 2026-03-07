@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { fetchFromBackend } from "@/lib/backend";
+import { auth } from "@/server/auth/auth";
+import { fetchFromBackend } from "@/server/backend/fetch-from-backend";
 import { redirect } from "next/navigation";
 import { ConnectionsClient } from "./connections-client";
 

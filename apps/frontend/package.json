@@ -10,6 +10,7 @@
     "stripe:sync-plans": "node scripts/stripe-sync-plans.mjs"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
     "@remotion/player": "^4.0.410",
@@ -17,9 +18,12 @@
     "@xyflow/react": "^12.10.0",
     "next": "^15.1.7",
     "next-auth": "^5.0.0-beta.25",
+    "plans": "workspace:*",
+    "platform-api": "workspace:*",
     "postprocessing": "^6.38.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.71.2",
     "remotion": "^4.0.410",
     "shared": "workspace:*",
     "stripe": "^20.3.1",

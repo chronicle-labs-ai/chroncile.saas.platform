@@ -4,13 +4,13 @@ import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useApiSwr } from "@/lib/hooks/use-api-swr";
-import { usePlatformApi } from "@/lib/hooks/use-platform-api";
+import { getBackendUrl } from "platform-api";
+import { Skeleton } from "ui";
+import { useApiSwr } from "@/shared/hooks/use-api-swr";
+import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 import type { ListRunsResponse, Run } from "shared/generated";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+const BACKEND_URL = getBackendUrl();
 
 function buildRunsUrl(
   status?: string,
@@ -59,7 +59,6 @@ function statusDisplayLabel(status: string): string {
 
 const WORKFLOW_OPTIONS = [
   { value: "", label: "All" },
-  { value: "lead-gen", label: "Lead gen" },
   { value: "demo-workflow", label: "Demo workflow" },
 ];
 
@@ -71,7 +70,9 @@ export function RunsClient() {
   const { data: session } = useSession();
 
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [workflowFilter, setWorkflowFilter] = useState<string>(() => workflowFromUrl || "");
+  const [workflowFilter, setWorkflowFilter] = useState<string>(
+    () => workflowFromUrl || ""
+  );
   const [additionalRuns, setAdditionalRuns] = useState<Run[]>([]);
   const [currentOffset, setCurrentOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState(false);
@@ -87,9 +88,12 @@ export function RunsClient() {
     20,
     effectiveWorkflowId
   );
-  const { data, error, isLoading, mutate } = useApiSwr<ListRunsResponse>(runsUrl, {
-    revalidateOnFocus: true,
-  });
+  const { data, error, isLoading, mutate } = useApiSwr<ListRunsResponse>(
+    runsUrl,
+    {
+      revalidateOnFocus: true,
+    }
+  );
 
   useEffect(() => {
     setAdditionalRuns([]);
@@ -112,26 +116,41 @@ export function RunsClient() {
   const loadMore = useCallback(async () => {
     const nextOffset = currentOffset + limit;
     if (nextOffset >= totalRuns) return;
-    
-    const url = buildRunsUrl(statusFilter || undefined, nextOffset, limit, effectiveWorkflowId);
+
+    const url = buildRunsUrl(
+      statusFilter || undefined,
+      nextOffset,
+      limit,
+      effectiveWorkflowId
+    );
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
     if (session?.backendToken) {
       headers["Authorization"] = `Bearer ${session.backendToken}`;
     }
-    
+
     const res = await fetch(`${BACKEND_URL}${url}`, { headers });
     if (!res.ok) return;
-    const next = await res.json() as ListRunsResponse;
+    const next = (await res.json()) as ListRunsResponse;
     setAdditionalRuns((prev) => [...prev, ...next.runs]);
     setCurrentOffset(nextOffset);
     setHasMore(nextOffset + next.runs.length < next.total);
-  }, [currentOffset, limit, totalRuns, statusFilter, effectiveWorkflowId, session?.backendToken]);
+  }, [
+    currentOffset,
+    limit,
+    totalRuns,
+    statusFilter,
+    effectiveWorkflowId,
+    session?.backendToken,
+  ]);
 
   const [creating, setCreating] = useState(false);
   const [processingPending, setProcessingPending] = useState(false);
-  const [processMessage, setProcessMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [processMessage, setProcessMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const sendPendingToAgent = useCallback(async () => {
     setProcessingPending(true);
@@ -155,7 +174,8 @@ export function RunsClient() {
     } catch (e) {
       setProcessMessage({
         type: "error",
-        text: e instanceof Error ? e.message : "Failed to send pending to agent",
+        text:
+          e instanceof Error ? e.message : "Failed to send pending to agent",
       });
     } finally {
       setProcessingPending(false);
@@ -174,7 +194,9 @@ export function RunsClient() {
           source: "demo",
           topic: "automation",
           event_type: "test.run",
-          entity_refs: [{ entity_type: "conversation", entity_id: "conv_demo" }],
+          entity_refs: [
+            { entity_type: "conversation", entity_id: "conv_demo" },
+          ],
         },
         contextPointers: null,
       });
@@ -262,7 +284,10 @@ export function RunsClient() {
                   if (value) next.set("workflowId", value);
                   else next.delete("workflowId");
                   const qs = next.toString();
-                  router.replace(qs ? `/dashboard/runs?${qs}` : "/dashboard/runs", { scroll: false });
+                  router.replace(
+                    qs ? `/dashboard/runs?${qs}` : "/dashboard/runs",
+                    { scroll: false }
+                  );
                 }}
                 className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
                   value === (workflowFilter ?? "")
@@ -315,7 +340,9 @@ export function RunsClient() {
             </svg>
             <p className="text-sm font-medium text-primary mb-1">No runs yet</p>
             <p className="text-xs text-tertiary max-w-sm mb-4">
-              Runs are created when events trigger your agent (Queue/Runner + Agent Gateway). Use &quot;Create test run&quot; to add a sample run for demos.
+              Runs are created when events trigger your agent (Queue/Runner +
+              Agent Gateway). Use &quot;Create test run&quot; to add a sample
+              run for demos.
             </p>
             <button
               type="button"
@@ -338,8 +365,18 @@ export function RunsClient() {
                     className="flex items-center gap-4 px-4 py-4 hover:bg-hover transition-colors group"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-border-dim bg-elevated text-tertiary">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
+                        />
                       </svg>
                     </div>
                     <div className="min-w-0 flex-1">
@@ -348,16 +385,31 @@ export function RunsClient() {
                           {run.invocationId}
                         </span>
                         {run.workflowId && (
-                          <span className="text-xs text-tertiary">{run.workflowId}</span>
+                          <span className="text-xs text-tertiary">
+                            {run.workflowId}
+                          </span>
                         )}
                       </div>
                       <div className="text-xs text-tertiary mt-0.5">
-                        event {run.eventId} · {run.mode} · {formatDate(run.createdAt)}
+                        event {run.eventId} · {run.mode} ·{" "}
+                        {formatDate(run.createdAt)}
                       </div>
                     </div>
-                    <span className={statusBadgeClass(run.status)}>{statusDisplayLabel(run.status)}</span>
-                    <svg className="w-4 h-4 shrink-0 text-tertiary group-hover:text-data transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    <span className={statusBadgeClass(run.status)}>
+                      {statusDisplayLabel(run.status)}
+                    </span>
+                    <svg
+                      className="w-4 h-4 shrink-0 text-tertiary group-hover:text-data transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                      />
                     </svg>
                   </Link>
                 </li>

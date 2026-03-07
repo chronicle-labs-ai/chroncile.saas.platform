@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { getLabelingStore } from "@/lib/labeling/store";
-import type { HumanActionAudit } from "@/lib/labeling/types";
+import { auth } from "@/server/auth/auth";
+import { getLabelingStore } from "@/features/labeling/server/store";
+import type { HumanActionAudit } from "@/features/labeling/lib/types";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { getSandboxStore } from "@/lib/sandbox/repository";
+import { auth } from "@/server/auth/auth";
+import { getSandboxStore } from "@/features/sandbox/server/repository";
 
 export const dynamic = "force-dynamic";
 

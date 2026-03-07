@@ -1,7 +1,8 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/server/auth/auth";
 import { redirect } from "next/navigation";
-import { fetchFromBackend } from "@/lib/backend";
-import { EventsClient } from "./events-client";
+import { getBackendUrl } from "platform-api";
+import { fetchFromBackend } from "@/server/backend/fetch-from-backend";
+import { EventsClient } from "@/features/events/client/events-client";
 
 interface ConnectionSummary {
   provider: string;
@@ -30,7 +31,7 @@ export default async function EventsPage() {
   return (
     <EventsClient
       tenantId={session.user.tenantId}
-      eventsManagerUrl={process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}
+      eventsManagerUrl={getBackendUrl()}
       hasActiveIntercom={hasActiveIntercom}
     />
   );

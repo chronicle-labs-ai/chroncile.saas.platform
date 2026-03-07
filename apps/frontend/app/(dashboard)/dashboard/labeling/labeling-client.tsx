@@ -2,18 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { TraceSummary, TraceStats, ExportFormat } from "@/lib/labeling/types";
-import { getAllAgentProfiles } from "@/lib/labeling/agents";
-import { StatsBar } from "@/components/labeling/StatsBar";
-import { TraceRow } from "@/components/labeling/TraceRow";
-
-interface LabelingClientProps {
-  tenantId: string;
-}
+import type {
+  ExportFormat,
+  TraceStats,
+  TraceSummary,
+} from "@/features/labeling/lib/types";
+import { getAllAgentProfiles } from "@/features/labeling/lib/agents";
+import { StatsBar } from "@/features/labeling/components/StatsBar";
+import { TraceRow } from "@/features/labeling/components/TraceRow";
 
 const agentProfiles = getAllAgentProfiles();
 
-export function LabelingClient({ tenantId }: LabelingClientProps) {
+export function LabelingClient() {
   const router = useRouter();
   const [traces, setTraces] = useState<TraceSummary[]>([]);
   const [stats, setStats] = useState<TraceStats | null>(null);

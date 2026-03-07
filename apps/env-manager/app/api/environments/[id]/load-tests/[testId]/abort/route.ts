@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { abortTestRun } from "@/lib/k6-client";
+import { prisma } from "@/server/data/db";
+import { abortTestRun } from "@/server/integrations/k6-client";
 
 export async function POST(
   _request: Request,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { destroyEnvironment } from "@/lib/lifecycle";
+import { prisma } from "@/server/data/db";
+import { destroyEnvironment } from "@/server/environments/lifecycle";
 
 export async function GET(
   _request: Request,

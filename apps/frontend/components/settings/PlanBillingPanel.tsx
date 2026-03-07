@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createCheckoutSession, createPortalSession } from "@/app/(dashboard)/dashboard/settings/billing-actions";
-import type { Plan } from "@/lib/plans";
+import type { Plan } from "plans";
 
 interface PlanBillingPanelProps {
   plans: Plan[];

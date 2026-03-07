@@ -3,7 +3,11 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use chronicle_domain::{CreateTenantInput, CreateUserInput, Tenant, User, UserRole};
+use chronicle_domain::{
+    AdminTenantFeatureAccessResponse, CreateTenantInput, CreateUserInput,
+    FeatureFlagDefinitionsResponse, FeatureFlagKey, Tenant, UpsertFeatureFlagOverrideRequest, User,
+    UserRole,
+};
 use serde::{Deserialize, Serialize};
 
 use super::error::{ApiError, ApiResult};
@@ -20,6 +24,15 @@ fn verify_service_secret(state: &SaasAppState, headers: &HeaderMap) -> Result<()
     } else {
         Ok(())
     }
+}
+
+fn admin_actor(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get("x-admin-actor")
+        .and_then(|value| value.to_str().ok())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
 }
 
 // ── List all tenants ─────────────────────────────────────────────────────────
@@ -215,5 +228,122 @@ pub async fn create_org(
         tenant,
         user,
         login_url: format!("{app_url}/login"),
+    }))
+}
+
+// ── Feature flag definitions ────────────────────────────────────────────────
+
+pub async fn list_feature_flags(
+    headers: HeaderMap,
+    State(state): State<SaasAppState>,
+) -> ApiResult<Json<FeatureFlagDefinitionsResponse>> {
+    verify_service_secret(&state, &headers)?;
+    let flags = state.feature_access.list_flag_definitions().await?;
+    Ok(Json(FeatureFlagDefinitionsResponse { flags }))
+}
+
+// ── Tenant feature access ───────────────────────────────────────────────────
+
+pub async fn get_tenant_feature_access(
+    headers: HeaderMap,
+    Path(tenant_id): Path<String>,
+    State(state): State<SaasAppState>,
+) -> ApiResult<Json<AdminTenantFeatureAccessResponse>> {
+    verify_service_secret(&state, &headers)?;
+    let (tenant, access, overrides) = state.feature_access.resolve_admin_view(&tenant_id).await?;
+    Ok(Json(AdminTenantFeatureAccessResponse {
+        tenant,
+        access,
+        overrides,
+    }))
+}
+
+pub async fn upsert_tenant_feature_flag_override(
+    headers: HeaderMap,
+    Path((tenant_id, flag_key)): Path<(String, String)>,
+    State(state): State<SaasAppState>,
+    Json(input): Json<UpsertFeatureFlagOverrideRequest>,
+) -> ApiResult<Json<AdminTenantFeatureAccessResponse>> {
+    verify_service_secret(&state, &headers)?;
+
+    let parsed_flag_key: FeatureFlagKey = flag_key
+        .parse()
+        .map_err(|_| ApiError::bad_request("Unknown feature flag key"))?;
+
+    state
+        .feature_access
+        .upsert_tenant_override(
+            &tenant_id,
+            parsed_flag_key,
+            input.enabled,
+            input.reason.clone(),
+        )
+        .await?;
+
+    let actor = admin_actor(&headers);
+    state
+        .audit_logs
+        .create(
+            &tenant_id,
+            "feature_flag_override_upserted",
+            actor.as_deref(),
+            None,
+            None,
+            None,
+            Some(serde_json::json!({
+                "flagKey": parsed_flag_key.as_str(),
+                "enabled": input.enabled,
+                "reason": input.reason,
+            })),
+        )
+        .await
+        .ok();
+
+    let (tenant, access, overrides) = state.feature_access.resolve_admin_view(&tenant_id).await?;
+    Ok(Json(AdminTenantFeatureAccessResponse {
+        tenant,
+        access,
+        overrides,
+    }))
+}
+
+pub async fn delete_tenant_feature_flag_override(
+    headers: HeaderMap,
+    Path((tenant_id, flag_key)): Path<(String, String)>,
+    State(state): State<SaasAppState>,
+) -> ApiResult<Json<AdminTenantFeatureAccessResponse>> {
+    verify_service_secret(&state, &headers)?;
+
+    let parsed_flag_key: FeatureFlagKey = flag_key
+        .parse()
+        .map_err(|_| ApiError::bad_request("Unknown feature flag key"))?;
+
+    state
+        .feature_access
+        .delete_tenant_override(&tenant_id, parsed_flag_key)
+        .await?;
+
+    let actor = admin_actor(&headers);
+    state
+        .audit_logs
+        .create(
+            &tenant_id,
+            "feature_flag_override_deleted",
+            actor.as_deref(),
+            None,
+            None,
+            None,
+            Some(serde_json::json!({
+                "flagKey": parsed_flag_key.as_str(),
+            })),
+        )
+        .await
+        .ok();
+
+    let (tenant, access, overrides) = state.feature_access.resolve_admin_view(&tenant_id).await?;
+    Ok(Json(AdminTenantFeatureAccessResponse {
+        tenant,
+        access,
+        overrides,
     }))
 }

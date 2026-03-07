@@ -1,0 +1,17 @@
+[package]
+name = "chronicle_web"
+description = "First-party web event tracking: types, validation, and conversion to Chronicle events."
+version.workspace = true
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+chronicle_core = { path = "../chronicle_core" }
+
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

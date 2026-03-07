@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useDashboardStats } from "@/shared/hooks/use-dashboard-stats";
+import { Skeleton } from "ui";
 import { RecentActivity } from "./recent-activity";
 import { RecentRuns } from "./recent-runs";
 
@@ -92,12 +92,14 @@ function OverviewSkeleton() {
   );
 }
 
-export function DashboardContent({ userName, currentDate }: DashboardContentProps) {
+export function DashboardContent({
+  userName,
+  currentDate,
+}: DashboardContentProps) {
   const {
     eventsCount,
     connectionsCount,
     eventsTodayCount,
-    sessionsCount,
     runsCount,
     runsTodayCount,
     isLoading,
@@ -137,7 +139,8 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
             </span>
           </div>
           <span className="font-mono text-xs text-nominal tabular-nums">
-            Last check: {new Date().toLocaleTimeString("en-US", { hour12: false })}
+            Last check:{" "}
+            {new Date().toLocaleTimeString("en-US", { hour12: false })}
           </span>
         </div>
       </div>
@@ -154,7 +157,9 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
                 {eventsTodayCount}
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <span className="metric__delta metric__delta--neutral">+0%</span>
+                <span className="metric__delta metric__delta--neutral">
+                  +0%
+                </span>
                 <span className="text-xs text-tertiary">vs yesterday</span>
               </div>
             </div>
@@ -190,7 +195,10 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
           </div>
         </div>
 
-        <Link href="/dashboard/runs" className="panel hover:border-data/30 transition-colors">
+        <Link
+          href="/dashboard/runs"
+          className="panel hover:border-data/30 transition-colors"
+        >
           <div className="panel__header">
             <span className="panel__title">Runs</span>
             <div
@@ -203,7 +211,9 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
           </div>
           <div className="panel__content">
             <div className="metric">
-              <div className="metric__value metric__value--data">{runsTodayCount}</div>
+              <div className="metric__value metric__value--data">
+                {runsTodayCount}
+              </div>
               <div className="mt-2 flex items-center gap-2">
                 <span className="metric__delta metric__delta--neutral">
                   {runsCount} total
@@ -418,23 +428,6 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
         {/* Quick Actions - 1 column */}
         <div className="space-y-4">
           <RecentRuns />
-          {/* Lead gen (demo) */}
-          <div className="panel">
-            <div className="panel__header">
-              <span className="panel__title">Lead gen (demo)</span>
-            </div>
-            <div className="panel__content">
-              <p className="text-sm text-tertiary mb-4">
-                Run a mock lead search (CPG/D2C + call centers + AI), create runs, and process them with the outreach agent.
-              </p>
-              <Link href="/dashboard/lead-gen" className="btn btn--secondary w-full">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-                </svg>
-                Open Lead gen
-              </Link>
-            </div>
-          </div>
           {/* Documentation */}
           <div className="panel">
             <div className="panel__header">
@@ -444,7 +437,10 @@ export function DashboardContent({ userName, currentDate }: DashboardContentProp
               <p className="text-sm text-tertiary mb-4">
                 System operation manuals and API reference guides.
               </p>
-              <Link href="/dashboard/docs" className="btn btn--secondary w-full">
+              <Link
+                href="/dashboard/docs"
+                className="btn btn--secondary w-full"
+              >
                 <svg
                   className="w-4 h-4"
                   fill="none"

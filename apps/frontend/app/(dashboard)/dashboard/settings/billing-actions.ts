@@ -1,9 +1,9 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import { fetchFromBackend } from "@/lib/backend";
+import { auth } from "@/server/auth/auth";
+import { fetchFromBackend } from "@/server/backend/fetch-from-backend";
 import { getStripe, getStripePriceIdsByLookupKeys } from "@/lib/stripe-server";
-import { getPlanById } from "@/lib/plans";
+import { getPlanById } from "plans";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { usePlatformApi } from "@/lib/hooks/use-platform-api";
+import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 
 interface TriggerOption {
   key: string;

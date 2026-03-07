@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { getPlans } from "./plans";
+import { getPlans } from "plans";
 
 const secretKey = process.env.STRIPE_SECRET_KEY;
 if (!secretKey && typeof window === "undefined") {
@@ -12,7 +12,7 @@ export function getStripe(): Stripe | null {
 }
 
 /**
- * Fetch Stripe Price IDs by lookup_keys from config/plans.json.
+ * Fetch Stripe Price IDs by lookup_keys from the plans package.
  * Used when creating Checkout sessions so we never store price IDs in env.
  */
 export async function getStripePriceIdsByLookupKeys(): Promise<Record<string, string>> {
