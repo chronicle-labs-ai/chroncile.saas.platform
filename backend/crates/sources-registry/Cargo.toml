@@ -1,5 +1,5 @@
 [package]
-name = "chronicle-sources-registry"
+name = "chronicle_sources_registry"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,8 +8,8 @@ description = "Source registration and discovery"
 
 [dependencies]
 # Internal
-chronicle-sources-core = { workspace = true }
-chronicle-domain = { workspace = true }
+chronicle_sources_core = { workspace = true }
+chronicle_domain = { workspace = true }
 
 # Compile-time registration
 inventory = "0.3"

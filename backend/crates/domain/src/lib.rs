@@ -4,6 +4,7 @@
 //! This crate contains the core types and logic for the event system.
 
 pub mod api_types;
+pub mod chronicle;
 pub mod envelope;
 pub mod error;
 pub mod ids;
@@ -19,6 +20,7 @@ pub mod tenant;
 pub mod test_utils;
 
 pub use api_types::*;
+pub use chronicle::*;
 pub use envelope::*;
 pub use error::*;
 pub use ids::*;

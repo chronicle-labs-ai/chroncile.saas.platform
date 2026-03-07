@@ -11,6 +11,13 @@ use crate::saas_state::SaasAppState;
 
 const MIN_PASSWORD_LENGTH: usize = 8;
 
+fn service_secret_matches(state: &SaasAppState, provided: &str) -> bool {
+    matches!(
+        state.config.service_secret.as_deref(),
+        Some(expected) if !expected.is_empty() && expected == provided
+    )
+}
+
 #[derive(serde::Deserialize)]
 pub struct SignupInput {
     pub email: String,
@@ -179,8 +186,7 @@ pub async fn exchange_token(
     State(state): State<SaasAppState>,
     Json(input): Json<TokenExchangeRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let expected_secret = std::env::var("SERVICE_SECRET").unwrap_or_default();
-    if expected_secret.is_empty() || input.service_secret != expected_secret {
+    if !service_secret_matches(&state, &input.service_secret) {
         return Err(ApiError::unauthorized());
     }
 
@@ -212,8 +218,7 @@ pub async fn oauth_signup(
     State(state): State<SaasAppState>,
     Json(input): Json<OAuthSignupInput>,
 ) -> ApiResult<Json<AuthResponse>> {
-    let expected_secret = std::env::var("SERVICE_SECRET").unwrap_or_default();
-    if expected_secret.is_empty() || input.service_secret != expected_secret {
+    if !service_secret_matches(&state, &input.service_secret) {
         return Err(ApiError::unauthorized());
     }
 

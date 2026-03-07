@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
 
-fn verify_service_secret(headers: &HeaderMap) -> Result<(), ApiError> {
-    let expected = std::env::var("SERVICE_SECRET").unwrap_or_default();
+fn verify_service_secret(state: &SaasAppState, headers: &HeaderMap) -> Result<(), ApiError> {
+    let expected = state.config.service_secret.as_deref().unwrap_or("");
     let provided = headers
         .get("x-service-secret")
         .and_then(|v| v.to_str().ok())
@@ -43,7 +43,7 @@ pub async fn list_tenants(
     headers: HeaderMap,
     State(state): State<SaasAppState>,
 ) -> ApiResult<Json<AdminTenantsResponse>> {
-    verify_service_secret(&headers)?;
+    verify_service_secret(&state, &headers)?;
 
     let total = state.tenants.count_all().await.unwrap_or(0);
     let tenants = state.tenants.list_all(100, 0).await.unwrap_or_default();
@@ -80,7 +80,7 @@ pub async fn list_tenant_users(
     Path(tenant_id): Path<String>,
     State(state): State<SaasAppState>,
 ) -> ApiResult<Json<AdminUsersResponse>> {
-    verify_service_secret(&headers)?;
+    verify_service_secret(&state, &headers)?;
 
     let users = state
         .users
@@ -112,7 +112,7 @@ pub async fn invite_user(
     State(state): State<SaasAppState>,
     Json(input): Json<InviteUserRequest>,
 ) -> ApiResult<Json<InviteUserResponse>> {
-    verify_service_secret(&headers)?;
+    verify_service_secret(&state, &headers)?;
 
     state
         .tenants
@@ -122,8 +122,7 @@ pub async fn invite_user(
 
     if let Some(existing) = state.users.find_by_email(&input.email).await? {
         if existing.tenant_id == tenant_id {
-            let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
-                .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());
+            let app_url = state.config.app_url.clone();
             return Ok(Json(InviteUserResponse {
                 login_url: format!("{app_url}/login"),
                 user: existing,
@@ -146,8 +145,7 @@ pub async fn invite_user(
         })
         .await?;
 
-    let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
-        .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());
+    let app_url = state.config.app_url.clone();
     let login_url = format!("{app_url}/login");
 
     Ok(Json(InviteUserResponse { user, login_url }))
@@ -177,7 +175,7 @@ pub async fn create_org(
     State(state): State<SaasAppState>,
     Json(input): Json<CreateOrgRequest>,
 ) -> ApiResult<Json<CreateOrgResponse>> {
-    verify_service_secret(&headers)?;
+    verify_service_secret(&state, &headers)?;
 
     if let Some(_existing) = state.tenants.find_by_slug(&input.org_slug).await? {
         return Err(ApiError::bad_request(
@@ -211,8 +209,7 @@ pub async fn create_org(
         })
         .await?;
 
-    let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
-        .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());
+    let app_url = state.config.app_url.clone();
 
     Ok(Json(CreateOrgResponse {
         tenant,

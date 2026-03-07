@@ -45,7 +45,7 @@ pub async fn admin_stats(
     headers: HeaderMap,
     State(state): State<SaasAppState>,
 ) -> ApiResult<Json<serde_json::Value>> {
-    let expected = std::env::var("SERVICE_SECRET").unwrap_or_default();
+    let expected = state.config.service_secret.as_deref().unwrap_or("");
     let provided = headers
         .get("x-service-secret")
         .and_then(|v| v.to_str().ok())

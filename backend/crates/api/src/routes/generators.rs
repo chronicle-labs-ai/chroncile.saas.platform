@@ -213,6 +213,7 @@ pub async fn start_generator(
     // Start generator - we need to clone the generator for the spawned task
     // Since generator is a trait object, we'll spawn an event forwarding task
     let event_stream = Arc::clone(&state.event_stream);
+    let event_store = Arc::clone(&state.store);
 
     // Spawn a task to forward events from the generator to the event stream
     let source_id_clone = source_id.clone();
@@ -223,7 +224,10 @@ pub async fn start_generator(
                 event_type = %event.event_type,
                 "Generator produced event"
             );
-            // Add to event store and broadcast
+            if let Err(e) = event_store.append(&[event.clone()]).await {
+                tracing::error!(source = %source_id_clone, error = %e, "Failed to persist event");
+                continue;
+            }
             if let Err(e) = event_stream.publish(event).await {
                 tracing::error!(source = %source_id_clone, error = %e, "Failed to publish event");
             }
@@ -233,9 +237,11 @@ pub async fn start_generator(
 
     // Start the generator (this is a simplified implementation - in production
     // you'd want the generator trait to be Clone-able or use Arc)
-    // For now, we'll start a simple generation loop
+    // We keep ownership of the source adapter in the task and drive generation
+    // through its dyn EventGenerator implementation.
     let config_clone = config.clone();
     let source_id_for_task = source_id.clone();
+    let adapter_for_task = adapter;
 
     // Create a stop channel
     let (stop_tx, mut stop_rx) = mpsc::channel::<()>(1);
@@ -246,10 +252,13 @@ pub async fn start_generator(
 
     // Spawn the generation task
     tokio::spawn(async move {
-        use chronicle_source_mock_stripe::MockStripeGenerator;
-        use chronicle_sources_core::EventGenerator;
-
-        let generator = MockStripeGenerator::new();
+        let Some(generator) = adapter_for_task.as_event_generator() else {
+            tracing::error!(
+                source = %source_id_for_task,
+                "Generator task started without generator support"
+            );
+            return;
+        };
         let interval = config_clone.interval();
         let mut interval_timer = tokio::time::interval(interval);
         let mut events_generated: u64 = 0;

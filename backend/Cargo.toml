@@ -4,10 +4,25 @@ members = [
     "crates/domain",
     "crates/interfaces",
     "crates/infra",
+    "crates/chronicle_tuid",
+    "crates/chronicle_interner",
+    "crates/chronicle_core",
+    "crates/chronicle_gorgias",
+    "crates/chronicle_stripe",
+    "crates/chronicle_web",
+    "crates/chronicle_store",
+    "crates/chronicle_ingest",
+    "crates/chronicle_query",
+    "crates/chronicle_link",
+    "crates/chronicle_embed",
+    "crates/chronicle_server",
+    "crates/chronicle_sdk",
+    "crates/chronicle_py",
+    "crates/chronicle_viewer_common",
+    "crates/chronicle_test_fixtures",
     "crates/mock-connector",
     "crates/sources-core",
     "crates/sources-registry",
-    "crates/source-mock-stripe",
     "crates/api",
     "crates/auth",
     "crates/integrations",
@@ -24,16 +39,39 @@ edition = "2021"
 license = "MIT"
 rust-version = "1.75"
 
+[workspace.lints.rust]
+unsafe_code = "deny"
+rust_2018_idioms = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
 [workspace.dependencies]
 # Internal crates
-chronicle-domain = { path = "crates/domain" }
-chronicle-interfaces = { path = "crates/interfaces" }
-chronicle-infra = { path = "crates/infra" }
-chronicle-mock-connector = { path = "crates/mock-connector" }
-chronicle-sources-core = { path = "crates/sources-core" }
-chronicle-sources-registry = { path = "crates/sources-registry" }
-chronicle-source-mock-stripe = { path = "crates/source-mock-stripe" }
-chronicle-api = { path = "crates/api" }
+chronicle_domain = { path = "crates/domain" }
+chronicle_interfaces = { path = "crates/interfaces" }
+chronicle_infra = { path = "crates/infra" }
+chronicle_mock_connector = { path = "crates/mock-connector" }
+chronicle_sources_core = { path = "crates/sources-core" }
+chronicle_sources_registry = { path = "crates/sources-registry" }
+chronicle_api = { path = "crates/api" }
+chronicle_core = { path = "crates/chronicle_core" }
+chronicle_gorgias = { path = "crates/chronicle_gorgias" }
+chronicle_stripe = { path = "crates/chronicle_stripe" }
+chronicle_web = { path = "crates/chronicle_web" }
+chronicle_store = { path = "crates/chronicle_store" }
+chronicle_ingest = { path = "crates/chronicle_ingest" }
+chronicle_query = { path = "crates/chronicle_query" }
+chronicle_link = { path = "crates/chronicle_link" }
+chronicle_embed = { path = "crates/chronicle_embed" }
+chronicle_sdk = { path = "crates/chronicle_sdk" }
+chronicle_py = { path = "crates/chronicle_py" }
+chronicle_viewer_common = { path = "crates/chronicle_viewer_common" }
 
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
@@ -74,6 +112,7 @@ dotenvy = "0.15"
 ts-rs = { version = "10", features = ["chrono-impl", "serde-json-impl"] }
 
 # Testing
+insta = { version = "1", features = ["json"] }
 proptest = "1.4"
 wiremock = "0.6"
 assert_json_diff = "2"
@@ -93,6 +132,7 @@ jsonwebtoken = "9"
 
 # HTTP client
 reqwest = { version = "0.12", features = ["json"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "json", "migrate"] }
 
 # IDs
 cuid2 = "0.1"
@@ -100,6 +140,13 @@ cuid2 = "0.1"
 # Random number generation
 rand = "0.8"
 
-chronicle-auth = { path = "crates/auth" }
-chronicle-integrations = { path = "crates/integrations" }
-pipedream-connect = { path = "crates/pipedream-connect" }
+# Vendored Chronicle support crates
+arrow = { version = "57", default-features = false, features = ["chrono-tz"] }
+datafusion = "52"
+kurrentdb = "1"
+nohash-hasher = "0.2"
+object_store = "0.12"
+
+chronicle_auth = { path = "crates/auth" }
+chronicle_integrations = { path = "crates/integrations" }
+chronicle_pipedream_connect = { path = "crates/pipedream-connect" }

@@ -7,7 +7,9 @@ use chronicle_interfaces::{
     InvitationRepository, PipedreamTriggerRepository, RunRepository, TenantRepository,
     UserRepository,
 };
-use pipedream_connect::PipedreamClient;
+use chronicle_pipedream_connect::PipedreamClient;
+
+use crate::runtime_config::SaasRuntimeConfig;
 
 #[derive(Clone)]
 pub struct SaasAppState {
@@ -24,6 +26,7 @@ pub struct SaasAppState {
     pub email: Arc<dyn EmailService>,
     pub event_store: Arc<StoreBackend>,
     pub event_stream: Arc<StreamBackend>,
+    pub config: Arc<SaasRuntimeConfig>,
 }
 
 impl SaasAppState {
@@ -42,6 +45,7 @@ impl SaasAppState {
         email: Arc<dyn EmailService>,
         event_store: Arc<StoreBackend>,
         event_stream: Arc<StreamBackend>,
+        config: SaasRuntimeConfig,
     ) -> Self {
         Self {
             jwt: Arc::new(JwtService::new(jwt_secret)),
@@ -57,6 +61,7 @@ impl SaasAppState {
             email,
             event_store,
             event_stream,
+            config: Arc::new(config),
         }
     }
 }

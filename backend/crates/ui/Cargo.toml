@@ -1,5 +1,5 @@
 [package]
-name = "chronicle-ui"
+name = "chronicle_ui"
 version.workspace = true
 edition.workspace = true
 
@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [features]
 default = ["native"]
-native = ["eframe/default", "reqwest/default-tls", "chronicle-domain"]
+native = ["eframe/default", "reqwest/default-tls", "chronicle_domain"]
 web = ["eframe/wgpu", "reqwest/rustls-tls"]
 
 [dependencies]
@@ -47,10 +47,10 @@ tracing = { workspace = true }
 urlencoding = "2.1"
 
 # Shared timeline core (works on web and native)
-chronicle-timeline-core = { path = "../timeline-core" }
+chronicle_timeline_core = { path = "../timeline-core" }
 
 # Domain types for recording (native only - pulls in native C deps via mcap)
-chronicle-domain = { path = "../domain", optional = true }
+chronicle_domain = { path = "../domain", optional = true }
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

@@ -9,12 +9,12 @@ use chronicle_domain::{
     DeployTriggerRequest, DeployedTriggersResponse, ListAppsParams, ListTriggersParams,
     PipedreamTokenRequest,
 };
-use pipedream_connect::types::UpdateDeploymentRequest;
+use chronicle_pipedream_connect::types::UpdateDeploymentRequest;
 
 use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
 
-fn get_pipedream(state: &SaasAppState) -> ApiResult<&pipedream_connect::PipedreamClient> {
+fn get_pipedream(state: &SaasAppState) -> ApiResult<&chronicle_pipedream_connect::PipedreamClient> {
     state
         .pipedream
         .as_deref()
@@ -63,7 +63,7 @@ pub async fn deploy_trigger(
     let pd = get_pipedream(&state)?;
 
     let result = pd
-        .deploy_trigger(pipedream_connect::types::DeployTriggerRequest {
+        .deploy_trigger(chronicle_pipedream_connect::types::DeployTriggerRequest {
             id: input.trigger_id,
             external_user_id: user.tenant_id.clone(),
             configured_props: input.configured_props,
@@ -149,7 +149,7 @@ pub async fn create_token(
 ) -> ApiResult<Json<serde_json::Value>> {
     let pd = get_pipedream(&state)?;
     let token = pd
-        .create_token(pipedream_connect::types::CreateTokenRequest {
+        .create_token(chronicle_pipedream_connect::types::CreateTokenRequest {
             external_user_id: user.tenant_id,
             app_id: input.app_id,
             webhook_uri: None,

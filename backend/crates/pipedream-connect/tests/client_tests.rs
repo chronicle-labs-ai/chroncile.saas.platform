@@ -1,4 +1,4 @@
-use pipedream_connect::{
+use chronicle_pipedream_connect::{
     types::{CreateTokenRequest, DeployTriggerRequest, UpdateDeploymentRequest},
     Environment, PipedreamClient,
 };
@@ -266,7 +266,7 @@ async fn test_unauthorized() {
     let result = client.list_apps(None::<&str>, None).await;
     assert!(matches!(
         result,
-        Err(pipedream_connect::PipedreamError::Unauthorized)
+        Err(chronicle_pipedream_connect::PipedreamError::Unauthorized)
     ));
 }
 
@@ -282,7 +282,7 @@ async fn test_rate_limited() {
 
     let result = client.list_apps(None::<&str>, None).await;
     match result {
-        Err(pipedream_connect::PipedreamError::RateLimited { retry_after }) => {
+        Err(chronicle_pipedream_connect::PipedreamError::RateLimited { retry_after }) => {
             assert_eq!(retry_after, Some(30));
         }
         other => panic!("expected RateLimited, got: {other:?}"),

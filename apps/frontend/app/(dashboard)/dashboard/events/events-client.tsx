@@ -1,48 +1,66 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { subscribeToStream } from "@/lib/events-manager-sse";
+import type { EventEnvelopeDto } from "@/lib/events-manager-sse";
 import { eventEnvelopeToTimelineEvent } from "@/components/timeline/mapEvent";
 import type { TimelineEvent } from "@/components/timeline/types";
 import { TimelinePanel } from "@/components/timeline/TimelinePanel";
 import { EventDetailPanel } from "@/components/timeline/EventDetailPanel";
 import { StreamsPanel } from "@/components/streams-panel/StreamsPanel";
 import type { RecordingState } from "@/components/streams-panel/types";
-import { REC_IDLE, recRecording } from "@/components/streams-panel/types";
+import { REC_IDLE } from "@/components/streams-panel/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
-interface EventEnvelope {
-  event_id: string;
-  tenant_id?: string;
-  source: string;
-  source_event_id?: string;
-  event_type: string;
-  occurred_at: string;
-  ingested_at?: string;
-  subject?: {
-    conversation_id?: string;
-    ticket_id?: string;
-    customer_id?: string;
-  };
-  actor?: {
-    actor_type?: string;
-    actor_id?: string;
-    name?: string;
-  };
-  payload?: Record<string, unknown>;
-}
+type EventEnvelope = EventEnvelopeDto;
+
+const getPayload = (event: EventEnvelope): Record<string, unknown> =>
+  (event.event.payload ?? {}) as Record<string, unknown>;
+
+const getPlatformActor = (event: EventEnvelope): Record<string, unknown> | undefined => {
+  const payload = getPayload(event);
+  const platform = payload["_platform"];
+  if (!platform || typeof platform !== "object") return undefined;
+  const actor = (platform as Record<string, unknown>).actor;
+  return actor && typeof actor === "object"
+    ? (actor as Record<string, unknown>)
+    : undefined;
+};
 
 const getActorType = (event: EventEnvelope): string => {
-  return event.actor?.actor_type || "system";
+  const actor = getPlatformActor(event);
+  return typeof actor?.actor_type === "string" ? actor.actor_type : "system";
 };
 
 const getActorDisplay = (event: EventEnvelope): string => {
-  return event.actor?.name || event.actor?.actor_id || "Unknown";
+  const actor = getPlatformActor(event);
+  if (typeof actor?.name === "string" && actor.name.length > 0) return actor.name;
+  if (typeof actor?.actor_id === "string" && actor.actor_id.length > 0) return actor.actor_id;
+  return "Unknown";
 };
 
-const getConversationId = (event: EventEnvelope): string => {
-  return event.subject?.conversation_id || "N/A";
+const getEntityRefs = (event: EventEnvelope): Array<{ entity_type: string; entity_id: string }> => {
+  const fromResult =
+    event.entity_refs?.map((entityRef) => ({
+      entity_type: entityRef.entity_type,
+      entity_id: entityRef.entity_id,
+    })) ?? [];
+  const fromPending =
+    event.event.entity_refs?.map((entityRef) => ({
+      entity_type: entityRef.entity_type,
+      entity_id: entityRef.entity_id,
+    })) ?? [];
+
+  const deduped = new Map<string, { entity_type: string; entity_id: string }>();
+  [...fromResult, ...fromPending].forEach((entityRef) => {
+    deduped.set(`${entityRef.entity_type}:${entityRef.entity_id}`, entityRef);
+  });
+  return Array.from(deduped.values());
+};
+
+const getPrimaryEntity = (event: EventEnvelope): string => {
+  const entity = getEntityRefs(event)[0];
+  return entity ? `${entity.entity_type}:${entity.entity_id}` : "N/A";
 };
 
 const MESSENGER_STORAGE_KEY = "chronicle-labs-events-messenger";
@@ -131,8 +149,6 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
   const [timelinePlayback, setTimelinePlayback] = useState<"live" | "playing" | "paused">("paused");
   const [selectedTimelineEventId, setSelectedTimelineEventId] = useState<string | null>(null);
   const [recordingState, setRecordingState] = useState<RecordingState>(REC_IDLE);
-  const recordingStateRef = useRef<RecordingState>(REC_IDLE);
-  recordingStateRef.current = recordingState;
   const recordingBufferRef = useRef<TimelineEvent[]>([]);
   const [timelineFilter, setTimelineFilter] = useState<string>("all");
   const [newEventsCount, setNewEventsCount] = useState(0);
@@ -152,19 +168,19 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
       
       const params = new URLSearchParams();
       params.set("limit", "500");
-      params.set("tenant_id", tenantId);
+      params.set("org_id", tenantId);
       if (filter !== "all") {
         params.set("source", filter);
       }
       
-      const response = await fetch(`${eventsManagerUrl}/api/events/query?${params}`);
+      const response = await fetch(`${eventsManagerUrl}/v1/events?${params}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch events: ${response.status}`);
       }
       
-      const data = await response.json();
-      setEvents(data.events || []);
+      const data = (await response.json()) as EventEnvelope[];
+      setEvents(data || []);
     } catch (err) {
       console.error("Error fetching events:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch events");
@@ -181,83 +197,25 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
     if (viewTab !== "timeline") return;
     let closed = false;
     setTimelineLoading(true);
+    setSseConnected(false);
     const params = new URLSearchParams();
     params.set("limit", "500");
-    params.set("tenant_id", tenantId);
+    params.set("org_id", tenantId);
     if (timelineFilter !== "all") params.set("source", timelineFilter);
-    fetch(`${eventsManagerUrl}/api/events/query?${params}`)
+    fetch(`${eventsManagerUrl}/v1/events?${params}`)
       .then((r) => r.json())
       .then((data) => {
         if (closed) return;
-        const list = (data.events || []) as Array<{
-          event_id: string;
-          source: string;
-          source_event_id?: string;
-          event_type: string;
-          conversation_id?: string;
-          actor_type?: string;
-          actor_id?: string;
-          actor_name?: string | null;
-          occurred_at: string;
-          ingested_at?: string;
-          payload?: Record<string, unknown>;
-          contains_pii?: boolean;
-        }>;
-        const mapped = list.map((e) =>
-          eventEnvelopeToTimelineEvent({
-            event_id: e.event_id,
-            tenant_id: tenantId,
-            source: e.source,
-            source_event_id: e.source_event_id ?? "",
-            event_type: e.event_type,
-            conversation_id: e.conversation_id ?? "",
-            actor_type: e.actor_type ?? "system",
-            actor_id: e.actor_id ?? "",
-            actor_name: e.actor_name ?? null,
-            occurred_at: e.occurred_at,
-            ingested_at: e.ingested_at ?? e.occurred_at,
-            payload: e.payload ?? {},
-            contains_pii: e.contains_pii ?? false,
-          })
-        );
+        const list = (data || []) as EventEnvelope[];
+        const mapped = list.map((event) => eventEnvelopeToTimelineEvent(event));
         setTimelineBuffer(mapped);
       })
       .catch(() => {})
       .finally(() => {
         if (!closed) setTimelineLoading(false);
       });
-
-    const LIVE_STREAM_ID = "live-api";
-    const cleanup = subscribeToStream(
-      eventsManagerUrl,
-      { tenantId, eventType: timelineFilter !== "all" ? timelineFilter : undefined },
-      (dto) => {
-        if (closed) return;
-        if (dto.event_type === "system.connected") return;
-        const te = eventEnvelopeToTimelineEvent(dto);
-        setTimelineBuffer((prev) => {
-          // Deduplicate — SSE may replay events or overlap with initial fetch
-          if (prev.some((e) => e.id === te.id)) return prev;
-          return [...prev, te];
-        });
-        setNewEventsCount((n) => n + 1);
-        const rec = recordingStateRef.current;
-        if (rec.kind === "Recording") {
-          const shouldRecord = rec.recordingStreamIds.includes(LIVE_STREAM_ID);
-          if (shouldRecord) {
-            recordingBufferRef.current.push(te);
-            setRecordingState(
-              recRecording(rec.startedAt, rec.eventCount + 1, rec.recordingStreamIds)
-            );
-          }
-        }
-      }
-    );
-    setSseConnected(true);
     return () => {
       closed = true;
-      cleanup();
-      setSseConnected(false);
     };
   }, [viewTab, tenantId, eventsManagerUrl, timelineFilter]);
 
@@ -829,40 +787,40 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
           <div className="divide-y divide-border-dim max-h-[600px] overflow-y-auto">
             {events.map((event) => (
               <div
-                key={event.event_id}
+                key={event.event.event_id}
                 onClick={() => setSelectedEvent(event)}
                 className={`flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors ${
-                  selectedEvent?.event_id === event.event_id
+                  selectedEvent?.event.event_id === event.event.event_id
                     ? "bg-data-bg border-l-2 border-data"
                     : "hover:bg-hover border-l-2 border-transparent"
                 }`}
               >
                 <div className={`w-8 h-8 flex items-center justify-center ${
-                  selectedEvent?.event_id === event.event_id ? "text-data" : "text-tertiary"
+                  selectedEvent?.event.event_id === event.event.event_id ? "text-data" : "text-tertiary"
                 }`}>
-                  {getEventIcon(event.event_type)}
+                  {getEventIcon(event.event.event_type)}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-medium ${
-                      selectedEvent?.event_id === event.event_id ? "text-data" : "text-primary"
+                      selectedEvent?.event.event_id === event.event.event_id ? "text-data" : "text-primary"
                     }`}>
-                      {event.event_type}
+                      {event.event.event_type}
                     </span>
                     <span className={`badge ${getActorBadge(getActorType(event))}`}>
                       {getActorType(event)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-tertiary">{event.source}</span>
+                    <span className="text-xs text-tertiary">{event.event.source}</span>
                     <span className="text-xs text-disabled">·</span>
-                    <span className="font-mono text-xs text-tertiary tabular-nums">{formatTime(event.occurred_at)}</span>
+                    <span className="font-mono text-xs text-tertiary tabular-nums">{formatTime(event.event.event_time)}</span>
                   </div>
                 </div>
 
                 <svg className={`w-4 h-4 ${
-                  selectedEvent?.event_id === event.event_id ? "text-data" : "text-tertiary"
+                  selectedEvent?.event.event_id === event.event.event_id ? "text-data" : "text-tertiary"
                 }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
@@ -883,18 +841,23 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
                 <div>
                   <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Event ID</div>
                   <div className="font-mono text-xs text-secondary break-all bg-base px-2 py-1.5 border border-border-dim">
-                    {selectedEvent.event_id}
+                    {selectedEvent.event.event_id}
                   </div>
                 </div>
 
                 <div>
                   <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Type</div>
-                  <div className="text-sm text-data font-medium">{selectedEvent.event_type}</div>
+                  <div className="text-sm text-data font-medium">{selectedEvent.event.event_type}</div>
                 </div>
 
                 <div>
                   <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Source</div>
-                  <div className="text-sm text-primary">{selectedEvent.source}</div>
+                  <div className="text-sm text-primary">{selectedEvent.event.source}</div>
+                </div>
+
+                <div>
+                  <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Topic</div>
+                  <div className="text-sm text-primary">{selectedEvent.event.topic}</div>
                 </div>
 
                 <div>
@@ -908,19 +871,37 @@ export function EventsClient({ tenantId, eventsManagerUrl, hasActiveIntercom }: 
                 </div>
 
                 <div>
-                  <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Conversation ID</div>
-                  <div className="font-mono text-xs text-secondary break-all">{getConversationId(selectedEvent)}</div>
+                  <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Entity Context</div>
+                  <div className="font-mono text-xs text-secondary break-all">{getPrimaryEntity(selectedEvent)}</div>
                 </div>
 
                 <div>
                   <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Timestamp</div>
-                  <div className="font-mono text-sm text-primary tabular-nums">{new Date(selectedEvent.occurred_at).toLocaleString()}</div>
+                  <div className="font-mono text-sm text-primary tabular-nums">{new Date(selectedEvent.event.event_time).toLocaleString()}</div>
+                </div>
+
+                <div>
+                  <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Entity Refs</div>
+                  <div className="flex flex-wrap gap-2">
+                    {getEntityRefs(selectedEvent).length > 0 ? (
+                      getEntityRefs(selectedEvent).map((entity) => (
+                        <span
+                          key={`${entity.entity_type}:${entity.entity_id}`}
+                          className="badge badge--neutral font-mono"
+                        >
+                          {entity.entity_type}:{entity.entity_id}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-tertiary">None</span>
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <div className="text-xs text-tertiary tracking-wide uppercase mb-1">Payload</div>
                   <pre className="font-mono text-xs text-secondary bg-base border border-border-dim p-3 overflow-auto max-h-48">
-                    {JSON.stringify(selectedEvent.payload || {}, null, 2)}
+                    {JSON.stringify(getPayload(selectedEvent), null, 2)}
                   </pre>
                 </div>
               </div>

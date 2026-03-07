@@ -166,14 +166,15 @@ export function RunsClient() {
     setCreating(true);
     try {
       await api.createRun({
-        eventId: `01${Date.now().toString(36).toUpperCase().padStart(24, "0").slice(-24)}`,
+        eventId: `evt_demo_${Date.now().toString(36)}`,
         invocationId: `inv_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
         mode: "shadow",
         workflowId: "demo-workflow",
         eventSnapshot: {
           source: "demo",
+          topic: "automation",
           event_type: "test.run",
-          conversation_id: "conv_demo",
+          entity_refs: [{ entity_type: "conversation", entity_id: "conv_demo" }],
         },
         contextPointers: null,
       });

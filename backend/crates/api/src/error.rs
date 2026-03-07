@@ -7,6 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use chronicle_core::error::{ChronicleError, StoreError as ChronicleStoreError};
 use serde::Serialize;
 use thiserror::Error;
 
@@ -106,6 +107,23 @@ impl From<chronicle_domain::StoreError> for ApiError {
 impl From<serde_json::Error> for ApiError {
     fn from(err: serde_json::Error) -> Self {
         ApiError::BadRequest(format!("JSON error: {}", err))
+    }
+}
+
+impl From<ChronicleError> for ApiError {
+    fn from(err: ChronicleError) -> Self {
+        match err {
+            ChronicleError::Store(ChronicleStoreError::NotFound { entity, id }) => {
+                ApiError::NotFound(format!("{entity} not found: {id}"))
+            }
+            ChronicleError::Store(ChronicleStoreError::Duplicate { entity, id }) => {
+                ApiError::BadRequest(format!("{entity} already exists: {id}"))
+            }
+            ChronicleError::Validation(err) => ApiError::Validation(err.to_string()),
+            ChronicleError::Serialization(err) => ApiError::BadRequest(err),
+            ChronicleError::External(err) => ApiError::Internal(err),
+            ChronicleError::Store(err) => ApiError::Store(err.to_string()),
+        }
     }
 }
 

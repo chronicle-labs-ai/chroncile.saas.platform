@@ -1,5 +1,5 @@
 [package]
-name = "chronicle-infra"
+name = "chronicle_infra"
 version.workspace = true
 edition.workspace = true
 
@@ -7,12 +7,16 @@ edition.workspace = true
 default = ["memory"]
 memory = []
 kafka = ["rdkafka"]
-postgres = ["sqlx"]
+postgres = ["sqlx", "chronicle_store/postgres"]
 full = ["memory", "kafka", "postgres"]
 
 [dependencies]
-chronicle-domain = { workspace = true }
-chronicle-interfaces = { workspace = true }
+chronicle_domain = { workspace = true }
+chronicle_interfaces = { workspace = true }
+chronicle_core = { workspace = true }
+chronicle_store = { workspace = true }
+chronicle_query = { workspace = true }
+chronicle_link = { workspace = true }
 
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -24,10 +28,11 @@ tracing = { workspace = true }
 chrono = { workspace = true }
 cuid2 = { workspace = true }
 serde = { workspace = true }
+ulid = { workspace = true }
 
 # Optional heavy dependencies
 rdkafka = { version = "0.36", optional = true }
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio", "chrono", "uuid", "json"], optional = true }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "chrono", "uuid", "json"], optional = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

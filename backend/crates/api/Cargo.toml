@@ -1,19 +1,22 @@
 [package]
-name = "chronicle-api"
+name = "chronicle_api"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-chronicle-domain = { workspace = true }
-chronicle-interfaces = { workspace = true }
-chronicle-infra = { workspace = true }
-chronicle-mock-connector = { workspace = true }
-chronicle-sources-core = { workspace = true }
-chronicle-sources-registry = { workspace = true }
-chronicle-source-mock-stripe = { workspace = true }
-chronicle-auth = { workspace = true }
-chronicle-integrations = { workspace = true }
-pipedream-connect = { workspace = true }
+chronicle_domain = { workspace = true }
+chronicle_interfaces = { workspace = true }
+chronicle_infra = { workspace = true }
+chronicle_mock_connector = { workspace = true }
+chronicle_sources_core = { workspace = true }
+chronicle_sources_registry = { workspace = true }
+chronicle_auth = { workspace = true }
+chronicle_pipedream_connect = { workspace = true }
+chronicle_core = { workspace = true }
+chronicle_stripe = { workspace = true }
+chronicle_store = { workspace = true }
+chronicle_query = { workspace = true }
+chronicle_link = { workspace = true }
 
 tokio = { workspace = true }
 async-trait = { workspace = true }
@@ -35,8 +38,4 @@ parking_lot = { workspace = true }
 dashmap = { workspace = true }
 
 # Cryptography (for webhook signature verification)
-hmac = { workspace = true }
-sha1 = { workspace = true }
-sha2 = { workspace = true }
-hex = { workspace = true }
 cuid2 = { workspace = true }

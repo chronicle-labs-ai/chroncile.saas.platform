@@ -5,7 +5,8 @@ use axum::{
 };
 use serde_json::Value;
 
-use chronicle_domain::{Actor, CreateRunInput, EventEnvelope, Subject, TenantId};
+use chronicle_domain::CreateRunInput;
+use chronicle_infra::conversion::build_native_event;
 
 use super::error::{ApiError, ApiResult};
 use crate::saas_state::SaasAppState;
@@ -59,41 +60,44 @@ pub async fn pipedream_webhook(
         );
     }
 
-    let raw_payload = serde_json::value::RawValue::from_string(
-        serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string()),
-    )
-    .unwrap_or_else(|_| serde_json::value::RawValue::from_string("{}".to_string()).unwrap());
-
-    let domain_actor = match actor.actor_type.as_str() {
-        "customer" => Actor::customer(&actor.id),
-        "agent" => Actor::agent(&actor.id),
-        _ => Actor::system(),
-    };
-    let domain_actor = if let Some(ref name) = actor.name {
-        domain_actor.with_name(name)
-    } else {
-        domain_actor
-    };
-
-    let event = EventEnvelope::new(
-        TenantId::new(&tenant_id),
+    let native_event = build_native_event(
+        &tenant_id,
         &provider,
-        &source_event_id,
         &event_type,
-        Subject::new(entity_id.as_str()),
-        domain_actor,
-        raw_payload,
+        chrono::Utc::now(),
+        None,
+        payload.clone(),
+        vec![(
+            entity_type_for_provider(&provider).to_string(),
+            entity_id.clone(),
+        )],
+        None,
+        Some(serde_json::json!({
+            "actor": {
+                "actor_type": actor.actor_type,
+                "actor_id": actor.id,
+                "name": actor.name,
+            },
+            "provider": provider.clone(),
+            "deployment_id": deployment_id.clone(),
+        })),
+        Some(serde_json::json!({
+            "source_event_id": source_event_id,
+        })),
     );
 
-    let event_id = event.event_id.to_string();
-
-    if let Err(e) = state.event_store.append(std::slice::from_ref(&event)).await {
-        tracing::error!("Failed to store event: {e}");
-    }
-
-    if let Err(e) = state.event_stream.publish(event).await {
-        tracing::error!("Failed to publish event to stream: {e}");
-    }
+    let event_id = state
+        .event_store
+        .insert_events(&[native_event])
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to store Chronicle event: {e}");
+            ApiError::internal()
+        })?
+        .into_iter()
+        .next()
+        .map(|id| id.to_string())
+        .ok_or_else(ApiError::internal)?;
 
     let invocation_id = format!("inv_{event_id}");
     if let Ok(run) = state
@@ -233,6 +237,17 @@ fn extract_entity_id(event: &Value, provider: &str) -> String {
     format!("{}_{}", provider, chrono::Utc::now().timestamp_millis())
 }
 
+fn entity_type_for_provider(provider: &str) -> &'static str {
+    match provider {
+        "slack" => "channel",
+        "intercom" => "conversation",
+        "stripe" => "customer",
+        "hubspot" => "contact",
+        "zendesk" => "ticket",
+        _ => "entity",
+    }
+}
+
 fn normalize_event_type(provider: &str, event_type: Option<&str>) -> String {
     match event_type {
         Some(t) if t.contains('.') => t.to_string(),
@@ -248,22 +263,37 @@ pub async fn stripe_webhook(
     headers: HeaderMap,
     body: axum::body::Bytes,
 ) -> ApiResult<Json<Value>> {
-    let webhook_secret = std::env::var("STRIPE_WEBHOOK_SECRET")
-        .map_err(|_| ApiError::bad_request("Stripe webhook secret not configured"))?;
+    let webhook_secret = state
+        .config
+        .stripe_webhook_secret
+        .clone()
+        .ok_or_else(|| ApiError::bad_request("Stripe webhook secret not configured"))?;
 
     let signature = headers
         .get("stripe-signature")
         .and_then(|v| v.to_str().ok())
         .ok_or_else(|| ApiError::bad_request("Missing stripe-signature header"))?;
 
-    chronicle_integrations::stripe::verify_webhook_signature(&body, signature, &webhook_secret)
+    chronicle_stripe::verify_webhook_signature(&body, signature, &webhook_secret)
         .map_err(|e| ApiError::bad_request(format!("Invalid Stripe signature: {e}")))?;
 
-    let event: Value = serde_json::from_slice(&body)
+    let body_str = std::str::from_utf8(&body)
+        .map_err(|e| ApiError::bad_request(format!("Invalid UTF-8 body: {e}")))?;
+    let event: Value = serde_json::from_str(body_str)
         .map_err(|e| ApiError::bad_request(format!("Invalid JSON: {e}")))?;
 
     let event_type = event.get("type").and_then(|v| v.as_str()).unwrap_or("");
     let data_object = event.get("data").and_then(|d| d.get("object"));
+    let tenant_id = resolve_stripe_tenant_id(&state, data_object).await?;
+    let stored_event_id = if let Some(ref tenant_id) = tenant_id {
+        Some(store_stripe_event(&state, tenant_id, body_str).await?)
+    } else {
+        tracing::debug!(
+            event_type,
+            "Skipping Chronicle Stripe ingest because tenant could not be resolved"
+        );
+        None
+    };
 
     match event_type {
         "checkout.session.completed" => {
@@ -273,16 +303,10 @@ pub async fn stripe_webhook(
                     return Ok(Json(serde_json::json!({ "received": true })));
                 }
 
-                let tenant_id = session
-                    .get("metadata")
-                    .and_then(|m| m.get("tenantId"))
-                    .or_else(|| session.get("client_reference_id"))
-                    .and_then(|v| v.as_str());
-
                 let customer_id = session.get("customer").and_then(|v| v.as_str());
                 let sub_id = session.get("subscription").and_then(|v| v.as_str());
 
-                if let (Some(tid), Some(cid)) = (tenant_id, customer_id) {
+                if let (Some(tid), Some(cid)) = (tenant_id.as_deref(), customer_id) {
                     let status = if sub_id.is_some() {
                         "active"
                     } else {
@@ -309,12 +333,20 @@ pub async fn stripe_webhook(
                     .and_then(|p| p.get("id"))
                     .and_then(|v| v.as_str());
 
-                if let Some(cid) = customer_id {
-                    // Find tenant by stripe customer ID -- search through tenants
-                    // For now, log and skip if we can't find by customer ID
-                    // TODO: Add find_by_stripe_customer_id to TenantRepository
+                if let (Some(tid), Some(cid)) = (tenant_id.as_deref(), customer_id) {
+                    state
+                        .tenants
+                        .update_stripe_fields(tid, None, status, price_id)
+                        .await
+                        .ok();
                     tracing::info!(
-                        "Stripe subscription {event_type} for customer {cid}: status={}, price={}",
+                        "Stripe subscription {event_type} for tenant {tid} customer {cid}: status={}, price={}",
+                        status.unwrap_or("unknown"),
+                        price_id.unwrap_or("none"),
+                    );
+                } else if let Some(cid) = customer_id {
+                    tracing::info!(
+                        "Stripe subscription {event_type} for customer {cid}: status={}, price={}, tenant unresolved",
                         status.unwrap_or("unknown"),
                         price_id.unwrap_or("none"),
                     );
@@ -326,5 +358,67 @@ pub async fn stripe_webhook(
         }
     }
 
-    Ok(Json(serde_json::json!({ "received": true })))
+    Ok(Json(serde_json::json!({
+        "received": true,
+        "tenant_id": tenant_id,
+        "event_id": stored_event_id,
+    })))
+}
+
+async fn resolve_stripe_tenant_id(
+    state: &SaasAppState,
+    data_object: Option<&Value>,
+) -> ApiResult<Option<String>> {
+    if let Some(tenant_id) = data_object.and_then(extract_stripe_tenant_id) {
+        return Ok(Some(tenant_id));
+    }
+
+    if let Some(customer_id) = data_object.and_then(extract_stripe_customer_id) {
+        let tenant = state
+            .tenants
+            .find_by_stripe_customer_id(customer_id)
+            .await?;
+        return Ok(tenant.map(|tenant| tenant.id));
+    }
+
+    Ok(None)
+}
+
+fn extract_stripe_tenant_id(data_object: &Value) -> Option<String> {
+    data_object
+        .get("metadata")
+        .and_then(|metadata| metadata.get("tenantId"))
+        .or_else(|| data_object.get("client_reference_id"))
+        .and_then(|value| value.as_str())
+        .map(ToString::to_string)
+}
+
+fn extract_stripe_customer_id(data_object: &Value) -> Option<&str> {
+    data_object.get("customer").and_then(|value| {
+        value
+            .as_str()
+            .or_else(|| value.get("id").and_then(|id| id.as_str()))
+    })
+}
+
+async fn store_stripe_event(
+    state: &SaasAppState,
+    tenant_id: &str,
+    body: &str,
+) -> ApiResult<String> {
+    let native_event = chronicle_stripe::convert_webhook(body, tenant_id)
+        .map_err(|e| ApiError::bad_request(format!("Invalid Stripe webhook payload: {e}")))?;
+
+    state
+        .event_store
+        .insert_events(&[native_event])
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to store Chronicle Stripe event: {e}");
+            ApiError::internal()
+        })?
+        .into_iter()
+        .next()
+        .map(|id| id.to_string())
+        .ok_or_else(ApiError::internal)
 }

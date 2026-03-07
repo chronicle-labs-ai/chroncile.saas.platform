@@ -1,5 +1,5 @@
 [package]
-name = "chronicle-source-intercom"
+name = "chronicle_source_intercom"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,9 +8,9 @@ description = "Intercom source integration for events manager"
 
 [dependencies]
 # Internal
-chronicle-domain = { workspace = true }
-chronicle-sources-core = { workspace = true }
-chronicle-sources-registry = { workspace = true }
+chronicle_domain = { workspace = true }
+chronicle_sources_core = { workspace = true }
+chronicle_sources_registry = { workspace = true }
 
 # Async
 async-trait = { workspace = true }

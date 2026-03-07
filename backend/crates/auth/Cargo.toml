@@ -1,11 +1,11 @@
 [package]
-name = "chronicle-auth"
+name = "chronicle_auth"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-chronicle-domain = { workspace = true }
-chronicle-interfaces = { workspace = true }
+chronicle_domain = { workspace = true }
+chronicle_interfaces = { workspace = true }
 
 serde = { workspace = true }
 serde_json = { workspace = true }

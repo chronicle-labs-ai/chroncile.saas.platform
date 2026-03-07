@@ -1,7 +1,9 @@
 //! Health Check Endpoint
 
-use axum::Json;
+use axum::{extract::State, Json};
 use serde::Serialize;
+
+use crate::AppState;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -13,16 +15,12 @@ pub struct HealthResponse {
     pub environment: Option<String>,
 }
 
-fn non_empty_env(key: &str) -> Option<String> {
-    std::env::var(key).ok().filter(|v| !v.is_empty())
-}
-
-pub async fn health_check() -> Json<HealthResponse> {
+pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     Json(HealthResponse {
         status: "ok".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        git_sha: non_empty_env("GIT_SHA"),
-        git_tag: non_empty_env("GIT_TAG"),
-        environment: non_empty_env("ENVIRONMENT"),
+        git_sha: state.config.health.git_sha.clone(),
+        git_tag: state.config.health.git_tag.clone(),
+        environment: state.config.health.environment.clone(),
     })
 }

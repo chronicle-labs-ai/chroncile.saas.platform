@@ -1,7 +1,6 @@
-//! Events Manager Infrastructure
-//!
-//! Vendor implementations for streaming, storage, and other infrastructure.
-//! Feature-gated to allow fast compilation with only needed backends.
+//! Chronicle-native infrastructure adapters for the platform backend.
+
+pub mod conversion;
 
 #[cfg(feature = "memory")]
 pub mod memory;
@@ -12,29 +11,41 @@ pub mod kafka;
 #[cfg(feature = "postgres")]
 pub mod postgres;
 
+use chronicle_core::error::ChronicleError;
+use chronicle_core::event::Event as ChronicleEvent;
+use chronicle_core::ids::EventId;
+use chronicle_core::ids::{OrgId, Source};
+use chronicle_core::query::{FilterOp, OrderBy, PayloadFilter, StructuredQuery};
 use chronicle_domain::{
-    EventEnvelope, EventQuery, StoreResult, StreamResult, SubjectId, TenantId, TimeRange,
+    EventEnvelope, StoreError, StoreResult, StreamResult, TenantId, LEGACY_METADATA_KEY,
 };
-use chronicle_interfaces::{QueryResult, StreamReceiver};
+use chronicle_interfaces::StreamReceiver;
+use chronicle_link::LinkService;
+use chronicle_query::QueryService;
+use chronicle_store::StorageEngine;
 
-// Re-export memory types when feature is enabled
 #[cfg(feature = "memory")]
 pub use memory::{MemoryStore, MemoryStream};
 
-/// Stream backend enum for dispatch without vtable overhead
+fn map_store_error(error: ChronicleError) -> StoreError {
+    match error {
+        ChronicleError::Store(err) => StoreError::QueryFailed(err.to_string()),
+        ChronicleError::Validation(err) => StoreError::ConstraintViolation(err.to_string()),
+        other => StoreError::QueryFailed(other.to_string()),
+    }
+}
+
+/// Stream backend for legacy producers and SSE consumers.
 #[derive(Clone)]
 pub enum StreamBackend {
-    /// In-memory broadcast channel (always available with memory feature)
     #[cfg(feature = "memory")]
     Memory(memory::MemoryStream),
 
-    /// Kafka backend (behind feature flag)
     #[cfg(feature = "kafka")]
     Kafka(kafka::KafkaStream),
 }
 
 impl StreamBackend {
-    /// Publish an event to the stream
     #[inline]
     pub async fn publish(&self, event: EventEnvelope) -> StreamResult<()> {
         use chronicle_interfaces::EventStreamProducer;
@@ -46,7 +57,6 @@ impl StreamBackend {
         }
     }
 
-    /// Publish a batch of events
     #[inline]
     pub async fn publish_batch(&self, events: Vec<EventEnvelope>) -> StreamResult<()> {
         use chronicle_interfaces::EventStreamProducer;
@@ -58,7 +68,6 @@ impl StreamBackend {
         }
     }
 
-    /// Subscribe to the stream
     #[inline]
     pub fn subscribe(&self) -> Box<dyn StreamReceiver> {
         match self {
@@ -69,7 +78,6 @@ impl StreamBackend {
         }
     }
 
-    /// Get buffer contents (memory backend only)
     #[cfg(feature = "memory")]
     pub fn get_buffer(&self) -> Vec<EventEnvelope> {
         match self {
@@ -80,150 +88,85 @@ impl StreamBackend {
     }
 }
 
-/// Storage backend enum for dispatch without vtable overhead
+/// Chronicle-native store backend.
 #[derive(Clone)]
 pub enum StoreBackend {
-    /// In-memory storage (always available with memory feature)
     #[cfg(feature = "memory")]
     Memory(memory::MemoryStore),
 
-    /// Postgres storage (behind feature flag)
     #[cfg(feature = "postgres")]
     Postgres(postgres::PostgresStore),
 }
 
 impl StoreBackend {
-    /// Append events to the store
-    #[inline]
+    pub fn engine(&self) -> StorageEngine {
+        match self {
+            #[cfg(feature = "memory")]
+            Self::Memory(store) => store.engine(),
+            #[cfg(feature = "postgres")]
+            Self::Postgres(store) => store.engine(),
+        }
+    }
+
+    pub fn query_service(&self) -> QueryService {
+        QueryService::new(self.engine())
+    }
+
+    pub fn link_service(&self) -> LinkService {
+        LinkService::new(self.engine())
+    }
+
+    pub async fn insert_events(
+        &self,
+        events: &[ChronicleEvent],
+    ) -> Result<Vec<EventId>, ChronicleError> {
+        self.engine()
+            .events
+            .insert_events(events)
+            .await
+            .map_err(Into::into)
+    }
+
     pub async fn append(&self, events: &[EventEnvelope]) -> StoreResult<()> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.append(events).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.append(events).await,
-        }
+        let native_events: Vec<ChronicleEvent> = events
+            .iter()
+            .map(conversion::legacy_event_to_chronicle)
+            .collect();
+        self.insert_events(&native_events)
+            .await
+            .map(|_| ())
+            .map_err(map_store_error)
     }
 
-    /// Fetch events for a subject within a time range
-    #[inline]
-    pub async fn fetch(
-        &self,
-        tenant_id: &TenantId,
-        subject: &SubjectId,
-        range: &TimeRange,
-    ) -> StoreResult<Vec<EventEnvelope>> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.fetch(tenant_id, subject, range).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.fetch(tenant_id, subject, range).await,
-        }
-    }
-
-    /// Fetch all events for a tenant
-    #[inline]
-    pub async fn fetch_all(&self, tenant_id: &TenantId) -> StoreResult<Vec<EventEnvelope>> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.fetch_all(tenant_id).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.fetch_all(tenant_id).await,
-        }
-    }
-
-    /// Fetch events by conversation
-    #[inline]
-    pub async fn fetch_by_conversation(
-        &self,
-        tenant_id: &TenantId,
-        conversation_id: &SubjectId,
-    ) -> StoreResult<Vec<EventEnvelope>> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => {
-                store
-                    .fetch_by_conversation(tenant_id, conversation_id)
-                    .await
-            }
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => {
-                store
-                    .fetch_by_conversation(tenant_id, conversation_id)
-                    .await
-            }
-        }
-    }
-
-    /// Check if event exists
-    #[inline]
     pub async fn exists(
         &self,
         tenant_id: &TenantId,
         source: &str,
         source_event_id: &str,
     ) -> StoreResult<bool> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.exists(tenant_id, source, source_event_id).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.exists(tenant_id, source, source_event_id).await,
-        }
-    }
+        let query = StructuredQuery {
+            org_id: OrgId::new(tenant_id.as_str()),
+            entity: None,
+            source: Some(Source::new(source)),
+            topic: None,
+            event_type: None,
+            time_range: None,
+            payload_filters: vec![PayloadFilter {
+                path: format!("{LEGACY_METADATA_KEY}.source_event_id"),
+                op: FilterOp::Eq(serde_json::json!(source_event_id)),
+            }],
+            group_by: None,
+            order_by: OrderBy::EventTimeDesc,
+            limit: 1,
+            offset: 0,
+        };
 
-    /// Get event count
-    #[inline]
-    pub async fn count(&self, tenant_id: &TenantId) -> StoreResult<usize> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.count(tenant_id).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.count(tenant_id).await,
-        }
-    }
-
-    /// Query events with advanced filtering
-    #[inline]
-    pub async fn query(
-        &self,
-        tenant_id: &TenantId,
-        query: &EventQuery,
-    ) -> StoreResult<QueryResult> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.query(tenant_id, query).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.query(tenant_id, query).await,
-        }
-    }
-
-    /// Get available sources for a tenant
-    #[inline]
-    pub async fn list_sources(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.list_sources(tenant_id).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.list_sources(tenant_id).await,
-        }
-    }
-
-    /// Get available event types for a tenant
-    #[inline]
-    pub async fn list_event_types(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>> {
-        use chronicle_interfaces::EventStore;
-        match self {
-            #[cfg(feature = "memory")]
-            Self::Memory(store) => store.list_event_types(tenant_id).await,
-            #[cfg(feature = "postgres")]
-            Self::Postgres(store) => store.list_event_types(tenant_id).await,
-        }
+        let count = self
+            .engine()
+            .events
+            .count(&query)
+            .await
+            .map_err(|err| map_store_error(err.into()))?;
+        Ok(count > 0)
     }
 }

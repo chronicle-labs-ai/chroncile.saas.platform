@@ -1,383 +1,352 @@
-//! Postgres Event Store
-//!
-//! Implements append-only event storage with Postgres.
+//! Postgres Chronicle storage wrapper.
 
-use async_trait::async_trait;
-use sqlx::postgres::PgPoolOptions;
+use std::sync::Arc;
+
+use chronicle_store::postgres::PostgresBackend;
+use chronicle_store::StorageEngine;
+use chrono::{DateTime, Utc};
+use serde_json::{value::RawValue, Value};
 use sqlx::{PgPool, Row};
 
-use chronicle_domain::{
-    sort_for_replay, EventEnvelope, EventQuery, StoreError, StoreResult, SubjectId, TenantId,
-    TimeRange,
-};
-use chronicle_interfaces::{EventStore, QueryResult};
+use crate::conversion::legacy_event_to_chronicle;
+use chronicle_domain::{Actor, ActorType, EventEnvelope, Permissions, PiiFlags, Subject, TenantId};
 
 use super::PostgresError;
 
-/// Postgres event store
 #[derive(Clone)]
 pub struct PostgresStore {
-    pool: PgPool,
+    backend: Arc<PostgresBackend>,
 }
 
 impl PostgresStore {
-    /// Create a new Postgres store
     pub async fn new(database_url: &str) -> Result<Self, PostgresError> {
-        let pool = PgPoolOptions::new()
-            .max_connections(10)
-            .connect(database_url)
+        let backend = PostgresBackend::new(database_url)
             .await
-            .map_err(|e| PostgresError::Connection(e.to_string()))?;
-
-        Ok(Self { pool })
-    }
-
-    /// Run database migrations
-    pub async fn migrate(&self) -> Result<(), PostgresError> {
-        sqlx::migrate!("./migrations")
-            .run(&self.pool)
-            .await
-            .map_err(|e: sqlx::migrate::MigrateError| PostgresError::Migration(e.to_string()))?;
-        Ok(())
-    }
-
-    /// Append a batch of events (optimized for bulk insert)
-    pub async fn append_batch(&self, events: &[EventEnvelope]) -> StoreResult<()> {
-        if events.is_empty() {
-            return Ok(());
-        }
-
-        // Use a transaction for atomicity
-        let mut tx = self
-            .pool
-            .begin()
-            .await
-            .map_err(|e| StoreError::ConnectionFailed(e.to_string()))?;
-
-        for event in events {
-            let payload_str = event.payload.get();
-            let pii_json = serde_json::to_value(&event.pii)
-                .map_err(|e: serde_json::Error| StoreError::Serialization(e.to_string()))?;
-            let permissions_json = serde_json::to_value(&event.permissions)
-                .map_err(|e: serde_json::Error| StoreError::Serialization(e.to_string()))?;
-
-            sqlx::query(
-                r#"
-                INSERT INTO events (
-                    event_id, tenant_id, source, source_event_id, event_type,
-                    conversation_id, ticket_id, customer_id, account_id,
-                    actor_type, actor_id, actor_name,
-                    occurred_at, ingested_at, schema_version,
-                    payload, pii_flags, permissions
-                ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::jsonb, $17, $18
-                )
-                ON CONFLICT (tenant_id, source, source_event_id) DO NOTHING
-                "#,
-            )
-            .bind(event.event_id.to_string())
-            .bind(event.tenant_id.as_str())
-            .bind(&event.source)
-            .bind(&event.source_event_id)
-            .bind(&event.event_type)
-            .bind(event.subject.conversation_id.as_str())
-            .bind(&event.subject.ticket_id)
-            .bind(&event.subject.customer_id)
-            .bind(&event.subject.account_id)
-            .bind(format!("{:?}", event.actor.actor_type).to_lowercase())
-            .bind(&event.actor.actor_id)
-            .bind(&event.actor.display_name)
-            .bind(event.occurred_at)
-            .bind(event.ingested_at)
-            .bind(event.schema_version as i32)
-            .bind(payload_str)
-            .bind(pii_json)
-            .bind(permissions_json)
-            .execute(&mut *tx)
-            .await
-            .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-        }
-
-        tx.commit()
-            .await
-            .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl EventStore for PostgresStore {
-    async fn append(&self, events: &[EventEnvelope]) -> StoreResult<()> {
-        self.append_batch(events).await
-    }
-
-    async fn fetch(
-        &self,
-        tenant_id: &TenantId,
-        subject: &SubjectId,
-        range: &TimeRange,
-    ) -> StoreResult<Vec<EventEnvelope>> {
-        let rows = sqlx::query(
-            r#"
-            SELECT * FROM events
-            WHERE tenant_id = $1
-              AND conversation_id = $2
-              AND occurred_at >= $3
-              AND occurred_at <= $4
-            ORDER BY occurred_at ASC, event_id ASC
-            "#,
-        )
-        .bind(tenant_id.as_str())
-        .bind(subject.as_str())
-        .bind(range.start)
-        .bind(range.end)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-
-        let events: Vec<EventEnvelope> = rows
-            .into_iter()
-            .filter_map(|row| row_to_event(&row).ok())
-            .collect();
-
-        Ok(events)
-    }
-
-    async fn fetch_all(&self, tenant_id: &TenantId) -> StoreResult<Vec<EventEnvelope>> {
-        let rows = sqlx::query(
-            r#"
-            SELECT * FROM events
-            WHERE tenant_id = $1
-            ORDER BY occurred_at ASC, event_id ASC
-            "#,
-        )
-        .bind(tenant_id.as_str())
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-
-        let events: Vec<EventEnvelope> = rows
-            .into_iter()
-            .filter_map(|row| row_to_event(&row).ok())
-            .collect();
-
-        Ok(events)
-    }
-
-    async fn fetch_by_conversation(
-        &self,
-        tenant_id: &TenantId,
-        conversation_id: &SubjectId,
-    ) -> StoreResult<Vec<EventEnvelope>> {
-        let rows = sqlx::query(
-            r#"
-            SELECT * FROM events
-            WHERE tenant_id = $1 AND conversation_id = $2
-            ORDER BY occurred_at ASC, event_id ASC
-            "#,
-        )
-        .bind(tenant_id.as_str())
-        .bind(conversation_id.as_str())
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-
-        let events: Vec<EventEnvelope> = rows
-            .into_iter()
-            .filter_map(|row| row_to_event(&row).ok())
-            .collect();
-
-        Ok(events)
-    }
-
-    async fn exists(
-        &self,
-        tenant_id: &TenantId,
-        source: &str,
-        source_event_id: &str,
-    ) -> StoreResult<bool> {
-        let row = sqlx::query(
-            r#"
-            SELECT EXISTS(
-                SELECT 1 FROM events
-                WHERE tenant_id = $1 AND source = $2 AND source_event_id = $3
-            ) as exists
-            "#,
-        )
-        .bind(tenant_id.as_str())
-        .bind(source)
-        .bind(source_event_id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-
-        Ok(row.get::<bool, _>("exists"))
-    }
-
-    async fn count(&self, tenant_id: &TenantId) -> StoreResult<usize> {
-        let row = sqlx::query(
-            r#"
-            SELECT COUNT(*) as count FROM events WHERE tenant_id = $1
-            "#,
-        )
-        .bind(tenant_id.as_str())
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-
-        Ok(row.get::<i64, _>("count") as usize)
-    }
-
-    async fn query(&self, tenant_id: &TenantId, query: &EventQuery) -> StoreResult<QueryResult> {
-        let all_events = self.fetch_all(tenant_id).await?;
-        let available_sources: std::collections::HashSet<String> =
-            all_events.iter().map(|e| e.source.clone()).collect();
-        let available_event_types: std::collections::HashSet<String> =
-            all_events.iter().map(|e| e.event_type.clone()).collect();
-
-        let mut filtered: Vec<EventEnvelope> = all_events
-            .into_iter()
-            .filter(|event| {
-                if let Some(ref range) = query.time_range {
-                    if !range.contains(&event.occurred_at) {
-                        return false;
-                    }
-                }
-                if !query.sources.is_empty() && !query.sources.contains(&event.source) {
-                    return false;
-                }
-                if !query.event_types.is_empty() && !query.event_types.contains(&event.event_type) {
-                    return false;
-                }
-                if !query.actors.is_empty() && !query.actors.contains(&event.actor.actor_id) {
-                    return false;
-                }
-                if !query.subjects.is_empty()
-                    && !query
-                        .subjects
-                        .contains(&event.subject.conversation_id.to_string())
-                {
-                    return false;
-                }
-                true
-            })
-            .collect();
-        filtered = sort_for_replay(filtered);
-        if let Some(limit) = query.limit {
-            filtered.truncate(limit);
-        }
-
-        let mut sources: Vec<String> = available_sources.into_iter().collect();
-        sources.sort();
-        let mut types: Vec<String> = available_event_types.into_iter().collect();
-        types.sort();
-
-        Ok(QueryResult {
-            events: filtered,
-            available_sources: sources,
-            available_event_types: types,
+            .map_err(|err| PostgresError::Connection(err.to_string()))?;
+        Ok(Self {
+            backend: Arc::new(backend),
         })
     }
 
-    async fn list_sources(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>> {
-        let rows = sqlx::query(
-            r#"SELECT DISTINCT source FROM events WHERE tenant_id = $1 ORDER BY source"#,
-        )
-        .bind(tenant_id.as_str())
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-        Ok(rows
-            .into_iter()
-            .map(|r| r.get::<String, _>("source"))
-            .collect())
+    pub async fn migrate(&self) -> Result<(), PostgresError> {
+        self.rename_legacy_events_table().await?;
+        self.backend
+            .run_migrations()
+            .await
+            .map_err(|err| PostgresError::Migration(err.to_string()))?;
+        self.create_support_tables().await?;
+        self.backfill_legacy_events().await?;
+        Ok(())
     }
 
-    async fn list_event_types(&self, tenant_id: &TenantId) -> StoreResult<Vec<String>> {
-        let rows = sqlx::query(
-            r#"SELECT DISTINCT event_type FROM events WHERE tenant_id = $1 ORDER BY event_type"#,
-        )
-        .bind(tenant_id.as_str())
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| StoreError::QueryFailed(e.to_string()))?;
-        Ok(rows
-            .into_iter()
-            .map(|r| r.get::<String, _>("event_type"))
-            .collect())
+    pub fn backend(&self) -> Arc<PostgresBackend> {
+        Arc::clone(&self.backend)
     }
-}
 
-/// Convert a database row to an EventEnvelope
-fn row_to_event(row: &sqlx::postgres::PgRow) -> Result<EventEnvelope, StoreError> {
-    use chronicle_domain::{Actor, ActorType, Permissions, PiiFlags, Subject};
-    use serde_json::value::RawValue;
+    pub fn engine(&self) -> StorageEngine {
+        StorageEngine {
+            events: self.backend.clone(),
+            entity_refs: self.backend.clone(),
+            links: self.backend.clone(),
+            embeddings: self.backend.clone(),
+            schemas: self.backend.clone(),
+            subscriptions: None,
+        }
+    }
 
-    let event_id: String = row.get("event_id");
-    let tenant_id: String = row.get("tenant_id");
-    let source: String = row.get("source");
-    let source_event_id: String = row.get("source_event_id");
-    let event_type: String = row.get("event_type");
-    let conversation_id: String = row.get("conversation_id");
-    let ticket_id: Option<String> = row.get("ticket_id");
-    let customer_id: Option<String> = row.get("customer_id");
-    let account_id: Option<String> = row.get("account_id");
-    let actor_type: String = row.get("actor_type");
-    let actor_id: String = row.get("actor_id");
-    let actor_name: Option<String> = row.get("actor_name");
-    let occurred_at: chrono::DateTime<chrono::Utc> = row.get("occurred_at");
-    let ingested_at: chrono::DateTime<chrono::Utc> = row.get("ingested_at");
-    let schema_version: i32 = row.get("schema_version");
-    let payload_value: serde_json::Value = row.get("payload");
-    let payload_str = serde_json::to_string(&payload_value)
-        .map_err(|e: serde_json::Error| StoreError::Serialization(e.to_string()))?;
-    let pii_flags: serde_json::Value = row.get("pii_flags");
-    let permissions: serde_json::Value = row.get("permissions");
+    fn pool(&self) -> &PgPool {
+        self.backend.pg_pool()
+    }
 
-    let subject = Subject {
-        conversation_id: SubjectId::new(conversation_id),
-        ticket_id,
-        customer_id,
-        account_id,
-    };
+    async fn rename_legacy_events_table(&self) -> Result<(), PostgresError> {
+        let pool = self.pool();
+        let has_legacy_columns: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'events'
+                  AND column_name = 'tenant_id'
+            )
+            "#,
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
 
-    let actor = Actor {
-        actor_type: match actor_type.as_str() {
-            "customer" => ActorType::Customer,
-            "agent" => ActorType::Agent,
-            "bot" => ActorType::Bot,
-            _ => ActorType::System,
-        },
-        actor_id,
-        display_name: actor_name,
-    };
+        if !has_legacy_columns {
+            return Ok(());
+        }
 
-    let payload = RawValue::from_string(payload_str)
-        .map_err(|e: serde_json::Error| StoreError::Serialization(e.to_string()))?;
+        let legacy_exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name = 'legacy_events'
+            )
+            "#,
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
 
-    let pii: PiiFlags = serde_json::from_value(pii_flags)
-        .map_err(|e: serde_json::Error| StoreError::Serialization(e.to_string()))?;
+        if !legacy_exists {
+            sqlx::raw_sql("ALTER TABLE events RENAME TO legacy_events")
+                .execute(pool)
+                .await
+                .map_err(|err| PostgresError::Migration(err.to_string()))?;
+        }
 
-    let permissions: Permissions = serde_json::from_value(permissions)
-        .map_err(|e: serde_json::Error| StoreError::Serialization(e.to_string()))?;
+        Ok(())
+    }
 
-    Ok(EventEnvelope {
-        event_id: event_id
-            .parse()
-            .map_err(|_| StoreError::Serialization("Invalid ULID".to_string()))?,
-        tenant_id: TenantId::new(tenant_id),
-        source,
-        source_event_id,
-        event_type,
-        subject,
-        actor,
-        occurred_at,
-        ingested_at,
-        schema_version: schema_version as u32,
-        payload,
-        pii,
-        permissions,
-        stream_id: None,
-    })
+    async fn create_support_tables(&self) -> Result<(), PostgresError> {
+        sqlx::raw_sql(
+            r#"
+            CREATE TABLE IF NOT EXISTS legacy_event_id_map (
+                legacy_event_id TEXT PRIMARY KEY,
+                chronicle_event_id TEXT NOT NULL UNIQUE,
+                org_id TEXT NOT NULL,
+                source TEXT NOT NULL,
+                source_event_id TEXT,
+                migrated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            "#,
+        )
+        .execute(self.pool())
+        .await
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
+
+        Ok(())
+    }
+
+    async fn backfill_legacy_events(&self) -> Result<(), PostgresError> {
+        let pool = self.pool();
+        let legacy_exists: bool = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name = 'legacy_events'
+            )
+            "#,
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
+
+        if !legacy_exists {
+            return Ok(());
+        }
+
+        let rows = sqlx::query(
+            r#"
+            SELECT
+                le.event_id,
+                le.tenant_id,
+                le.source,
+                le.source_event_id,
+                le.event_type,
+                le.conversation_id,
+                le.ticket_id,
+                le.customer_id,
+                le.account_id,
+                le.actor_type,
+                le.actor_id,
+                le.actor_name,
+                le.occurred_at,
+                le.ingested_at,
+                le.schema_version,
+                le.payload,
+                le.pii_flags,
+                le.permissions
+            FROM legacy_events le
+            LEFT JOIN legacy_event_id_map map
+                ON map.legacy_event_id = le.event_id
+            WHERE map.legacy_event_id IS NULL
+            ORDER BY le.occurred_at ASC, le.event_id ASC
+            "#,
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
+
+        if rows.is_empty() {
+            return Ok(());
+        }
+
+        for row in rows {
+            let legacy_event = self.row_to_legacy_event(&row)?;
+            let legacy_event_id = legacy_event.event_id.to_string();
+            let source = legacy_event.source.clone();
+            let source_event_id = legacy_event.source_event_id.clone();
+            let org_id = legacy_event.tenant_id.to_string();
+            let native_event = legacy_event_to_chronicle(&legacy_event);
+
+            let chronicle_event_id = self
+                .engine()
+                .events
+                .insert_events(&[native_event])
+                .await
+                .map_err(|err| PostgresError::Migration(err.to_string()))?
+                .into_iter()
+                .next()
+                .ok_or_else(|| PostgresError::Migration("missing migrated event id".to_string()))?;
+
+            sqlx::query(
+                r#"
+                INSERT INTO legacy_event_id_map (
+                    legacy_event_id,
+                    chronicle_event_id,
+                    org_id,
+                    source,
+                    source_event_id
+                ) VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (legacy_event_id) DO NOTHING
+                "#,
+            )
+            .bind(&legacy_event_id)
+            .bind(chronicle_event_id.to_string())
+            .bind(org_id)
+            .bind(source)
+            .bind(source_event_id)
+            .execute(pool)
+            .await
+            .map_err(|err| PostgresError::Migration(err.to_string()))?;
+        }
+
+        sqlx::raw_sql(
+            r#"
+            UPDATE "Run" AS run
+            SET "eventId" = map.chronicle_event_id
+            FROM legacy_event_id_map AS map
+            WHERE run."eventId" = map.legacy_event_id;
+
+            UPDATE "AuditLog" AS log
+            SET "eventId" = map.chronicle_event_id
+            FROM legacy_event_id_map AS map
+            WHERE log."eventId" = map.legacy_event_id;
+            "#,
+        )
+        .execute(pool)
+        .await
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
+
+        Ok(())
+    }
+
+    fn row_to_legacy_event(
+        &self,
+        row: &sqlx::postgres::PgRow,
+    ) -> Result<EventEnvelope, PostgresError> {
+        let payload = row
+            .try_get::<serde_json::Value, _>("payload")
+            .map_err(|err| PostgresError::Migration(err.to_string()))?;
+        let raw_payload = RawValue::from_string(
+            serde_json::to_string(&payload)
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+        )
+        .map_err(|err| PostgresError::Migration(err.to_string()))?;
+
+        let pii = row
+            .try_get::<Value, _>("pii_flags")
+            .ok()
+            .and_then(|value| serde_json::from_value::<PiiFlags>(value).ok())
+            .unwrap_or_default();
+        let permissions = row
+            .try_get::<Value, _>("permissions")
+            .ok()
+            .and_then(|value| serde_json::from_value::<Permissions>(value).ok())
+            .unwrap_or_default();
+
+        let actor_type = row
+            .try_get::<String, _>("actor_type")
+            .unwrap_or_else(|_| "system".to_string());
+        let actor_id = row
+            .try_get::<String, _>("actor_id")
+            .unwrap_or_else(|_| "system".to_string());
+        let actor_name = row
+            .try_get::<Option<String>, _>("actor_name")
+            .ok()
+            .flatten();
+
+        let actor = match actor_type.as_str() {
+            "customer" => Actor::customer(actor_id),
+            "agent" => Actor::agent(actor_id),
+            "bot" => Actor {
+                actor_type: ActorType::Bot,
+                actor_id,
+                display_name: None,
+            },
+            _ => Actor::system(),
+        };
+        let actor = if let Some(name) = actor_name {
+            actor.with_name(name)
+        } else {
+            actor
+        };
+
+        let mut subject = Subject::new(
+            row.try_get::<String, _>("conversation_id")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+        );
+        if let Some(ticket_id) = row.try_get::<Option<String>, _>("ticket_id").ok().flatten() {
+            subject = subject.with_ticket(ticket_id);
+        }
+        if let Some(customer_id) = row
+            .try_get::<Option<String>, _>("customer_id")
+            .ok()
+            .flatten()
+        {
+            subject = subject.with_customer(customer_id);
+        }
+        if let Some(account_id) = row
+            .try_get::<Option<String>, _>("account_id")
+            .ok()
+            .flatten()
+        {
+            subject = subject.with_account(account_id);
+        }
+
+        Ok(EventEnvelope {
+            event_id: row
+                .try_get::<String, _>("event_id")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?
+                .parse::<ulid::Ulid>()
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            tenant_id: TenantId::new(
+                row.try_get::<String, _>("tenant_id")
+                    .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            ),
+            source: row
+                .try_get("source")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            source_event_id: row
+                .try_get("source_event_id")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            event_type: row
+                .try_get("event_type")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            subject,
+            actor,
+            occurred_at: row
+                .try_get::<DateTime<Utc>, _>("occurred_at")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            ingested_at: row
+                .try_get::<DateTime<Utc>, _>("ingested_at")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?,
+            schema_version: row
+                .try_get::<i32, _>("schema_version")
+                .map_err(|err| PostgresError::Migration(err.to_string()))?
+                as u32,
+            payload: raw_payload,
+            pii,
+            permissions,
+            stream_id: None,
+        })
+    }
 }

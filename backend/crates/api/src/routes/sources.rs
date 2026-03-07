@@ -144,9 +144,13 @@ pub async fn handle_webhook(
         ApiError::BadRequest(format!("Source {} does not support webhooks", source_id))
     })?;
 
-    // Get webhook secret from environment (source-specific)
+    // Prefer configured webhook secrets, then fall back to the legacy env naming.
     let secret_env_var = format!("{}_WEBHOOK_SECRET", source_id.to_uppercase());
-    let webhook_secret = std::env::var(&secret_env_var).ok();
+    let webhook_secret = state
+        .config
+        .webhook_secret(&source_id)
+        .map(ToOwned::to_owned)
+        .or_else(|| std::env::var(&secret_env_var).ok());
 
     // Verify signature if secret is configured
     if let Some(ref secret) = webhook_secret {

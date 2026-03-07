@@ -5,12 +5,9 @@
 mod connections;
 mod generators;
 mod health;
-mod ingest;
-mod replay;
+mod native;
 pub mod saas;
-pub mod sandbox;
 mod sources;
-mod stream;
 
 pub use generators::GeneratorManager;
 
@@ -31,6 +28,7 @@ pub fn build_routes(state: AppState) -> Router {
         .allow_headers(Any);
 
     Router::new()
+        .merge(native::build_native_routes())
         // Health check
         .route("/health", get(health::health_check))
         .route("/api/health", get(health::health_check))
@@ -44,27 +42,6 @@ pub fn build_routes(state: AppState) -> Router {
         .route(
             "/api/connections/:id/generate",
             post(connections::generate_events),
-        )
-        // Ingest
-        .route("/api/ingest", post(ingest::ingest_event))
-        .route("/api/ingest/batch", post(ingest::ingest_batch))
-        // Stream
-        .route("/api/stream", get(stream::stream_events))
-        .route("/api/events", get(stream::list_events))
-        // Query API (tenant-based, advanced filtering)
-        .route("/api/events/query", get(stream::query_events))
-        .route("/api/events/sources", get(stream::list_sources))
-        .route("/api/events/types", get(stream::list_event_types))
-        // Legacy conversation-based timeline
-        .route("/api/conversations/:id/timeline", get(stream::get_timeline))
-        // Replay
-        .route("/api/replay", post(replay::create_replay))
-        .route("/api/replay/:session_id", get(replay::get_replay_status))
-        .route("/api/replay/:session_id/stream", get(replay::stream_replay))
-        .route("/api/replay/:session_id/step", post(replay::step_replay))
-        .route(
-            "/api/replay/:session_id/control",
-            post(replay::control_replay),
         )
         // Scenarios
         .route("/api/scenarios", get(connections::list_scenarios))
@@ -98,19 +75,6 @@ pub fn build_routes(state: AppState) -> Router {
         .route(
             "/api/generators/:source_id/stop",
             post(generators::stop_generator),
-        )
-        // Sandbox API (for AI agents)
-        .route(
-            "/api/sandbox/sessions",
-            get(sandbox::list_sandbox_sessions).post(sandbox::create_sandbox_session),
-        )
-        .route(
-            "/api/sandbox/sessions/:session_id",
-            get(sandbox::get_sandbox_status).delete(sandbox::delete_sandbox_session),
-        )
-        .route(
-            "/api/sandbox/sessions/:session_id/stream",
-            get(sandbox::stream_sandbox),
         )
         // Add CORS layer
         .layer(cors)

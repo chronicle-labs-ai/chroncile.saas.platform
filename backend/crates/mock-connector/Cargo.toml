@@ -1,10 +1,10 @@
 [package]
-name = "chronicle-mock-connector"
+name = "chronicle_mock_connector"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-chronicle-domain = { workspace = true }
+chronicle_domain = { workspace = true }
 
 serde = { workspace = true }
 serde_json = { workspace = true }

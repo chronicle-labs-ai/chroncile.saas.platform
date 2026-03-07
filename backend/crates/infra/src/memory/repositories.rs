@@ -58,6 +58,14 @@ impl TenantRepository for InMemoryTenantRepo {
             .map(|e| e.value().clone()))
     }
 
+    async fn find_by_stripe_customer_id(&self, customer_id: &str) -> RepoResult<Option<Tenant>> {
+        Ok(self
+            .store
+            .iter()
+            .find(|e| e.value().stripe_customer_id.as_deref() == Some(customer_id))
+            .map(|e| e.value().clone()))
+    }
+
     async fn update_stripe_fields(
         &self,
         id: &str,

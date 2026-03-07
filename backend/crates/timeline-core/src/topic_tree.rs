@@ -316,12 +316,12 @@ impl Default for TopicTree {
 /// Get color for a source
 pub fn source_color(source: &str) -> Color32 {
     match source.to_lowercase().as_str() {
-        "intercom" => Color32::from_rgb(64, 180, 166), // Teal
-        "stripe" | "mock-stripe" => Color32::from_rgb(99, 91, 255), // Purple/Blue
-        "zendesk" => Color32::from_rgb(3, 54, 61),     // Dark teal
-        "slack" => Color32::from_rgb(74, 21, 75),      // Purple
-        "hubspot" => Color32::from_rgb(255, 122, 89),  // Orange
-        "github" => Color32::from_rgb(110, 84, 148),   // Purple
+        "intercom" => Color32::from_rgb(64, 180, 166),  // Teal
+        "stripe" => Color32::from_rgb(99, 91, 255),     // Purple/Blue
+        "zendesk" => Color32::from_rgb(3, 54, 61),      // Dark teal
+        "slack" => Color32::from_rgb(74, 21, 75),       // Purple
+        "hubspot" => Color32::from_rgb(255, 122, 89),   // Orange
+        "github" => Color32::from_rgb(110, 84, 148),    // Purple
         "salesforce" => Color32::from_rgb(0, 161, 224), // Blue
         _ => {
             // Generate consistent color from name

@@ -22,6 +22,7 @@ pub trait TenantRepository: Send + Sync {
     async fn create(&self, input: CreateTenantInput) -> RepoResult<Tenant>;
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Tenant>>;
     async fn find_by_slug(&self, slug: &str) -> RepoResult<Option<Tenant>>;
+    async fn find_by_stripe_customer_id(&self, customer_id: &str) -> RepoResult<Option<Tenant>>;
     async fn update_stripe_fields(
         &self,
         id: &str,

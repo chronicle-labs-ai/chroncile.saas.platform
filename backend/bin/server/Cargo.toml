@@ -1,5 +1,5 @@
 [package]
-name = "chronicle-server"
+name = "chronicle_backend"
 version.workspace = true
 edition.workspace = true
 
@@ -9,24 +9,24 @@ path = "src/main.rs"
 
 [features]
 default = ["postgres"]
-kafka = ["chronicle-infra/kafka"]
-postgres = ["chronicle-infra/postgres"]
+kafka = ["chronicle_infra/kafka"]
+postgres = ["chronicle_infra/postgres"]
 full = ["kafka", "postgres"]
 
 [dependencies]
-chronicle-domain = { workspace = true }
-chronicle-interfaces = { workspace = true }
-chronicle-infra = { workspace = true }
-chronicle-mock-connector = { workspace = true }
-chronicle-source-mock-stripe = { workspace = true }
-chronicle-sources-core = { workspace = true }
-chronicle-api = { workspace = true }
-chronicle-auth = { workspace = true }
-chronicle-integrations = { workspace = true }
-pipedream-connect = { workspace = true }
+chronicle_domain = { workspace = true }
+chronicle_interfaces = { workspace = true }
+chronicle_infra = { workspace = true }
+chronicle_mock_connector = { workspace = true }
+chronicle_api = { workspace = true }
+chronicle_auth = { workspace = true }
+chronicle_integrations = { workspace = true }
+chronicle_pipedream_connect = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
+toml = "0.8"
 
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio"] }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio"] }
 tokio = { workspace = true }
 axum = { workspace = true }
 tower-http = { workspace = true }

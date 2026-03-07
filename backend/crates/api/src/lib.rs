@@ -4,10 +4,12 @@
 
 pub mod error;
 pub mod routes;
+pub mod runtime_config;
 pub mod saas_state;
 pub mod state;
 
 pub use error::{ApiError, ApiResult};
+pub use runtime_config::{EventsRuntimeConfig, HealthMetadata, SaasRuntimeConfig};
 pub use saas_state::SaasAppState;
 pub use state::AppState;
 

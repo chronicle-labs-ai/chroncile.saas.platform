@@ -1,5 +1,5 @@
 [package]
-name = "chronicle-timeline-core"
+name = "chronicle_timeline_core"
 version = "0.1.0"
 edition = "2021"
 description = "Shared timeline panel core for native and web applications"

@@ -199,18 +199,29 @@ impl EmailService for NoopEmailService {
     }
 }
 
-pub fn build_email_service(template_map: HashMap<String, String>) -> Box<dyn EmailService> {
-    match std::env::var("RESEND_API_KEY") {
-        Ok(api_key) if !api_key.is_empty() => {
-            let from = std::env::var("RESEND_FROM_ADDRESS").ok();
+pub fn build_email_service_with_options(
+    api_key: Option<String>,
+    from_address: Option<String>,
+    template_map: HashMap<String, String>,
+) -> Box<dyn EmailService> {
+    match api_key {
+        Some(api_key) if !api_key.is_empty() => {
             info!("Resend email service configured");
-            Box::new(ResendEmailService::new(api_key, from).with_template_map(template_map))
+            Box::new(ResendEmailService::new(api_key, from_address).with_template_map(template_map))
         }
         _ => {
             info!("RESEND_API_KEY not set, using NoopEmailService");
             Box::new(NoopEmailService)
         }
     }
+}
+
+pub fn build_email_service(template_map: HashMap<String, String>) -> Box<dyn EmailService> {
+    build_email_service_with_options(
+        std::env::var("RESEND_API_KEY").ok(),
+        std::env::var("RESEND_FROM_ADDRESS").ok(),
+        template_map,
+    )
 }
 
 pub fn email_tags(pairs: &[(&str, &str)]) -> Vec<EmailTag> {

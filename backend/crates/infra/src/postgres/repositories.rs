@@ -192,6 +192,14 @@ impl TenantRepository for PgTenantRepo {
             .map_err(to_repo_err)
     }
 
+    async fn find_by_stripe_customer_id(&self, customer_id: &str) -> RepoResult<Option<Tenant>> {
+        sqlx::query("SELECT * FROM \"Tenant\" WHERE \"stripeCustomerId\" = $1")
+            .bind(customer_id)
+            .try_map(tenant_from_row)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(to_repo_err)
+    }
     async fn update_stripe_fields(
         &self,
         id: &str,

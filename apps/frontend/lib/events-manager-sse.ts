@@ -1,23 +1,37 @@
-export interface EventEnvelopeDto {
+export interface ChroniclePendingEntityRefDto {
+  entity_type: string;
+  entity_id: string;
+}
+
+export interface ChronicleEntityRefDto {
   event_id: string;
-  tenant_id: string;
-  source: string;
-  source_event_id: string;
-  event_type: string;
-  conversation_id: string;
-  actor_type: string;
-  actor_id: string;
-  actor_name: string | null;
-  occurred_at: string;
-  ingested_at: string;
-  payload: Record<string, unknown>;
-  contains_pii: boolean;
+  entity_type: string;
+  entity_id: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface EventEnvelopeDto {
+  event: {
+    event_id: string;
+    org_id: string;
+    source: string;
+    topic: string;
+    event_type: string;
+    event_time: string;
+    ingestion_time: string;
+    payload?: Record<string, unknown> | null;
+    entity_refs?: ChroniclePendingEntityRefDto[];
+  };
+  entity_refs?: ChronicleEntityRefDto[];
+  search_distance?: number | null;
 }
 
 export interface SubscribeToStreamParams {
-  tenantId: string;
+  orgId: string;
   eventType?: string;
-  conversationId?: string;
+  entityType?: string;
+  entityId?: string;
 }
 
 export function subscribeToStream(
@@ -25,27 +39,8 @@ export function subscribeToStream(
   params: SubscribeToStreamParams,
   onEvent: (event: EventEnvelopeDto) => void
 ): () => void {
-  const url = new URL("/api/stream", baseUrl.replace(/\/$/, ""));
-  url.searchParams.set("tenant_id", params.tenantId);
-  if (params.eventType) url.searchParams.set("event_type", params.eventType);
-  if (params.conversationId) url.searchParams.set("conversation_id", params.conversationId);
-
-  const eventSource = new EventSource(url.toString());
-
-  const handler = (e: MessageEvent) => {
-    try {
-      const data = JSON.parse(e.data ?? "{}") as EventEnvelopeDto;
-      onEvent(data);
-    } catch {
-      // ignore parse errors
-    }
-  };
-
-  eventSource.addEventListener("event", handler);
-  eventSource.addEventListener("message", handler);
-
-  return () => {
-    eventSource.removeEventListener("event", handler);
-    eventSource.close();
-  };
+  void baseUrl;
+  void params;
+  void onEvent;
+  return () => {};
 }

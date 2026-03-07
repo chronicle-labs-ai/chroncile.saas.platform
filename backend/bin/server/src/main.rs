@@ -11,117 +11,139 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use chronicle_api::{build_router, build_saas_router, AppState, SaasAppState};
+use chronicle_api::{
+    build_router, build_saas_router, AppState, EventsRuntimeConfig, HealthMetadata, SaasAppState,
+    SaasRuntimeConfig,
+};
 use chronicle_infra::{StoreBackend, StreamBackend};
 
+mod config;
 mod simulation;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
+    let config::CliArgs {
+        config_path: cli_config_path,
+        print_config,
+    } = config::CliArgs::parse()?;
+    let config_path = config::LaunchConfig::config_path(cli_config_path);
+    let launch_config = config::LaunchConfig::load(config_path.as_deref())?;
 
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "info,tower_http=debug".into()),
+            launch_config.server.rust_log.clone(),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let host = std::env::var("API_HOST").unwrap_or_else(|_| "0.0.0.0".into());
-    let port: u16 = std::env::var("API_PORT")
-        .unwrap_or_else(|_| "8080".into())
-        .parse()?;
-    let backend_mode = std::env::var("BACKEND_MODE").unwrap_or_else(|_| "memory".into());
+    if print_config {
+        println!("{}", toml::to_string_pretty(&launch_config)?);
+        return Ok(());
+    }
 
     tracing::info!("Starting Chronicle backend");
-    tracing::info!("Backend mode: {}", backend_mode);
+    if let Some(path) = config_path.as_ref() {
+        tracing::info!(path = %path.display(), "Loaded launch configuration file");
+    } else {
+        tracing::info!("Using env/default launch configuration");
+    }
+    tracing::info!(
+        events_backend = ?launch_config.storage.events.backend,
+        saas_backend = ?launch_config.storage.saas.backend,
+        "Launch configuration resolved"
+    );
 
-    let database_url = std::env::var("DATABASE_URL").ok();
+    maybe_run_saas_migrations(&launch_config).await?;
 
-    let channel_capacity: usize = std::env::var("STREAM_CHANNEL_CAPACITY")
-        .unwrap_or_else(|_| "10000".into())
-        .parse()?;
-    let buffer_capacity: usize = std::env::var("STREAM_BUFFER_CAPACITY")
-        .unwrap_or_else(|_| "100000".into())
-        .parse()?;
+    let stream_backend = Arc::new(StreamBackend::Memory(
+        chronicle_infra::memory::MemoryStream::new(
+            launch_config.stream.channel_capacity,
+            launch_config.stream.buffer_capacity,
+        ),
+    ));
 
-    let (store_backend, stream_backend, saas_state) = match backend_mode.as_str() {
+    let store_backend = match launch_config.storage.events.backend {
         #[cfg(feature = "postgres")]
-        "real" | "postgres" => {
-            let db_url = database_url.expect("DATABASE_URL must be set when BACKEND_MODE=real");
-            tracing::info!("Using Postgres backend");
+        config::BackendKind::Postgres => {
+            let db_url = require_database_url("storage.events", &launch_config.storage.events)?;
+            tracing::info!("Using Postgres event store");
 
-            let postgres_store = chronicle_infra::postgres::PostgresStore::new(&db_url)
+            let postgres_store = chronicle_infra::postgres::PostgresStore::new(db_url)
                 .await
-                .map_err(|e| anyhow::anyhow!("Failed to connect to Postgres: {e}"))?;
+                .map_err(|e| anyhow::anyhow!("Failed to connect to Postgres event store: {e}"))?;
 
-            tracing::info!("Running event store migrations...");
-            postgres_store
-                .migrate()
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to run migrations: {e}"))?;
-
-            tracing::info!("Running SaaS schema migrations...");
-            run_saas_migrations(&db_url).await?;
-
-            let memory_stream =
-                chronicle_infra::memory::MemoryStream::new(channel_capacity, buffer_capacity);
-
-            let store = Arc::new(StoreBackend::Postgres(postgres_store));
-            let stream = Arc::new(StreamBackend::Memory(memory_stream));
-
-            let pool = sqlx::PgPool::connect(&db_url)
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to create connection pool: {e}"))?;
-
-            let saas = build_saas_state_postgres(pool, Arc::clone(&store), Arc::clone(&stream));
-
-            (store, stream, saas)
-        }
-        _ => {
-            tracing::info!("Using in-memory backends");
-
-            if let Some(ref db_url) = database_url {
-                tracing::info!(
-                    "DATABASE_URL set -- running SaaS migrations and using Postgres repos"
-                );
-                run_saas_migrations(db_url).await?;
-
-                let pool = sqlx::PgPool::connect(db_url)
+            if launch_config.storage.events.run_migrations {
+                tracing::info!("Running Chronicle-native event migrations...");
+                postgres_store
+                    .migrate()
                     .await
-                    .map_err(|e| anyhow::anyhow!("Failed to create connection pool: {e}"))?;
-
-                let memory_stream =
-                    chronicle_infra::memory::MemoryStream::new(channel_capacity, buffer_capacity);
-                let memory_store = chronicle_infra::memory::MemoryStore::new();
-
-                let store = Arc::new(StoreBackend::Memory(memory_store));
-                let stream = Arc::new(StreamBackend::Memory(memory_stream));
-
-                let saas = build_saas_state_postgres(pool, Arc::clone(&store), Arc::clone(&stream));
-
-                (store, stream, saas)
+                    .map_err(|e| anyhow::anyhow!("Failed to run event migrations: {e}"))?;
             } else {
-                tracing::info!("No DATABASE_URL -- using in-memory repos for SaaS");
-
-                let memory_stream =
-                    chronicle_infra::memory::MemoryStream::new(channel_capacity, buffer_capacity);
-                let memory_store = chronicle_infra::memory::MemoryStore::new();
-
-                let store = Arc::new(StoreBackend::Memory(memory_store));
-                let stream = Arc::new(StreamBackend::Memory(memory_stream));
-
-                let saas = build_saas_state_memory(Arc::clone(&store), Arc::clone(&stream));
-
-                (store, stream, saas)
+                tracing::info!("Chronicle-native event migrations disabled");
             }
+
+            Arc::new(StoreBackend::Postgres(postgres_store))
+        }
+        #[cfg(not(feature = "postgres"))]
+        config::BackendKind::Postgres => {
+            anyhow::bail!("storage.events.backend=postgres requires the `postgres` feature");
+        }
+        config::BackendKind::Memory => {
+            tracing::info!("Using in-memory event store");
+            Arc::new(StoreBackend::Memory(
+                chronicle_infra::memory::MemoryStore::new(),
+            ))
         }
     };
 
-    let events_state =
-        AppState::new_from_arcs(Arc::clone(&store_backend), Arc::clone(&stream_backend));
+    let saas_runtime = SaasRuntimeConfig {
+        app_url: launch_config.urls.app_url.clone(),
+        service_secret: launch_config.security.service_secret.clone(),
+        stripe_webhook_secret: launch_config.webhooks.stripe_secret.clone(),
+    };
 
-    let sim_config = simulation::SimulationConfig::from_env();
+    let saas_state = match launch_config.storage.saas.backend {
+        config::BackendKind::Postgres => {
+            let db_url = require_database_url("storage.saas", &launch_config.storage.saas)?;
+            tracing::info!("Using Postgres SaaS repositories");
+            let pool = sqlx::PgPool::connect(db_url)
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to create SaaS connection pool: {e}"))?;
+            build_saas_state_postgres(
+                pool,
+                Arc::clone(&store_backend),
+                Arc::clone(&stream_backend),
+                &launch_config,
+                saas_runtime.clone(),
+            )
+        }
+        config::BackendKind::Memory => {
+            tracing::info!("Using in-memory SaaS repositories");
+            build_saas_state_memory(
+                Arc::clone(&store_backend),
+                Arc::clone(&stream_backend),
+                &launch_config,
+                saas_runtime,
+            )
+        }
+    };
+
+    let events_state = AppState::new_from_arcs_with_config(
+        Arc::clone(&store_backend),
+        Arc::clone(&stream_backend),
+        EventsRuntimeConfig {
+            default_tenant_id: launch_config.events.default_tenant_id.clone(),
+            health: HealthMetadata {
+                environment: launch_config.health.environment.clone(),
+                git_sha: launch_config.health.git_sha.clone(),
+                git_tag: launch_config.health.git_tag.clone(),
+            },
+            webhook_secrets: launch_config.webhooks.source_secrets.clone(),
+        },
+    );
+
+    let sim_config = launch_config.simulation.clone();
     if sim_config.enabled {
         tracing::info!(
             mode = ?sim_config.mode,
@@ -151,7 +173,11 @@ async fn main() -> Result<()> {
         .layer(cors)
         .layer(TraceLayer::new_for_http());
 
-    let addr: SocketAddr = format!("{}:{}", host, port).parse()?;
+    let addr: SocketAddr = format!(
+        "{}:{}",
+        launch_config.server.host, launch_config.server.port
+    )
+    .parse()?;
     let listener = TcpListener::bind(addr).await?;
     tracing::info!("Listening on http://{}", addr);
 
@@ -160,50 +186,53 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn build_pipedream_client() -> Option<Arc<pipedream_connect::PipedreamClient>> {
-    let client_id = std::env::var("PIPEDREAM_CLIENT_ID").ok()?;
-    let client_secret = std::env::var("PIPEDREAM_CLIENT_SECRET").ok()?;
-    let project_id = std::env::var("PIPEDREAM_PROJECT_ID").ok()?;
+fn build_pipedream_client(
+    launch_config: &config::LaunchConfig,
+) -> Option<Arc<chronicle_pipedream_connect::PipedreamClient>> {
+    let client_id = launch_config.integrations.pipedream.client_id.clone()?;
+    let client_secret = launch_config.integrations.pipedream.client_secret.clone()?;
+    let project_id = launch_config.integrations.pipedream.project_id.clone()?;
 
     if client_id.is_empty() || client_secret.is_empty() {
         return None;
     }
 
-    tracing::info!("Pipedream integration configured (project: {project_id})");
-    Some(Arc::new(pipedream_connect::PipedreamClient::new(
+    tracing::info!(
+        project_id = %project_id,
+        environment = ?launch_config.integrations.pipedream.environment,
+        "Pipedream integration configured"
+    );
+    Some(Arc::new(chronicle_pipedream_connect::PipedreamClient::new(
         client_id,
         client_secret,
         project_id,
-        pipedream_connect::Environment::Development,
+        launch_config.integrations.pipedream.environment.to_sdk(),
     )))
 }
 
-fn build_email_service() -> Arc<dyn chronicle_interfaces::EmailService> {
-    let template_map = parse_template_map();
-    Arc::from(chronicle_integrations::resend::build_email_service(
-        template_map,
-    ))
-}
-
-fn parse_template_map() -> std::collections::HashMap<String, String> {
-    std::env::var("RESEND_TEMPLATES_JSON")
-        .ok()
-        .and_then(|json| serde_json::from_str(&json).ok())
-        .unwrap_or_default()
+fn build_email_service(
+    launch_config: &config::LaunchConfig,
+) -> Arc<dyn chronicle_interfaces::EmailService> {
+    Arc::from(
+        chronicle_integrations::resend::build_email_service_with_options(
+            launch_config.integrations.resend.api_key.clone(),
+            launch_config.integrations.resend.from_address.clone(),
+            launch_config.integrations.resend.templates.clone(),
+        ),
+    )
 }
 
 fn build_saas_state_postgres(
     pool: sqlx::PgPool,
     event_store: Arc<StoreBackend>,
     event_stream: Arc<StreamBackend>,
+    launch_config: &config::LaunchConfig,
+    runtime_config: SaasRuntimeConfig,
 ) -> SaasAppState {
     use chronicle_infra::postgres::repositories::*;
 
-    let jwt_secret = std::env::var("AUTH_SECRET")
-        .unwrap_or_else(|_| "dev-secret-change-in-production-min-32-chars!!".into());
-
     SaasAppState::new(
-        &jwt_secret,
+        &launch_config.security.auth_secret,
         Arc::new(PgTenantRepo::new(pool.clone())),
         Arc::new(PgUserRepo::new(pool.clone())),
         Arc::new(PgRunRepo::new(pool.clone())),
@@ -212,24 +241,24 @@ fn build_saas_state_postgres(
         Arc::new(PgAgentEndpointConfigRepo::new(pool.clone())),
         Arc::new(PgPipedreamTriggerRepo::new(pool.clone())),
         Arc::new(PgInvitationRepo::new(pool)),
-        build_pipedream_client(),
-        build_email_service(),
+        build_pipedream_client(launch_config),
+        build_email_service(launch_config),
         event_store,
         event_stream,
+        runtime_config,
     )
 }
 
 fn build_saas_state_memory(
     event_store: Arc<StoreBackend>,
     event_stream: Arc<StreamBackend>,
+    launch_config: &config::LaunchConfig,
+    runtime_config: SaasRuntimeConfig,
 ) -> SaasAppState {
     use chronicle_infra::memory::repositories::*;
 
-    let jwt_secret = std::env::var("AUTH_SECRET")
-        .unwrap_or_else(|_| "dev-secret-change-in-production-min-32-chars!!".into());
-
     SaasAppState::new(
-        &jwt_secret,
+        &launch_config.security.auth_secret,
         Arc::new(InMemoryTenantRepo::default()),
         Arc::new(InMemoryUserRepo::default()),
         Arc::new(InMemoryRunRepo::default()),
@@ -238,11 +267,38 @@ fn build_saas_state_memory(
         Arc::new(InMemoryAgentEndpointConfigRepo::default()),
         Arc::new(InMemoryPipedreamTriggerRepo::default()),
         Arc::new(InMemoryInvitationRepo::default()),
-        build_pipedream_client(),
-        build_email_service(),
+        build_pipedream_client(launch_config),
+        build_email_service(launch_config),
         event_store,
         event_stream,
+        runtime_config,
     )
+}
+
+async fn maybe_run_saas_migrations(launch_config: &config::LaunchConfig) -> Result<()> {
+    if launch_config.storage.saas.backend != config::BackendKind::Postgres {
+        return Ok(());
+    }
+
+    let db_url = require_database_url("storage.saas", &launch_config.storage.saas)?;
+    if launch_config.storage.saas.run_migrations {
+        tracing::info!("Running SaaS schema migrations...");
+        run_saas_migrations(db_url).await?;
+    } else {
+        tracing::info!("SaaS schema migrations disabled");
+    }
+
+    Ok(())
+}
+
+fn require_database_url<'a>(
+    section: &str,
+    store_config: &'a config::StoreConfig,
+) -> Result<&'a str> {
+    store_config
+        .database_url
+        .as_deref()
+        .ok_or_else(|| anyhow::anyhow!("{section}.database_url must be set when backend=postgres"))
 }
 
 async fn run_saas_migrations(database_url: &str) -> Result<()> {
@@ -258,7 +314,8 @@ async fn run_saas_migrations(database_url: &str) -> Result<()> {
 
     let mut migration_files: Vec<_> = std::fs::read_dir(migrations_dir)?
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "sql"))
+        .filter(|e| e.path().extension().map_or(false, |ext| ext == "sql"))
+        .filter(|e| e.file_name() != "001_create_events.sql")
         .collect();
     migration_files.sort_by_key(|e| e.file_name());
 

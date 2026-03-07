@@ -101,8 +101,7 @@ pub async fn invite_member(
         })
         .await?;
 
-    let app_url = std::env::var("NEXT_PUBLIC_APP_URL")
-        .unwrap_or_else(|_| "https://app.chronicle-labs.com".to_string());
+    let app_url = state.config.app_url.clone();
     let accept_url = format!("{app_url}/invite/{}", invitation.token);
 
     let inviter_name = user.name.unwrap_or_else(|| user.email.clone());

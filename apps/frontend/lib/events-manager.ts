@@ -1,61 +1,67 @@
-const EVENTS_MANAGER_URL = process.env.EVENTS_MANAGER_URL || "http://localhost:8080";
+const EVENTS_MANAGER_URL =
+  process.env.EVENTS_MANAGER_URL || "http://localhost:8080";
+
+export interface ChroniclePendingEntityRef {
+  entity_type: string;
+  entity_id: string;
+}
+
+export interface ChronicleEntityRef {
+  event_id: string;
+  entity_type: string;
+  entity_id: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ChronicleEvent {
+  event_id: string;
+  org_id: string;
+  source: string;
+  topic: string;
+  event_type: string;
+  event_time: string;
+  ingestion_time: string;
+  payload?: Record<string, unknown> | null;
+  entity_refs?: ChroniclePendingEntityRef[];
+  raw_body?: string | null;
+}
+
+export interface ChronicleEventResult {
+  event: ChronicleEvent;
+  entity_refs?: ChronicleEntityRef[];
+  search_distance?: number | null;
+}
 
 export interface IngestEventRequest {
+  org_id: string;
   source: string;
-  source_event_id: string;
+  topic: string;
   event_type: string;
-  conversation_id: string;
-  ticket_id?: string;
-  customer_id?: string;
-  actor_type: "customer" | "agent" | "system";
-  actor_id: string;
-  actor_name?: string;
-  payload: Record<string, unknown>;
-  contains_pii?: boolean;
-  occurred_at?: string;
-  tenant_id?: string;
+  entities?: Record<string, string>;
+  payload?: Record<string, unknown>;
+  timestamp?: string;
 }
 
 export interface IngestResponse {
-  event_id: string;
-  ingested: boolean;
-  message: string;
-}
-
-export interface EventEnvelope {
-  event_id: string;
-  tenant_id: string;
-  source: string;
-  source_event_id: string;
-  event_type: string;
-  occurred_at: string;
-  ingested_at: string;
-  subject: {
-    conversation_id: string;
-    ticket_id?: string;
-    customer_id?: string;
-  };
-  actor: {
-    actor_type: string;
-    actor_id: string;
-    name?: string;
-  };
-  payload: Record<string, unknown>;
+  event_ids: string[];
+  count: number;
 }
 
 export interface EventsQueryParams {
-  tenant_id?: string;
+  org_id?: string;
   source?: string;
+  topic?: string;
   event_type?: string;
-  conversation_id?: string;
+  entity_type?: string;
+  entity_id?: string;
   limit?: number;
   offset?: number;
-  start_time?: string;
-  end_time?: string;
+  since?: string;
 }
 
 export interface EventsResponse {
-  events: EventEnvelope[];
+  events: ChronicleEventResult[];
   total: number;
   has_more: boolean;
 }
@@ -68,7 +74,7 @@ class EventsManagerClient {
   }
 
   async ingestEvent(event: IngestEventRequest): Promise<IngestResponse> {
-    const response = await fetch(`${this.baseUrl}/api/ingest`, {
+    const response = await fetch(`${this.baseUrl}/v1/events`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,17 +92,18 @@ class EventsManagerClient {
 
   async queryEvents(params: EventsQueryParams): Promise<EventsResponse> {
     const searchParams = new URLSearchParams();
-    
-    if (params.tenant_id) searchParams.set("tenant_id", params.tenant_id);
+
+    if (params.org_id) searchParams.set("org_id", params.org_id);
     if (params.source) searchParams.set("source", params.source);
+    if (params.topic) searchParams.set("topic", params.topic);
     if (params.event_type) searchParams.set("event_type", params.event_type);
-    if (params.conversation_id) searchParams.set("conversation_id", params.conversation_id);
+    if (params.entity_type) searchParams.set("entity_type", params.entity_type);
+    if (params.entity_id) searchParams.set("entity_id", params.entity_id);
     if (params.limit) searchParams.set("limit", params.limit.toString());
     if (params.offset) searchParams.set("offset", params.offset.toString());
-    if (params.start_time) searchParams.set("start", params.start_time);
-    if (params.end_time) searchParams.set("end", params.end_time);
+    if (params.since) searchParams.set("since", params.since);
 
-    const response = await fetch(`${this.baseUrl}/api/events/query?${searchParams}`, {
+    const response = await fetch(`${this.baseUrl}/v1/events?${searchParams}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -108,34 +115,25 @@ class EventsManagerClient {
       throw new Error(`Failed to query events: ${error}`);
     }
 
-    const data = await response.json();
+    const events = (await response.json()) as ChronicleEventResult[];
     return {
-      events: data.events || [],
-      total: data.count || 0,
-      has_more: false,
+      events,
+      total: events.length,
+      has_more: params.limit ? events.length >= params.limit : false,
     };
   }
 
-  async listEvents(params?: { limit?: number; source?: string; tenant_id?: string }): Promise<EventEnvelope[]> {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", params.limit.toString());
-    if (params?.source) searchParams.set("source", params.source);
-    if (params?.tenant_id) searchParams.set("tenant_id", params.tenant_id);
-
-    const response = await fetch(`${this.baseUrl}/api/events/query?${searchParams}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  async listEvents(params?: {
+    limit?: number;
+    source?: string;
+    org_id?: string;
+  }): Promise<ChronicleEventResult[]> {
+    const query = await this.queryEvents({
+      org_id: params?.org_id,
+      source: params?.source,
+      limit: params?.limit,
     });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Failed to list events: ${error}`);
-    }
-
-    const data = await response.json();
-    return data.events || [];
+    return query.events;
   }
 
   async healthCheck(): Promise<boolean> {
