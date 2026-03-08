@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { ConfirmDestroyModal } from "@/shared/components/confirm-destroy-modal";
 import {
@@ -11,6 +11,8 @@ import {
 } from "@/shared/environment-ui";
 import { fetcher } from "@/shared/fetcher";
 import type { EnvironmentRecord } from "@/shared/types";
+
+const RELATIVE_TIME_REFRESH_MS = 60_000;
 
 function Skeleton({ className }: { className?: string }) {
   return (
@@ -62,8 +64,23 @@ function SkeletonCard() {
 
 function RelativeTime({ date }: { date: string | null }) {
   if (!date) return <span className="text-tertiary">never</span>;
+
+  return <RelativeTimeValue key={date} date={date} />;
+}
+
+function RelativeTimeValue({ date }: { date: string }) {
+  const [nowMs, setNowMs] = useState(() => new Date(date).getTime());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, RELATIVE_TIME_REFRESH_MS);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const d = new Date(date);
-  const diff = Date.now() - d.getTime();
+  const diff = nowMs - d.getTime();
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return <span>just now</span>;
   if (mins < 60) return <span>{mins}m ago</span>;

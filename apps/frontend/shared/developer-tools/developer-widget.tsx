@@ -69,7 +69,11 @@ export function DeveloperWidget() {
   const { data: session } = useSession();
   const [clickCount, setClickCount] = useState(0);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [isLocalHost, setIsLocalHost] = useState(false);
+  const [isLocalHost] = useState(
+    () =>
+      typeof window !== "undefined"
+      && LOCAL_HOSTNAMES.has(window.location.hostname)
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [activeTab, setActiveTab] = useState<DebugTabId>("posthog");
@@ -139,14 +143,6 @@ export function DeveloperWidget() {
     [analyticsDebugInfo, host, pathname, sentryDebugInfo, session?.user?.id, session?.user?.tenantId],
   );
   const activeTabContent = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    setIsLocalHost(LOCAL_HOSTNAMES.has(window.location.hostname));
-  }, []);
 
   useEffect(() => {
     if (clickCount === 0) {

@@ -316,6 +316,7 @@ where
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
+#[ignore = "manual benchmark"]
 async fn bench_read_performance() {
     let pg = PostgresBackend::new(PG_URL).await.unwrap();
     pg.run_migrations().await.ok();

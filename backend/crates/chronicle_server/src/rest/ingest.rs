@@ -6,9 +6,6 @@ use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
 use chronicle_core::event::EventBuilder;
-use chronicle_core::ids::{EventId, EventType, OrgId, Source, Topic};
-use chronicle_core::media::MediaAttachment;
-use chronicle_store::traits::EventStore;
 
 use super::error::ApiError;
 use crate::ServerState;

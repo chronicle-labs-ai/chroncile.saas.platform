@@ -10,10 +10,9 @@
 
 use std::sync::Arc;
 
-use chronicle_core::entity_ref::EntityRef;
 use chronicle_core::event::EventBuilder;
 use chronicle_core::ids::*;
-use chronicle_core::link::{EventLink, LinkDirection};
+use chronicle_core::link::LinkDirection;
 use chronicle_core::media::MediaAttachment;
 use chronicle_core::query::*;
 use chronicle_embed::model::MockEmbeddingModel;
@@ -22,10 +21,8 @@ use chronicle_ingest::{BatchConfig, Batcher};
 use chronicle_link::LinkService;
 use chronicle_query::QueryService;
 use chronicle_store::memory::InMemoryBackend;
-use chronicle_store::traits::*;
 use chronicle_store::StorageEngine;
 use chronicle_test_fixtures::factories;
-use chrono::Utc;
 use std::time::Duration;
 
 /// Create a full service stack backed by InMemoryBackend.

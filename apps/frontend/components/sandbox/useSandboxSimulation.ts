@@ -265,13 +265,15 @@ export function useSandboxSimulation(
   const [nodeActivity, setNodeActivity] = useState<Record<string, NodeActivity>>({});
   const [edgeParticles, setEdgeParticles] = useState<EdgeParticle[]>([]);
   const [processedEvents, setProcessedEvents] = useState<SandboxEvent[]>([]);
-  const [activeEdgeIds, setActiveEdgeIds] = useState<Set<string>>(new Set());
 
   const particleIdRef = useRef(0);
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
-  nodesRef.current = nodes;
-  edgesRef.current = edges;
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
 
   /* Node lookup map */
   const nodeMap = useMemo(() => {
@@ -374,11 +376,6 @@ export function useSandboxSimulation(
                 ? "#00ff88"
                 : "#ff3b3b";
             emitParticle(edgeId, color);
-            setActiveEdgeIds((prev) => {
-              const next = new Set(prev);
-              next.add(edgeId);
-              return next;
-            });
           }
           queue.push(childId);
         }
@@ -456,23 +453,15 @@ export function useSandboxSimulation(
         }
         return changed ? next : prev;
       });
-
-      // Decay active edges
-      setActiveEdgeIds((prev) => {
-        if (prev.size === 0) return prev;
-        // Keep active if there are particles on it
-        return prev;
-      });
     }, 30);
 
     return () => clearInterval(raf);
   }, [mode, speed, edgeParticles.length]);
 
-  /* ---- Decay active edges when no particles ---- */
-  useEffect(() => {
-    const activeWithParticles = new Set(edgeParticles.map((p) => p.edgeId));
-    setActiveEdgeIds(activeWithParticles);
-  }, [edgeParticles]);
+  const activeEdgeIds = useMemo(
+    () => new Set(edgeParticles.map((particle) => particle.edgeId)),
+    [edgeParticles]
+  );
 
   return {
     mode,

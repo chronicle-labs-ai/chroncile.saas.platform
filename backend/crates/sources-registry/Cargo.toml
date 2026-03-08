@@ -6,6 +6,9 @@ license.workspace = true
 rust-version.workspace = true
 description = "Source registration and discovery"
 
+[lints]
+workspace = true
+
 [dependencies]
 # Internal
 chronicle_sources_core = { workspace = true }

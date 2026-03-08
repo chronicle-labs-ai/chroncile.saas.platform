@@ -150,7 +150,7 @@ mod event_tests {
 }
 
 mod link_tests {
-    use chronicle_core::ids::{EventId, OrgId};
+    use chronicle_core::ids::OrgId;
     use chronicle_core::link::LinkDirection;
     use chronicle_core::query::GraphQuery;
     use chronicle_store::memory::InMemoryBackend;

@@ -164,7 +164,7 @@ impl Tuid {
     /// The full 128-bit value.
     #[inline]
     pub fn as_u128(&self) -> u128 {
-        ((self.nanos_since_epoch() as u128) << 64) | (self.inc() as u128)
+        (u128::from(self.nanos_since_epoch()) << 64) | u128::from(self.inc())
     }
 
     /// Big-endian byte representation (sorts identically to the Tuid).
@@ -247,14 +247,21 @@ fn monotonic_nanos_since_epoch() -> u64 {
 
     static START_TIME: std::sync::LazyLock<(u64, Instant)> =
         std::sync::LazyLock::new(|| (nanos_since_epoch(), Instant::now()));
-    START_TIME.0 + START_TIME.1.elapsed().as_nanos() as u64
+    START_TIME
+        .0
+        .saturating_add(saturating_u64_from_u128(START_TIME.1.elapsed().as_nanos()))
+}
+
+#[inline]
+fn saturating_u64_from_u128(value: u128) -> u64 {
+    u64::try_from(value).unwrap_or(u64::MAX)
 }
 
 fn nanos_since_epoch() -> u64 {
     if let Ok(duration_since_epoch) = web_time::SystemTime::UNIX_EPOCH.elapsed() {
-        let mut nanos = duration_since_epoch.as_nanos() as u64;
+        let mut nanos = saturating_u64_from_u128(duration_since_epoch.as_nanos());
         if cfg!(target_arch = "wasm32") {
-            nanos += random_u64() % 1_000_000;
+            nanos = nanos.saturating_add(random_u64() % 1_000_000);
         }
         nanos
     } else {

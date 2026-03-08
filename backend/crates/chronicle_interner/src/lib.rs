@@ -187,6 +187,7 @@ struct StringInterner {
 }
 
 impl StringInterner {
+    #[cfg(test)]
     fn len(&self) -> usize {
         self.map.len()
     }

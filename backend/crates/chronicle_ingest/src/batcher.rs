@@ -6,7 +6,6 @@
 //!
 //! Design adapted from Rerun's `ChunkBatcher` pattern.
 
-use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::mpsc;
@@ -188,8 +187,9 @@ fn estimate_event_size(event: &Event) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
+
     use chronicle_store::memory::InMemoryBackend;
-    use chronicle_store::traits::EventStore;
     use chronicle_test_fixtures::factories;
 
     fn make_engine() -> (StorageEngine, Arc<InMemoryBackend>) {

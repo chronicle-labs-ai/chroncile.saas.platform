@@ -9,10 +9,8 @@
 //! be called from any test harness with any backend instance.
 
 use chronicle_core::{
-    event::EventBuilder,
     ids::{EntityId, EntityType, EventId, OrgId, Source},
-    query::{OrderBy, StructuredQuery, TimelineQuery},
-    time_range::TimeRange,
+    query::{OrderBy, StructuredQuery},
 };
 use chronicle_store::traits::{EntityRefStore, EventStore};
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Trace, HumanActionAudit, ActionAnnotation } from "@/lib/labeling/types";
 import { ConfidenceBar } from "./ConfidenceBar";
 import { StarRating } from "./StarRating";
@@ -17,7 +17,24 @@ interface LabelingPanelProps {
   saving?: boolean;
 }
 
-export function LabelingPanel({
+function getInitialAuditValues(trace: Trace) {
+  const existingAudit = trace.humanAudit;
+  const auto = trace.autoAudit;
+
+  return {
+    correctionSummary:
+      existingAudit?.correction_summary ?? auto?.correction_summary ?? "",
+    criticalErrors: existingAudit?.critical_errors ?? auto?.critical_errors ?? [],
+    notes: existingAudit?.notes ?? "",
+    overallScore: existingAudit?.overall_score ?? auto?.overall_score ?? 3,
+  };
+}
+
+export function LabelingPanel(props: LabelingPanelProps) {
+  return <LabelingPanelForm key={props.trace.id} {...props} />;
+}
+
+function LabelingPanelForm({
   trace,
   actionAnnotations,
   onSave,
@@ -29,29 +46,18 @@ export function LabelingPanel({
   saving,
 }: LabelingPanelProps) {
   const auto = trace.autoAudit;
-
-  const existingAudit = trace.humanAudit;
+  const initialAuditValues = getInitialAuditValues(trace);
   const [overallScore, setOverallScore] = useState(
-    existingAudit?.overall_score ?? auto?.overall_score ?? 3
+    initialAuditValues.overallScore
   );
   const [criticalErrors, setCriticalErrors] = useState<string[]>(
-    existingAudit?.critical_errors ?? auto?.critical_errors ?? []
+    initialAuditValues.criticalErrors
   );
   const [correctionSummary, setCorrectionSummary] = useState(
-    existingAudit?.correction_summary ?? auto?.correction_summary ?? ""
+    initialAuditValues.correctionSummary
   );
-  const [notes, setNotes] = useState(existingAudit?.notes ?? "");
+  const [notes, setNotes] = useState(initialAuditValues.notes);
   const [newError, setNewError] = useState("");
-
-  useEffect(() => {
-    const ea = trace.humanAudit;
-    const aa = trace.autoAudit;
-    setOverallScore(ea?.overall_score ?? aa?.overall_score ?? 3);
-    setCriticalErrors(ea?.critical_errors ?? aa?.critical_errors ?? []);
-    setCorrectionSummary(ea?.correction_summary ?? aa?.correction_summary ?? "");
-    setNotes(ea?.notes ?? "");
-    setNewError("");
-  }, [trace.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addError = () => {
     const trimmed = newError.trim();

@@ -5,13 +5,10 @@
 
 #![cfg(feature = "postgres")]
 
-use std::sync::Arc;
-
 use chronicle_core::ids::*;
 use chronicle_core::query::*;
 use chronicle_store::postgres::PostgresBackend;
 use chronicle_store::traits::*;
-use chronicle_store::StorageEngine;
 use chronicle_test_fixtures::{factories, trait_tests};
 
 const TEST_DB_URL: &str = "postgres://chronicle:chronicle@localhost:5433/chronicle";
@@ -25,18 +22,21 @@ async fn backend() -> PostgresBackend {
 }
 
 #[tokio::test]
+#[ignore = "requires local Postgres on :5433"]
 async fn pg_trait_suite_events() {
     let b = backend().await;
     trait_tests::run_event_store_tests(&b).await;
 }
 
 #[tokio::test]
+#[ignore = "requires local Postgres on :5433"]
 async fn pg_trait_suite_entity_refs() {
     let b = backend().await;
     trait_tests::run_entity_ref_tests(&b, &b).await;
 }
 
 #[tokio::test]
+#[ignore = "requires local Postgres on :5433"]
 async fn pg_insert_and_query() {
     let b = backend().await;
 
@@ -68,6 +68,7 @@ async fn pg_insert_and_query() {
 }
 
 #[tokio::test]
+#[ignore = "requires local Postgres on :5433"]
 async fn pg_timeline() {
     let b = backend().await;
 
@@ -100,6 +101,7 @@ async fn pg_timeline() {
 }
 
 #[tokio::test]
+#[ignore = "requires local Postgres on :5433"]
 async fn pg_entity_linking() {
     let b = backend().await;
 
@@ -143,8 +145,10 @@ async fn pg_entity_linking() {
 }
 
 #[tokio::test]
+#[ignore = "requires local Postgres on :5433"]
 async fn pg_event_links() {
     let b = backend().await;
+    let org_id = OrgId::new("pg_lk");
 
     let a = factories::stripe_payment("pg_lk", "cust_lk", 100);
     let b_evt = factories::support_ticket("pg_lk", "cust_lk", "Issue");
@@ -153,9 +157,9 @@ async fn pg_event_links() {
     b.insert_events(&[a, b_evt]).await.unwrap();
 
     let link = factories::causal_link(id_a, id_b, 0.9);
-    b.create_link(&link).await.unwrap();
+    b.create_link(&org_id, &link).await.unwrap();
 
-    let found = b.get_links_for_event(&id_a).await.unwrap();
+    let found = b.get_links_for_event(&org_id, &id_a).await.unwrap();
     assert_eq!(found.len(), 1);
     assert_eq!(found[0].link_type, "caused_by");
 }

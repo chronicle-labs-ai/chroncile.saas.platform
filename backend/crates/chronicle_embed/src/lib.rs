@@ -21,7 +21,7 @@ use std::sync::Arc;
 use chronicle_core::error::ChronicleError;
 use chronicle_core::event::Event;
 use chronicle_core::ids::OrgId;
-use chronicle_store::traits::{EmbeddingStore, EventEmbedding};
+use chronicle_store::traits::EventEmbedding;
 use chronicle_store::StorageEngine;
 use model::EmbeddingModel;
 

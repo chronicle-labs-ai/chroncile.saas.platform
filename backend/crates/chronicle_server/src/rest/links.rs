@@ -5,7 +5,7 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
-use chronicle_core::ids::{Confidence, EntityId, EntityType, EventId, LinkId, OrgId};
+use chronicle_core::ids::{Confidence, EventId, LinkId, OrgId};
 use chronicle_core::link::EventLink;
 use chrono::Utc;
 

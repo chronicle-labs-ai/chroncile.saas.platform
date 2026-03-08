@@ -5,7 +5,6 @@
 //! (like `KurrentBackend` delegating refs/links/embeddings to Postgres).
 
 use async_trait::async_trait;
-use std::sync::Arc;
 
 use chronicle_core::{
     error::StoreError,

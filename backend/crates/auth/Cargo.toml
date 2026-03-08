@@ -3,6 +3,9 @@ name = "chronicle_auth"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 chronicle_domain = { workspace = true }
 chronicle_interfaces = { workspace = true }

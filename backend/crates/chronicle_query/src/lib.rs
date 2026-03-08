@@ -7,15 +7,13 @@
 //! - **Discovery**: list sources, entity types, schemas
 //! - **Result enrichment**: attach entity refs to results when requested
 
-use std::sync::Arc;
-
 use chronicle_core::error::ChronicleError;
-use chronicle_core::ids::{EntityId, EntityType, EventId, EventType, OrgId, Source};
+use chronicle_core::ids::{EntityType, EventId, EventType, OrgId, Source};
 use chronicle_core::query::{
     EventResult, GraphQuery, SemanticQuery, StructuredQuery, TimelineQuery,
 };
 use chronicle_store::{
-    EntityInfo, EntityTypeInfo, SchemaRegistry, SourceInfo, SourceSchema, StorageEngine,
+    EntityInfo, EntityTypeInfo, SourceInfo, SourceSchema, StorageEngine,
 };
 
 /// Unified query interface over the [`StorageEngine`].
@@ -137,6 +135,8 @@ impl QueryService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
+
     use chronicle_core::ids::{EntityId, EntityType, OrgId, Source};
     use chronicle_core::query::OrderBy;
     use chronicle_store::memory::InMemoryBackend;

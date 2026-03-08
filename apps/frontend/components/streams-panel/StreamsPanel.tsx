@@ -32,6 +32,36 @@ export interface StreamsPanelProps {
   className?: string;
 }
 
+function RecordingDuration({
+  eventCount,
+  startedAt,
+}: {
+  eventCount: number;
+  startedAt: number;
+}) {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [startedAt]);
+
+  return (
+    <span
+      style={{
+        fontFamily: "monospace",
+        fontSize: 12,
+        color: TIMELINE_THEME.text_muted,
+      }}
+    >
+      {eventCount} events · {elapsedSeconds}s
+    </span>
+  );
+}
+
 export function StreamsPanel({
   recordingState,
   streams = defaultStreams,
@@ -43,12 +73,6 @@ export function StreamsPanel({
   const [streamsToRecord, setStreamsToRecord] = useState<Set<StreamId>>(
     new Set(streams.filter((s) => s.enabled).map((s) => s.id))
   );
-  const [recordingTick, setRecordingTick] = useState(0);
-  useEffect(() => {
-    if (recordingState.kind !== "Recording") return;
-    const id = setInterval(() => setRecordingTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
-  }, [recordingState.kind]);
 
   const startSelecting = useCallback(() => {
     setStreamsToRecord(new Set(streams.filter((s) => s.enabled).map((s) => s.id)));
@@ -239,9 +263,11 @@ export function StreamsPanel({
                 <span className="animate-pulse" style={{ fontSize: 11, color: TIMELINE_THEME.playhead }}>
                   RECORDING
                 </span>
-                <span style={{ fontFamily: "monospace", fontSize: 12, color: TIMELINE_THEME.text_muted }}>
-                  {recordingState.eventCount} events · {Math.round((Date.now() - recordingState.startedAt) / 1000)}s
-                </span>
+                <RecordingDuration
+                  key={recordingState.startedAt}
+                  eventCount={recordingState.eventCount}
+                  startedAt={recordingState.startedAt}
+                />
               </div>
             )}
 

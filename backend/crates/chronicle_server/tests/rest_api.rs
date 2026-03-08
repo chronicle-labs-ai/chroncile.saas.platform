@@ -4,7 +4,6 @@
 //! with reqwest, and verifies responses. Uses InMemoryBackend
 //! so no database is needed.
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 
 use chronicle_server::rest::build_router;

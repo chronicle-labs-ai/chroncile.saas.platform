@@ -15,9 +15,9 @@ pub fn routes() -> Router<ServerState> {
     Router::new()
         .route("/v1/discover/sources", get(describe_sources))
         .route("/v1/discover/entity-types", get(describe_entity_types))
-        .route("/v1/discover/entities/{entity_type}", get(list_entities))
+        .route("/v1/discover/entities/:entity_type", get(list_entities))
         .route(
-            "/v1/discover/schema/{source}/{event_type}",
+            "/v1/discover/schema/:source/:event_type",
             get(describe_schema),
         )
 }

@@ -6,6 +6,9 @@ license.workspace = true
 rust-version.workspace = true
 description = "Core abstractions for event source integrations"
 
+[lints]
+workspace = true
+
 [dependencies]
 # Internal
 chronicle_domain = { workspace = true }

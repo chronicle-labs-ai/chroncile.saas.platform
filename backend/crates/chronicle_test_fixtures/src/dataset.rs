@@ -5,7 +5,6 @@
 //! so assertions are stable.
 
 use chronicle_core::event::Event;
-use chronicle_core::ids::EventId;
 use chronicle_core::link::EventLink;
 
 use crate::factories;

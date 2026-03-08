@@ -309,7 +309,11 @@ mod tests {
             .build();
 
         assert_eq!(params.len(), 1, "Only org_id should be bound");
-        assert!(!sql.contains("e.source"));
+        assert!(sql.contains("WHERE e.org_id = $1"));
+        assert!(!sql.contains("e.source = $"));
+        assert!(!sql.contains("e.event_type = $"));
+        assert!(!sql.contains("er.entity_type = $"));
+        assert!(!sql.contains("er.entity_id = $"));
     }
 
     #[test]

@@ -4,7 +4,6 @@
 //! pgvector extension with HNSW index would replace the array-based approach.
 
 use async_trait::async_trait;
-use sqlx::Row;
 
 use chronicle_core::error::StoreError;
 use chronicle_core::ids::*;

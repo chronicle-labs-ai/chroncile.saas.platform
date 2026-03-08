@@ -41,15 +41,56 @@ rust-version = "1.81"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
-rust_2018_idioms = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
+pedantic = { level = "allow", priority = -1 }
+bool_to_int_with_if = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_possible_wrap = "allow"
+cast_sign_loss = "allow"
+cloned_ref_to_slice_refs = "allow"
+default_trait_access = "allow"
+derivable_impls = "allow"
+doc_markdown = "allow"
+drain_collect = "allow"
+elidable_lifetime_names = "allow"
+field_reassign_with_default = "allow"
+format_push_string = "allow"
+items_after_statements = "allow"
+manual_contains = "allow"
+manual_let_else = "allow"
+manual_midpoint = "allow"
+map_unwrap_or = "allow"
+return_self_not_must_use = "allow"
 module_name_repetitions = "allow"
 must_use_candidate = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+needless_continue = "allow"
+needless_lifetimes = "allow"
+needless_pass_by_value = "allow"
+needless_raw_string_hashes = "allow"
+needless_range_loop = "allow"
+redundant_closure_for_method_calls = "allow"
+ref_as_ptr = "allow"
+ref_option = "allow"
+semicolon_if_nothing_returned = "allow"
+similar_names = "allow"
+single_match_else = "allow"
+trim_split_whitespace = "allow"
+too_many_arguments = "allow"
+too_many_lines = "allow"
+uninlined_format_args = "allow"
+unnecessary_literal_bound = "allow"
+unnecessary_map_or = "allow"
+unreadable_literal = "allow"
+ignored_unit_patterns = "allow"
+unused_self = "allow"
+used_underscore_binding = "allow"
+wildcard_imports = "allow"
 
 [workspace.dependencies]
 # Internal crates

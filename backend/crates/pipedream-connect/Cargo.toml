@@ -7,6 +7,9 @@ description = "Typed async Rust client for the Pipedream Connect REST API"
 keywords = ["pipedream", "api", "async", "integration"]
 categories = ["api-bindings", "web-programming::http-client"]
 
+[lints]
+workspace = true
+
 [dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }

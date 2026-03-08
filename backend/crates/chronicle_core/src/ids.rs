@@ -313,7 +313,6 @@ mod tests {
         assert_eq!(c.to_string(), "0.85");
     }
 
-    #[cfg(feature = "serde")]
     #[test]
     fn event_id_serde_round_trip() {
         let id = EventId::new();

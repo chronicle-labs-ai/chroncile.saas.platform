@@ -134,7 +134,7 @@ mod tests {
         let start = now - chrono::Duration::minutes(5);
         let end = now;
 
-        let events = vec![
+        let events = [
             make_test_event(start, "event.a", None),
             make_test_event(end, "event.b", None),
         ];

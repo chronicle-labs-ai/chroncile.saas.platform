@@ -188,12 +188,6 @@ mod tests {
         "data": {"customer_id": 777}
     }"#;
 
-    const TICKET_CLOSED: &str = r#"{
-        "id": 101, "type": "ticket-closed", "object_id": 500, "object_type": "Ticket",
-        "created_datetime": "2024-03-15T11:00:00.000000", "user_id": 42,
-        "data": {}
-    }"#;
-
     const MESSAGE_CREATED: &str = r#"{
         "id": 200, "type": "ticket-message-created", "object_id": 8000, "object_type": "TicketMessage",
         "created_datetime": "2024-03-15T10:35:00.000000", "user_id": null,

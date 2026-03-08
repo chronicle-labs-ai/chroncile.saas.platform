@@ -211,6 +211,7 @@ async fn setup_hybrid(org_tag: &str) -> (HybridBackend, StressDataset, tempfile:
 /// Seed a backend with the stress dataset: insert events and create links.
 async fn seed<T: EventStore + EventLinkStore>(backend: &T, ds: &StressDataset) {
     let t = Instant::now();
+    let org_id = OrgId::new(&ds.org_id);
 
     // Insert events in batches of 100.
     for chunk in ds.events.chunks(100) {
@@ -219,7 +220,10 @@ async fn seed<T: EventStore + EventLinkStore>(backend: &T, ds: &StressDataset) {
 
     // Create links.
     for link in &ds.links {
-        backend.create_link(link).await.expect("create link");
+        backend
+            .create_link(&org_id, link)
+            .await
+            .expect("create link");
     }
 
     let elapsed = t.elapsed();
@@ -388,11 +392,11 @@ async fn cross_backend_stress() {
     // --- Test 7: Event link graph ---
     eprintln!("[Test 7] Graph traversal (links)…");
     let mem_links = mem
-        .get_links_for_event(&mem_ds.links[0].source_event_id)
+        .get_links_for_event(&OrgId::new(&mem_ds.org_id), &mem_ds.links[0].source_event_id)
         .await
         .unwrap();
     let pg_links = pg
-        .get_links_for_event(&pg_ds.links[0].source_event_id)
+        .get_links_for_event(&OrgId::new(&pg_ds.org_id), &pg_ds.links[0].source_event_id)
         .await
         .unwrap();
 

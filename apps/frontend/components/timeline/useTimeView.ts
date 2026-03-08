@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MIN_HALF_WIDTH_MS,
   MAX_HALF_WIDTH_MS,
@@ -22,7 +22,10 @@ export function useTimeView(initialCenterMs?: number, initialHalfWidthMs?: numbe
   );
 
   const viewRef = useRef({ centerMs: 0, halfWidthMs: 0 });
-  viewRef.current = { centerMs, halfWidthMs };
+
+  useEffect(() => {
+    viewRef.current = { centerMs, halfWidthMs };
+  }, [centerMs, halfWidthMs]);
 
   const startMs = centerMs - halfWidthMs;
   const endMs = centerMs + halfWidthMs;

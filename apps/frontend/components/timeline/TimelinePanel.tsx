@@ -108,7 +108,10 @@ export function TimelinePanel({
   // Keep a live ref to the current time view so the interval can read it
   // without re-creating the effect on every range change.
   const timeViewRef = useRef({ centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs });
-  timeViewRef.current = { centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs };
+
+  useEffect(() => {
+    timeViewRef.current = { centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs };
+  }, [timeView.centerMs, timeView.halfWidthMs]);
 
   useEffect(() => {
     if (playback === "paused") {
@@ -125,7 +128,6 @@ export function TimelinePanel({
       const half = 10_000; // ±10 seconds = 20 second window
       // Position so playhead is at 75% of the window
       setRange(now - half * 1.5, now + half * 0.5);
-      setPlayheadMs(now);
       // Mark initial centering done so it won't override after pause
       hasInitialCentered.current = true;
     }
@@ -209,7 +211,10 @@ export function TimelinePanel({
      Attached to both the header time area and the rows container so zoom
      works anywhere on the timeline. */
   const wheelDepsRef = useRef({ xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth });
-  wheelDepsRef.current = { xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth };
+
+  useEffect(() => {
+    wheelDepsRef.current = { xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth };
+  }, [durationMs, labelWidth, pan, timeAreaWidth, xToTime, zoomAt]);
 
   useEffect(() => {
     const headerEl = timeAreaRef.current;

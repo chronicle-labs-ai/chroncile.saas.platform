@@ -3,6 +3,9 @@ name = "chronicle_integrations"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 chronicle_interfaces = { workspace = true }
 serde = { workspace = true }

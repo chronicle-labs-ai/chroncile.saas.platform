@@ -251,6 +251,7 @@ async fn bench_backend(
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
+#[ignore = "manual benchmark"]
 async fn benchmark_all_backends() {
     eprintln!("\n{}", "=".repeat(60));
     eprintln!("  CHRONICLE BACKEND BENCHMARK");

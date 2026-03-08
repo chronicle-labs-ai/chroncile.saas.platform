@@ -180,10 +180,10 @@ impl ChronicleFilterState {
             }
         }
 
-        if !self.entity_type_filter.is_empty() || !self.entity_id_filter.is_empty() {
-            if !self.payload_has_entity(payload_json) {
-                return false;
-            }
+        if (!self.entity_type_filter.is_empty() || !self.entity_id_filter.is_empty())
+            && !self.payload_has_entity(payload_json)
+        {
+            return false;
         }
 
         true

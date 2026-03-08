@@ -15,7 +15,7 @@ use crate::ServerState;
 pub fn routes() -> Router<ServerState> {
     Router::new()
         .route("/v1/events", get(query_events))
-        .route("/v1/timeline/{entity_type}/{entity_id}", get(timeline))
+        .route("/v1/timeline/:entity_type/:entity_id", get(timeline))
         .route("/v1/search", post(search))
 }
 

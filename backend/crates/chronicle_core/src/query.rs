@@ -97,19 +97,14 @@ pub enum GroupBy {
 }
 
 /// Ordering for result sets.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum OrderBy {
     EventTimeAsc,
+    #[default]
     EventTimeDesc,
     IngestionTimeAsc,
     IngestionTimeDesc,
-}
-
-impl Default for OrderBy {
-    fn default() -> Self {
-        Self::EventTimeDesc
-    }
 }
 
 /// The result of a query -- a single event with optional enrichments.

@@ -5,9 +5,9 @@
 
 use chronicle_core::event::{Event, EventBuilder};
 use chronicle_core::ids::{Confidence, EventId, LinkId};
-use chronicle_core::link::{EventLink, LinkDirection};
+use chronicle_core::link::EventLink;
 use chronicle_core::media::MediaAttachment;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 /// A Stripe payment event with a customer entity ref.
 pub fn stripe_payment(org_id: &str, customer_id: &str, amount: i64) -> Event {

@@ -14,8 +14,6 @@
 
 pub mod extractor;
 
-use std::sync::Arc;
-
 use chronicle_core::entity_ref::EntityRef;
 use chronicle_core::error::ChronicleError;
 use chronicle_core::ids::{EntityId, EntityType, EventId, LinkId, OrgId};
@@ -122,10 +120,11 @@ impl LinkService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chronicle_core::ids::{Confidence, EventId, LinkId, OrgId};
+    use std::sync::Arc;
+
+    use chronicle_core::ids::{Confidence, LinkId, OrgId};
     use chronicle_core::link::LinkDirection;
     use chronicle_store::memory::InMemoryBackend;
-    use chronicle_store::traits::EventStore;
     use chronicle_test_fixtures::factories;
     use chrono::Utc;
 

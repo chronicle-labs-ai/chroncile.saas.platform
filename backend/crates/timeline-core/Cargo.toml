@@ -5,6 +5,9 @@ edition = "2021"
 description = "Shared timeline panel core for native and web applications"
 license = "MIT"
 
+[lints]
+workspace = true
+
 [dependencies]
 # GUI - egui core only (no eframe)
 egui = "0.29"

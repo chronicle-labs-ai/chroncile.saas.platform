@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use chronicle_core::query::EventResult;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// SDK-level error type.
 #[derive(Debug, thiserror::Error)]

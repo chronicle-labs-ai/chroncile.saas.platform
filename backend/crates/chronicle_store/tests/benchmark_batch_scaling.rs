@@ -126,6 +126,7 @@ fn print_table(name: &str, results: &[ScaleResult]) {
 }
 
 #[tokio::test]
+#[ignore = "manual benchmark"]
 async fn benchmark_batch_scaling() {
     eprintln!("\n{}", "=".repeat(68));
     eprintln!("  BATCH SCALING BENCHMARK");

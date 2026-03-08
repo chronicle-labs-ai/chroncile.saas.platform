@@ -21,7 +21,6 @@ use chrono::{Duration, Utc};
 use sqlx::PgPool;
 
 use chronicle_core::event::{Event, EventBuilder};
-use chronicle_core::ids::*;
 use chronicle_store::postgres::PostgresBackend;
 use chronicle_store::traits::EventStore;
 
@@ -189,6 +188,7 @@ fn measure(label: &str, count: usize, elapsed: std::time::Duration) -> WriteResu
 }
 
 #[tokio::test]
+#[ignore = "manual benchmark"]
 async fn bench_write_overhead() {
     let pg = PostgresBackend::new(PG_URL).await.unwrap();
     ensure_chronicle_schema(&pg).await;

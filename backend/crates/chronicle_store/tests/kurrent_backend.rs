@@ -180,6 +180,7 @@ async fn kurrent_timeline_and_jit_linking() {
 #[tokio::test]
 async fn kurrent_event_links() {
     let b = setup("k_lk").await;
+    let org_id = OrgId::new("k_lk");
 
     let a = factories::stripe_payment("k_lk", "cust_lk", 100);
     let b_evt = factories::support_ticket("k_lk", "cust_lk", "Link test");
@@ -188,9 +189,9 @@ async fn kurrent_event_links() {
     b.insert_events(&[a, b_evt]).await.unwrap();
 
     let link = factories::causal_link(id_a, id_b, 0.9);
-    b.create_link(&link).await.unwrap();
+    b.create_link(&org_id, &link).await.unwrap();
 
-    let found = b.get_links_for_event(&id_a).await.unwrap();
+    let found = b.get_links_for_event(&org_id, &id_a).await.unwrap();
     assert_eq!(found.len(), 1);
     assert_eq!(found[0].link_type, "caused_by");
 }

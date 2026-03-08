@@ -1,9 +1,5 @@
 //! Server state shared across all route handlers.
 
-use std::sync::Arc;
-
-use chronicle_embed::EmbedService;
-use chronicle_ingest::{BatchConfig, Batcher};
 use chronicle_link::LinkService;
 use chronicle_query::QueryService;
 use chronicle_store::StorageEngine;
