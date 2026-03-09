@@ -173,6 +173,7 @@ pub struct Account {
     pub healthy: Option<bool>,
     pub dead: Option<bool>,
     pub app: Option<AccountApp>,
+    pub data: Option<serde_json::Value>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }

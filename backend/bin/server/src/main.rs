@@ -10,6 +10,8 @@ use std::borrow::Cow;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
+use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
@@ -175,7 +177,7 @@ async fn run(launch_config: config::LaunchConfig, config_path: Option<PathBuf>) 
             let db_url = require_database_url("storage.saas", &launch_config.storage.saas)?;
             tracing::info!("Using Postgres SaaS repositories");
             let pool = chronicle_infra::postgres::TracedPgPool::from(
-                sqlx::PgPool::connect(db_url)
+                connect_saas_pg_pool(db_url)
                     .await
                     .map_err(|e| anyhow::anyhow!("Failed to create SaaS connection pool: {e}"))?,
             );
@@ -379,7 +381,7 @@ fn require_database_url<'a>(
 }
 
 async fn run_saas_migrations(database_url: &str) -> Result<()> {
-    let pool = sqlx::PgPool::connect(database_url)
+    let pool = connect_saas_pg_pool(database_url)
         .await
         .map_err(|e| anyhow::anyhow!("Migration pool connect failed: {e}"))?;
 
@@ -400,13 +402,82 @@ async fn run_saas_migrations(database_url: &str) -> Result<()> {
         let path = entry.path();
         let sql = std::fs::read_to_string(&path)?;
         tracing::info!("Running migration: {}", path.display());
-        sqlx::raw_sql(&sql)
-            .execute(&pool)
-            .await
-            .map_err(|e| anyhow::anyhow!("Migration {} failed: {e}", path.display()))?;
+
+        let mut last_error: Option<sqlx::Error> = None;
+        for attempt in 1..=3 {
+            match sqlx::raw_sql(&sql).execute(&pool).await {
+                Ok(_) => {
+                    last_error = None;
+                    break;
+                }
+                Err(error) if is_retryable_db_error(&error) && attempt < 3 => {
+                    tracing::warn!(
+                        migration = %path.display(),
+                        attempt,
+                        error = %error,
+                        "Transient DB error running migration, retrying"
+                    );
+                    last_error = Some(error);
+                    tokio::time::sleep(Duration::from_millis(400)).await;
+                }
+                Err(error) => {
+                    last_error = Some(error);
+                    break;
+                }
+            }
+        }
+
+        if let Some(error) = last_error {
+            return Err(anyhow::anyhow!(
+                "Migration {} failed: {error}",
+                path.display()
+            ));
+        }
     }
 
     tracing::info!("Migrations complete");
     pool.close().await;
     Ok(())
+}
+
+async fn connect_saas_pg_pool(database_url: &str) -> Result<sqlx::PgPool, sqlx::Error> {
+    let mut delay = Duration::from_millis(300);
+    let mut last_error: Option<sqlx::Error> = None;
+
+    for attempt in 1..=5 {
+        let result = PgPoolOptions::new()
+            .max_connections(16)
+            .min_connections(1)
+            .acquire_timeout(Duration::from_secs(10))
+            .idle_timeout(Some(Duration::from_secs(60)))
+            .max_lifetime(Some(Duration::from_secs(60 * 15)))
+            .test_before_acquire(true)
+            .connect(database_url)
+            .await;
+
+        match result {
+            Ok(pool) => return Ok(pool),
+            Err(error) if is_retryable_db_error(&error) && attempt < 5 => {
+                tracing::warn!(
+                    attempt,
+                    error = %error,
+                    "Transient DB error creating SaaS pool, retrying"
+                );
+                last_error = Some(error);
+                tokio::time::sleep(delay).await;
+                delay = (delay * 2).min(Duration::from_secs(2));
+            }
+            Err(error) => return Err(error),
+        }
+    }
+
+    Err(last_error.expect("retry loop should set an error"))
+}
+
+fn is_retryable_db_error(error: &sqlx::Error) -> bool {
+    let detail = error.to_string();
+    detail.contains("error communicating with database")
+        || detail.contains("at EOF")
+        || detail.contains("Connection reset by peer")
+        || detail.contains("Broken pipe")
 }

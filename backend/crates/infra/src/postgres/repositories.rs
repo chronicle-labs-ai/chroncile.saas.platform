@@ -2,6 +2,8 @@ use async_trait::async_trait;
 use chronicle_store::postgres::TracedPgPool;
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use sqlx::Row;
+use std::future::Future;
+use std::time::Duration;
 
 fn naive_to_utc(naive: NaiveDateTime) -> chrono::DateTime<Utc> {
     Utc.from_utc_datetime(&naive)
@@ -29,6 +31,35 @@ fn to_repo_err(e: sqlx::Error) -> RepoError {
         }
         sqlx::Error::RowNotFound => RepoError::NotFound("row not found".to_string()),
         _ => RepoError::Internal(e.to_string()),
+    }
+}
+
+fn is_retryable_sqlx_error(err: &sqlx::Error) -> bool {
+    let detail = err.to_string();
+    detail.contains("error communicating with database")
+        || detail.contains("at EOF")
+        || detail.contains("Connection reset by peer")
+        || detail.contains("Broken pipe")
+}
+
+async fn with_sqlx_retry<T, Fut, Op>(mut op: Op) -> Result<T, sqlx::Error>
+where
+    Op: FnMut() -> Fut,
+    Fut: Future<Output = Result<T, sqlx::Error>>,
+{
+    let mut delay = Duration::from_millis(150);
+    let mut attempts = 0usize;
+
+    loop {
+        attempts += 1;
+        match op().await {
+            Ok(value) => return Ok(value),
+            Err(error) if is_retryable_sqlx_error(&error) && attempts < 4 => {
+                tokio::time::sleep(delay).await;
+                delay = (delay * 2).min(Duration::from_millis(1200));
+            }
+            Err(error) => return Err(error),
+        }
     }
 }
 
@@ -575,22 +606,25 @@ impl RunRepository for PgRunRepo {
     }
 
     async fn count_by_tenant(&self, tenant_id: &str) -> RepoResult<usize> {
-        let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM \"Run\" WHERE \"tenantId\" = $1")
-            .bind(tenant_id)
-            .fetch_one(&self.pool)
-            .await
-            .map_err(to_repo_err)?;
+        let row: (i64,) = with_sqlx_retry(|| {
+            sqlx::query_as("SELECT COUNT(*) FROM \"Run\" WHERE \"tenantId\" = $1")
+                .bind(tenant_id)
+                .fetch_one(&self.pool)
+        })
+        .await
+        .map_err(to_repo_err)?;
         Ok(row.0 as usize)
     }
 
     async fn count_by_status(&self, tenant_id: &str, status: &str) -> RepoResult<usize> {
-        let row: (i64,) =
+        let row: (i64,) = with_sqlx_retry(|| {
             sqlx::query_as("SELECT COUNT(*) FROM \"Run\" WHERE \"tenantId\" = $1 AND status = $2")
                 .bind(tenant_id)
                 .bind(status)
                 .fetch_one(&self.pool)
-                .await
-                .map_err(to_repo_err)?;
+        })
+        .await
+        .map_err(to_repo_err)?;
         Ok(row.0 as usize)
     }
 }
@@ -619,6 +653,51 @@ impl ConnectionRepository for PgConnectionRepo {
             .try_map(connection_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
     }
 
+    async fn upsert_by_tenant_provider(
+        &self,
+        input: CreateConnectionInput,
+        status: &str,
+    ) -> RepoResult<Connection> {
+        let now = Utc::now().naive_utc();
+        let existing_id: Option<String> = with_sqlx_retry(|| {
+            sqlx::query_scalar("SELECT id FROM \"Connection\" WHERE \"tenantId\" = $1 AND provider = $2 LIMIT 1")
+                .bind(&input.tenant_id)
+                .bind(&input.provider)
+                .fetch_optional(&self.pool)
+        })
+        .await
+        .map_err(to_repo_err)?;
+
+        if let Some(id) = existing_id {
+            return with_sqlx_retry(|| {
+                sqlx::query("UPDATE \"Connection\" SET \"accessToken\" = $2, \"refreshToken\" = $3, \"expiresAt\" = $4, \"pipedreamAuthId\" = $5, metadata = $6, status = $7, \"updatedAt\" = $8 WHERE id = $1 RETURNING *")
+                    .bind(&id)
+                    .bind(&input.access_token)
+                    .bind(&input.refresh_token)
+                    .bind(input.expires_at)
+                    .bind(&input.pipedream_auth_id)
+                    .bind(&input.metadata)
+                    .bind(status)
+                    .bind(now)
+                    .try_map(connection_from_row)
+                    .fetch_one(&self.pool)
+            })
+            .await
+            .map_err(to_repo_err);
+        }
+
+        let id = new_id();
+        with_sqlx_retry(|| {
+            sqlx::query("INSERT INTO \"Connection\" (id, \"tenantId\", provider, \"accessToken\", \"refreshToken\", \"expiresAt\", \"pipedreamAuthId\", metadata, status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *")
+            .bind(&id).bind(&input.tenant_id).bind(&input.provider).bind(&input.access_token)
+            .bind(&input.refresh_token).bind(input.expires_at).bind(&input.pipedream_auth_id)
+            .bind(&input.metadata).bind(status).bind(now).bind(now)
+            .try_map(connection_from_row).fetch_one(&self.pool)
+        })
+        .await
+        .map_err(to_repo_err)
+    }
+
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Connection>> {
         sqlx::query("SELECT * FROM \"Connection\" WHERE id = $1")
             .bind(id)
@@ -643,12 +722,14 @@ impl ConnectionRepository for PgConnectionRepo {
     }
 
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<Connection>> {
-        sqlx::query(
+        with_sqlx_retry(|| {
+            sqlx::query(
             "SELECT * FROM \"Connection\" WHERE \"tenantId\" = $1 ORDER BY \"createdAt\" DESC",
         )
         .bind(tenant_id)
         .try_map(connection_from_row)
         .fetch_all(&self.pool)
+        })
         .await
         .map_err(to_repo_err)
     }
@@ -801,12 +882,14 @@ impl PipedreamTriggerRepository for PgPipedreamTriggerRepo {
     }
 
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>> {
-        sqlx::query("SELECT * FROM \"PipedreamTrigger\" WHERE \"tenantId\" = $1")
-            .bind(tenant_id)
-            .try_map(trigger_from_row)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(to_repo_err)
+        with_sqlx_retry(|| {
+            sqlx::query("SELECT * FROM \"PipedreamTrigger\" WHERE \"tenantId\" = $1")
+                .bind(tenant_id)
+                .try_map(trigger_from_row)
+                .fetch_all(&self.pool)
+        })
+        .await
+        .map_err(to_repo_err)
     }
 
     async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger> {

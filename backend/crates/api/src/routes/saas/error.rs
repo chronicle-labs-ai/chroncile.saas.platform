@@ -9,6 +9,13 @@ pub struct ApiError {
 }
 
 impl ApiError {
+    fn expose_internal_details() -> bool {
+        cfg!(debug_assertions)
+            || std::env::var("EXPOSE_INTERNAL_ERRORS")
+                .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+                .unwrap_or(false)
+    }
+
     pub fn bad_request(msg: impl Into<String>) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,
@@ -77,7 +84,14 @@ impl From<RepoError> for ApiError {
             }
             RepoError::Internal(detail) => {
                 tracing::error!("Internal error: {detail}");
-                Self::internal()
+                if Self::expose_internal_details() {
+                    Self {
+                        status: StatusCode::INTERNAL_SERVER_ERROR,
+                        message: format!("Internal error: {detail}"),
+                    }
+                } else {
+                    Self::internal()
+                }
             }
         }
     }
@@ -101,7 +115,14 @@ impl From<chronicle_auth::error::AuthError> for ApiError {
             },
             chronicle_auth::error::AuthError::Internal(detail) => {
                 tracing::error!("Auth internal error: {detail}");
-                Self::internal()
+                if Self::expose_internal_details() {
+                    Self {
+                        status: StatusCode::INTERNAL_SERVER_ERROR,
+                        message: format!("Auth internal error: {detail}"),
+                    }
+                } else {
+                    Self::internal()
+                }
             }
         }
     }

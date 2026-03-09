@@ -262,7 +262,7 @@ export function ConnectionsClient({
       };
       showToastMessage(errorMessages[errorMessage] || `Error: ${errorMessage}`, "error");
     }
-  }, [successMessage, errorMessage, pipedreamSuccess, pipedreamError, pipedreamApp, initialConnections, showToastMessage, router]);
+  }, [successMessage, errorMessage, pipedreamSuccess, pipedreamError, pipedreamErrorDetail, pipedreamApp, initialConnections, showToastMessage, router]);
 
   useEffect(() => {
     if (showToast) {

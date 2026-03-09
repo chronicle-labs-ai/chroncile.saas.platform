@@ -472,6 +472,49 @@ impl ConnectionRepository for InMemoryConnectionRepo {
         Ok(conn)
     }
 
+    async fn upsert_by_tenant_provider(
+        &self,
+        input: CreateConnectionInput,
+        status: &str,
+    ) -> RepoResult<Connection> {
+        if let Some(existing) = self
+            .store
+            .iter()
+            .find(|e| e.value().tenant_id == input.tenant_id && e.value().provider == input.provider)
+            .map(|e| e.value().clone())
+        {
+            let mut conn = self
+                .store
+                .get_mut(&existing.id)
+                .ok_or_else(|| RepoError::NotFound(format!("connection: {}", existing.id)))?;
+            conn.access_token = input.access_token;
+            conn.refresh_token = input.refresh_token;
+            conn.expires_at = input.expires_at;
+            conn.pipedream_auth_id = input.pipedream_auth_id;
+            conn.metadata = input.metadata;
+            conn.status = status.to_string();
+            conn.updated_at = Utc::now();
+            return Ok(conn.clone());
+        }
+
+        let now = Utc::now();
+        let conn = Connection {
+            id: new_id(),
+            tenant_id: input.tenant_id,
+            provider: input.provider,
+            access_token: input.access_token,
+            refresh_token: input.refresh_token,
+            expires_at: input.expires_at,
+            pipedream_auth_id: input.pipedream_auth_id,
+            metadata: input.metadata,
+            status: status.to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        self.store.insert(conn.id.clone(), conn.clone());
+        Ok(conn)
+    }
+
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Connection>> {
         Ok(self.store.get(id).map(|e| e.value().clone()))
     }

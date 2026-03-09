@@ -145,6 +145,10 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/pipedream/accounts",
             get(pipedream::list_accounts),
         )
+        .route(
+            "/api/platform/pipedream/accounts/sync",
+            post(pipedream::sync_accounts),
+        )
         .route("/api/platform/team/members", get(team::list_members))
         .route("/api/platform/team/invite", post(team::invite_member))
         .route(

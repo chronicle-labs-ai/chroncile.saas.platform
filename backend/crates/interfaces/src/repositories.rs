@@ -90,6 +90,11 @@ pub trait RunRepository: Send + Sync {
 #[async_trait]
 pub trait ConnectionRepository: Send + Sync {
     async fn create(&self, input: CreateConnectionInput) -> RepoResult<Connection>;
+    async fn upsert_by_tenant_provider(
+        &self,
+        input: CreateConnectionInput,
+        status: &str,
+    ) -> RepoResult<Connection>;
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Connection>>;
     async fn find_by_tenant_provider(
         &self,
