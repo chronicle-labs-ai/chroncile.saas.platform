@@ -2,7 +2,7 @@ app = 'chronicle-backend'
 primary_region = 'ams'
 
 [build]
-  dockerfile = 'deploy/Dockerfile'
+  dockerfile = 'Dockerfile'
 
 [env]
   API_HOST = "0.0.0.0"
