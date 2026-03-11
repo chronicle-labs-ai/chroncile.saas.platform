@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/server/auth/auth";
+
+import type { UpdateSandboxPayload } from "@/components/sandbox/types";
 import { getSandboxStore } from "@/features/sandbox/server/repository";
+import { auth } from "@/server/auth/auth";
 
 export const dynamic = "force-dynamic";
 
-/* GET /api/sandbox/[id] — get sandbox by ID */
+async function getScopedSandbox(id: string, tenantId: string) {
+  const store = await getSandboxStore();
+  await store.list(tenantId);
+  const sandbox = await store.getById(id);
+
+  if (!sandbox || sandbox.tenantId !== tenantId) {
+    return { store, sandbox: null };
+  }
+
+  return { store, sandbox };
+}
+
 export async function GET(
-  _req: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -16,32 +29,28 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const store = await getSandboxStore();
-    const sandbox = await store.getById(id);
-
+    const { store, sandbox } = await getScopedSandbox(id, session.user.tenantId);
     if (!sandbox) {
-      return NextResponse.json(
-        { error: "Sandbox not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Sandbox not found" }, { status: 404 });
     }
 
-    const events = await store.getEvents(id);
-    const actions = await store.getAgentActions(id);
+    const [events, actions] = await Promise.all([
+      store.getEvents(id),
+      store.getAgentActions(id),
+    ]);
 
     return NextResponse.json({ sandbox, events, actions });
-  } catch (err) {
-    console.error("Get sandbox error:", err);
+  } catch (error) {
+    console.error("Failed to load sandbox:", error);
     return NextResponse.json(
-      { error: "Failed to get sandbox" },
+      { error: "Failed to load sandbox" },
       { status: 500 }
     );
   }
 }
 
-/* PUT /api/sandbox/[id] — update sandbox */
 export async function PUT(
-  req: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -51,54 +60,25 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const body = await req.json();
-    const store = await getSandboxStore();
-    const sandbox = await store.update(id, body);
-
+    const { store, sandbox } = await getScopedSandbox(id, session.user.tenantId);
     if (!sandbox) {
+      return NextResponse.json({ error: "Sandbox not found" }, { status: 404 });
+    }
+
+    const payload = (await request.json()) as UpdateSandboxPayload;
+    const updated = await store.update(id, payload);
+    if (!updated) {
       return NextResponse.json(
-        { error: "Sandbox not found" },
-        { status: 404 }
+        { error: "Sandbox update failed" },
+        { status: 500 }
       );
     }
 
-    return NextResponse.json({ sandbox });
-  } catch (err) {
-    console.error("Update sandbox error:", err);
+    return NextResponse.json({ sandbox: updated });
+  } catch (error) {
+    console.error("Failed to update sandbox:", error);
     return NextResponse.json(
       { error: "Failed to update sandbox" },
-      { status: 500 }
-    );
-  }
-}
-
-/* DELETE /api/sandbox/[id] — delete sandbox */
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await auth();
-  if (!session?.user?.tenantId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { id } = await params;
-    const store = await getSandboxStore();
-    const deleted = await store.delete(id);
-
-    if (!deleted) {
-      return NextResponse.json(
-        { error: "Sandbox not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Delete sandbox error:", err);
-    return NextResponse.json(
-      { error: "Failed to delete sandbox" },
       { status: 500 }
     );
   }

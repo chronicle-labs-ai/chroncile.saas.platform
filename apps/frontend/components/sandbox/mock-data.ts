@@ -6,6 +6,7 @@ import type {
   AgentAction,
 } from "./types";
 import { PROVIDER_CATALOG, PROVIDER_IDS } from "./constants";
+import { createSandboxDefaults } from "@/lib/sandbox/runtime";
 
 /* ------------------------------------------------------------------ */
 /*  Helper to produce dates relative to now                            */
@@ -320,7 +321,11 @@ export const DEMO_SANDBOXES: Sandbox[] = [
     name: "Customer Support Replay",
     description:
       "Replay Intercom conversation events with bot messages filtered out. Useful for testing agent response handling.",
-    status: "active",
+    status: "paused",
+    playbackMode: "paused",
+    ...createSandboxDefaults({ status: "paused", playbackMode: "paused" }),
+    runtimePhase: "replayComplete",
+    lastDeliveryAt: hoursAgo(2),
     nodes: csReplayNodes,
     edges: csReplayEdges,
     createdAt: daysAgo(5),
@@ -333,6 +338,10 @@ export const DEMO_SANDBOXES: Sandbox[] = [
     description:
       "Split all events into Stripe and non-Stripe streams with separate outputs.",
     status: "active",
+    playbackMode: "live",
+    ...createSandboxDefaults({ status: "active", playbackMode: "live" }),
+    runtimePhase: "waitingForEvents",
+    lastDeliveryAt: hoursAgo(8),
     nodes: stripeNodes,
     edges: stripeEdges,
     createdAt: daysAgo(3),
@@ -345,6 +354,8 @@ export const DEMO_SANDBOXES: Sandbox[] = [
     description:
       "Generate fake support tickets from Intercom and Zendesk at 2/sec and stream to the agent intake endpoint.",
     status: "draft",
+    playbackMode: "paused",
+    ...createSandboxDefaults({ status: "draft", playbackMode: "paused" }),
     nodes: loadTestNodes,
     edges: loadTestEdges,
     createdAt: daysAgo(1),

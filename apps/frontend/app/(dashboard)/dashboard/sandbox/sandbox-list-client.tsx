@@ -3,7 +3,11 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import type { Sandbox, SandboxStatus } from "@/features/sandbox/components/types";
+import type {
+  Sandbox,
+  SandboxRuntimePhase,
+  SandboxStatus,
+} from "@/features/sandbox/components/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -23,12 +27,36 @@ const STATUS_STYLES: Record<
     bg: "bg-caution-bg",
     border: "border-caution-dim",
   },
+  paused: {
+    dot: "bg-secondary",
+    text: "text-secondary",
+    bg: "bg-base",
+    border: "border-border-default",
+  },
+  error: {
+    dot: "bg-critical shadow-[0_0_8px_theme(colors.critical.DEFAULT)]",
+    text: "text-critical",
+    bg: "bg-critical-bg",
+    border: "border-critical-dim",
+  },
   archived: {
     dot: "bg-tertiary",
     text: "text-tertiary",
     bg: "bg-elevated",
     border: "border-border-dim",
   },
+};
+
+const RUNTIME_PHASE_LABELS: Record<SandboxRuntimePhase, string> = {
+  applyingChanges: "applying changes",
+  archived: "archived",
+  draft: "draft",
+  error: "error",
+  paused: "paused",
+  replayComplete: "replay complete",
+  replaying: "replaying",
+  streaming: "streaming",
+  waitingForEvents: "waiting",
 };
 
 export function SandboxListClient() {
@@ -179,6 +207,11 @@ export function SandboxListClient() {
                   <p className="text-xs text-secondary line-clamp-2 leading-relaxed">
                     {sbx.description || "No description"}
                   </p>
+
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-tertiary">
+                    {RUNTIME_PHASE_LABELS[sbx.runtimePhase]}
+                    {sbx.pendingConfigApply ? " · pending apply" : ""}
+                  </div>
 
                   {/* Meta row */}
                   <div className="flex items-center gap-4 pt-1 border-t border-border-dim">

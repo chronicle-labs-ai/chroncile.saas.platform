@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+
 import { auth } from "@/server/auth/auth";
 import { getSandboxStore } from "@/features/sandbox/server/repository";
 
 export const dynamic = "force-dynamic";
 
-/* GET /api/sandbox — list sandboxes for tenant */
 export async function GET() {
   const session = await auth();
   if (!session?.user?.tenantId) {
@@ -15,8 +15,8 @@ export async function GET() {
     const store = await getSandboxStore();
     const sandboxes = await store.list(session.user.tenantId);
     return NextResponse.json({ sandboxes });
-  } catch (err) {
-    console.error("List sandboxes error:", err);
+  } catch (error) {
+    console.error("Failed to list sandboxes:", error);
     return NextResponse.json(
       { error: "Failed to list sandboxes" },
       { status: 500 }
@@ -24,23 +24,21 @@ export async function GET() {
   }
 }
 
-/* POST /api/sandbox — create a new sandbox */
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.tenantId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const body = await req.json();
-    const { name, description } = body as {
+    const body = (await request.json()) as {
       name?: string;
       description?: string;
     };
-
-    if (!name || typeof name !== "string") {
+    const name = body.name?.trim();
+    if (!name) {
       return NextResponse.json(
-        { error: "Name is required" },
+        { error: "Sandbox name is required" },
         { status: 400 }
       );
     }
@@ -48,12 +46,12 @@ export async function POST(req: Request) {
     const store = await getSandboxStore();
     const sandbox = await store.create(session.user.tenantId, {
       name,
-      description: description ?? "",
+      description: body.description?.trim() ?? "",
     });
 
     return NextResponse.json({ sandbox }, { status: 201 });
-  } catch (err) {
-    console.error("Create sandbox error:", err);
+  } catch (error) {
+    console.error("Failed to create sandbox:", error);
     return NextResponse.json(
       { error: "Failed to create sandbox" },
       { status: 500 }

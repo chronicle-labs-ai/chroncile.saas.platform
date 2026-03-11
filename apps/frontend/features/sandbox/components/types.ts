@@ -1,12 +1,17 @@
 export type {
   AgentAction,
   CreateSandboxPayload,
+  SandboxDetailResponse,
   Sandbox,
   SandboxEdge,
   SandboxEvent,
   SandboxNode,
   SandboxNodeData,
   SandboxNodeType,
+  SandboxPlaybackMode,
+  SandboxRuntimeEvent,
+  SandboxRuntimePhase,
   SandboxStatus,
+  SandboxListResponse,
   UpdateSandboxPayload,
 } from "@/components/sandbox/types";

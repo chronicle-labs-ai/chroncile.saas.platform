@@ -93,7 +93,25 @@ export type SandboxEdge = Edge;
 /*  Sandbox entity                                                     */
 /* ------------------------------------------------------------------ */
 
-export type SandboxStatus = "draft" | "active" | "archived";
+export type SandboxStatus =
+  | "draft"
+  | "active"
+  | "paused"
+  | "error"
+  | "archived";
+
+export type SandboxPlaybackMode = "paused" | "playing" | "live";
+
+export type SandboxRuntimePhase =
+  | "draft"
+  | "replaying"
+  | "streaming"
+  | "waitingForEvents"
+  | "applyingChanges"
+  | "paused"
+  | "replayComplete"
+  | "error"
+  | "archived";
 
 export interface Sandbox {
   id: string;
@@ -101,6 +119,14 @@ export interface Sandbox {
   name: string;
   description: string;
   status: SandboxStatus;
+  playbackMode: SandboxPlaybackMode;
+  runtimePhase: SandboxRuntimePhase;
+  speed: number;
+  configVersion: number;
+  appliedConfigVersion: number | null;
+  pendingConfigApply: boolean;
+  lastDeliveryAt: string | null;
+  lastError: string | null;
   nodes: SandboxNode[];
   edges: SandboxEdge[];
   createdAt: string; // ISO
@@ -145,7 +171,6 @@ export interface AgentAction {
   timestamp: string;
   payload?: Record<string, unknown>;
 }
-
 /* ------------------------------------------------------------------ */
 /*  API payload helpers                                                */
 /* ------------------------------------------------------------------ */
@@ -159,6 +184,31 @@ export interface UpdateSandboxPayload {
   name?: string;
   description?: string;
   status?: SandboxStatus;
+  playbackMode?: SandboxPlaybackMode;
+  runtimePhase?: SandboxRuntimePhase;
+  speed?: number;
+  configVersion?: number;
+  appliedConfigVersion?: number | null;
+  pendingConfigApply?: boolean;
+  lastDeliveryAt?: string | null;
+  lastError?: string | null;
   nodes?: SandboxNode[];
   edges?: SandboxEdge[];
 }
+
+export interface SandboxRuntimeEvent {
+  key: string;
+  event: SandboxEvent;
+  startNodeId: string;
+}
+
+export interface SandboxDetailResponse {
+  sandbox: Sandbox;
+  events: SandboxEvent[];
+  actions: AgentAction[];
+}
+
+export interface SandboxListResponse {
+  sandboxes: Sandbox[];
+}
+

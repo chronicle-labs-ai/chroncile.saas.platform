@@ -1,12 +1,15 @@
 import type {
   Sandbox,
-  SandboxNode,
-  SandboxEdge,
   SandboxEvent,
   AgentAction,
   CreateSandboxPayload,
   UpdateSandboxPayload,
 } from "@/components/sandbox/types";
+import {
+  createGraphSignature,
+  createSandboxDefaults,
+  deriveDefaultRuntimePhase,
+} from "@/lib/sandbox/runtime";
 
 /* ------------------------------------------------------------------ */
 /*  Repository interface — swap InMemory for Prisma / external later   */
@@ -42,28 +45,163 @@ function uid(prefix = "sbx"): string {
   return `${prefix}_${Date.now().toString(36)}_${counter}`;
 }
 
+const DEMO_TENANT_ID = "demo-tenant";
+
+function cloneSandboxEventForSandbox(
+  sandboxId: string,
+  event: SandboxEvent
+): SandboxEvent {
+  return {
+    ...structuredClone(event),
+    event_id: uid("evt"),
+    sandbox_id: sandboxId,
+  };
+}
+
+function cloneAgentActionForSandbox(
+  sandboxId: string,
+  action: AgentAction
+): AgentAction {
+  return {
+    ...structuredClone(action),
+    id: uid("act"),
+    sandbox_id: sandboxId,
+  };
+}
+
+function buildUpdatedSandbox(
+  existing: Sandbox,
+  data: UpdateSandboxPayload
+): Sandbox {
+  const nextStatus = data.status ?? existing.status;
+  const nextPlaybackMode = data.playbackMode ?? existing.playbackMode;
+  const nextNodes = data.nodes ?? existing.nodes;
+  const nextEdges = data.edges ?? existing.edges;
+  const nextSpeed = data.speed ?? existing.speed;
+  const graphChanged =
+    createGraphSignature(existing.nodes, existing.edges) !==
+    createGraphSignature(nextNodes, nextEdges);
+  const speedChanged = nextSpeed !== existing.speed;
+  const statusChanged = nextStatus !== existing.status;
+  const playbackChanged = nextPlaybackMode !== existing.playbackMode;
+
+  let configVersion = existing.configVersion;
+  let appliedConfigVersion = existing.appliedConfigVersion;
+  let pendingConfigApply = existing.pendingConfigApply;
+  let runtimePhase = existing.runtimePhase;
+  let lastDeliveryAt = existing.lastDeliveryAt;
+  const lastError =
+    data.lastError !== undefined ? data.lastError : existing.lastError;
+
+  if (graphChanged || speedChanged) {
+    configVersion = existing.configVersion + 1;
+    if (nextStatus === "active") {
+      pendingConfigApply = true;
+      runtimePhase = "applyingChanges";
+    } else {
+      appliedConfigVersion = configVersion;
+      pendingConfigApply = false;
+      runtimePhase = deriveDefaultRuntimePhase(nextStatus, nextPlaybackMode);
+    }
+  }
+
+  if (statusChanged || playbackChanged) {
+    if (nextStatus === "active" && nextPlaybackMode !== "paused") {
+      if (!graphChanged && !speedChanged) {
+        pendingConfigApply = true;
+        runtimePhase = "applyingChanges";
+      }
+    } else {
+      pendingConfigApply = false;
+      runtimePhase = deriveDefaultRuntimePhase(nextStatus, nextPlaybackMode);
+    }
+  }
+
+  if (data.configVersion !== undefined) {
+    configVersion = data.configVersion;
+  }
+  if (data.appliedConfigVersion !== undefined) {
+    appliedConfigVersion = data.appliedConfigVersion;
+  }
+  if (data.pendingConfigApply !== undefined) {
+    pendingConfigApply = data.pendingConfigApply;
+  }
+  if (data.runtimePhase !== undefined) {
+    runtimePhase = data.runtimePhase;
+  }
+  if (data.lastDeliveryAt !== undefined) {
+    lastDeliveryAt = data.lastDeliveryAt;
+  }
+
+  if (!pendingConfigApply && nextStatus !== "active" && data.appliedConfigVersion === undefined) {
+    appliedConfigVersion = configVersion;
+  }
+
+  return {
+    ...existing,
+    ...data,
+    status: nextStatus,
+    playbackMode: nextPlaybackMode,
+    runtimePhase,
+    speed: nextSpeed,
+    configVersion,
+    appliedConfigVersion,
+    pendingConfigApply,
+    lastDeliveryAt,
+    lastError,
+    nodes: nextNodes,
+    edges: nextEdges,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 class InMemorySandboxStore implements SandboxRepository {
   private sandboxes = new Map<string, Sandbox>();
   private events = new Map<string, SandboxEvent[]>(); // sandboxId -> events
   private actions = new Map<string, AgentAction[]>(); // sandboxId -> actions
+  private seededTenants = new Set<string>();
+
+  private ensureTenantSeeded(tenantId: string) {
+    if (this.seededTenants.has(tenantId)) {
+      return;
+    }
+
+    this.seededTenants.add(tenantId);
+    if (tenantId === DEMO_TENANT_ID) {
+      return;
+    }
+
+    const demos = Array.from(this.sandboxes.values()).filter(
+      (sandbox) => sandbox.tenantId === DEMO_TENANT_ID
+    );
+
+    for (const demo of demos) {
+      const clonedId = uid("sbx");
+      const clonedSandbox: Sandbox = {
+        ...structuredClone(demo),
+        id: clonedId,
+        tenantId,
+      };
+      this.sandboxes.set(clonedId, clonedSandbox);
+
+      const demoEvents = this.events.get(demo.id) ?? [];
+      const demoActions = this.actions.get(demo.id) ?? [];
+
+      this.events.set(
+        clonedId,
+        demoEvents.map((event) => cloneSandboxEventForSandbox(clonedId, event))
+      );
+      this.actions.set(
+        clonedId,
+        demoActions.map((action) => cloneAgentActionForSandbox(clonedId, action))
+      );
+    }
+  }
 
   /* ---------- Sandbox CRUD ---------- */
 
   async list(tenantId: string): Promise<Sandbox[]> {
-    // On first access per-tenant, clone demo data for this tenant
-    const hasTenant = Array.from(this.sandboxes.values()).some(
-      (s) => s.tenantId === tenantId
-    );
-    if (!hasTenant) {
-      // Clone demo sandboxes for this tenant
-      const demos = Array.from(this.sandboxes.values()).filter(
-        (s) => s.tenantId === "demo-tenant"
-      );
-      for (const demo of demos) {
-        const cloned: Sandbox = { ...demo, tenantId };
-        this.sandboxes.set(cloned.id, cloned);
-      }
-    }
+    this.ensureTenantSeeded(tenantId);
 
     return Array.from(this.sandboxes.values())
       .filter((s) => s.tenantId === tenantId)
@@ -82,12 +220,16 @@ class InMemorySandboxStore implements SandboxRepository {
     data: CreateSandboxPayload
   ): Promise<Sandbox> {
     const now = new Date().toISOString();
+    const status = "draft";
+    const playbackMode = "paused";
     const sandbox: Sandbox = {
       id: uid("sbx"),
       tenantId,
       name: data.name,
       description: data.description,
-      status: "draft",
+      status,
+      playbackMode,
+      ...createSandboxDefaults({ status, playbackMode }),
       nodes: [],
       edges: [],
       createdAt: now,
@@ -106,11 +248,7 @@ class InMemorySandboxStore implements SandboxRepository {
     const existing = this.sandboxes.get(id);
     if (!existing) return null;
 
-    const updated: Sandbox = {
-      ...existing,
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
+    const updated = buildUpdatedSandbox(existing, data);
     this.sandboxes.set(id, updated);
     return updated;
   }
@@ -175,6 +313,7 @@ class InMemorySandboxStore implements SandboxRepository {
   ) {
     for (const s of sandboxes) {
       this.sandboxes.set(s.id, s);
+      this.seededTenants.add(s.tenantId);
     }
     for (const [k, v] of Object.entries(events)) {
       this.events.set(k, v);

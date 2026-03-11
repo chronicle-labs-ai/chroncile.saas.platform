@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -13,13 +12,12 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import type {
-  Sandbox,
   SandboxNode,
   SandboxEdge,
   SandboxNodeData,
   SandboxNodeType,
   SandboxEvent,
-  AgentAction,
+  SandboxStatus,
 } from "@/features/sandbox/components/types";
 import {
   DEFAULT_EVENT_SOURCE_CONFIG,
@@ -32,15 +30,15 @@ import { SandboxCanvas } from "@/features/sandbox/components/SandboxCanvas";
 import { NodeConfigDrawer } from "@/features/sandbox/components/panels/NodeConfigDrawer";
 import { AgentRecorder } from "@/features/sandbox/components/panels/AgentRecorder";
 import { GenerativePrompt } from "@/features/sandbox/components/panels/GenerativePrompt";
-import { useSandboxSimulation } from "@/features/sandbox/components/use-sandbox-simulation";
+import { useSandboxVisualization } from "@/features/sandbox/components/use-sandbox-visualization";
+import { useSandboxExecution } from "@/features/sandbox/client/use-sandbox-execution";
 import { TimelinePanel } from "@/features/events/timeline/TimelinePanel";
 import { EventDetailPanel } from "@/features/events/timeline/EventDetailPanel";
 import type {
   TimelineEvent,
   PlaybackState,
 } from "@/features/events/timeline/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import type { SandboxExecutionPhase } from "@/lib/sandbox/runtime";
 
 /* ------------------------------------------------------------------ */
 /*  Node palette items                                                 */
@@ -109,6 +107,85 @@ function makeNodeData(
   }
 }
 
+const SANDBOX_STATUS_BADGES: Record<SandboxStatus, string> = {
+  active: "bg-nominal-bg text-nominal border-nominal-dim",
+  draft: "bg-caution-bg text-caution border-caution-dim",
+  paused: "bg-elevated text-secondary border-border-default",
+  error: "bg-critical-bg text-critical border-critical-dim",
+  archived: "bg-elevated text-tertiary border-border-dim",
+};
+
+function getExecutionBadge(
+  phase: SandboxExecutionPhase,
+  speed: number
+): {
+  label: string;
+  className: string;
+} {
+  switch (phase) {
+    case "saving":
+      return {
+        label: "Saving graph",
+        className: "bg-data-bg text-data border-data-dim",
+      };
+    case "saveError":
+      return {
+        label: "Save failed",
+        className: "bg-critical-bg text-critical border-critical-dim",
+      };
+    case "applyingChanges":
+      return {
+        label: "Applying changes",
+        className: "bg-caution-bg text-caution border-caution-dim",
+      };
+    case "replaying":
+      return {
+        label: `Playing ${speed}x`,
+        className: "bg-nominal-bg text-nominal border-nominal-dim",
+      };
+    case "streaming":
+      return {
+        label: "Live",
+        className: "bg-nominal-bg text-nominal border-nominal-dim",
+      };
+    case "waitingForEvents":
+      return {
+        label: "Waiting for events",
+        className: "bg-base text-data border-data-dim",
+      };
+    case "replayComplete":
+      return {
+        label: "Replay complete",
+        className: "bg-base text-secondary border-border-default",
+      };
+    case "error":
+      return {
+        label: "Runtime error",
+        className: "bg-critical-bg text-critical border-critical-dim",
+      };
+    case "draft":
+      return {
+        label: "Draft",
+        className: "bg-base text-tertiary border-border-dim",
+      };
+    case "paused":
+      return {
+        label: "Paused",
+        className: "bg-base text-secondary border-border-default",
+      };
+    case "archived":
+      return {
+        label: "Archived",
+        className: "bg-base text-tertiary border-border-dim",
+      };
+    case "loading":
+      return {
+        label: "Loading",
+        className: "bg-base text-tertiary border-border-dim",
+      };
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Inner editor (needs ReactFlowProvider)                             */
 /* ------------------------------------------------------------------ */
@@ -121,24 +198,22 @@ function EditorInner({
   tenantId: string;
 }) {
   const router = useRouter();
-  const { data, mutate, isLoading } = useSWR<{
-    sandbox: Sandbox;
-    events: SandboxEvent[];
-    actions: AgentAction[];
-  }>(`/api/sandbox/${sandboxId}`, fetcher);
-
-  const sandbox = data?.sandbox;
-  const storedEvents = data?.events;
-  const events = useMemo(() => storedEvents ?? [], [storedEvents]);
-  const actions = useMemo(() => data?.actions ?? [], [data?.actions]);
 
   /* React Flow state */
-  const [nodes, setNodes, onNodesChange] = useNodesState<SandboxNode>(
-    sandbox?.nodes ?? []
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState<SandboxEdge>(
-    sandbox?.edges ?? []
-  );
+  const [nodes, setNodes, onNodesChange] = useNodesState<SandboxNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<SandboxEdge>([]);
+  const [graphReady, setGraphReady] = useState(false);
+
+  const execution = useSandboxExecution({
+    sandboxId,
+    nodes,
+    edges,
+    graphReady,
+  });
+
+  const sandbox = execution.sandbox;
+  const events = execution.events;
+  const actions = execution.actions;
 
   /* Sync when sandbox loads */
   const initializedRef = useRef(false);
@@ -150,24 +225,37 @@ function EditorInner({
         sandbox.edges.map((e) => ({ ...e, type: "animated" }))
       );
       initializedRef.current = true;
+      queueMicrotask(() => setGraphReady(true));
     }
-  }, [sandbox, setNodes, setEdges]);
+  }, [sandbox, setEdges, setNodes]);
 
-  /* ---- Simulation hook ---- */
-  const sim = useSandboxSimulation(sandboxId, nodes, edges, events);
+  const visualization = useSandboxVisualization({
+    nodes,
+    edges,
+    runtimeEvents: execution.runtimeEvents,
+    speed: execution.speed,
+    graphRevisionKey: `${sandbox?.id ?? sandboxId}:${
+      sandbox?.appliedConfigVersion ?? 0
+    }:${sandbox?.runtimePhase ?? "draft"}`,
+    enabled:
+      graphReady &&
+      execution.phase !== "saving" &&
+      execution.phase !== "saveError" &&
+      execution.phase !== "applyingChanges",
+  });
 
   /* Memoize context values to avoid unnecessary re-renders */
   const simulationCtx = useMemo(
-    () => ({ nodeActivity: sim.nodeActivity }),
-    [sim.nodeActivity]
+    () => ({ nodeActivity: visualization.nodeActivity }),
+    [visualization.nodeActivity]
   );
 
   const edgeSimCtx = useMemo(
     () => ({
-      particles: sim.edgeParticles,
-      activeEdgeIds: sim.activeEdgeIds,
+      particles: visualization.edgeParticles,
+      activeEdgeIds: visualization.activeEdgeIds,
     }),
-    [sim.edgeParticles, sim.activeEdgeIds]
+    [visualization.activeEdgeIds, visualization.edgeParticles]
   );
 
   /* Map SandboxEvents to TimelineEvents for the timeline panel.
@@ -189,25 +277,27 @@ function EditorInner({
   );
 
   const timelineEvents = useMemo<TimelineEvent[]>(() => {
-    const simulated = sim.processedEvents.map(mapSandboxEvent);
+    const runtime = execution.runtimeEvents.map((entry) =>
+      mapSandboxEvent(entry.event)
+    );
 
-    if (sim.mode !== "paused") {
+    if (execution.playback !== "paused") {
       // During playback: only show real-time simulated events
-      return simulated;
+      return runtime;
     }
 
     // When paused: merge stored + simulated, deduplicated
     const stored = events.map(mapSandboxEvent);
     const seen = new Set<string>();
     const deduped: TimelineEvent[] = [];
-    for (const ev of [...stored, ...simulated]) {
+    for (const ev of [...stored, ...runtime]) {
       if (!seen.has(ev.id)) {
         seen.add(ev.id);
         deduped.push(ev);
       }
     }
     return deduped;
-  }, [events, sim.processedEvents, sim.mode, mapSandboxEvent]);
+  }, [events, execution.playback, execution.runtimeEvents, mapSandboxEvent]);
 
   const [selectedTimelineEventId, setSelectedTimelineEventId] = useState<string | null>(null);
   const selectedTimelineEvent = useMemo(
@@ -282,26 +372,6 @@ function EditorInner({
     [setNodes]
   );
 
-  /* ---- Save to backend ---- */
-  const saveDebounce = useRef<NodeJS.Timeout | null>(null);
-
-  const save = useCallback(async () => {
-    if (saveDebounce.current) clearTimeout(saveDebounce.current);
-    saveDebounce.current = setTimeout(async () => {
-      await fetch(`/api/sandbox/${sandboxId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nodes, edges }),
-      });
-    }, 800);
-  }, [sandboxId, nodes, edges]);
-
-  useEffect(() => {
-    if (initializedRef.current) {
-      save();
-    }
-  }, [nodes, edges, save]);
-
   /* ---- Node config update ---- */
   const onNodeDataChange = useCallback(
     (nodeId: string, newData: SandboxNodeData) => {
@@ -325,7 +395,7 @@ function EditorInner({
   );
 
   /* ---- Loading state ---- */
-  if (isLoading || !sandbox) {
+  if (execution.isLoading && !sandbox) {
     return (
       <div className="h-[calc(100vh-48px)] flex items-center justify-center bg-base">
         <div className="flex flex-col items-center gap-3">
@@ -337,6 +407,33 @@ function EditorInner({
       </div>
     );
   }
+
+  if (execution.error) {
+    return (
+      <div className="h-[calc(100vh-48px)] flex items-center justify-center bg-base px-4">
+        <div className="panel max-w-md w-full">
+          <div className="p-4 space-y-3">
+            <div className="text-sm text-critical font-medium">
+              Failed to load sandbox
+            </div>
+            <div className="text-xs text-secondary">{execution.error}</div>
+            <button
+              onClick={() => void execution.refresh()}
+              className="btn btn--secondary"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sandbox) {
+    return null;
+  }
+
+  const executionBadge = getExecutionBadge(execution.phase, execution.speed);
 
   return (
     <div className="h-[calc(100vh-48px)] flex flex-col bg-void overflow-hidden -m-4 lg:-m-6">
@@ -373,38 +470,51 @@ function EditorInner({
           </h2>
 
           <span
-            className={`badge shrink-0 ${
-              sandbox.status === "active"
-                ? "bg-nominal-bg text-nominal border-nominal-dim"
-                : sandbox.status === "draft"
-                ? "bg-caution-bg text-caution border-caution-dim"
-                : "bg-elevated text-tertiary border-border-dim"
-            }`}
+            className={`badge shrink-0 ${SANDBOX_STATUS_BADGES[sandbox.status]}`}
           >
             {sandbox.status}
           </span>
 
-          {/* Simulation status in header */}
-          {sim.mode !== "paused" && (
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-nominal-bg border border-nominal-dim ml-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-nominal animate-pulse" />
-              <span className="font-mono text-[9px] text-nominal uppercase tracking-wider">
-                {sim.mode === "live" ? "Live" : `Playing ${sim.speed}x`}
-              </span>
-            </span>
-          )}
+          <span className={`badge shrink-0 ${executionBadge.className}`}>
+            {executionBadge.label}
+          </span>
 
           <div className="ml-auto flex items-center gap-2">
             <span className="font-mono text-[10px] text-tertiary tabular-nums">
               {nodes.length} nodes &middot; {edges.length} edges
             </span>
-            {sim.processedEvents.length > 0 && (
+            {execution.runtimeEvents.length > 0 && (
               <span className="font-mono text-[10px] text-nominal tabular-nums">
-                &middot; {sim.processedEvents.length} simulated
+                &middot; {execution.runtimeEvents.length} runtime
               </span>
             )}
           </div>
         </div>
+
+        {(execution.phase === "saveError" ||
+          execution.phase === "applyingChanges" ||
+          execution.phase === "waitingForEvents" ||
+          execution.phase === "replayComplete") && (
+          <div className="flex items-center gap-3 px-4 py-2 border-b border-border-dim bg-base">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-secondary">
+              {execution.saveError
+                ? execution.saveError
+                : execution.phase === "applyingChanges"
+                ? "Runtime is pausing briefly so the latest graph can take effect."
+                : execution.phase === "waitingForEvents"
+                ? "Live mode is connected and waiting for the next matching event."
+                : "Historical replay finished. Press live to tail new events or play to start over."}
+            </span>
+            {execution.phase === "saveError" && (
+              <button
+                onClick={() => void execution.retrySave()}
+                className="btn btn--secondary ml-auto"
+              >
+                Retry Save
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Generative prompt */}
         <GenerativePrompt onGenerate={onGenerateNodes} />
@@ -508,9 +618,9 @@ function EditorInner({
             {[1, 2, 5, 10].map((s) => (
               <button
                 key={s}
-                onClick={() => sim.setSpeed(s)}
+                onClick={() => void execution.setSpeed(s)}
                 className={`px-1.5 py-0.5 rounded font-mono text-[10px] transition-colors ${
-                  sim.speed === s
+                  execution.speed === s
                     ? "bg-data-bg text-data border border-data-dim"
                     : "text-tertiary hover:text-secondary"
                 }`}
@@ -521,9 +631,9 @@ function EditorInner({
           </div>
 
           {/* Simulated event count */}
-          {sim.processedEvents.length > 0 && (
+          {execution.runtimeEvents.length > 0 && (
             <span className="font-mono text-[10px] text-nominal tabular-nums ml-2">
-              {sim.processedEvents.length} simulated
+              {execution.runtimeEvents.length} runtime
             </span>
           )}
 
@@ -556,9 +666,9 @@ function EditorInner({
               <>
                 <TimelinePanel
                   events={timelineEvents}
-                  playback={sim.mode as PlaybackState}
+                  playback={execution.playback as PlaybackState}
                   selectedEventId={selectedTimelineEventId}
-                  onPlaybackChange={(state) => sim.setMode(state)}
+                  onPlaybackChange={(state) => void execution.setPlayback(state)}
                   onSelect={(e) => setSelectedTimelineEventId(e.eventId)}
                   className={selectedTimelineEvent ? "flex-1 min-w-0" : "w-full"}
                 />
@@ -588,7 +698,7 @@ function EditorInner({
                 <AgentRecorder
                   sandboxId={sandboxId}
                   actions={actions}
-                  onNewAction={() => mutate()}
+                  onNewAction={() => void execution.refresh()}
                 />
               </div>
             )}
