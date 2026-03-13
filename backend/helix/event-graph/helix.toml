@@ -1,0 +1,20 @@
+[project]
+name = "event-graph"
+queries = "./db/"
+container_runtime = "docker"
+
+[local.dev]
+port = 6969
+build_mode = "dev"
+
+[local.test]
+port = 6970
+build_mode = "dev"
+
+[local.benchmark]
+port = 6971
+build_mode = "release"
+
+[cloud]
+
+[enterprise]

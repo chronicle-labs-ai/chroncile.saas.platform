@@ -11,12 +11,12 @@ port = 8080
 rust_log = "info,tower_http=debug"
 
 [storage.events]
-backend = "memory"
+backend = "postgres"
 # database_url = "postgres://postgres:postgres@localhost/chronicle_events"
 run_migrations = true
 
 [storage.saas]
-backend = "memory"
+backend = "postgres"
 # database_url = "postgres://postgres:postgres@localhost/chronicle_saas"
 run_migrations = true
 
@@ -57,6 +57,13 @@ environment = "development"
 dsn = "https://962563178590206d935ae42ee0af131d@o4511003800109056.ingest.us.sentry.io/4511003805351936"
 environment = "development"
 traces_sample_rate = 1.0
+
+[integrations.helix]
+# Only used when storage.events.backend = "helix"
+endpoint = "http://localhost"
+port = 6969
+# api_key = "helix-dev-key"
+project_dir = "backend/helix/event-graph"
 
 [webhooks]
 # stripe_secret = "whsec_xxx"

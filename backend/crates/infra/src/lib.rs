@@ -10,6 +10,9 @@ pub mod memory;
 #[cfg(feature = "kafka")]
 pub mod kafka;
 
+#[cfg(feature = "helix")]
+pub mod helix;
+
 #[cfg(feature = "postgres")]
 pub mod postgres;
 
@@ -97,6 +100,9 @@ pub enum StoreBackend {
     #[cfg(feature = "memory")]
     Memory(memory::MemoryStore),
 
+    #[cfg(feature = "helix")]
+    Helix(helix::HelixStore),
+
     #[cfg(feature = "postgres")]
     Postgres(postgres::PostgresStore),
 }
@@ -106,8 +112,21 @@ impl StoreBackend {
         match self {
             #[cfg(feature = "memory")]
             Self::Memory(store) => store.engine(),
+            #[cfg(feature = "helix")]
+            Self::Helix(store) => store.engine(),
             #[cfg(feature = "postgres")]
             Self::Postgres(store) => store.engine(),
+        }
+    }
+
+    #[cfg(feature = "helix")]
+    pub fn helix(&self) -> Option<&helix::HelixStore> {
+        match self {
+            Self::Helix(store) => Some(store),
+            #[cfg(feature = "memory")]
+            Self::Memory(_) => None,
+            #[cfg(feature = "postgres")]
+            Self::Postgres(_) => None,
         }
     }
 

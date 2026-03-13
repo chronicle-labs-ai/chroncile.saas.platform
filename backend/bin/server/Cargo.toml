@@ -15,7 +15,8 @@ path = "src/main.rs"
 default = ["postgres"]
 kafka = ["chronicle_infra/kafka"]
 postgres = ["chronicle_infra/postgres"]
-full = ["kafka", "postgres"]
+helix = ["chronicle_infra/helix", "postgres"]
+full = ["kafka", "postgres", "helix"]
 
 [dependencies]
 chronicle_domain = { workspace = true }

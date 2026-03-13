@@ -38,30 +38,40 @@ pub async fn build_platform_runtime(
     let store_backend = match launch_config.storage.events.backend {
         #[cfg(feature = "postgres")]
         config::BackendKind::Postgres => {
-            let db_url = require_database_url("storage.events", &launch_config.storage.events)?;
-            tracing::info!("Using Postgres event store");
-
-            let postgres_store = chronicle_infra::postgres::PostgresStore::new(db_url)
-                .await
-                .map_err(|error| {
-                    anyhow::anyhow!("Failed to connect to Postgres event store: {error}")
-                })?;
-
-            if launch_config.storage.events.run_migrations {
-                tracing::info!("Running Chronicle-native event migrations...");
-                postgres_store
-                    .migrate()
-                    .await
-                    .map_err(|error| anyhow::anyhow!("Failed to run event migrations: {error}"))?;
-            } else {
-                tracing::info!("Chronicle-native event migrations disabled");
-            }
-
+            let postgres_store = build_postgres_event_store(launch_config).await?;
             Arc::new(StoreBackend::Postgres(postgres_store))
         }
         #[cfg(not(feature = "postgres"))]
         config::BackendKind::Postgres => {
             anyhow::bail!("storage.events.backend=postgres requires the `postgres` feature");
+        }
+        #[cfg(feature = "helix")]
+        config::BackendKind::Helix => {
+            let postgres_store = build_postgres_event_store(launch_config).await?;
+            let helix_config = chronicle_infra::helix::HelixConnectionConfig {
+                endpoint: launch_config.integrations.helix.endpoint.clone(),
+                port: launch_config.integrations.helix.port,
+                api_key: launch_config.integrations.helix.api_key.clone(),
+                project_dir: std::path::PathBuf::from(
+                    launch_config.integrations.helix.project_dir.as_str(),
+                ),
+            };
+
+            tracing::info!(
+                helix_endpoint = %helix_config.endpoint,
+                helix_port = helix_config.port,
+                project_dir = %helix_config.project_dir.display(),
+                "Using Helix-backed event store with Postgres canonical storage"
+            );
+
+            Arc::new(StoreBackend::Helix(chronicle_infra::helix::HelixStore::new(
+                postgres_store,
+                helix_config,
+            )))
+        }
+        #[cfg(not(feature = "helix"))]
+        config::BackendKind::Helix => {
+            anyhow::bail!("storage.events.backend=helix requires the `helix` feature");
         }
         config::BackendKind::Memory => {
             tracing::info!("Using in-memory event store");
@@ -105,6 +115,9 @@ pub async fn build_platform_runtime(
                 launch_config,
                 saas_runtime,
             )
+        }
+        config::BackendKind::Helix => {
+            anyhow::bail!("storage.saas.backend=helix is not supported");
         }
     };
 
@@ -293,7 +306,31 @@ fn require_database_url<'a>(
     store_config
         .database_url
         .as_deref()
-        .ok_or_else(|| anyhow::anyhow!("{section}.database_url must be set when backend=postgres"))
+        .ok_or_else(|| anyhow::anyhow!("{section}.database_url must be set for the selected backend"))
+}
+
+#[cfg(feature = "postgres")]
+async fn build_postgres_event_store(
+    launch_config: &config::LaunchConfig,
+) -> Result<chronicle_infra::postgres::PostgresStore> {
+    let db_url = require_database_url("storage.events", &launch_config.storage.events)?;
+    tracing::info!("Using Postgres canonical event store");
+
+    let postgres_store = chronicle_infra::postgres::PostgresStore::new(db_url)
+        .await
+        .map_err(|error| anyhow::anyhow!("Failed to connect to Postgres event store: {error}"))?;
+
+    if launch_config.storage.events.run_migrations {
+        tracing::info!("Running Chronicle-native event migrations...");
+        postgres_store
+            .migrate()
+            .await
+            .map_err(|error| anyhow::anyhow!("Failed to run event migrations: {error}"))?;
+    } else {
+        tracing::info!("Chronicle-native event migrations disabled");
+    }
+
+    Ok(postgres_store)
 }
 
 async fn run_saas_migrations(database_url: &str) -> Result<()> {

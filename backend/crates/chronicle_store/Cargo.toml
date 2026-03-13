@@ -14,6 +14,7 @@ arrow-export = ["dep:arrow"]
 postgres = ["dep:sqlx"]
 hybrid = ["dep:datafusion", "dep:object_store", "postgres", "arrow-export"]
 kurrent = ["dep:kurrentdb", "postgres"]
+helix = ["dep:helix-rs", "dep:reqwest"]
 
 [dependencies]
 chronicle_core = { path = "../chronicle_core" }
@@ -27,13 +28,16 @@ itoa = "1"
 kurrentdb = { workspace = true, optional = true }
 object_store = { workspace = true, optional = true }
 parking_lot.workspace = true
+reqwest = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 sqlx = { workspace = true, optional = true }
 tokio.workspace = true
 tracing.workspace = true
+helix-rs = { version = "0.1.10", optional = true }
 
 [dev-dependencies]
 chronicle_test_fixtures = { path = "../chronicle_test_fixtures" }
 sqlx = { workspace = true }
 tempfile = "3"
+wiremock = { workspace = true }

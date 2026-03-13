@@ -11,7 +11,8 @@ default = ["memory"]
 memory = []
 kafka = ["rdkafka"]
 postgres = ["sqlx", "chronicle_store/postgres"]
-full = ["memory", "kafka", "postgres"]
+helix = ["chronicle_store/helix", "postgres"]
+full = ["memory", "kafka", "postgres", "helix"]
 
 [dependencies]
 chronicle_domain = { workspace = true }

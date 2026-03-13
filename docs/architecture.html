@@ -116,6 +116,7 @@ graph TB
         subgraph Infra["Infrastructure — crates/infra"]
             IN_MEM["In-Memory Stores<br/>DashMap — dev / test"]
             PG_STORES["Postgres Stores<br/>SQLx — production"]
+            HELIX_GRAPH["Helix Graph Mirror<br/>helix-rs · HelixQL"]
             KAFKA_STREAM["Kafka Streaming<br/>feature-gated"]
         end
 
@@ -142,6 +143,7 @@ graph TB
 
     subgraph DataStores["Data Stores"]
         POSTGRES[("PostgreSQL<br/>Multi-tenant")]
+        HELIX_DB[("HelixDB<br/>Graph + Vector mirror")]
         KAFKA[("Apache Kafka<br/>Event Streaming")]
     end
 
@@ -166,9 +168,11 @@ graph TB
 
     TRAITS --> IN_MEM
     TRAITS --> PG_STORES
+    TRAITS --> HELIX_GRAPH
     TRAITS -.-> KAFKA_STREAM
 
     PG_STORES --> POSTGRES
+    HELIX_GRAPH --> HELIX_DB
     KAFKA_STREAM --> KAFKA
 
     SAAS_API --> PD_CLIENT
@@ -192,9 +196,9 @@ graph TB
     class BROWSER client
     class NEXTJS,NEXTAUTH,API_CLIENT,ANALYTICS frontend
     class TS_TYPES shared
-    class SAAS_API,EVENT_API,DOMAIN,AUTH,API_TYPES,TRAITS,IN_MEM,PG_STORES,KAFKA_STREAM,PD_CLIENT,STRIPE_INT,ENCRYPTION,SRC_CORE,SRC_REGISTRY,SRC_MOCK,SRC_INTERCOM backend
+    class SAAS_API,EVENT_API,DOMAIN,AUTH,API_TYPES,TRAITS,IN_MEM,PG_STORES,HELIX_GRAPH,KAFKA_STREAM,PD_CLIENT,STRIPE_INT,ENCRYPTION,SRC_CORE,SRC_REGISTRY,SRC_MOCK,SRC_INTERCOM backend
     class PIPEDREAM,POSTHOG,SENTRY,STRIPE external
-    class POSTGRES,KAFKA datastore
+    class POSTGRES,HELIX_DB,KAFKA datastore
     </pre>
   </div>
 
@@ -205,7 +209,7 @@ graph TB
     </div>
     <div class="legend-card">
       <h3>Backend</h3>
-      <p>Rust / Axum HTTP server. SaaS routes handle auth, runs, connections, dashboard, settings, audit, pipedream, and webhooks. Event routes handle ingest, stream, and query.</p>
+      <p>Rust / Axum HTTP server. SaaS routes handle auth, runs, connections, dashboard, settings, audit, pipedream, and webhooks. Event routes handle ingest, stream, and query, with an optional Helix-backed graph read model for vector and traversal workloads.</p>
     </div>
     <div class="legend-card">
       <h3>Type Safety</h3>
@@ -213,7 +217,7 @@ graph TB
     </div>
     <div class="legend-card">
       <h3>Infrastructure</h3>
-      <p><code>BACKEND_MODE=memory</code> uses DashMap (dev). <code>BACKEND_MODE=real</code> uses PostgreSQL via SQLx (production). Kafka streaming is feature-gated and optional.</p>
+      <p><code>BACKEND_MODE=memory</code> uses DashMap (dev). <code>BACKEND_MODE=real</code> uses PostgreSQL via SQLx (production). <code>EVENTS_BACKEND_MODE=helix</code> keeps Postgres canonical in phase 1 while mirroring event graphs, typed payload nodes, traces, and embeddings into HelixDB. Kafka streaming is feature-gated and optional.</p>
     </div>
     <div class="legend-card">
       <h3>External Integrations</h3>

@@ -3,6 +3,22 @@
 Rolling record of notable changes in `chronicle.platform`. Entries are kept
 newest-first and grouped by date.
 
+## 2026-03-13
+
+### Added
+
+- Added a feature-gated Helix event-graph backend path that mirrors canonical Postgres events into Helix raw payload, typed payload, entity, link, embedding, and trace nodes for graph and vector workloads.
+- Added Helix-specific backfill tooling under `scripts/` plus a `chronicle_store` loader example for exporting event rows, entity refs, links, and embeddings from Postgres into a local Helix instance.
+- Added Helix unit coverage for typed payload mirroring, non-mutating backfill helpers, trace materialization, OOD scoring, deterministic text embedding, and Anthropic-backed link-decision parsing, plus ignored live `chronicle_store` integration tests for the Helix backend.
+
+### Changed
+
+- Extended the backend runtime and config surface so `storage.events.backend=helix` builds a canonical Postgres store together with a Helix graph mirror, exposes Helix-specific services from the infra layer, and documents Helix connection settings in the backend example config.
+
+### Docs
+
+- Updated `docs/architecture.html` to include the Helix graph mirror and HelixDB datastore in the backend architecture diagram.
+
 ## 2026-03-11
 
 ### Fixed

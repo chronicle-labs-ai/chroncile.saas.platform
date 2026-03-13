@@ -186,6 +186,18 @@ impl LaunchConfig {
         if let Some(value) = parse_env::<f32>("SENTRY_TRACES_SAMPLE_RATE")? {
             self.integrations.sentry.traces_sample_rate = value;
         }
+        if let Some(value) = non_empty_env("HELIX_BASE_URL") {
+            self.integrations.helix.endpoint = value;
+        }
+        if let Some(value) = parse_env::<u16>("HELIX_PORT")? {
+            self.integrations.helix.port = value;
+        }
+        if let Some(value) = non_empty_env("HELIX_API_KEY") {
+            self.integrations.helix.api_key = Some(value);
+        }
+        if let Some(value) = non_empty_env("HELIX_PROJECT_PATH") {
+            self.integrations.helix.project_dir = value;
+        }
 
         if let Some(value) = non_empty_env("STRIPE_WEBHOOK_SECRET") {
             self.webhooks.stripe_secret = Some(value);
@@ -366,6 +378,7 @@ pub struct IntegrationsConfig {
     pub resend: ResendConfig,
     pub sandbox_ai: SandboxAiConfig,
     pub sentry: SentryConfig,
+    pub helix: HelixConfig,
 }
 
 impl Default for IntegrationsConfig {
@@ -375,6 +388,7 @@ impl Default for IntegrationsConfig {
             resend: ResendConfig::default(),
             sandbox_ai: SandboxAiConfig::default(),
             sentry: SentryConfig::default(),
+            helix: HelixConfig::default(),
         }
     }
 }
@@ -445,6 +459,25 @@ impl Default for SentryConfig {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct HelixConfig {
+    pub endpoint: String,
+    pub port: u16,
+    pub api_key: Option<String>,
+    pub project_dir: String,
+}
+
+impl Default for HelixConfig {
+    fn default() -> Self {
+        Self {
+            endpoint: "http://localhost".to_string(),
+            port: 6969,
+            api_key: None,
+            project_dir: "backend/helix/event-graph".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct WebhooksConfig {
     pub stripe_secret: Option<String>,
@@ -488,6 +521,7 @@ impl Default for StoreConfig {
 pub enum BackendKind {
     Memory,
     Postgres,
+    Helix,
 }
 
 impl BackendKind {
@@ -495,6 +529,7 @@ impl BackendKind {
         match value.trim().to_lowercase().as_str() {
             "memory" => Ok(Self::Memory),
             "postgres" | "real" => Ok(Self::Postgres),
+            "helix" => Ok(Self::Helix),
             other => bail!("invalid backend mode: {other}"),
         }
     }
@@ -651,6 +686,18 @@ impl FileConfig {
         if let Some(value) = self.integrations.sentry.traces_sample_rate {
             config.integrations.sentry.traces_sample_rate = value;
         }
+        if let Some(value) = self.integrations.helix.endpoint {
+            config.integrations.helix.endpoint = value;
+        }
+        if let Some(value) = self.integrations.helix.port {
+            config.integrations.helix.port = value;
+        }
+        if let Some(value) = self.integrations.helix.api_key {
+            config.integrations.helix.api_key = Some(value);
+        }
+        if let Some(value) = self.integrations.helix.project_dir {
+            config.integrations.helix.project_dir = value;
+        }
 
         if let Some(value) = self.webhooks.stripe_secret {
             config.webhooks.stripe_secret = Some(value);
@@ -735,6 +782,7 @@ struct FileIntegrationsConfig {
     resend: FileResendConfig,
     sandbox_ai: FileSandboxAiConfig,
     sentry: FileSentryConfig,
+    helix: FileHelixConfig,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -771,6 +819,15 @@ struct FileSentryConfig {
     dsn: Option<String>,
     environment: Option<String>,
     traces_sample_rate: Option<f32>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+struct FileHelixConfig {
+    endpoint: Option<String>,
+    port: Option<u16>,
+    api_key: Option<String>,
+    project_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
