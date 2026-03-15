@@ -69,12 +69,12 @@ export function DeveloperWidget() {
   const { data: session } = useSession();
   const [clickCount, setClickCount] = useState(0);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [isLocalHost] = useState(
-    () =>
-      typeof window !== "undefined"
-      && LOCAL_HOSTNAMES.has(window.location.hostname)
-  );
+  const [isLocalHost, setIsLocalHost] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsLocalHost(LOCAL_HOSTNAMES.has(window.location.hostname));
+  }, []);
   const [refreshTick, setRefreshTick] = useState(0);
   const [activeTab, setActiveTab] = useState<DebugTabId>("posthog");
 

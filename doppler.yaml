@@ -1,4 +1,7 @@
-# Doppler CLI config for Chronicle Platform monorepo (local dev only).
+# Default Doppler CLI scopes for the Chronicle Platform monorepo.
+# `make doppler-setup DOPPLER_ENV=<dev|stg|prd>` writes the scoped project/config
+# pairs directly with `doppler configure set`, so this file remains a dev-default
+# reference for manual `doppler setup` usage.
 setup:
   - project: chronicle-platform
     config: dev_frontend

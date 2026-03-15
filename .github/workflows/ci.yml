@@ -127,6 +127,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install Doppler CLI
+        run: curl -Ls --tlsv1.2 --proto '=https' --retry 3 https://cli.doppler.com/install.sh | sudo sh
+      - name: Sync Fly secrets from Doppler (dev)
+        run: ./scripts/sync-fly-secrets-from-doppler.sh dev
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_BACKEND_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (dev)
         run: |
           flyctl deploy --config deploy/fly.development.toml --remote-only \
@@ -146,6 +153,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install Doppler CLI
+        run: curl -Ls --tlsv1.2 --proto '=https' --retry 3 https://cli.doppler.com/install.sh | sudo sh
+      - name: Sync Fly secrets from Doppler (stg)
+        run: ./scripts/sync-fly-secrets-from-doppler.sh stg
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_BACKEND_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (staging)
         run: |
           flyctl deploy --config deploy/fly.staging.toml --remote-only \
@@ -165,6 +179,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install Doppler CLI
+        run: curl -Ls --tlsv1.2 --proto '=https' --retry 3 https://cli.doppler.com/install.sh | sudo sh
+      - name: Sync Fly secrets from Doppler (prd)
+        run: ./scripts/sync-fly-secrets-from-doppler.sh prd
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_BACKEND_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (production)
         run: |
           flyctl deploy --config deploy/fly.production.toml --remote-only \

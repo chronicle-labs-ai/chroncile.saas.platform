@@ -91,7 +91,8 @@ cargo install wasm-bindgen-cli
 # From repo root, enter backend
 cd backend
 
-# Option A — Doppler (if your team uses it): run once from root: doppler setup --no-interactive
+# Option A — Doppler (if your team uses it): run once from repo root
+# make doppler-setup DOPPLER_ENV=dev
 doppler run -- cargo run --bin chronicle-backend
 
 # Option B — Local .env

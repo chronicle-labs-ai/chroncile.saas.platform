@@ -13,7 +13,7 @@ This is the Next.js frontend application for Chronicle Labs.
    Either use **Doppler** (recommended if your team uses it) or a local `.env` file.
 
    **Option A — Doppler:**  
-   From repo root run `doppler setup --no-interactive`, then from this directory:
+   From repo root run `make doppler-setup DOPPLER_ENV=dev`, then from this directory:
    ```bash
    doppler run -- yarn dev
    ```

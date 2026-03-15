@@ -45,7 +45,7 @@ the default local development flow for the backend, frontend, and env manager.
 | Start backend in dev mode | `make backend-dev` |
 | Run backend SQLx migrations | `make migrate` |
 | Launch the local Docker stack | `make docker-up` |
-| Sync Doppler env files | `make doppler-sync` |
+| Sync Doppler env files | `make doppler-sync DOPPLER_ENV=dev` |
 
 For subsystem-specific environment variables, database setup, and runtime
 details, use the docs below.
@@ -57,7 +57,9 @@ Use these docs for deeper context by topic:
 | If you need... | Read |
 | --- | --- |
 | Frontend setup, env vars, Prisma workflows, and app routes | [Frontend README](./apps/frontend/README.md) |
+| Env-manager setup, Doppler access, and admin runtime requirements | [Env Manager README](./apps/env-manager/README.md) |
 | Backend setup, architecture, API endpoints, and runtime modes | [Backend README](./backend/README.md) |
+| Doppler config matrix, secret ownership, and automation flow | [Doppler Guide](./docs/doppler.md) |
 | Backend status, known issues, and remaining implementation work | [Backend Development Notes](./backend/DEVELOPMENT.md) |
 | Feature flags, entitlements, ownership, and cleanup rules | [Feature Access](./docs/feature-access.md) |
 | Official Tau² setup, Chronicle ingestion, and benchmark reporting | [Tau² Benchmark Guide](./docs/tau2-benchmark.md) |

@@ -9,7 +9,7 @@ primary_region = 'ams'
   API_PORT = "8080"
   BACKEND_MODE = "real"
   RUST_LOG = "info,tower_http=info"
-  PIPEDREAM_ENVIRONMENT = "staging"
+  PIPEDREAM_ENVIRONMENT = "production"
   SENTRY_ENVIRONMENT = "staging"
   SENTRY_TRACES_SAMPLE_RATE = "1.0"
 

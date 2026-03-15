@@ -33,12 +33,16 @@ repo root:
 
 ```bash
 doppler login
-make doppler-setup
-make doppler-sync
+make doppler-setup DOPPLER_ENV=dev
+make doppler-sync DOPPLER_ENV=dev
 ```
 
 `make doppler-sync` writes `.env` files for `backend/`, `apps/frontend/`, and
 `apps/env-manager/`.
+
+Supported permanent environment slugs are `dev`, `stg`, and `prd`, so you can
+also run `make doppler-sync DOPPLER_ENV=stg` or `make doppler-sync DOPPLER_ENV=prd`
+when you need those config families locally.
 
 If you are not using Doppler, follow the app-specific READMEs for local `.env`
 setup. For backend Sentry in local development, add `SENTRY_DSN`,

@@ -6,7 +6,7 @@ set -euo pipefail
 # Prerequisites:
 #   - flyctl installed and authenticated (fly auth login)
 #   - gh CLI installed and authenticated
-#   - Vercel CLI installed (npm i -g vercel) and linked to project
+#   - doppler CLI installed and authenticated, or DOPPLER_TOKEN exported
 #
 # Usage:
 #   ./scripts/setup-production.sh [environment]
@@ -14,63 +14,48 @@ set -euo pipefail
 
 ENV="${1:-all}"
 BACKEND_DEPLOY_DIR="deploy"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "=== Chronicle Labs Environment Setup ==="
 echo ""
 
 setup_env() {
     local env_name="$1"
-    local fly_app="$2"
-    local fly_config="$3"
+    local env_slug="$2"
+    local fly_app="$3"
+    local fly_config="$4"
 
     echo "── Setting up: $env_name ──"
     echo ""
 
-    local auth_secret="${AUTH_SECRET:-$(openssl rand -base64 32)}"
-    local service_secret="${SERVICE_SECRET:-$(openssl rand -base64 32)}"
-    local encryption_key="${ENCRYPTION_KEY:-$(openssl rand -hex 32)}"
-
     echo "  Fly.io app:    $fly_app"
     echo "  Fly.io config: $fly_config"
     echo "  URL:           https://$fly_app.fly.dev"
+    echo "  Doppler config: ${env_slug}_backend"
     echo ""
 
-    flyctl secrets set \
-        AUTH_SECRET="$auth_secret" \
-        SERVICE_SECRET="$service_secret" \
-        ENCRYPTION_KEY="$encryption_key" \
-        SENTRY_DSN="${SENTRY_DSN:-}" \
-        PIPEDREAM_CLIENT_ID="${PIPEDREAM_CLIENT_ID:-}" \
-        PIPEDREAM_CLIENT_SECRET="${PIPEDREAM_CLIENT_SECRET:-}" \
-        PIPEDREAM_PROJECT_ID="${PIPEDREAM_PROJECT_ID:-}" \
-        STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY:-}" \
-        STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET:-}" \
-        --app "$fly_app" 2>/dev/null || true
+    "${ROOT_DIR}/scripts/sync-fly-secrets-from-doppler.sh" "${env_slug}" "${fly_app}"
 
-    echo "  Secrets configured for $fly_app"
+    echo "  Secrets synced from Doppler for $fly_app"
     echo ""
 
     if [ "$env_name" = "production" ]; then
-        echo "  Vercel env vars (set in Dashboard):"
-        echo "    NEXT_PUBLIC_BACKEND_URL = https://$fly_app.fly.dev"
-        echo "    AUTH_SECRET             = $auth_secret"
-        echo "    AUTH_TRUST_HOST         = true"
-        echo "    SERVICE_SECRET          = $service_secret"
-        echo "    ENCRYPTION_KEY          = $encryption_key"
+        echo "  Frontend production env vars should be sourced from prd_frontend"
+        echo "  and synced through env-manager's permanent environment sync."
         echo ""
     fi
 }
 
 if [ "$ENV" = "development" ] || [ "$ENV" = "all" ]; then
-    setup_env "development" "chronicle-backend-dev" "${BACKEND_DEPLOY_DIR}/fly.development.toml"
+    setup_env "development" "dev" "chronicle-backend-dev" "${BACKEND_DEPLOY_DIR}/fly.development.toml"
 fi
 
 if [ "$ENV" = "staging" ] || [ "$ENV" = "all" ]; then
-    setup_env "staging" "chronicle-backend-staging" "${BACKEND_DEPLOY_DIR}/fly.staging.toml"
+    setup_env "staging" "stg" "chronicle-backend-staging" "${BACKEND_DEPLOY_DIR}/fly.staging.toml"
 fi
 
 if [ "$ENV" = "production" ] || [ "$ENV" = "all" ]; then
-    setup_env "production" "chronicle-backend" "${BACKEND_DEPLOY_DIR}/fly.production.toml"
+    setup_env "production" "prd" "chronicle-backend" "${BACKEND_DEPLOY_DIR}/fly.production.toml"
 fi
 
 echo "=== Branching Strategy ==="
@@ -96,6 +81,6 @@ echo "  development  -- no protection, auto-deploy on develop push"
 echo "  staging      -- auto-deploy on staging push"
 echo "  production   -- branch restricted to main"
 echo ""
-echo "  FLY_API_TOKEN is set as environment secret on each."
+echo "  Each environment needs FLY_API_TOKEN and DOPPLER_BACKEND_TOKEN."
 echo ""
 echo "=== Setup Complete ==="
