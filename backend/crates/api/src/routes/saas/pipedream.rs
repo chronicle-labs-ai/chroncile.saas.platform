@@ -181,6 +181,34 @@ pub async fn list_triggers(
     })))
 }
 
+#[derive(serde::Deserialize)]
+pub struct ConfigurePropRequest {
+    pub trigger_id: String,
+    pub prop_name: String,
+    pub configured_props: Option<serde_json::Value>,
+    pub query: Option<String>,
+}
+
+pub async fn configure_prop(
+    user: AuthUser,
+    State(state): State<SaasAppState>,
+    Json(input): Json<ConfigurePropRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let pd = get_pipedream(&state)?;
+    let result = pd
+        .configure_prop(
+            &input.trigger_id,
+            &input.prop_name,
+            &user.tenant_id,
+            input.configured_props,
+            input.query.as_deref(),
+        )
+        .await
+        .map_err(|e| ApiError::bad_request(e.to_string()))?;
+
+    Ok(Json(serde_json::to_value(result).unwrap_or_default()))
+}
+
 pub async fn deploy_trigger(
     user: AuthUser,
     State(state): State<SaasAppState>,

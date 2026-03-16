@@ -198,8 +198,12 @@ impl PipedreamClient {
         configured_props: Option<serde_json::Value>,
         query: Option<&str>,
     ) -> Result<PropOptionsResponse> {
-        let url = self.project_url(&format!("/triggers/{trigger_id}/props/{prop_name}"));
-        let mut body = serde_json::json!({ "external_user_id": external_user_id });
+        let url = self.project_url("/triggers/configure");
+        let mut body = serde_json::json!({
+            "id": trigger_id,
+            "prop_name": prop_name,
+            "external_user_id": external_user_id,
+        });
         if let Some(props) = configured_props {
             body["configured_props"] = props;
         }

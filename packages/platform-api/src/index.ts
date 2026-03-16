@@ -235,6 +235,18 @@ class PlatformApi {
     );
   }
 
+  configurePipedreamTriggerProp(body: {
+    trigger_id: string;
+    prop_name: string;
+    configured_props?: Record<string, unknown> | null;
+    query?: string | null;
+  }) {
+    return this.request<{
+      options?: Array<{ label: string; value: unknown }>;
+      stringOptions?: string[] | null;
+    }>("POST", "/api/platform/pipedream/triggers/configure", { body });
+  }
+
   deployPipedreamTrigger(body: DeployTriggerRequest) {
     return this.request<{ data: unknown }>(
       "POST",

@@ -129,6 +129,10 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             get(pipedream::list_triggers),
         )
         .route(
+            "/api/platform/pipedream/triggers/configure",
+            post(pipedream::configure_prop),
+        )
+        .route(
             "/api/platform/pipedream/triggers/deploy",
             post(pipedream::deploy_trigger),
         )

@@ -149,6 +149,7 @@ impl LaunchConfig {
             self.integrations.pipedream.environment = PipedreamEnvironment::parse(&value)?;
         }
 
+
         if let Some(value) = non_empty_env("RESEND_API_KEY") {
             self.integrations.resend.api_key = Some(value);
         }
@@ -392,6 +393,7 @@ impl Default for IntegrationsConfig {
         }
     }
 }
+
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PipedreamConfig {

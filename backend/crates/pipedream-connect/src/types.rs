@@ -112,9 +112,12 @@ pub struct TriggerResponse {
     pub data: TriggerComponent,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PropOptionsResponse {
+    #[serde(default)]
     pub options: Vec<PropOption>,
+    #[serde(default, rename = "stringOptions")]
+    pub string_options: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
