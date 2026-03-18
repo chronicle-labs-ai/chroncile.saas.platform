@@ -1552,6 +1552,7 @@ dependencies = [
  "chronicle_interfaces",
  "chronicle_link",
  "chronicle_mock_connector",
+ "chronicle_nango",
  "chronicle_pipedream_connect",
  "chronicle_query",
  "chronicle_sources_core",
@@ -1612,6 +1613,7 @@ dependencies = [
  "chronicle_integrations",
  "chronicle_interfaces",
  "chronicle_mock_connector",
+ "chronicle_nango",
  "chronicle_pipedream_connect",
  "chrono",
  "dotenvy",
@@ -1831,6 +1833,19 @@ dependencies = [
  "serde",
  "serde_json",
  "ulid",
+]
+
+[[package]]
+name = "chronicle_nango"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "wiremock",
 ]
 
 [[package]]

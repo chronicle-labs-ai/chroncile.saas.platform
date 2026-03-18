@@ -148,6 +148,21 @@ impl LaunchConfig {
         if let Some(value) = non_empty_env("PIPEDREAM_ENVIRONMENT") {
             self.integrations.pipedream.environment = PipedreamEnvironment::parse(&value)?;
         }
+        if let Some(value) = non_empty_env("NANGO_SECRET_KEY") {
+            self.integrations.nango.secret_key = Some(value);
+        }
+        if let Some(value) = non_empty_env("NANGO_BASE_URL") {
+            self.integrations.nango.base_url = value;
+        }
+        if let Some(value) = non_empty_env("NANGO_WEBHOOK_SECRET") {
+            self.integrations.nango.webhook_secret = Some(value);
+        }
+        if let Some(value) = non_empty_env("NANGO_INTERCOM_INTEGRATION_ID") {
+            self.integrations.nango.intercom_integration_id = value;
+        }
+        if let Some(value) = non_empty_env("NANGO_FRONT_INTEGRATION_ID") {
+            self.integrations.nango.front_integration_id = value;
+        }
 
 
         if let Some(value) = non_empty_env("RESEND_API_KEY") {
@@ -376,6 +391,7 @@ pub struct HealthConfig {
 #[derive(Debug, Clone, Serialize)]
 pub struct IntegrationsConfig {
     pub pipedream: PipedreamConfig,
+    pub nango: NangoConfig,
     pub resend: ResendConfig,
     pub sandbox_ai: SandboxAiConfig,
     pub sentry: SentryConfig,
@@ -386,6 +402,7 @@ impl Default for IntegrationsConfig {
     fn default() -> Self {
         Self {
             pipedream: PipedreamConfig::default(),
+            nango: NangoConfig::default(),
             resend: ResendConfig::default(),
             sandbox_ai: SandboxAiConfig::default(),
             sentry: SentryConfig::default(),
@@ -410,6 +427,27 @@ impl Default for PipedreamConfig {
             client_secret: None,
             project_id: None,
             environment: PipedreamEnvironment::Development,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct NangoConfig {
+    pub secret_key: Option<String>,
+    pub base_url: String,
+    pub webhook_secret: Option<String>,
+    pub intercom_integration_id: String,
+    pub front_integration_id: String,
+}
+
+impl Default for NangoConfig {
+    fn default() -> Self {
+        Self {
+            secret_key: None,
+            base_url: "https://api.nango.dev".to_string(),
+            webhook_secret: None,
+            intercom_integration_id: "intercom".to_string(),
+            front_integration_id: "front".to_string(),
         }
     }
 }

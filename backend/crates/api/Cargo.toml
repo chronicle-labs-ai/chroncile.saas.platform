@@ -15,6 +15,7 @@ chronicle_sources_core = { workspace = true }
 chronicle_sources_registry = { workspace = true }
 chronicle_auth = { workspace = true }
 chronicle_pipedream_connect = { workspace = true }
+chronicle_nango = { workspace = true }
 chronicle_core = { workspace = true }
 chronicle_stripe = { workspace = true }
 chronicle_store = { workspace = true }

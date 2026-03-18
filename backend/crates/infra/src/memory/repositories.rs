@@ -521,6 +521,14 @@ impl ConnectionRepository for InMemoryConnectionRepo {
         Ok(self.store.get(id).map(|e| e.value().clone()))
     }
 
+    async fn find_by_pipedream_auth_id(&self, auth_id: &str) -> RepoResult<Option<Connection>> {
+        Ok(self
+            .store
+            .iter()
+            .find(|e| e.value().pipedream_auth_id.as_deref() == Some(auth_id))
+            .map(|e| e.value().clone()))
+    }
+
     async fn find_by_tenant_provider(
         &self,
         tenant_id: &str,

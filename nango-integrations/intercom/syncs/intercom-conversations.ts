@@ -123,9 +123,10 @@ type IntercomConversationDetail = {
   } | null;
 };
 
-function asUnixSeconds(value: string | undefined): number | undefined {
+function asUnixSeconds(value: Date | string | undefined): number | undefined {
   if (!value) return undefined;
-  const parsed = Date.parse(value);
+  const parsed =
+    value instanceof Date ? value.getTime() : Date.parse(value);
   if (Number.isNaN(parsed)) return undefined;
   return Math.floor(parsed / 1000);
 }
@@ -206,6 +207,8 @@ export default createSync({
   },
 
   exec: async (nango) => {
+    await nango.log(`Starting Intercom sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`);
+
     await nango.setMergingStrategy(
       { strategy: "ignore_if_modified_after" },
       "IntercomConversation",
@@ -231,6 +234,8 @@ export default createSync({
       const conversations =
         response.data?.conversations || response.data?.data || [];
 
+      await nango.log(`Fetched ${conversations.length} Intercom conversations in current page.`);
+
       if (!conversations.length) {
         break;
       }
@@ -255,6 +260,7 @@ export default createSync({
       }
 
       if (batch.length) {
+        await nango.log(`Saving ${batch.length} Intercom conversations to Nango cache.`);
         await nango.batchSave(batch, "IntercomConversation");
       }
 

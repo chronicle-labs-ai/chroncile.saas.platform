@@ -3,6 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 
+type JsonValue =
+  | number
+  | string
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue | undefined };
+
 interface PropOptionItem {
   label: string;
   value: unknown;
@@ -372,7 +380,9 @@ export function AddEventSourcesModal({
         triggerId: trigger.key,
         connectionId: connection.id,
         webhookUrl: null,
-        configuredProps: Object.keys(configuredProps).length ? configuredProps : null,
+        configuredProps: Object.keys(configuredProps).length
+          ? (configuredProps as unknown as JsonValue)
+          : null,
       });
 
       const deploymentId =
@@ -418,7 +428,9 @@ export function AddEventSourcesModal({
         triggerId: trigger.key,
         connectionId: connection.id,
         webhookUrl: null,
-        configuredProps: Object.keys(configuredProps).length ? configuredProps : null,
+        configuredProps: Object.keys(configuredProps).length
+          ? (configuredProps as unknown as JsonValue)
+          : null,
       });
 
       const deploymentId =

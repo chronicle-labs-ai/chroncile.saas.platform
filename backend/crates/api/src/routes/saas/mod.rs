@@ -5,6 +5,7 @@ pub mod connections;
 pub mod dashboard;
 mod error;
 pub mod feature_access;
+pub mod integrations;
 pub mod pipedream;
 pub mod runs;
 pub mod sandboxes;
@@ -71,6 +72,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             post(webhooks::pipedream_webhook),
         )
         .route("/api/webhooks/stripe", post(webhooks::stripe_webhook))
+        .route("/api/webhooks/nango", post(webhooks::nango_webhook))
         .route(
             "/api/platform/auth/accept-invite/:token",
             post(team::accept_invite),
@@ -157,6 +159,30 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route(
             "/api/platform/pipedream/accounts/sync",
             post(pipedream::sync_accounts),
+        )
+        .route(
+            "/api/platform/integrations/providers",
+            get(integrations::list_providers),
+        )
+        .route(
+            "/api/platform/integrations/connections",
+            get(integrations::list_nango_connections),
+        )
+        .route(
+            "/api/platform/integrations/connect-session",
+            post(integrations::create_connect_session),
+        )
+        .route(
+            "/api/platform/integrations/connections/sync",
+            post(integrations::sync_connection),
+        )
+        .route(
+            "/api/platform/integrations/sync",
+            post(integrations::trigger_sync),
+        )
+        .route(
+            "/api/platform/integrations/disconnect",
+            post(integrations::disconnect),
         )
         .route("/api/platform/team/members", get(team::list_members))
         .route("/api/platform/team/invite", post(team::invite_member))

@@ -51,6 +51,7 @@ pub struct SaasRuntimeConfig {
     pub service_secret: Option<String>,
     pub stripe_webhook_secret: Option<String>,
     pub feature_access: FeatureAccessRuntimeConfig,
+    pub nango: NangoRuntimeConfig,
 }
 
 impl Default for SaasRuntimeConfig {
@@ -60,6 +61,24 @@ impl Default for SaasRuntimeConfig {
             service_secret: None,
             stripe_webhook_secret: None,
             feature_access: FeatureAccessRuntimeConfig::default(),
+            nango: NangoRuntimeConfig::default(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct NangoRuntimeConfig {
+    pub intercom_integration_id: String,
+    pub front_integration_id: String,
+    pub webhook_secret: Option<String>,
+}
+
+impl Default for NangoRuntimeConfig {
+    fn default() -> Self {
+        Self {
+            intercom_integration_id: "intercom".to_string(),
+            front_integration_id: "front".to_string(),
+            webhook_secret: None,
         }
     }
 }

@@ -3,12 +3,18 @@ use axum::{
     http::HeaderMap,
     Json,
 };
+use chrono::{DateTime, TimeZone, Utc};
 use serde_json::Value;
 
-use chronicle_domain::CreateRunInput;
+use chronicle_core::event::Event as ChronicleEvent;
+use chronicle_domain::{CreateRunInput, TenantId};
 use chronicle_infra::conversion::build_native_event;
 
 use super::error::{ApiError, ApiResult};
+use super::integrations::{
+    materialize_nango_connection, nango_provider_by_integration_id, nango_provider_by_name,
+    trigger_provider_sync,
+};
 use crate::saas_state::SaasAppState;
 
 // ── Pipedream Webhook ──
@@ -254,6 +260,657 @@ fn normalize_event_type(provider: &str, event_type: Option<&str>) -> String {
         Some(t) => format!("{provider}.{t}"),
         None => format!("{provider}.event"),
     }
+}
+
+// ── Nango Webhook ──
+
+pub async fn nango_webhook(
+    State(state): State<SaasAppState>,
+    _headers: HeaderMap,
+    body: String,
+) -> ApiResult<Json<Value>> {
+    let payload: Value = serde_json::from_str(&body)
+        .map_err(|error| ApiError::bad_request(format!("Invalid JSON: {error}")))?;
+
+    let webhook_type = payload.get("type").and_then(Value::as_str).unwrap_or("unknown");
+
+    match webhook_type {
+        "auth" => handle_nango_auth_webhook(&state, &payload).await,
+        "sync" => handle_nango_sync_webhook(&state, &payload).await,
+        _ => Ok(Json(serde_json::json!({
+            "received": true,
+            "ignored": true,
+            "type": webhook_type,
+        }))),
+    }
+}
+
+async fn handle_nango_auth_webhook(
+    state: &SaasAppState,
+    payload: &Value,
+) -> ApiResult<Json<Value>> {
+    let success = payload.get("success").and_then(Value::as_bool).unwrap_or(false);
+    let operation = payload
+        .get("operation")
+        .and_then(Value::as_str)
+        .unwrap_or("unknown");
+    let connection_id = payload
+        .get("connectionId")
+        .or_else(|| payload.get("connection_id"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| ApiError::bad_request("Missing connectionId"))?;
+    let provider_config_key = payload
+        .get("providerConfigKey")
+        .or_else(|| payload.get("provider_config_key"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| ApiError::bad_request("Missing providerConfigKey"))?;
+
+    if operation == "deletion" {
+        if let Some(connection) = state
+            .connections
+            .find_by_pipedream_auth_id(connection_id)
+            .await?
+        {
+            state.connections.delete(&connection.id).await?;
+        }
+
+        return Ok(Json(serde_json::json!({
+            "received": true,
+            "type": "auth",
+            "operation": operation,
+            "deleted": true,
+        })));
+    }
+
+    if !success {
+        return Ok(Json(serde_json::json!({
+            "received": true,
+            "type": "auth",
+            "operation": operation,
+            "success": false,
+        })));
+    }
+
+    let provider = nango_provider_by_integration_id(&state.config, provider_config_key)
+        .or_else(|| {
+            payload
+                .get("provider")
+                .and_then(Value::as_str)
+                .and_then(|provider| nango_provider_by_name(&state.config, provider))
+        })
+        .ok_or_else(|| ApiError::bad_request("Unsupported Nango provider"))?;
+
+    let existing = state
+        .connections
+        .find_by_pipedream_auth_id(connection_id)
+        .await?;
+
+    let tenant_id = payload
+        .get("endUser")
+        .and_then(|value| value.get("tags"))
+        .and_then(|value| {
+            value.get("organizationId").or_else(|| value.get("tenantId"))
+        })
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+        .or_else(|| {
+            payload
+                .get("organization")
+                .and_then(|value| value.get("id"))
+                .and_then(Value::as_str)
+                .map(ToString::to_string)
+        })
+        .or_else(|| existing.as_ref().map(|connection| connection.tenant_id.clone()))
+        .ok_or_else(|| ApiError::bad_request("Missing tenant mapping for Nango webhook"))?;
+
+    let connection = materialize_nango_connection(
+        state,
+        &tenant_id,
+        provider.provider,
+        connection_id,
+        provider_config_key,
+        None,
+    )
+    .await?;
+
+    trigger_provider_sync(state, &provider, &connection, Some("incremental")).await?;
+
+    Ok(Json(serde_json::json!({
+        "received": true,
+        "type": "auth",
+        "operation": operation,
+        "provider": provider.provider,
+        "connection_id": connection_id,
+    })))
+}
+
+async fn handle_nango_sync_webhook(
+    state: &SaasAppState,
+    payload: &Value,
+) -> ApiResult<Json<Value>> {
+    let success = payload.get("success").and_then(Value::as_bool).unwrap_or(true);
+    let connection_id = payload
+        .get("connectionId")
+        .or_else(|| payload.get("connection_id"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| ApiError::bad_request("Missing connectionId"))?;
+
+    if !success {
+        return Ok(Json(serde_json::json!({
+            "received": true,
+            "type": "sync",
+            "success": false,
+        })));
+    }
+
+    let connection = state
+        .connections
+        .find_by_pipedream_auth_id(connection_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("Connection"))?;
+
+    let provider = nango_provider_by_name(&state.config, &connection.provider)
+        .ok_or_else(|| ApiError::bad_request("Unsupported Nango provider"))?;
+    let provider_config_key = payload
+        .get("providerConfigKey")
+        .or_else(|| payload.get("provider_config_key"))
+        .and_then(Value::as_str)
+        .or_else(|| {
+            connection
+                .metadata
+                .as_ref()
+                .and_then(|metadata| metadata.get("provider_config_key"))
+                .and_then(Value::as_str)
+        })
+        .unwrap_or(provider.integration_id.as_str());
+    let model = payload
+        .get("model")
+        .or_else(|| payload.get("modelName"))
+        .and_then(Value::as_str)
+        .unwrap_or(provider.model);
+    let modified_after = payload
+        .get("modifiedAfter")
+        .or_else(|| payload.get("modified_after"))
+        .and_then(Value::as_str);
+
+    let records = fetch_nango_records(
+        state,
+        connection_id,
+        provider_config_key,
+        model,
+        modified_after,
+    )
+    .await?;
+
+    let events = match provider.provider {
+        "intercom" => normalize_intercom_records(&connection.tenant_id, &records),
+        "front" => normalize_front_records(&connection.tenant_id, &records),
+        other => {
+            tracing::warn!(provider = other, "Ignoring Nango sync for unsupported provider");
+            Vec::new()
+        }
+    };
+
+    let ingested = insert_nango_events(state, &connection.tenant_id, provider.provider, events).await?;
+
+    Ok(Json(serde_json::json!({
+        "received": true,
+        "type": "sync",
+        "provider": provider.provider,
+        "connection_id": connection_id,
+        "records": records.len(),
+        "ingested": ingested,
+    })))
+}
+
+async fn fetch_nango_records(
+    state: &SaasAppState,
+    connection_id: &str,
+    provider_config_key: &str,
+    model: &str,
+    modified_after: Option<&str>,
+) -> ApiResult<Vec<Value>> {
+    let nango = state
+        .nango
+        .as_ref()
+        .ok_or_else(|| ApiError::bad_request("Nango is not configured"))?;
+
+    let mut cursor: Option<String> = None;
+    let mut records = Vec::new();
+
+    loop {
+        let response = nango
+            .get_records(
+                connection_id,
+                provider_config_key,
+                model,
+                cursor.as_deref(),
+                modified_after,
+            )
+            .await
+            .map_err(|error| {
+                tracing::error!(connection_id, provider_config_key, model, %error, "Failed to fetch Nango records");
+                ApiError::bad_request(format!("Failed to fetch Nango records: {error}"))
+            })?;
+
+        records.extend(response.records);
+
+        match response.next_cursor {
+            Some(next_cursor) if !next_cursor.is_empty() => cursor = Some(next_cursor),
+            _ => break,
+        }
+    }
+
+    Ok(records)
+}
+
+fn normalize_intercom_records(tenant_id: &str, records: &[Value]) -> Vec<(String, ChronicleEvent)> {
+    let mut events = Vec::new();
+    for record in records {
+        let conversation_id = record
+            .get("conversation_id")
+            .or_else(|| record.get("id"))
+            .and_then(Value::as_str);
+        let Some(conversation_id) = conversation_id else {
+            continue;
+        };
+
+        let customer_id = record
+            .get("contact")
+            .and_then(|value| value.get("id"))
+            .and_then(Value::as_str)
+            .or_else(|| {
+                record
+                    .get("contacts")
+                    .and_then(Value::as_array)
+                    .and_then(|items| items.first())
+                    .and_then(|value| value.get("id"))
+                    .and_then(Value::as_str)
+            });
+
+        let created_at = value_to_datetime(record.get("created_at")).unwrap_or_else(Utc::now);
+        let updated_at = value_to_datetime(record.get("updated_at")).unwrap_or(created_at);
+
+        let source = record.get("source");
+        let source_author = source.and_then(|value| value.get("author"));
+        let (source_actor_type, source_actor_id, source_actor_name) = actor_from_author(source_author, "intercom");
+
+        events.push(build_nango_native_event(
+            tenant_id,
+            "intercom",
+            "intercom.conversation.created",
+            &format!("intercom:{conversation_id}:created:{}", created_at.timestamp()),
+            created_at,
+            conversation_id,
+            customer_id,
+            &source_actor_type,
+            &source_actor_id,
+            source_actor_name.as_deref(),
+            serde_json::json!({
+                "conversation_id": conversation_id,
+                "state": record.get("state").cloned(),
+                "body": source.and_then(|value| value.get("body")).cloned(),
+                "contact": record.get("contact").cloned(),
+                "assignee": record.get("assignee").cloned(),
+                "raw": record,
+            }),
+        ));
+
+        if let Some(body) = source.and_then(|value| value.get("body")).and_then(Value::as_str) {
+            let message_event_type = if source_actor_type == "agent" {
+                "intercom.message.agent"
+            } else {
+                "intercom.message.customer"
+            };
+            events.push(build_nango_native_event(
+                tenant_id,
+                "intercom",
+                message_event_type,
+                &format!(
+                    "intercom:{conversation_id}:source:{}",
+                    source
+                        .and_then(|value| value.get("id"))
+                        .and_then(Value::as_str)
+                        .unwrap_or("root")
+                ),
+                created_at,
+                conversation_id,
+                customer_id,
+                &source_actor_type,
+                &source_actor_id,
+                source_actor_name.as_deref(),
+                serde_json::json!({
+                    "conversation_id": conversation_id,
+                    "body": body,
+                    "author": source_author.cloned(),
+                    "raw": source.cloned(),
+                }),
+            ));
+        }
+
+        if let Some(parts) = record.get("conversation_parts").and_then(Value::as_array) {
+            for part in parts {
+                let part_id = part.get("id").and_then(Value::as_str).unwrap_or("part");
+                let part_author = part.get("author");
+                let (actor_type, actor_id, actor_name) = actor_from_author(part_author, "intercom");
+                let part_created_at = value_to_datetime(part.get("created_at")).unwrap_or(updated_at);
+                let event_type = if part
+                    .get("part_type")
+                    .or_else(|| part.get("type"))
+                    .and_then(Value::as_str)
+                    .is_some_and(|value| value.contains("note"))
+                {
+                    "intercom.note.internal"
+                } else if actor_type == "agent" {
+                    "intercom.message.agent"
+                } else {
+                    "intercom.message.customer"
+                };
+
+                events.push(build_nango_native_event(
+                    tenant_id,
+                    "intercom",
+                    event_type,
+                    &format!("intercom:{conversation_id}:part:{part_id}"),
+                    part_created_at,
+                    conversation_id,
+                    customer_id,
+                    &actor_type,
+                    &actor_id,
+                    actor_name.as_deref(),
+                    serde_json::json!({
+                        "conversation_id": conversation_id,
+                        "message_id": part_id,
+                        "body": part.get("body").cloned(),
+                        "author": part_author.cloned(),
+                        "raw": part,
+                    }),
+                ));
+            }
+        }
+
+        if let Some(assignee) = record.get("assignee") {
+            let assignee_id = assignee.get("id").and_then(Value::as_str).unwrap_or("assignee");
+            let assignee_name = assignee.get("name").and_then(Value::as_str);
+            events.push(build_nango_native_event(
+                tenant_id,
+                "intercom",
+                "intercom.conversation.assigned",
+                &format!(
+                    "intercom:{conversation_id}:assigned:{assignee_id}:{}",
+                    updated_at.timestamp()
+                ),
+                updated_at,
+                conversation_id,
+                customer_id,
+                "agent",
+                assignee_id,
+                assignee_name,
+                serde_json::json!({
+                    "conversation_id": conversation_id,
+                    "assignee": assignee,
+                    "raw": record,
+                }),
+            ));
+        }
+    }
+
+    events
+}
+
+fn normalize_front_records(tenant_id: &str, records: &[Value]) -> Vec<(String, ChronicleEvent)> {
+    let mut events = Vec::new();
+    for record in records {
+        let conversation_id = record
+            .get("conversation_id")
+            .or_else(|| record.get("id"))
+            .and_then(Value::as_str);
+        let Some(conversation_id) = conversation_id else {
+            continue;
+        };
+
+        let customer_id = record
+            .get("contacts")
+            .and_then(Value::as_array)
+            .and_then(|items| items.first())
+            .and_then(|value| value.get("id"))
+            .and_then(Value::as_str);
+        let created_at = value_to_datetime(record.get("created_at")).unwrap_or_else(Utc::now);
+        let updated_at = value_to_datetime(record.get("updated_at")).unwrap_or(created_at);
+
+        events.push(build_nango_native_event(
+            tenant_id,
+            "front",
+            "front.conversation.created",
+            &format!("front:{conversation_id}:created:{}", created_at.timestamp()),
+            created_at,
+            conversation_id,
+            customer_id,
+            "system",
+            "front",
+            None,
+            serde_json::json!({
+                "conversation_id": conversation_id,
+                "subject": record.get("subject").cloned(),
+                "status": record.get("status").cloned(),
+                "inbox": record.get("inbox").cloned(),
+                "raw": record,
+            }),
+        ));
+
+        if let Some(messages) = record.get("messages").and_then(Value::as_array) {
+            for message in messages {
+                let message_id = message.get("id").and_then(Value::as_str).unwrap_or("message");
+                let occurred_at = value_to_datetime(message.get("created_at")).unwrap_or(updated_at);
+                let is_comment = message
+                    .get("is_comment")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let is_inbound = message
+                    .get("is_inbound")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let (actor_type, actor_id, actor_name) = if is_comment {
+                    actor_from_front_author(message.get("author"), false)
+                } else {
+                    actor_from_front_author(message.get("author"), is_inbound)
+                };
+                let event_type = if is_comment {
+                    "front.comment.added"
+                } else if is_inbound {
+                    "front.message.received"
+                } else {
+                    "front.message.sent"
+                };
+
+                events.push(build_nango_native_event(
+                    tenant_id,
+                    "front",
+                    event_type,
+                    &format!("front:{conversation_id}:message:{message_id}"),
+                    occurred_at,
+                    conversation_id,
+                    customer_id,
+                    &actor_type,
+                    &actor_id,
+                    actor_name.as_deref(),
+                    serde_json::json!({
+                        "conversation_id": conversation_id,
+                        "message_id": message_id,
+                        "body": message.get("body_text").or_else(|| message.get("body")).cloned(),
+                        "author": message.get("author").cloned(),
+                        "raw": message,
+                    }),
+                ));
+            }
+        }
+
+        if let Some(assignee) = record.get("assignee") {
+            let assignee_id = assignee.get("id").and_then(Value::as_str).unwrap_or("assignee");
+            events.push(build_nango_native_event(
+                tenant_id,
+                "front",
+                "front.conversation.assigned",
+                &format!(
+                    "front:{conversation_id}:assigned:{assignee_id}:{}",
+                    updated_at.timestamp()
+                ),
+                updated_at,
+                conversation_id,
+                customer_id,
+                "agent",
+                assignee_id,
+                assignee.get("name").and_then(Value::as_str),
+                serde_json::json!({
+                    "conversation_id": conversation_id,
+                    "assignee": assignee,
+                    "raw": record,
+                }),
+            ));
+        }
+    }
+
+    events
+}
+
+fn build_nango_native_event(
+    tenant_id: &str,
+    provider: &str,
+    event_type: &str,
+    source_event_id: &str,
+    occurred_at: DateTime<Utc>,
+    conversation_id: &str,
+    customer_id: Option<&str>,
+    actor_type: &str,
+    actor_id: &str,
+    actor_name: Option<&str>,
+    payload: Value,
+) -> (String, ChronicleEvent) {
+    let mut entities = vec![("conversation".to_string(), conversation_id.to_string())];
+    if let Some(customer_id) = customer_id {
+        entities.push(("customer".to_string(), customer_id.to_string()));
+    }
+
+    (
+        source_event_id.to_string(),
+        build_native_event(
+            tenant_id,
+            provider,
+            event_type,
+            occurred_at,
+            None,
+            payload,
+            entities,
+            None,
+            Some(serde_json::json!({
+                "actor": {
+                    "actor_type": actor_type,
+                    "actor_id": actor_id,
+                    "name": actor_name,
+                },
+                "provider": provider,
+            })),
+            Some(serde_json::json!({
+                "source_event_id": source_event_id,
+            })),
+        ),
+    )
+}
+
+async fn insert_nango_events(
+    state: &SaasAppState,
+    tenant_id: &str,
+    provider: &str,
+    events: Vec<(String, ChronicleEvent)>,
+) -> ApiResult<usize> {
+    let mut ingested = 0usize;
+    let tenant_id = TenantId::new(tenant_id);
+
+    for (source_event_id, event) in events {
+        let exists = state
+            .event_store
+            .exists(&tenant_id, provider, &source_event_id)
+            .await
+            .map_err(|error| {
+                tracing::error!(provider, %source_event_id, %error, "Failed to check existing Chronicle event");
+                ApiError::internal()
+            })?;
+
+        if exists {
+            continue;
+        }
+
+        state
+            .event_store
+            .insert_events(&[event])
+            .await
+            .map_err(|error| {
+                tracing::error!(provider, %source_event_id, %error, "Failed to store Chronicle event from Nango");
+                ApiError::internal()
+            })?;
+        ingested += 1;
+    }
+
+    Ok(ingested)
+}
+
+fn value_to_datetime(value: Option<&Value>) -> Option<DateTime<Utc>> {
+    match value {
+        Some(Value::String(value)) => DateTime::parse_from_rfc3339(value)
+            .ok()
+            .map(|date| date.with_timezone(&Utc)),
+        Some(Value::Number(value)) => value.as_i64().and_then(timestamp_to_datetime),
+        _ => None,
+    }
+}
+
+fn timestamp_to_datetime(timestamp: i64) -> Option<DateTime<Utc>> {
+    let (secs, nanos) = if timestamp > 1_000_000_000_000 {
+        (timestamp / 1_000, ((timestamp % 1_000) * 1_000_000) as u32)
+    } else {
+        (timestamp, 0)
+    };
+    Utc.timestamp_opt(secs, nanos).single()
+}
+
+fn actor_from_author(author: Option<&Value>, provider: &str) -> (String, String, Option<String>) {
+    let author_type = author
+        .and_then(|value| value.get("type"))
+        .and_then(Value::as_str)
+        .unwrap_or("system");
+    let actor_type = if matches!(author_type, "user" | "lead" | "contact") {
+        "customer"
+    } else if matches!(author_type, "admin" | "teammate") {
+        "agent"
+    } else {
+        "system"
+    };
+    let actor_id = author
+        .and_then(|value| value.get("id"))
+        .and_then(Value::as_str)
+        .unwrap_or(provider)
+        .to_string();
+    let actor_name = author
+        .and_then(|value| value.get("name"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+
+    (actor_type.to_string(), actor_id, actor_name)
+}
+
+fn actor_from_front_author(author: Option<&Value>, inbound: bool) -> (String, String, Option<String>) {
+    let actor_type = if inbound { "customer" } else { "agent" };
+    let actor_id = author
+        .and_then(|value| value.get("id"))
+        .and_then(Value::as_str)
+        .unwrap_or(if inbound { "front-customer" } else { "front-agent" })
+        .to_string();
+    let actor_name = author
+        .and_then(|value| value.get("name"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+
+    (actor_type.to_string(), actor_id, actor_name)
 }
 
 // ── Stripe Webhook ──

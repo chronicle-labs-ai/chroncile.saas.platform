@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ConfirmModal, Skeleton } from "ui";
@@ -1091,21 +1092,29 @@ export function ConnectionsClient({
                       </div>
                     )}
                   </>
-                ) : !isPipedreamConfigured ? (
-                  <div className="col-span-full panel">
-                    <div className="flex items-center justify-between px-4 py-3 bg-caution-bg border-b border-caution-dim">
+	                ) : !isPipedreamConfigured ? (
+	                  <div className="col-span-full panel">
+	                    <div className="flex items-center justify-between px-4 py-3 bg-caution-bg border-b border-caution-dim">
                       <div className="flex items-center gap-3">
                         <div className="status-dot status-dot--caution" />
                         <span className="text-sm font-medium text-caution">Pipedream not configured</span>
                       </div>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-sm text-tertiary">
-                        Configure Pipedream credentials to enable additional integrations.
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
+	                    </div>
+	                    <div className="p-4">
+	                      <p className="text-sm text-tertiary">
+	                        Pipedream is not configured for this legacy page. Nango connections for Intercom and Front are available separately and do not require Pipedream.
+	                      </p>
+                        <div className="mt-4">
+                          <Link
+                            href="/dashboard/connections-nango"
+                            className="inline-flex items-center rounded-sm border border-border-dim px-3 py-2 text-sm text-secondary transition hover:bg-hover hover:text-primary"
+                          >
+                            Open Nango Connections
+                          </Link>
+                        </div>
+	                    </div>
+	                  </div>
+	                ) : null}
               </div>
 
               {isPipedreamConfigured && hasMoreApps && !searchQuery && selectedCategory === "all" && (

@@ -709,6 +709,15 @@ impl ConnectionRepository for PgConnectionRepo {
             .map_err(to_repo_err)
     }
 
+    async fn find_by_pipedream_auth_id(&self, auth_id: &str) -> RepoResult<Option<Connection>> {
+        sqlx::query("SELECT * FROM \"Connection\" WHERE \"pipedreamAuthId\" = $1")
+            .bind(auth_id)
+            .try_map(connection_from_row)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(to_repo_err)
+    }
+
     async fn find_by_tenant_provider(
         &self,
         tenant_id: &str,

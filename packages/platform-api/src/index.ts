@@ -28,6 +28,33 @@ import type {
   UpdateStripeRequest,
 } from "shared/generated";
 
+export interface NangoProviderSummary {
+  provider: string;
+  displayName: string;
+  description: string;
+  integrationId: string;
+  syncName: string;
+  model: string;
+  connection: ConnectionListResponse["connections"][number] | null;
+}
+
+export interface NangoProvidersResponse {
+  providers: NangoProviderSummary[];
+}
+
+export interface CreateNangoConnectSessionResponse {
+  provider: string;
+  integrationId: string;
+  sessionToken: string;
+  expiresAt?: string | null;
+}
+
+export interface NangoConnectionActionResponse {
+  success: boolean;
+  message: string;
+  connection?: ConnectionListResponse["connections"][number] | null;
+}
+
 export const DEFAULT_BACKEND_URL = "http://localhost:8080";
 
 export function getBackendUrl(): string {
@@ -288,6 +315,56 @@ class PlatformApi {
     return this.request<{ data: unknown }>(
       "GET",
       "/api/platform/pipedream/accounts",
+    );
+  }
+
+  listNangoProviders() {
+    return this.request<NangoProvidersResponse>(
+      "GET",
+      "/api/platform/integrations/providers",
+    );
+  }
+
+  listNangoConnections() {
+    return this.request<ConnectionListResponse>(
+      "GET",
+      "/api/platform/integrations/connections",
+    );
+  }
+
+  createNangoConnectSession(body: { provider: string }) {
+    return this.request<CreateNangoConnectSessionResponse>(
+      "POST",
+      "/api/platform/integrations/connect-session",
+      { body },
+    );
+  }
+
+  syncNangoConnection(body: {
+    provider: string;
+    connectionId: string;
+    providerConfigKey?: string;
+  }) {
+    return this.request<NangoConnectionActionResponse>(
+      "POST",
+      "/api/platform/integrations/connections/sync",
+      { body },
+    );
+  }
+
+  triggerNangoSync(body: { provider: string; syncMode?: string }) {
+    return this.request<NangoConnectionActionResponse>(
+      "POST",
+      "/api/platform/integrations/sync",
+      { body },
+    );
+  }
+
+  disconnectNango(body: { provider: string }) {
+    return this.request<NangoConnectionActionResponse>(
+      "POST",
+      "/api/platform/integrations/disconnect",
+      { body },
     );
   }
 

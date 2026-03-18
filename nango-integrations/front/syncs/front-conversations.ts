@@ -85,9 +85,10 @@ type FrontConversation = {
   tags?: Array<{ id?: string | null; name?: string | null }> | null;
 };
 
-function asFrontTimestamp(value: string | undefined): number | undefined {
+function asFrontTimestamp(value: Date | string | undefined): number | undefined {
   if (!value) return undefined;
-  const parsed = Date.parse(value);
+  const parsed =
+    value instanceof Date ? value.getTime() : Date.parse(value);
   if (Number.isNaN(parsed)) return undefined;
   return Math.floor(parsed / 1000);
 }
@@ -208,6 +209,8 @@ export default createSync({
   },
 
   exec: async (nango) => {
+    await nango.log(`Starting Front sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`);
+
     await nango.setMergingStrategy(
       { strategy: "ignore_if_modified_after" },
       "FrontConversation",
@@ -229,6 +232,8 @@ export default createSync({
       const conversations: FrontConversation[] =
         response.data?._results || response.data?.results || [];
 
+      await nango.log(`Fetched ${conversations.length} Front conversations in current page.`);
+
       if (!conversations.length) {
         break;
       }
@@ -241,6 +246,7 @@ export default createSync({
       }
 
       if (batch.length) {
+        await nango.log(`Saving ${batch.length} Front conversations to Nango cache.`);
         await nango.batchSave(batch, "FrontConversation");
       }
 

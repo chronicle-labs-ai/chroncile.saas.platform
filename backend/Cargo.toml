@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/chronicle_nango",
     "crates/chronicle_mcp",
     "crates/domain",
     "crates/interfaces",
@@ -198,3 +199,4 @@ object_store = "0.12"
 chronicle_auth = { path = "crates/auth" }
 chronicle_integrations = { path = "crates/integrations" }
 chronicle_pipedream_connect = { path = "crates/pipedream-connect" }
+chronicle_nango = { path = "crates/chronicle_nango" }

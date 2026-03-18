@@ -12,7 +12,8 @@ pub mod state;
 pub use error::{ApiError, ApiResult};
 pub use feature_access::{FeatureAccessService, ResolvedFeatureAccess};
 pub use runtime_config::{
-    EventsRuntimeConfig, FeatureAccessRuntimeConfig, HealthMetadata, SaasRuntimeConfig,
+    EventsRuntimeConfig, FeatureAccessRuntimeConfig, HealthMetadata, NangoRuntimeConfig,
+    SaasRuntimeConfig,
 };
 pub use saas_state::SaasAppState;
 pub use state::AppState;

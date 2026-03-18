@@ -78,18 +78,20 @@ impl NangoClient {
         Self::parse_response(resp).await
     }
 
-    pub async fn list_connections(
-        &self,
-        end_user_id: Option<&str>,
-        end_user_organization_id: Option<&str>,
-    ) -> Result<ConnectionsResponse> {
+    pub async fn list_connections(&self, query: &ListConnectionsQuery) -> Result<ConnectionsResponse> {
         let mut request = self.request(reqwest::Method::GET, "/connections");
-        let mut params = Vec::new();
-        if let Some(value) = end_user_id {
-            params.push(("endUserId", value));
+        let mut params: Vec<(String, String)> = Vec::new();
+        if let Some(value) = query.end_user_id.as_deref() {
+            params.push(("endUserId".to_string(), value.to_string()));
         }
-        if let Some(value) = end_user_organization_id {
-            params.push(("endUserOrganizationId", value));
+        if let Some(value) = query.end_user_organization_id.as_deref() {
+            params.push(("endUserOrganizationId".to_string(), value.to_string()));
+        }
+        if let Some(value) = query.search.as_deref() {
+            params.push(("search".to_string(), value.to_string()));
+        }
+        for (key, value) in &query.tags {
+            params.push((format!("tags[{key}]"), value.clone()));
         }
         if !params.is_empty() {
             request = request.query(&params);
@@ -137,6 +139,41 @@ impl NangoClient {
             .send()
             .await?;
         Self::parse_response(resp).await
+    }
+
+    pub async fn start_sync(&self, payload: &StartSyncRequest) -> Result<SuccessResponse> {
+        let resp = self
+            .request(reqwest::Method::POST, "/sync/start")
+            .json(payload)
+            .send()
+            .await?;
+        Self::parse_response(resp).await
+    }
+
+    pub async fn get_scripts_config(
+        &self,
+        provider_config_key: &str,
+    ) -> Result<ScriptsConfigResponse> {
+        let resp = self
+            .request(reqwest::Method::GET, "/scripts/config")
+            .query(&[("provider_config_key", provider_config_key)])
+            .send()
+            .await?;
+        let envelope: ScriptsConfigEnvelope = Self::parse_response(resp).await?;
+        let configs = envelope.into_configs();
+        configs
+            .iter()
+            .find(|config| {
+                config.provider_config_key.as_deref() == Some(provider_config_key)
+                    || config.provider.as_deref() == Some(provider_config_key)
+            })
+            .cloned()
+            .or_else(|| configs.into_iter().next())
+            .ok_or_else(|| {
+                NangoError::Deserialize(format!(
+                    "No scripts config returned for provider_config_key `{provider_config_key}`"
+                ))
+            })
     }
 
     pub async fn get_records(

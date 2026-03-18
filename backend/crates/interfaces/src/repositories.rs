@@ -96,6 +96,7 @@ pub trait ConnectionRepository: Send + Sync {
         status: &str,
     ) -> RepoResult<Connection>;
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Connection>>;
+    async fn find_by_pipedream_auth_id(&self, auth_id: &str) -> RepoResult<Option<Connection>>;
     async fn find_by_tenant_provider(
         &self,
         tenant_id: &str,

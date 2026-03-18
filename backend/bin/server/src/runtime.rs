@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use chronicle_api::{
     AppState, EventsRuntimeConfig, FeatureAccessRuntimeConfig, HealthMetadata, SaasAppState,
-    SaasRuntimeConfig,
+    NangoRuntimeConfig, SaasRuntimeConfig,
 };
 use chronicle_infra::{StoreBackend, StreamBackend};
 
@@ -87,6 +87,15 @@ pub async fn build_platform_runtime(
         stripe_webhook_secret: launch_config.webhooks.stripe_secret.clone(),
         feature_access: FeatureAccessRuntimeConfig {
             plan_price_ids: launch_config.feature_access.plan_price_ids.clone(),
+        },
+        nango: NangoRuntimeConfig {
+            intercom_integration_id: launch_config
+                .integrations
+                .nango
+                .intercom_integration_id
+                .clone(),
+            front_integration_id: launch_config.integrations.nango.front_integration_id.clone(),
+            webhook_secret: launch_config.integrations.nango.webhook_secret.clone(),
         },
     };
 
@@ -190,6 +199,27 @@ fn build_pipedream_client(
     )))
 }
 
+fn build_nango_client(
+    launch_config: &config::LaunchConfig,
+) -> Option<Arc<chronicle_nango::NangoClient>> {
+    let secret_key = launch_config.integrations.nango.secret_key.clone()?;
+    if secret_key.is_empty() {
+        return None;
+    }
+
+    tracing::info!(
+        base_url = %launch_config.integrations.nango.base_url,
+        intercom_integration_id = %launch_config.integrations.nango.intercom_integration_id,
+        front_integration_id = %launch_config.integrations.nango.front_integration_id,
+        "Nango integration configured"
+    );
+
+    Some(Arc::new(
+        chronicle_nango::NangoClient::new(secret_key)
+            .with_base_url(launch_config.integrations.nango.base_url.clone()),
+    ))
+}
+
 fn build_email_service(
     launch_config: &config::LaunchConfig,
 ) -> Arc<dyn chronicle_interfaces::EmailService> {
@@ -246,6 +276,7 @@ fn build_saas_state_postgres(
         Arc::new(PgInvitationRepo::new(pool.clone())),
         Arc::new(PgPasswordResetRepo::new(pool)),
         build_pipedream_client(launch_config),
+        build_nango_client(launch_config),
         build_email_service(launch_config),
         build_sandbox_ai_service(launch_config),
         event_store,
@@ -275,6 +306,7 @@ fn build_saas_state_memory(
         Arc::new(InMemoryInvitationRepo::default()),
         Arc::new(InMemoryPasswordResetRepo::default()),
         build_pipedream_client(launch_config),
+        build_nango_client(launch_config),
         build_email_service(launch_config),
         build_sandbox_ai_service(launch_config),
         event_store,
