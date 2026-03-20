@@ -91,11 +91,19 @@ pub(crate) fn nango_provider_catalog(config: &SaasRuntimeConfig) -> Vec<NangoPro
             model: "Conversation",
         },
         NangoProviderDescriptor {
+            provider: "slack",
+            display_name: "Slack",
+            description: "Sync channel messages, thread replies, and reactions.",
+            integration_id: config.nango.slack_integration_id.clone(),
+            sync_name: "slack-messages",
+            model: "SlackMessage",
+        },
+        NangoProviderDescriptor {
             provider: "front",
             display_name: "Front",
             description: "Sync conversations, messages, comments, inboxes, and assignees.",
             integration_id: config.nango.front_integration_id.clone(),
-            sync_name: "front-conversations",
+            sync_name: "conversations",
             model: "FrontConversation",
         },
     ]
@@ -142,6 +150,28 @@ fn merge_metadata(
     }
 
     serde_json::Value::Object(map)
+}
+
+fn nango_integrations_config_defaults(
+    provider: &NangoProviderDescriptor,
+) -> Option<serde_json::Value> {
+    match provider.provider {
+        "slack" => {
+            let user_scopes = "channels:history,groups:history";
+            let mut defaults = serde_json::Map::new();
+            defaults.insert(
+                provider.integration_id.clone(),
+                serde_json::json!({
+                    "user_scopes": user_scopes,
+                    "connection_config": {
+                        "user_scopes": user_scopes,
+                    }
+                }),
+            );
+            Some(serde_json::Value::Object(defaults))
+        }
+        _ => None,
+    }
 }
 
 pub(crate) fn clear_nango_sync_bookmarks(
@@ -605,6 +635,7 @@ pub async fn create_connect_session(
         id: user.tenant_id.clone(),
         display_name: Some(user.tenant_name.clone()),
     });
+    let integrations_config_defaults = nango_integrations_config_defaults(&provider);
 
     let session = if existing.is_some() {
         if let Some(connection_id) = resolved_existing
@@ -618,7 +649,7 @@ pub async fn create_connect_session(
                     tags: tags.clone(),
                     end_user,
                     organization,
-                    integrations_config_defaults: None,
+                    integrations_config_defaults: integrations_config_defaults.clone(),
                     overrides: None,
                 })
                 .await
@@ -629,7 +660,7 @@ pub async fn create_connect_session(
                     end_user,
                     organization,
                     allowed_integrations: vec![provider.integration_id.clone()],
-                    integrations_config_defaults: None,
+                    integrations_config_defaults: integrations_config_defaults.clone(),
                 })
                 .await
         }
@@ -640,7 +671,7 @@ pub async fn create_connect_session(
                 end_user,
                 organization,
                 allowed_integrations: vec![provider.integration_id.clone()],
-                integrations_config_defaults: None,
+                integrations_config_defaults,
             })
             .await
     }

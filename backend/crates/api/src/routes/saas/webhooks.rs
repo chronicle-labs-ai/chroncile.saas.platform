@@ -476,6 +476,7 @@ async fn handle_nango_sync_webhook(
 
         let events = match provider.provider {
             "intercom" => normalize_intercom_records(&connection.tenant_id, &fetched.records),
+            "slack" => normalize_slack_records(&connection.tenant_id, &fetched.records),
             "front" => normalize_front_records(&connection.tenant_id, &fetched.records),
             other => {
                 tracing::warn!(
@@ -959,6 +960,141 @@ fn normalize_front_records(tenant_id: &str, records: &[Value]) -> Vec<(String, C
     events
 }
 
+fn normalize_slack_records(tenant_id: &str, records: &[Value]) -> Vec<(String, ChronicleEvent)> {
+    let mut events = Vec::new();
+
+    for record in records {
+        let channel_id = record.get("channel_id").and_then(Value::as_str);
+        let message_id = record.get("id").and_then(Value::as_str).unwrap_or_default();
+        let ts = record.get("ts").and_then(Value::as_str);
+        let Some(channel_id) = channel_id else {
+            continue;
+        };
+        let Some(ts) = ts else {
+            continue;
+        };
+
+        let thread_ts = record
+            .get("thread_ts")
+            .and_then(Value::as_str)
+            .unwrap_or(ts);
+        let occurred_at = slack_ts_to_datetime(ts).unwrap_or_else(|| {
+            value_to_datetime(
+                record
+                    .get("_nango_metadata")
+                    .and_then(|value| value.get("first_seen_at")),
+            )
+            .unwrap_or_else(Utc::now)
+        });
+        let user_id = record
+            .get("user_id")
+            .and_then(Value::as_str)
+            .or_else(|| {
+                record
+                    .get("raw")
+                    .and_then(|value| value.get("user"))
+                    .and_then(Value::as_str)
+            })
+            .unwrap_or("slack");
+        let user_name = record.get("user_name").and_then(Value::as_str).or_else(|| {
+            record
+                .get("raw")
+                .and_then(|value| value.get("username"))
+                .and_then(Value::as_str)
+        });
+        let subtype = record
+            .get("raw")
+            .and_then(|value| value.get("subtype"))
+            .and_then(Value::as_str);
+        let actor_type = if user_id == "slack" || matches!(subtype, Some("bot_message")) {
+            "system"
+        } else {
+            "agent"
+        };
+        let event_type = match record.get("event_type").and_then(Value::as_str) {
+            Some("thread_reply") if thread_ts != ts => "slack.thread_reply",
+            _ => "slack.message",
+        };
+
+        let mut entities = vec![("channel".to_string(), channel_id.to_string())];
+        if thread_ts != ts {
+            entities.push(("thread".to_string(), thread_ts.to_string()));
+        }
+        if user_id != "slack" {
+            entities.push(("user".to_string(), user_id.to_string()));
+        }
+
+        events.push(build_nango_native_event_with_entities(
+            tenant_id,
+            "slack",
+            event_type,
+            &format!("slack:{message_id}"),
+            occurred_at,
+            entities.clone(),
+            actor_type,
+            user_id,
+            user_name,
+            serde_json::json!({
+                "channel_id": channel_id,
+                "channel_name": record.get("channel_name").cloned(),
+                "message_id": message_id,
+                "text": record.get("text").cloned(),
+                "ts": ts,
+                "thread_ts": thread_ts,
+                "reactions": record.get("reactions").cloned(),
+                "raw": record,
+            }),
+        ));
+
+        if let Some(reactions) = record.get("reactions").and_then(Value::as_array) {
+            for reaction in reactions {
+                let Some(reaction_name) = reaction.get("name").and_then(Value::as_str) else {
+                    continue;
+                };
+
+                let users = reaction
+                    .get("users")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
+
+                for reactor in users {
+                    let Some(reactor_id) = reactor.as_str() else {
+                        continue;
+                    };
+
+                    let mut reaction_entities = entities.clone();
+                    reaction_entities.push(("reaction".to_string(), reaction_name.to_string()));
+
+                    events.push(build_nango_native_event_with_entities(
+                        tenant_id,
+                        "slack",
+                        "slack.reaction_added",
+                        &format!("slack:{channel_id}:reaction:{ts}:{reaction_name}:{reactor_id}"),
+                        occurred_at,
+                        reaction_entities,
+                        "agent",
+                        reactor_id,
+                        None,
+                        serde_json::json!({
+                            "channel_id": channel_id,
+                            "channel_name": record.get("channel_name").cloned(),
+                            "message_id": message_id,
+                            "message_ts": ts,
+                            "thread_ts": thread_ts,
+                            "reaction": reaction_name,
+                            "reactor_id": reactor_id,
+                            "raw": reaction,
+                        }),
+                    ));
+                }
+            }
+        }
+    }
+
+    events
+}
+
 fn build_nango_native_event(
     tenant_id: &str,
     provider: &str,
@@ -977,6 +1113,32 @@ fn build_nango_native_event(
         entities.push(("customer".to_string(), customer_id.to_string()));
     }
 
+    build_nango_native_event_with_entities(
+        tenant_id,
+        provider,
+        event_type,
+        source_event_id,
+        occurred_at,
+        entities,
+        actor_type,
+        actor_id,
+        actor_name,
+        payload,
+    )
+}
+
+fn build_nango_native_event_with_entities(
+    tenant_id: &str,
+    provider: &str,
+    event_type: &str,
+    source_event_id: &str,
+    occurred_at: DateTime<Utc>,
+    entities: Vec<(String, String)>,
+    actor_type: &str,
+    actor_id: &str,
+    actor_name: Option<&str>,
+    payload: Value,
+) -> (String, ChronicleEvent) {
     (
         source_event_id.to_string(),
         build_native_event(
@@ -1057,6 +1219,14 @@ fn timestamp_to_datetime(timestamp: i64) -> Option<DateTime<Utc>> {
         (timestamp, 0)
     };
     Utc.timestamp_opt(secs, nanos).single()
+}
+
+fn slack_ts_to_datetime(timestamp: &str) -> Option<DateTime<Utc>> {
+    let (seconds, nanos) = timestamp.split_once('.')?;
+    let seconds = seconds.parse::<i64>().ok()?;
+    let nanos = format!("{:0<9}", nanos).get(0..9)?.parse::<u32>().ok()?;
+
+    Utc.timestamp_opt(seconds, nanos).single()
 }
 
 fn actor_from_author(author: Option<&Value>, provider: &str) -> (String, String, Option<String>) {
@@ -1271,4 +1441,59 @@ async fn store_stripe_event(
         .next()
         .map(|id| id.to_string())
         .ok_or_else(ApiError::internal)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_slack_records;
+    use serde_json::json;
+
+    #[test]
+    fn normalizes_slack_messages_replies_and_reactions() {
+        let records = vec![
+            json!({
+                "id": "C123:1710000000.000100",
+                "channel_id": "C123",
+                "channel_name": "eng",
+                "user_id": "U123",
+                "user_name": "Alice",
+                "text": "hello",
+                "ts": "1710000000.000100",
+                "thread_ts": "1710000000.000100",
+                "event_type": "message",
+                "reactions": [{
+                    "name": "thumbsup",
+                    "users": ["U456"]
+                }],
+                "raw": {
+                    "ts": "1710000000.000100",
+                    "user": "U123"
+                }
+            }),
+            json!({
+                "id": "C123:1710000000.000100:1710000005.000200",
+                "channel_id": "C123",
+                "channel_name": "eng",
+                "user_id": "U456",
+                "user_name": "Bob",
+                "text": "reply",
+                "ts": "1710000005.000200",
+                "thread_ts": "1710000000.000100",
+                "event_type": "thread_reply",
+                "raw": {
+                    "ts": "1710000005.000200",
+                    "thread_ts": "1710000000.000100",
+                    "user": "U456"
+                }
+            }),
+        ];
+
+        let events = normalize_slack_records("tenant_test", &records);
+        let source_ids = events.iter().map(|(id, _)| id.as_str()).collect::<Vec<_>>();
+
+        assert_eq!(events.len(), 3);
+        assert!(source_ids.contains(&"slack:C123:1710000000.000100"));
+        assert!(source_ids.contains(&"slack:C123:1710000000.000100:1710000005.000200"));
+        assert!(source_ids.contains(&"slack:C123:reaction:1710000000.000100:thumbsup:U456"));
+    }
 }

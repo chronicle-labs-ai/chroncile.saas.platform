@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use chronicle_api::{
-    AppState, EventsRuntimeConfig, FeatureAccessRuntimeConfig, HealthMetadata, SaasAppState,
-    NangoRuntimeConfig, SaasRuntimeConfig,
+    AppState, EventsRuntimeConfig, FeatureAccessRuntimeConfig, HealthMetadata, NangoRuntimeConfig,
+    SaasAppState, SaasRuntimeConfig,
 };
 use chronicle_infra::{StoreBackend, StreamBackend};
 
@@ -64,10 +64,9 @@ pub async fn build_platform_runtime(
                 "Using Helix-backed event store with Postgres canonical storage"
             );
 
-            Arc::new(StoreBackend::Helix(chronicle_infra::helix::HelixStore::new(
-                postgres_store,
-                helix_config,
-            )))
+            Arc::new(StoreBackend::Helix(
+                chronicle_infra::helix::HelixStore::new(postgres_store, helix_config),
+            ))
         }
         #[cfg(not(feature = "helix"))]
         config::BackendKind::Helix => {
@@ -94,7 +93,16 @@ pub async fn build_platform_runtime(
                 .nango
                 .intercom_integration_id
                 .clone(),
-            front_integration_id: launch_config.integrations.nango.front_integration_id.clone(),
+            slack_integration_id: launch_config
+                .integrations
+                .nango
+                .slack_integration_id
+                .clone(),
+            front_integration_id: launch_config
+                .integrations
+                .nango
+                .front_integration_id
+                .clone(),
             webhook_secret: launch_config.integrations.nango.webhook_secret.clone(),
         },
     };
@@ -210,6 +218,7 @@ fn build_nango_client(
     tracing::info!(
         base_url = %launch_config.integrations.nango.base_url,
         intercom_integration_id = %launch_config.integrations.nango.intercom_integration_id,
+        slack_integration_id = %launch_config.integrations.nango.slack_integration_id,
         front_integration_id = %launch_config.integrations.nango.front_integration_id,
         "Nango integration configured"
     );
@@ -335,10 +344,9 @@ fn require_database_url<'a>(
     section: &str,
     store_config: &'a config::StoreConfig,
 ) -> Result<&'a str> {
-    store_config
-        .database_url
-        .as_deref()
-        .ok_or_else(|| anyhow::anyhow!("{section}.database_url must be set for the selected backend"))
+    store_config.database_url.as_deref().ok_or_else(|| {
+        anyhow::anyhow!("{section}.database_url must be set for the selected backend")
+    })
 }
 
 #[cfg(feature = "postgres")]

@@ -160,10 +160,12 @@ impl LaunchConfig {
         if let Some(value) = non_empty_env("NANGO_INTERCOM_INTEGRATION_ID") {
             self.integrations.nango.intercom_integration_id = value;
         }
+        if let Some(value) = non_empty_env("NANGO_SLACK_INTEGRATION_ID") {
+            self.integrations.nango.slack_integration_id = value;
+        }
         if let Some(value) = non_empty_env("NANGO_FRONT_INTEGRATION_ID") {
             self.integrations.nango.front_integration_id = value;
         }
-
 
         if let Some(value) = non_empty_env("RESEND_API_KEY") {
             self.integrations.resend.api_key = Some(value);
@@ -411,7 +413,6 @@ impl Default for IntegrationsConfig {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize)]
 pub struct PipedreamConfig {
     pub client_id: Option<String>,
@@ -437,6 +438,7 @@ pub struct NangoConfig {
     pub base_url: String,
     pub webhook_secret: Option<String>,
     pub intercom_integration_id: String,
+    pub slack_integration_id: String,
     pub front_integration_id: String,
 }
 
@@ -447,6 +449,7 @@ impl Default for NangoConfig {
             base_url: "https://api.nango.dev".to_string(),
             webhook_secret: None,
             intercom_integration_id: "intercom".to_string(),
+            slack_integration_id: "slack".to_string(),
             front_integration_id: "front".to_string(),
         }
     }

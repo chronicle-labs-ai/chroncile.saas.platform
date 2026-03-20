@@ -248,7 +248,7 @@ export function ConnectionsNangoClient({
                 >
                   Run Sync
                 </button>
-                {provider.provider === "intercom" && (
+                {["intercom", "slack", "front"].includes(provider.provider) && (
                   <button
                     type="button"
                     onClick={() => handleBackfill(provider)}

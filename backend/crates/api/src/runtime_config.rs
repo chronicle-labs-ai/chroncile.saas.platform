@@ -69,6 +69,7 @@ impl Default for SaasRuntimeConfig {
 #[derive(Clone, Debug)]
 pub struct NangoRuntimeConfig {
     pub intercom_integration_id: String,
+    pub slack_integration_id: String,
     pub front_integration_id: String,
     pub webhook_secret: Option<String>,
 }
@@ -77,6 +78,7 @@ impl Default for NangoRuntimeConfig {
     fn default() -> Self {
         Self {
             intercom_integration_id: "intercom".to_string(),
+            slack_integration_id: "slack".to_string(),
             front_integration_id: "front".to_string(),
             webhook_secret: None,
         }

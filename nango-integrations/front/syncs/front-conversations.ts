@@ -1,6 +1,8 @@
 import { createSync } from "nango";
 import * as z from "zod";
 
+type NangoSyncClient = import("nango").NangoSyncClient;
+
 const FrontAuthorSchema = z.object({
   id: z.string().nullable().optional(),
   name: z.string().nullable().optional(),
@@ -102,7 +104,10 @@ function nextFrontPage(data: any): string | undefined {
   );
 }
 
-async function fetchFrontMessages(nango: any, conversationId: string) {
+async function fetchFrontMessages(
+  nango: NangoSyncClient,
+  conversationId: string,
+) {
   let endpoint = `/conversations/${conversationId}/messages`;
   const messages: any[] = [];
 
@@ -202,7 +207,7 @@ export default createSync({
   version: "1.0.0",
   endpoints: [{ method: "GET", path: "/conversations", group: "Conversations" }],
   frequency: "every hour",
-  autoStart: true,
+  autoStart: false,
   syncType: "incremental",
   models: {
     FrontConversation: FrontConversationSchema,
