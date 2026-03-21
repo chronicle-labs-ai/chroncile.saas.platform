@@ -199,7 +199,7 @@ pub struct Connection {
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
     pub expires_at: Option<DateTime<Utc>>,
-    pub pipedream_auth_id: Option<String>,
+    pub nango_connection_id: Option<String>,
     pub metadata: Option<serde_json::Value>,
     pub status: String,
     pub created_at: DateTime<Utc>,
@@ -209,13 +209,15 @@ pub struct Connection {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "generated/")]
-pub struct PipedreamTrigger {
+pub struct IntegrationSync {
     pub id: String,
     pub tenant_id: String,
     pub connection_id: String,
-    pub trigger_id: String,
-    pub deployment_id: String,
+    pub sync_name: String,
+    pub nango_sync_id: String,
     pub configured_props: Option<serde_json::Value>,
+    pub last_sync_at: Option<DateTime<Utc>>,
+    pub sync_cursor: Option<String>,
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -295,7 +297,7 @@ pub struct CreateConnectionInput {
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
     pub expires_at: Option<DateTime<Utc>>,
-    pub pipedream_auth_id: Option<String>,
+    pub nango_connection_id: Option<String>,
     pub metadata: Option<serde_json::Value>,
 }
 

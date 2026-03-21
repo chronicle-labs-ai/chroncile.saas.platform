@@ -3,7 +3,7 @@ use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
     CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateUserInput,
     FeatureFlagDefinition, FeatureFlagKey, FeatureFlagOverride, FeatureFlagScope, Invitation,
-    PasswordResetToken, PipedreamTrigger, Run, Tenant, UpsertFeatureFlagDefinitionInput,
+    IntegrationSync, PasswordResetToken, Run, Tenant, UpsertFeatureFlagDefinitionInput,
     UpsertFeatureFlagOverrideInput, User,
 };
 
@@ -96,7 +96,7 @@ pub trait ConnectionRepository: Send + Sync {
         status: &str,
     ) -> RepoResult<Connection>;
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Connection>>;
-    async fn find_by_pipedream_auth_id(&self, auth_id: &str) -> RepoResult<Option<Connection>>;
+    async fn find_by_nango_connection_id(&self, auth_id: &str) -> RepoResult<Option<Connection>>;
     async fn find_by_tenant_provider(
         &self,
         tenant_id: &str,
@@ -140,21 +140,21 @@ pub trait AgentEndpointConfigRepository: Send + Sync {
 }
 
 #[async_trait]
-pub trait PipedreamTriggerRepository: Send + Sync {
+pub trait IntegrationSyncRepository: Send + Sync {
     async fn create(
         &self,
         tenant_id: &str,
         connection_id: &str,
-        trigger_id: &str,
-        deployment_id: &str,
+        sync_name: &str,
+        nango_sync_id: &str,
         configured_props: Option<serde_json::Value>,
-    ) -> RepoResult<PipedreamTrigger>;
-    async fn find_by_deployment_id(
+    ) -> RepoResult<IntegrationSync>;
+    async fn find_by_nango_sync_id(
         &self,
-        deployment_id: &str,
-    ) -> RepoResult<Option<PipedreamTrigger>>;
-    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>>;
-    async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger>;
+        nango_sync_id: &str,
+    ) -> RepoResult<Option<IntegrationSync>>;
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<IntegrationSync>>;
+    async fn update_status(&self, id: &str, status: &str) -> RepoResult<IntegrationSync>;
     async fn delete(&self, id: &str) -> RepoResult<()>;
 }
 

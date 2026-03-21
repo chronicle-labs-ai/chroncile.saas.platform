@@ -96,20 +96,48 @@ CREATE TABLE IF NOT EXISTS "Connection" (
 CREATE UNIQUE INDEX IF NOT EXISTS "Connection_tenantId_provider_key" ON "Connection" ("tenantId", provider);
 CREATE INDEX IF NOT EXISTS "Connection_tenantId_idx" ON "Connection" ("tenantId");
 CREATE INDEX IF NOT EXISTS "Connection_provider_idx" ON "Connection" (provider);
-CREATE INDEX IF NOT EXISTS "Connection_pipedreamAuthId_idx" ON "Connection" ("pipedreamAuthId");
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'Connection'
+          AND column_name = 'pipedreamAuthId'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS "Connection_pipedreamAuthId_idx"
+            ON "Connection" ("pipedreamAuthId");
+    END IF;
+END $$;
 
-CREATE TABLE IF NOT EXISTS "PipedreamTrigger" (
-    id TEXT NOT NULL PRIMARY KEY,
-    "tenantId" TEXT NOT NULL REFERENCES "Tenant"(id) ON DELETE CASCADE,
-    "connectionId" TEXT NOT NULL REFERENCES "Connection"(id) ON DELETE CASCADE,
-    "triggerId" TEXT NOT NULL,
-    "deploymentId" TEXT NOT NULL,
-    "configuredProps" JSONB,
-    status TEXT NOT NULL DEFAULT 'active',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE UNIQUE INDEX IF NOT EXISTS "PipedreamTrigger_deploymentId_key" ON "PipedreamTrigger" ("deploymentId");
-CREATE INDEX IF NOT EXISTS "PipedreamTrigger_tenantId_idx" ON "PipedreamTrigger" ("tenantId");
-CREATE INDEX IF NOT EXISTS "PipedreamTrigger_connectionId_idx" ON "PipedreamTrigger" ("connectionId");
-CREATE INDEX IF NOT EXISTS "PipedreamTrigger_deploymentId_idx" ON "PipedreamTrigger" ("deploymentId");
+DO $$
+BEGIN
+    IF to_regclass('"PipedreamTrigger"') IS NULL
+       AND to_regclass('"IntegrationSync"') IS NULL THEN
+        CREATE TABLE "PipedreamTrigger" (
+            id TEXT NOT NULL PRIMARY KEY,
+            "tenantId" TEXT NOT NULL REFERENCES "Tenant"(id) ON DELETE CASCADE,
+            "connectionId" TEXT NOT NULL REFERENCES "Connection"(id) ON DELETE CASCADE,
+            "triggerId" TEXT NOT NULL,
+            "deploymentId" TEXT NOT NULL,
+            "configuredProps" JSONB,
+            status TEXT NOT NULL DEFAULT 'active',
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF to_regclass('"PipedreamTrigger"') IS NOT NULL THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS "PipedreamTrigger_deploymentId_key"
+            ON "PipedreamTrigger" ("deploymentId");
+        CREATE INDEX IF NOT EXISTS "PipedreamTrigger_tenantId_idx"
+            ON "PipedreamTrigger" ("tenantId");
+        CREATE INDEX IF NOT EXISTS "PipedreamTrigger_connectionId_idx"
+            ON "PipedreamTrigger" ("connectionId");
+        CREATE INDEX IF NOT EXISTS "PipedreamTrigger_deploymentId_idx"
+            ON "PipedreamTrigger" ("deploymentId");
+    END IF;
+END $$;

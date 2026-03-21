@@ -36,7 +36,7 @@ pub async fn pipedream_webhook(
 
     let mut provider = "unknown".to_string();
     if let Some(ref dep_id) = deployment_id {
-        if let Ok(Some(trigger)) = state.pipedream_triggers.find_by_deployment_id(dep_id).await {
+        if let Ok(Some(trigger)) = state.integration_syncs.find_by_nango_sync_id(dep_id).await {
             if let Ok(Some(conn)) = state.connections.find_by_id(&trigger.connection_id).await {
                 provider = conn.provider;
             }
@@ -515,7 +515,7 @@ async fn handle_nango_auth_webhook(
     if operation == "deletion" {
         if let Some(connection) = state
             .connections
-            .find_by_pipedream_auth_id(connection_id)
+            .find_by_nango_connection_id(connection_id)
             .await?
         {
             state.connections.delete(&connection.id).await?;
@@ -531,7 +531,7 @@ async fn handle_nango_auth_webhook(
 
     let existing = state
         .connections
-        .find_by_pipedream_auth_id(connection_id)
+        .find_by_nango_connection_id(connection_id)
         .await?;
 
     if !success {
@@ -630,7 +630,7 @@ async fn handle_nango_sync_webhook(
     let connection_id = extract_nango_connection_id(payload)?;
     let connection = state
         .connections
-        .find_by_pipedream_auth_id(connection_id)
+        .find_by_nango_connection_id(connection_id)
         .await?;
 
     if nango_sync_failed(webhook_type, payload) {
@@ -1780,7 +1780,7 @@ mod tests {
         memory::{
             InMemoryAgentEndpointConfigRepo, InMemoryAuditLogRepo, InMemoryConnectionRepo,
             InMemoryFeatureFlagRepo, InMemoryInvitationRepo, InMemoryPasswordResetRepo,
-            InMemoryPipedreamTriggerRepo, InMemoryRunRepo, InMemoryTenantRepo, InMemoryUserRepo,
+            InMemoryIntegrationSyncRepo, InMemoryRunRepo, InMemoryTenantRepo, InMemoryUserRepo,
             MemoryStore, MemoryStream,
         },
         StoreBackend, StreamBackend,
@@ -1830,7 +1830,7 @@ mod tests {
         let feature_flags = Arc::new(InMemoryFeatureFlagRepo::default());
         let invitations = Arc::new(InMemoryInvitationRepo::default());
         let password_resets = Arc::new(InMemoryPasswordResetRepo::default());
-        let pipedream_triggers = Arc::new(InMemoryPipedreamTriggerRepo::default());
+        let integration_syncs = Arc::new(InMemoryIntegrationSyncRepo::default());
         let event_store = Arc::new(StoreBackend::Memory(MemoryStore::new()));
         let event_stream = Arc::new(StreamBackend::Memory(MemoryStream::new(16, 16)));
         let mut config = SaasRuntimeConfig::default();
@@ -1844,7 +1844,7 @@ mod tests {
             connections.clone(),
             audit_logs.clone(),
             agent_configs,
-            pipedream_triggers,
+            integration_syncs,
             feature_flags,
             invitations,
             password_resets,
@@ -1880,7 +1880,7 @@ mod tests {
                 access_token: None,
                 refresh_token: None,
                 expires_at: None,
-                pipedream_auth_id: Some(connection_id.to_string()),
+                nango_connection_id: Some(connection_id.to_string()),
                 metadata,
             })
             .await

@@ -204,7 +204,7 @@ pub(crate) async fn persist_connection_metadata(
                 access_token: connection.access_token.clone(),
                 refresh_token: connection.refresh_token.clone(),
                 expires_at: connection.expires_at,
-                pipedream_auth_id: connection.pipedream_auth_id.clone(),
+                nango_connection_id: connection.nango_connection_id.clone(),
                 metadata: Some(metadata),
             },
             &connection.status,
@@ -415,7 +415,7 @@ pub(crate) async fn materialize_nango_connection(
                 expires_at: existing
                     .as_ref()
                     .and_then(|connection| connection.expires_at.clone()),
-                pipedream_auth_id: Some(connection_id.to_string()),
+                nango_connection_id: Some(connection_id.to_string()),
                 metadata: Some(metadata),
             },
             "active",
@@ -433,7 +433,7 @@ pub(crate) async fn trigger_provider_sync(
 ) -> ApiResult<()> {
     let nango = require_nango(state)?;
     let connection_id = connection
-        .pipedream_auth_id
+        .nango_connection_id
         .as_deref()
         .ok_or_else(|| ApiError::bad_request("Connection is missing a Nango connection ID"))?;
     let scripts_config = nango
@@ -597,7 +597,7 @@ pub async fn create_connect_session(
         .await?;
 
     let resolved_existing = if let Some(connection) = existing.as_ref() {
-        if let Some(connection_id) = connection.pipedream_auth_id.as_deref() {
+        if let Some(connection_id) = connection.nango_connection_id.as_deref() {
             resolve_nango_connection_for_user(
                 &state,
                 &user,
@@ -740,7 +740,7 @@ pub async fn trigger_sync(
         &state,
         &user,
         &provider,
-        connection.pipedream_auth_id.as_deref(),
+        connection.nango_connection_id.as_deref(),
         provider_config_key,
     )
     .await?;
@@ -783,7 +783,7 @@ pub async fn disconnect(
         .ok_or_else(|| ApiError::not_found("Connection"))?;
 
     let connection_id = connection
-        .pipedream_auth_id
+        .nango_connection_id
         .as_deref()
         .ok_or_else(|| ApiError::bad_request("Connection is missing a Nango connection ID"))?;
 

@@ -6,11 +6,11 @@ use std::sync::Arc;
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
     CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateUserInput, Invitation,
-    PasswordResetToken, PipedreamTrigger, Run, Tenant, User,
+    IntegrationSync, PasswordResetToken, Run, Tenant, User,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, InvitationRepository,
-    PasswordResetRepository, PipedreamTriggerRepository, RepoError, RepoResult, RunRepository,
+    IntegrationSyncRepository, PasswordResetRepository, RepoError, RepoResult, RunRepository,
     TenantRepository, UserRepository,
 };
 
@@ -462,7 +462,7 @@ impl ConnectionRepository for InMemoryConnectionRepo {
             access_token: input.access_token,
             refresh_token: input.refresh_token,
             expires_at: input.expires_at,
-            pipedream_auth_id: input.pipedream_auth_id,
+            nango_connection_id: input.nango_connection_id,
             metadata: input.metadata,
             status: "active".to_string(),
             created_at: now,
@@ -493,7 +493,7 @@ impl ConnectionRepository for InMemoryConnectionRepo {
             conn.access_token = input.access_token;
             conn.refresh_token = input.refresh_token;
             conn.expires_at = input.expires_at;
-            conn.pipedream_auth_id = input.pipedream_auth_id;
+            conn.nango_connection_id = input.nango_connection_id;
             conn.metadata = input.metadata;
             conn.status = status.to_string();
             conn.updated_at = Utc::now();
@@ -508,7 +508,7 @@ impl ConnectionRepository for InMemoryConnectionRepo {
             access_token: input.access_token,
             refresh_token: input.refresh_token,
             expires_at: input.expires_at,
-            pipedream_auth_id: input.pipedream_auth_id,
+            nango_connection_id: input.nango_connection_id,
             metadata: input.metadata,
             status: status.to_string(),
             created_at: now,
@@ -522,11 +522,11 @@ impl ConnectionRepository for InMemoryConnectionRepo {
         Ok(self.store.get(id).map(|e| e.value().clone()))
     }
 
-    async fn find_by_pipedream_auth_id(&self, auth_id: &str) -> RepoResult<Option<Connection>> {
+    async fn find_by_nango_connection_id(&self, auth_id: &str) -> RepoResult<Option<Connection>> {
         Ok(self
             .store
             .iter()
-            .find(|e| e.value().pipedream_auth_id.as_deref() == Some(auth_id))
+            .find(|e| e.value().nango_connection_id.as_deref() == Some(auth_id))
             .map(|e| e.value().clone()))
     }
 
@@ -654,40 +654,40 @@ impl AgentEndpointConfigRepository for InMemoryAgentEndpointConfigRepo {
     }
 }
 
-// === PipedreamTrigger ===
+// === IntegrationSync ===
 
 #[derive(Clone, Default)]
-pub struct InMemoryPipedreamTriggerRepo {
-    store: Arc<DashMap<String, PipedreamTrigger>>,
+pub struct InMemoryIntegrationSyncRepo {
+    store: Arc<DashMap<String, IntegrationSync>>,
 }
 
 #[async_trait]
-impl PipedreamTriggerRepository for InMemoryPipedreamTriggerRepo {
+impl IntegrationSyncRepository for InMemoryIntegrationSyncRepo {
     async fn create(
         &self,
         tenant_id: &str,
         connection_id: &str,
-        trigger_id: &str,
-        deployment_id: &str,
+        sync_name: &str,
+        nango_sync_id: &str,
         configured_props: Option<serde_json::Value>,
-    ) -> RepoResult<PipedreamTrigger> {
+    ) -> RepoResult<IntegrationSync> {
         if self
             .store
             .iter()
-            .any(|e| e.value().deployment_id == deployment_id)
+            .any(|e| e.value().nango_sync_id == nango_sync_id)
         {
-            return Err(RepoError::AlreadyExists(format!(
-                "deployment_id: {deployment_id}"
-            )));
+            return Err(RepoError::AlreadyExists(format!("nango_sync_id: {nango_sync_id}")));
         }
         let now = Utc::now();
-        let trigger = PipedreamTrigger {
+        let trigger = IntegrationSync {
             id: new_id(),
             tenant_id: tenant_id.to_string(),
             connection_id: connection_id.to_string(),
-            trigger_id: trigger_id.to_string(),
-            deployment_id: deployment_id.to_string(),
+            sync_name: sync_name.to_string(),
+            nango_sync_id: nango_sync_id.to_string(),
             configured_props,
+            last_sync_at: None,
+            sync_cursor: None,
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
@@ -696,18 +696,18 @@ impl PipedreamTriggerRepository for InMemoryPipedreamTriggerRepo {
         Ok(trigger)
     }
 
-    async fn find_by_deployment_id(
+    async fn find_by_nango_sync_id(
         &self,
-        deployment_id: &str,
-    ) -> RepoResult<Option<PipedreamTrigger>> {
+        nango_sync_id: &str,
+    ) -> RepoResult<Option<IntegrationSync>> {
         Ok(self
             .store
             .iter()
-            .find(|e| e.value().deployment_id == deployment_id)
+            .find(|e| e.value().nango_sync_id == nango_sync_id)
             .map(|e| e.value().clone()))
     }
 
-    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>> {
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<IntegrationSync>> {
         Ok(self
             .store
             .iter()
@@ -716,7 +716,7 @@ impl PipedreamTriggerRepository for InMemoryPipedreamTriggerRepo {
             .collect())
     }
 
-    async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger> {
+    async fn update_status(&self, id: &str, status: &str) -> RepoResult<IntegrationSync> {
         let mut trigger = self
             .store
             .get_mut(id)
@@ -907,7 +907,7 @@ mod tests {
                 access_token: Some("at_123".to_string()),
                 refresh_token: None,
                 expires_at: None,
-                pipedream_auth_id: None,
+                nango_connection_id: None,
                 metadata: None,
             })
             .await
@@ -939,7 +939,7 @@ mod tests {
             access_token: None,
             refresh_token: None,
             expires_at: None,
-            pipedream_auth_id: None,
+            nango_connection_id: None,
             metadata: None,
         })
         .await
@@ -952,7 +952,7 @@ mod tests {
                 access_token: None,
                 refresh_token: None,
                 expires_at: None,
-                pipedream_auth_id: None,
+                nango_connection_id: None,
                 metadata: None,
             })
             .await;

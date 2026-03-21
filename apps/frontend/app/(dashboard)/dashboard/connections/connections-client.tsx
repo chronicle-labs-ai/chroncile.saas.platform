@@ -39,7 +39,7 @@ function getConnectionMetadata(connection: ConnectionData | null | undefined) {
 
 function getConnectionId(connection: ConnectionData | null | undefined) {
   const metadata = getConnectionMetadata(connection);
-  return metadata?.connection_id || connection?.pipedreamAuthId || "pending";
+  return metadata?.connection_id || connection?.nangoConnectionId || "pending";
 }
 
 function getConnectionLabel(connection: ConnectionData | null | undefined) {

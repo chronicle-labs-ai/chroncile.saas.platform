@@ -8,7 +8,7 @@ use chrono::Utc;
 use chronicle_auth::types::AuthUser;
 use chronicle_domain::{
     CreateConnectionInput, DeployTriggerRequest, DeployedTriggersResponse, ListAppsParams,
-    ListTriggersParams, PipedreamTokenRequest,
+    ListTriggersParams, PipedreamTokenRequest, PipedreamTrigger,
 };
 use chronicle_interfaces::RepoError;
 use chronicle_pipedream_connect::types::UpdateDeploymentRequest;
@@ -244,7 +244,7 @@ pub async fn deploy_trigger(
         .map_err(|e| ApiError::bad_request(e.to_string()))?;
 
     state
-        .pipedream_triggers
+        .integration_syncs
         .create(
             &user.tenant_id,
             &connection_id,
@@ -270,14 +270,11 @@ pub async fn list_deployed(
         .await
         .map_err(|e| ApiError::bad_request(e.to_string()))?;
 
-    let triggers = match state
-        .pipedream_triggers
-        .list_by_tenant(&user.tenant_id)
-        .await
-    {
+    let triggers = match state.integration_syncs.list_by_tenant(&user.tenant_id).await {
         Ok(triggers) => triggers,
         Err(RepoError::Internal(detail))
-            if detail.contains("PipedreamTrigger") && detail.contains("does not exist") =>
+            if (detail.contains("PipedreamTrigger") || detail.contains("IntegrationSync"))
+                && detail.contains("does not exist") =>
         {
             // Backward compatibility for older SaaS schemas where this table may not exist yet.
             Vec::new()
@@ -287,7 +284,20 @@ pub async fn list_deployed(
 
     Ok(Json(DeployedTriggersResponse {
         data: serde_json::to_value(result.data).unwrap_or_default(),
-        triggers,
+        triggers: triggers
+            .into_iter()
+            .map(|trigger| PipedreamTrigger {
+                id: trigger.id,
+                tenant_id: trigger.tenant_id,
+                connection_id: trigger.connection_id,
+                trigger_id: trigger.sync_name,
+                deployment_id: trigger.nango_sync_id,
+                configured_props: trigger.configured_props,
+                status: trigger.status,
+                created_at: trigger.created_at,
+                updated_at: trigger.updated_at,
+            })
+            .collect(),
     }))
 }
 
@@ -331,11 +341,11 @@ pub async fn delete_deployed(
         .map_err(|e| ApiError::bad_request(e.to_string()))?;
 
     if let Ok(Some(trigger)) = state
-        .pipedream_triggers
-        .find_by_deployment_id(&deployment_id)
+        .integration_syncs
+        .find_by_nango_sync_id(&deployment_id)
         .await
     {
-        let _ = state.pipedream_triggers.delete(&trigger.id).await;
+        let _ = state.integration_syncs.delete(&trigger.id).await;
     }
 
     Ok(StatusCode::NO_CONTENT)
@@ -405,7 +415,7 @@ pub async fn sync_accounts(
                     access_token: None,
                     refresh_token: None,
                     expires_at: None,
-                    pipedream_auth_id: Some(account.id.clone()),
+                    nango_connection_id: Some(account.id.clone()),
                     metadata: Some(metadata),
                 },
                 status,

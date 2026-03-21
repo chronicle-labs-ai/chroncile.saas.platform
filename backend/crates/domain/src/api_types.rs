@@ -4,8 +4,8 @@ use ts_rs::TS;
 use crate::{
     AgentEndpointConfig, AuditLog, Connection, FeatureAccessSnapshot, FeatureFlagDefinition,
     FeatureFlagOverride, GraphEditCommand, GraphEditPreview, GraphEditValidationError,
-    PipedreamTrigger, Run, SandboxAiChatMessage, SandboxEdgeDto, SandboxNodeDto,
-    SandboxValidationResponse, Tenant,
+    Run, SandboxAiChatMessage, SandboxEdgeDto, SandboxNodeDto, SandboxValidationResponse,
+    Tenant,
 };
 
 // ── Dashboard ──
@@ -216,6 +216,21 @@ pub struct DeployTriggerRequest {
     pub connection_id: Option<String>,
     pub webhook_url: Option<String>,
     pub configured_props: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct PipedreamTrigger {
+    pub id: String,
+    pub tenant_id: String,
+    pub connection_id: String,
+    pub trigger_id: String,
+    pub deployment_id: String,
+    pub configured_props: Option<serde_json::Value>,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize, TS)]

@@ -4,8 +4,8 @@ use chronicle_auth::jwt::JwtService;
 use chronicle_infra::{StoreBackend, StreamBackend};
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, EmailService,
-    FeatureFlagRepository, InvitationRepository, PasswordResetRepository,
-    PipedreamTriggerRepository, RunRepository, SandboxAiConfigService, TenantRepository,
+    FeatureFlagRepository, IntegrationSyncRepository, InvitationRepository,
+    PasswordResetRepository, RunRepository, SandboxAiConfigService, TenantRepository,
     UserRepository,
 };
 use chronicle_nango::NangoClient;
@@ -23,7 +23,7 @@ pub struct SaasAppState {
     pub connections: Arc<dyn ConnectionRepository>,
     pub audit_logs: Arc<dyn AuditLogRepository>,
     pub agent_configs: Arc<dyn AgentEndpointConfigRepository>,
-    pub pipedream_triggers: Arc<dyn PipedreamTriggerRepository>,
+    pub integration_syncs: Arc<dyn IntegrationSyncRepository>,
     pub invitations: Arc<dyn InvitationRepository>,
     pub password_resets: Arc<dyn PasswordResetRepository>,
     pub pipedream: Option<Arc<PipedreamClient>>,
@@ -46,7 +46,7 @@ impl SaasAppState {
         connections: Arc<dyn ConnectionRepository>,
         audit_logs: Arc<dyn AuditLogRepository>,
         agent_configs: Arc<dyn AgentEndpointConfigRepository>,
-        pipedream_triggers: Arc<dyn PipedreamTriggerRepository>,
+        integration_syncs: Arc<dyn IntegrationSyncRepository>,
         feature_flags: Arc<dyn FeatureFlagRepository>,
         invitations: Arc<dyn InvitationRepository>,
         password_resets: Arc<dyn PasswordResetRepository>,
@@ -66,7 +66,7 @@ impl SaasAppState {
             connections,
             audit_logs,
             agent_configs,
-            pipedream_triggers,
+            integration_syncs,
             invitations,
             password_resets,
             pipedream,

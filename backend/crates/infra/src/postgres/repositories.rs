@@ -12,11 +12,11 @@ fn naive_to_utc(naive: NaiveDateTime) -> chrono::DateTime<Utc> {
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
     CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateUserInput, Invitation,
-    PasswordResetToken, PipedreamTrigger, Run, Tenant, User, UserRole,
+    IntegrationSync, PasswordResetToken, Run, Tenant, User, UserRole,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, InvitationRepository,
-    PasswordResetRepository, PipedreamTriggerRepository, RepoError, RepoResult, RunRepository,
+    IntegrationSyncRepository, PasswordResetRepository, RepoError, RepoResult, RunRepository,
     TenantRepository, UserRepository,
 };
 
@@ -129,7 +129,7 @@ fn connection_from_row(row: sqlx::postgres::PgRow) -> Result<Connection, sqlx::E
         expires_at: row
             .try_get::<Option<NaiveDateTime>, _>("expiresAt")?
             .map(naive_to_utc),
-        pipedream_auth_id: row.try_get("pipedreamAuthId")?,
+        nango_connection_id: row.try_get("nangoConnectionId")?,
         metadata: row.try_get("metadata")?,
         status: row.try_get("status")?,
         created_at: naive_to_utc(row.try_get::<NaiveDateTime, _>("createdAt")?),
@@ -166,14 +166,18 @@ fn config_from_row(row: sqlx::postgres::PgRow) -> Result<AgentEndpointConfig, sq
     })
 }
 
-fn trigger_from_row(row: sqlx::postgres::PgRow) -> Result<PipedreamTrigger, sqlx::Error> {
-    Ok(PipedreamTrigger {
+fn integration_sync_from_row(row: sqlx::postgres::PgRow) -> Result<IntegrationSync, sqlx::Error> {
+    Ok(IntegrationSync {
         id: row.try_get("id")?,
         tenant_id: row.try_get("tenantId")?,
         connection_id: row.try_get("connectionId")?,
-        trigger_id: row.try_get("triggerId")?,
-        deployment_id: row.try_get("deploymentId")?,
+        sync_name: row.try_get("syncName")?,
+        nango_sync_id: row.try_get("nangoSyncId")?,
         configured_props: row.try_get("configuredProps")?,
+        last_sync_at: row
+            .try_get::<Option<NaiveDateTime>, _>("lastSyncAt")?
+            .map(naive_to_utc),
+        sync_cursor: row.try_get("syncCursor")?,
         status: row.try_get("status")?,
         created_at: naive_to_utc(row.try_get::<NaiveDateTime, _>("createdAt")?),
         updated_at: naive_to_utc(row.try_get::<NaiveDateTime, _>("updatedAt")?),
@@ -646,9 +650,9 @@ impl ConnectionRepository for PgConnectionRepo {
     async fn create(&self, input: CreateConnectionInput) -> RepoResult<Connection> {
         let id = new_id();
         let now = Utc::now().naive_utc();
-        sqlx::query("INSERT INTO \"Connection\" (id, \"tenantId\", provider, \"accessToken\", \"refreshToken\", \"expiresAt\", \"pipedreamAuthId\", metadata, status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10) RETURNING *")
+        sqlx::query("INSERT INTO \"Connection\" (id, \"tenantId\", provider, \"accessToken\", \"refreshToken\", \"expiresAt\", \"nangoConnectionId\", metadata, status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10) RETURNING *")
             .bind(&id).bind(&input.tenant_id).bind(&input.provider).bind(&input.access_token)
-            .bind(&input.refresh_token).bind(input.expires_at).bind(&input.pipedream_auth_id)
+            .bind(&input.refresh_token).bind(input.expires_at).bind(&input.nango_connection_id)
             .bind(&input.metadata).bind(now).bind(now)
             .try_map(connection_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
     }
@@ -672,12 +676,12 @@ impl ConnectionRepository for PgConnectionRepo {
 
         if let Some(id) = existing_id {
             return with_sqlx_retry(|| {
-                sqlx::query("UPDATE \"Connection\" SET \"accessToken\" = $2, \"refreshToken\" = $3, \"expiresAt\" = $4, \"pipedreamAuthId\" = $5, metadata = $6, status = $7, \"updatedAt\" = $8 WHERE id = $1 RETURNING *")
+                sqlx::query("UPDATE \"Connection\" SET \"accessToken\" = $2, \"refreshToken\" = $3, \"expiresAt\" = $4, \"nangoConnectionId\" = $5, metadata = $6, status = $7, \"updatedAt\" = $8 WHERE id = $1 RETURNING *")
                     .bind(&id)
                     .bind(&input.access_token)
                     .bind(&input.refresh_token)
                     .bind(input.expires_at)
-                    .bind(&input.pipedream_auth_id)
+                    .bind(&input.nango_connection_id)
                     .bind(&input.metadata)
                     .bind(status)
                     .bind(now)
@@ -690,9 +694,9 @@ impl ConnectionRepository for PgConnectionRepo {
 
         let id = new_id();
         with_sqlx_retry(|| {
-            sqlx::query("INSERT INTO \"Connection\" (id, \"tenantId\", provider, \"accessToken\", \"refreshToken\", \"expiresAt\", \"pipedreamAuthId\", metadata, status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *")
+            sqlx::query("INSERT INTO \"Connection\" (id, \"tenantId\", provider, \"accessToken\", \"refreshToken\", \"expiresAt\", \"nangoConnectionId\", metadata, status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *")
             .bind(&id).bind(&input.tenant_id).bind(&input.provider).bind(&input.access_token)
-            .bind(&input.refresh_token).bind(input.expires_at).bind(&input.pipedream_auth_id)
+            .bind(&input.refresh_token).bind(input.expires_at).bind(&input.nango_connection_id)
             .bind(&input.metadata).bind(status).bind(now).bind(now)
             .try_map(connection_from_row).fetch_one(&self.pool)
         })
@@ -709,8 +713,8 @@ impl ConnectionRepository for PgConnectionRepo {
             .map_err(to_repo_err)
     }
 
-    async fn find_by_pipedream_auth_id(&self, auth_id: &str) -> RepoResult<Option<Connection>> {
-        sqlx::query("SELECT * FROM \"Connection\" WHERE \"pipedreamAuthId\" = $1")
+    async fn find_by_nango_connection_id(&self, auth_id: &str) -> RepoResult<Option<Connection>> {
+        sqlx::query("SELECT * FROM \"Connection\" WHERE \"nangoConnectionId\" = $1")
             .bind(auth_id)
             .try_map(connection_from_row)
             .fetch_optional(&self.pool)
@@ -850,66 +854,66 @@ impl AgentEndpointConfigRepository for PgAgentEndpointConfigRepo {
     }
 }
 
-// === PipedreamTrigger ===
+// === IntegrationSync ===
 
 #[derive(Clone)]
-pub struct PgPipedreamTriggerRepo {
+pub struct PgIntegrationSyncRepo {
     pool: TracedPgPool,
 }
-impl PgPipedreamTriggerRepo {
+impl PgIntegrationSyncRepo {
     pub fn new(pool: TracedPgPool) -> Self {
         Self { pool }
     }
 }
 
 #[async_trait]
-impl PipedreamTriggerRepository for PgPipedreamTriggerRepo {
+impl IntegrationSyncRepository for PgIntegrationSyncRepo {
     async fn create(
         &self,
         tenant_id: &str,
         connection_id: &str,
-        trigger_id: &str,
-        deployment_id: &str,
+        sync_name: &str,
+        nango_sync_id: &str,
         configured_props: Option<serde_json::Value>,
-    ) -> RepoResult<PipedreamTrigger> {
+    ) -> RepoResult<IntegrationSync> {
         let id = new_id();
         let now = Utc::now().naive_utc();
-        sqlx::query("INSERT INTO \"PipedreamTrigger\" (id, \"tenantId\", \"connectionId\", \"triggerId\", \"deploymentId\", \"configuredProps\", status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8) RETURNING *")
-            .bind(&id).bind(tenant_id).bind(connection_id).bind(trigger_id).bind(deployment_id)
+        sqlx::query("INSERT INTO \"IntegrationSync\" (id, \"tenantId\", \"connectionId\", \"syncName\", \"nangoSyncId\", \"configuredProps\", \"lastSyncAt\", \"syncCursor\", status, \"createdAt\", \"updatedAt\") VALUES ($1,$2,$3,$4,$5,$6,NULL,NULL,'active',$7,$8) RETURNING *")
+            .bind(&id).bind(tenant_id).bind(connection_id).bind(sync_name).bind(nango_sync_id)
             .bind(configured_props).bind(now).bind(now)
-            .try_map(trigger_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
+            .try_map(integration_sync_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
     }
 
-    async fn find_by_deployment_id(
+    async fn find_by_nango_sync_id(
         &self,
-        deployment_id: &str,
-    ) -> RepoResult<Option<PipedreamTrigger>> {
-        sqlx::query("SELECT * FROM \"PipedreamTrigger\" WHERE \"deploymentId\" = $1")
-            .bind(deployment_id)
-            .try_map(trigger_from_row)
+        nango_sync_id: &str,
+    ) -> RepoResult<Option<IntegrationSync>> {
+        sqlx::query("SELECT * FROM \"IntegrationSync\" WHERE \"nangoSyncId\" = $1")
+            .bind(nango_sync_id)
+            .try_map(integration_sync_from_row)
             .fetch_optional(&self.pool)
             .await
             .map_err(to_repo_err)
     }
 
-    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<PipedreamTrigger>> {
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<IntegrationSync>> {
         with_sqlx_retry(|| {
-            sqlx::query("SELECT * FROM \"PipedreamTrigger\" WHERE \"tenantId\" = $1")
+            sqlx::query("SELECT * FROM \"IntegrationSync\" WHERE \"tenantId\" = $1")
                 .bind(tenant_id)
-                .try_map(trigger_from_row)
+                .try_map(integration_sync_from_row)
                 .fetch_all(&self.pool)
         })
         .await
         .map_err(to_repo_err)
     }
 
-    async fn update_status(&self, id: &str, status: &str) -> RepoResult<PipedreamTrigger> {
-        sqlx::query("UPDATE \"PipedreamTrigger\" SET status = $2, \"updatedAt\" = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *")
-            .bind(id).bind(status).try_map(trigger_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
+    async fn update_status(&self, id: &str, status: &str) -> RepoResult<IntegrationSync> {
+        sqlx::query("UPDATE \"IntegrationSync\" SET status = $2, \"updatedAt\" = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *")
+            .bind(id).bind(status).try_map(integration_sync_from_row).fetch_one(&self.pool).await.map_err(to_repo_err)
     }
 
     async fn delete(&self, id: &str) -> RepoResult<()> {
-        let result = sqlx::query("DELETE FROM \"PipedreamTrigger\" WHERE id = $1")
+        let result = sqlx::query("DELETE FROM \"IntegrationSync\" WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await
