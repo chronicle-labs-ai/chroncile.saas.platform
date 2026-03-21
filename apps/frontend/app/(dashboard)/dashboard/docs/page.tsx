@@ -125,7 +125,7 @@ export default function DocsPage() {
         <div className="panel__content space-y-3 text-sm text-secondary">
           <p>
             A connection is a link between Chronicle Labs and an external service
-            (for example a webhook or an integration like Pipedream). On the{" "}
+            (for example a webhook source or a synced support integration). On the{" "}
             <Link href="/dashboard/connections" className="text-data hover:underline">
               Connections
             </Link>{" "}

@@ -80,13 +80,13 @@ This is the Next.js frontend application for Chronicle Labs.
 - ✅ Dashboard layout with sidebar navigation
 
 ### Connections (Week 2)
-- ✅ Pipedream Connect: connect Intercom, Slack, Stripe, etc. (no direct OAuth to third parties)
+- ✅ Nango Connect: connect Intercom, Slack, Front, and other supported providers
 - ✅ Token encryption for secure storage
 - ✅ Connection management UI
-- ✅ Deploy triggers per connection to receive events via Pipedream webhooks
+- ✅ Manual sync and backfill controls per provider
 
 ### Webhooks & Events
-- ✅ Single webhook endpoint: `/api/webhooks/pipedream` for all Pipedream trigger events
+- ✅ Single backend webhook endpoint: `/api/webhooks/nango` for integration sync updates
 - ✅ Event forwarding to Events Manager
 - ✅ Events timeline UI with real-time refresh
 
@@ -102,35 +102,33 @@ This is the Next.js frontend application for Chronicle Labs.
 - `/signup` - Signup page with organization creation
 - `/dashboard` - Protected dashboard home
 - `/dashboard/events` - Events timeline (shows events from Events Manager)
-- `/dashboard/connections` - Integration management via Pipedream (Intercom, Slack, Stripe, etc.)
+- `/dashboard/connections` - Integration management via Nango
 - `/dashboard/settings` - Account and organization settings
 
 ### API Endpoints
 - `POST /api/auth/signup` - User registration
 - `POST /api/auth/[...nextauth]` - NextAuth handlers
-- `GET /api/pipedream/triggers` - List available Pipedream triggers
-- `POST /api/pipedream/triggers/deploy` - Deploy a trigger for a connection
-- `GET /api/pipedream/triggers/deployed` - List deployed triggers
-- `POST /api/webhooks/pipedream` - Receive events from Pipedream (all integrations)
+- `GET /api/platform/integrations/providers` - List Nango-backed providers
+- `POST /api/platform/integrations/connect-session` - Create a Nango Connect session
+- `POST /api/platform/integrations/sync` - Trigger incremental sync or backfill
+- `POST /api/webhooks/nango` - Receive sync webhooks from Nango
 
 ### Database Schema
 - `User` - User accounts with email/password
 - `Tenant` - Organizations/tenants
-- `Connection` - Pipedream Connect accounts (Intercom, Slack, Stripe, etc.). No direct third-party OAuth.
-- `PipedreamTrigger` - Deployed triggers linking a connection to our webhook so we receive events.
+- `Connection` - Connected integration accounts and their provider metadata.
+- `IntegrationSync` - Stored sync/deployment metadata for legacy compatibility and future sync state work.
 
-### Pipedream Triggers (what they do in this app)
+### Integration Syncs (what they do in this app)
 
-**Triggers** are the mechanism by which the app receives events from third-party apps (Intercom, Slack, Stripe, etc.) **only via Pipedream**—there is no direct connection to those services.
+Chronicle now uses **Nango** for OAuth and sync orchestration. Instead of deploying provider-specific triggers from the frontend, the app materializes a connection and then lets operators run:
 
-1. **List triggers** (`GET /api/pipedream/triggers`) – Returns available Pipedream trigger components (e.g. “new message in Slack”, “new Intercom conversation”) that can be deployed for a given app.
-2. **Deploy trigger** (`POST /api/pipedream/triggers/deploy`) – For a given **Connection** (Pipedream account), deploys a trigger so that:
-   - Pipedream listens for that event type (e.g. new Intercom conversation).
-   - When the event occurs, Pipedream sends it to our **single webhook** `POST /api/webhooks/pipedream`.
-3. **List deployed triggers** (`GET /api/pipedream/triggers/deployed`) – Returns triggers already deployed for the current tenant (per connection), with status (active/paused).
-4. **Webhook** (`POST /api/webhooks/pipedream`) – Receives **all** events from **all** deployed triggers. The handler looks up the deployment ID to get tenant and provider, normalizes the payload, and forwards it to the Events Manager.
+1. **Connect** – Creates a Nango Connect session so the user can authorize a provider.
+2. **Run Sync** – Triggers an incremental sync for new or updated records.
+3. **Run Backfill** – Triggers a historical sync for providers that support backfill.
+4. **Webhook** (`POST /api/webhooks/nango`) – Receives sync notifications from Nango, fetches records, normalizes them, and forwards them into Chronicle’s event pipeline.
 
-So in this application, **triggers** = “subscriptions” to event types per connection. Deploying a trigger is what turns a connected app (e.g. Intercom via Pipedream) into a live event stream into the platform, without the app ever calling Intercom (or any other provider) directly.
+So in this application, connections are now driven by **Nango-managed syncs**.
 
 ## Tech Stack
 

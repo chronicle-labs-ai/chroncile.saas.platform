@@ -6,7 +6,6 @@ pub mod dashboard;
 mod error;
 pub mod feature_access;
 pub mod integrations;
-pub mod pipedream;
 pub mod runs;
 pub mod sandboxes;
 pub mod settings;
@@ -67,10 +66,6 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
                 .delete(admin::delete_tenant_feature_flag_override),
         )
         .route("/api/platform/admin/orgs", post(admin::create_org))
-        .route(
-            "/api/webhooks/pipedream/:tenantId",
-            post(webhooks::pipedream_webhook),
-        )
         .route("/api/webhooks/stripe", post(webhooks::stripe_webhook))
         .route("/api/webhooks/nango", post(webhooks::nango_webhook))
         .route(
@@ -124,41 +119,6 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         .route(
             "/api/platform/tenant/stripe",
             put(tenant::update_tenant_stripe),
-        )
-        .route("/api/platform/pipedream/apps", get(pipedream::list_apps))
-        .route(
-            "/api/platform/pipedream/triggers",
-            get(pipedream::list_triggers),
-        )
-        .route(
-            "/api/platform/pipedream/triggers/configure",
-            post(pipedream::configure_prop),
-        )
-        .route(
-            "/api/platform/pipedream/triggers/deploy",
-            post(pipedream::deploy_trigger),
-        )
-        .route(
-            "/api/platform/pipedream/triggers/deployed",
-            get(pipedream::list_deployed),
-        )
-        .route(
-            "/api/platform/pipedream/triggers/deployed/:deployment_id",
-            get(pipedream::get_deployed)
-                .put(pipedream::update_deployed)
-                .delete(pipedream::delete_deployed),
-        )
-        .route(
-            "/api/platform/pipedream/token",
-            post(pipedream::create_token),
-        )
-        .route(
-            "/api/platform/pipedream/accounts",
-            get(pipedream::list_accounts),
-        )
-        .route(
-            "/api/platform/pipedream/accounts/sync",
-            post(pipedream::sync_accounts),
         )
         .route(
             "/api/platform/integrations/providers",

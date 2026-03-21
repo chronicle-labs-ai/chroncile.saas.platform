@@ -183,30 +183,6 @@ pub fn maybe_start_simulation(
     ))
 }
 
-fn build_pipedream_client(
-    launch_config: &config::LaunchConfig,
-) -> Option<Arc<chronicle_pipedream_connect::PipedreamClient>> {
-    let client_id = launch_config.integrations.pipedream.client_id.clone()?;
-    let client_secret = launch_config.integrations.pipedream.client_secret.clone()?;
-    let project_id = launch_config.integrations.pipedream.project_id.clone()?;
-
-    if client_id.is_empty() || client_secret.is_empty() {
-        return None;
-    }
-
-    tracing::info!(
-        project_id = %project_id,
-        environment = ?launch_config.integrations.pipedream.environment,
-        "Pipedream integration configured"
-    );
-    Some(Arc::new(chronicle_pipedream_connect::PipedreamClient::new(
-        client_id,
-        client_secret,
-        project_id,
-        launch_config.integrations.pipedream.environment.to_sdk(),
-    )))
-}
-
 fn build_nango_client(
     launch_config: &config::LaunchConfig,
 ) -> Option<Arc<chronicle_nango::NangoClient>> {
@@ -284,7 +260,6 @@ fn build_saas_state_postgres(
         Arc::new(PgFeatureFlagRepo::new(pool.clone())),
         Arc::new(PgInvitationRepo::new(pool.clone())),
         Arc::new(PgPasswordResetRepo::new(pool)),
-        build_pipedream_client(launch_config),
         build_nango_client(launch_config),
         build_email_service(launch_config),
         build_sandbox_ai_service(launch_config),
@@ -314,7 +289,6 @@ fn build_saas_state_memory(
         Arc::new(InMemoryFeatureFlagRepo::default()),
         Arc::new(InMemoryInvitationRepo::default()),
         Arc::new(InMemoryPasswordResetRepo::default()),
-        build_pipedream_client(launch_config),
         build_nango_client(launch_config),
         build_email_service(launch_config),
         build_sandbox_ai_service(launch_config),

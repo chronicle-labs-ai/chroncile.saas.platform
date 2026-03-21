@@ -9,7 +9,6 @@ primary_region = 'ams'
   API_PORT = "8080"
   BACKEND_MODE = "real"
   RUST_LOG = "debug,tower_http=debug"
-  PIPEDREAM_ENVIRONMENT = "development"
   SENTRY_DSN = "https://962563178590206d935ae42ee0af131d@o4511003800109056.ingest.us.sentry.io/4511003805351936"
   SENTRY_ENVIRONMENT = "development"
   SENTRY_TRACES_SAMPLE_RATE = "1.0"

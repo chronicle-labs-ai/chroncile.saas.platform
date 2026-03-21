@@ -7,14 +7,11 @@ import type {
   CreateRunRequest,
   DashboardActivityResponse,
   DashboardStatsResponse,
-  DeployTriggerRequest,
-  DeployedTriggersResponse,
   FeatureAccessResponse,
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   ListRunsResponse,
   LoginRequest,
-  PipedreamTokenRequest,
   SandboxAiChatRequest,
   SandboxAiChatResponse,
   ResetPasswordRequest,
@@ -229,93 +226,6 @@ class PlatformApi {
     return this.request<TenantResponse>("PUT", "/api/platform/tenant/stripe", {
       body,
     });
-  }
-
-  listPipedreamApps(params?: { q?: string; limit?: number }) {
-    return this.request<{ data: unknown; pageInfo: unknown }>(
-      "GET",
-      "/api/platform/pipedream/apps",
-      {
-        params: {
-          q: params?.q,
-          limit: params?.limit?.toString(),
-        },
-      },
-    );
-  }
-
-  listPipedreamTriggers(params?: {
-    app?: string;
-    q?: string;
-    limit?: number;
-  }) {
-    return this.request<{ data: unknown; pageInfo: unknown }>(
-      "GET",
-      "/api/platform/pipedream/triggers",
-      {
-        params: {
-          app: params?.app,
-          q: params?.q,
-          limit: params?.limit?.toString(),
-        },
-      },
-    );
-  }
-
-  configurePipedreamTriggerProp(body: {
-    trigger_id: string;
-    prop_name: string;
-    configured_props?: Record<string, unknown> | null;
-    query?: string | null;
-  }) {
-    return this.request<{
-      options?: Array<{ label: string; value: unknown }>;
-      stringOptions?: string[] | null;
-    }>("POST", "/api/platform/pipedream/triggers/configure", { body });
-  }
-
-  deployPipedreamTrigger(body: DeployTriggerRequest) {
-    return this.request<{ data: unknown }>(
-      "POST",
-      "/api/platform/pipedream/triggers/deploy",
-      { body },
-    );
-  }
-
-  listDeployedTriggers() {
-    return this.request<DeployedTriggersResponse>(
-      "GET",
-      "/api/platform/pipedream/triggers/deployed",
-    );
-  }
-
-  getDeployedTrigger(id: string) {
-    return this.request<{ data: unknown }>(
-      "GET",
-      `/api/platform/pipedream/triggers/deployed/${id}`,
-    );
-  }
-
-  deleteDeployedTrigger(id: string) {
-    return this.request<void>(
-      "DELETE",
-      `/api/platform/pipedream/triggers/deployed/${id}`,
-    );
-  }
-
-  createPipedreamToken(body?: PipedreamTokenRequest) {
-    return this.request<{ token: string }>(
-      "POST",
-      "/api/platform/pipedream/token",
-      { body: body ?? {} },
-    );
-  }
-
-  listPipedreamAccounts() {
-    return this.request<{ data: unknown }>(
-      "GET",
-      "/api/platform/pipedream/accounts",
-    );
   }
 
   listNangoProviders() {

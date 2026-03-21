@@ -40,11 +40,13 @@ auth_secret = "dev-secret-change-in-production-min-32-chars!!"
 [urls]
 app_url = "https://app.chronicle-labs.com"
 
-[integrations.pipedream]
-# client_id = "pd_client_id"
-# client_secret = "pd_client_secret"
-# project_id = "pd_project_id"
-environment = "development"
+[integrations.nango]
+# secret_key = "nango_sk_xxx"
+base_url = "https://api.nango.dev"
+# webhook_secret = "nango_webhook_secret"
+intercom_integration_id = "intercom"
+slack_integration_id = "slack"
+front_integration_id = "front"
 
 [integrations.resend]
 # api_key = "re_xxx"

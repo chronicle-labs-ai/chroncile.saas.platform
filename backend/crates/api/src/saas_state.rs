@@ -9,7 +9,6 @@ use chronicle_interfaces::{
     UserRepository,
 };
 use chronicle_nango::NangoClient;
-use chronicle_pipedream_connect::PipedreamClient;
 
 use crate::feature_access::FeatureAccessService;
 use crate::runtime_config::SaasRuntimeConfig;
@@ -26,7 +25,6 @@ pub struct SaasAppState {
     pub integration_syncs: Arc<dyn IntegrationSyncRepository>,
     pub invitations: Arc<dyn InvitationRepository>,
     pub password_resets: Arc<dyn PasswordResetRepository>,
-    pub pipedream: Option<Arc<PipedreamClient>>,
     pub nango: Option<Arc<NangoClient>>,
     pub email: Arc<dyn EmailService>,
     pub sandbox_ai: Option<Arc<dyn SandboxAiConfigService>>,
@@ -50,7 +48,6 @@ impl SaasAppState {
         feature_flags: Arc<dyn FeatureFlagRepository>,
         invitations: Arc<dyn InvitationRepository>,
         password_resets: Arc<dyn PasswordResetRepository>,
-        pipedream: Option<Arc<PipedreamClient>>,
         nango: Option<Arc<NangoClient>>,
         email: Arc<dyn EmailService>,
         sandbox_ai: Option<Arc<dyn SandboxAiConfigService>>,
@@ -69,7 +66,6 @@ impl SaasAppState {
             integration_syncs,
             invitations,
             password_resets,
-            pipedream,
             nango,
             email,
             sandbox_ai,

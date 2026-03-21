@@ -28,7 +28,6 @@ members = [
     "crates/api",
     "crates/auth",
     "crates/integrations",
-    "crates/pipedream-connect",
     "crates/ui",
     "crates/timeline-core",
     "crates/timeline-widget",
@@ -198,5 +197,4 @@ object_store = "0.12"
 
 chronicle_auth = { path = "crates/auth" }
 chronicle_integrations = { path = "crates/integrations" }
-chronicle_pipedream_connect = { path = "crates/pipedream-connect" }
 chronicle_nango = { path = "crates/chronicle_nango" }

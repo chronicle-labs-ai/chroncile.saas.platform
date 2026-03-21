@@ -24,9 +24,6 @@ interface DbTemplate {
 const SECRET_FIELDS = [
   { key: "AUTH_SECRET", label: "Auth Secret", placeholder: "Override or leave blank for default" },
   { key: "STRIPE_SECRET_KEY", label: "Stripe Secret Key", placeholder: "sk_test_..." },
-  { key: "PIPEDREAM_CLIENT_ID", label: "Pipedream Client ID", placeholder: "" },
-  { key: "PIPEDREAM_CLIENT_SECRET", label: "Pipedream Client Secret", placeholder: "" },
-  { key: "PIPEDREAM_PROJECT_ID", label: "Pipedream Project ID", placeholder: "" },
 ];
 
 const TTL_OPTIONS = [

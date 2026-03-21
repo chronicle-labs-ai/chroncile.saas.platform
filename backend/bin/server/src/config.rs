@@ -136,18 +136,6 @@ impl LaunchConfig {
             self.urls.app_url = value;
         }
 
-        if let Some(value) = non_empty_env("PIPEDREAM_CLIENT_ID") {
-            self.integrations.pipedream.client_id = Some(value);
-        }
-        if let Some(value) = non_empty_env("PIPEDREAM_CLIENT_SECRET") {
-            self.integrations.pipedream.client_secret = Some(value);
-        }
-        if let Some(value) = non_empty_env("PIPEDREAM_PROJECT_ID") {
-            self.integrations.pipedream.project_id = Some(value);
-        }
-        if let Some(value) = non_empty_env("PIPEDREAM_ENVIRONMENT") {
-            self.integrations.pipedream.environment = PipedreamEnvironment::parse(&value)?;
-        }
         if let Some(value) = non_empty_env("NANGO_SECRET_KEY") {
             self.integrations.nango.secret_key = Some(value);
         }
@@ -392,7 +380,6 @@ pub struct HealthConfig {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct IntegrationsConfig {
-    pub pipedream: PipedreamConfig,
     pub nango: NangoConfig,
     pub resend: ResendConfig,
     pub sandbox_ai: SandboxAiConfig,
@@ -403,31 +390,11 @@ pub struct IntegrationsConfig {
 impl Default for IntegrationsConfig {
     fn default() -> Self {
         Self {
-            pipedream: PipedreamConfig::default(),
             nango: NangoConfig::default(),
             resend: ResendConfig::default(),
             sandbox_ai: SandboxAiConfig::default(),
             sentry: SentryConfig::default(),
             helix: HelixConfig::default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct PipedreamConfig {
-    pub client_id: Option<String>,
-    pub client_secret: Option<String>,
-    pub project_id: Option<String>,
-    pub environment: PipedreamEnvironment,
-}
-
-impl Default for PipedreamConfig {
-    fn default() -> Self {
-        Self {
-            client_id: None,
-            client_secret: None,
-            project_id: None,
-            environment: PipedreamEnvironment::Development,
         }
     }
 }
@@ -582,30 +549,6 @@ impl BackendKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum PipedreamEnvironment {
-    Development,
-    Production,
-}
-
-impl PipedreamEnvironment {
-    pub fn parse(value: &str) -> Result<Self> {
-        match value.trim().to_lowercase().as_str() {
-            "development" | "dev" => Ok(Self::Development),
-            "production" | "prod" => Ok(Self::Production),
-            other => bail!("invalid pipedream environment: {other}"),
-        }
-    }
-
-    pub fn to_sdk(self) -> chronicle_pipedream_connect::Environment {
-        match self {
-            Self::Development => chronicle_pipedream_connect::Environment::Development,
-            Self::Production => chronicle_pipedream_connect::Environment::Production,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 struct FileConfig {
@@ -680,17 +623,23 @@ impl FileConfig {
             config.urls.app_url = value;
         }
 
-        if let Some(value) = self.integrations.pipedream.client_id {
-            config.integrations.pipedream.client_id = Some(value);
+        if let Some(value) = self.integrations.nango.secret_key {
+            config.integrations.nango.secret_key = Some(value);
         }
-        if let Some(value) = self.integrations.pipedream.client_secret {
-            config.integrations.pipedream.client_secret = Some(value);
+        if let Some(value) = self.integrations.nango.base_url {
+            config.integrations.nango.base_url = value;
         }
-        if let Some(value) = self.integrations.pipedream.project_id {
-            config.integrations.pipedream.project_id = Some(value);
+        if let Some(value) = self.integrations.nango.webhook_secret {
+            config.integrations.nango.webhook_secret = Some(value);
         }
-        if let Some(value) = self.integrations.pipedream.environment {
-            config.integrations.pipedream.environment = value;
+        if let Some(value) = self.integrations.nango.intercom_integration_id {
+            config.integrations.nango.intercom_integration_id = value;
+        }
+        if let Some(value) = self.integrations.nango.slack_integration_id {
+            config.integrations.nango.slack_integration_id = value;
+        }
+        if let Some(value) = self.integrations.nango.front_integration_id {
+            config.integrations.nango.front_integration_id = value;
         }
 
         if let Some(value) = self.integrations.resend.api_key {
@@ -821,7 +770,7 @@ struct FileHealthConfig {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 struct FileIntegrationsConfig {
-    pipedream: FilePipedreamConfig,
+    nango: FileNangoConfig,
     resend: FileResendConfig,
     sandbox_ai: FileSandboxAiConfig,
     sentry: FileSentryConfig,
@@ -830,11 +779,13 @@ struct FileIntegrationsConfig {
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
-struct FilePipedreamConfig {
-    client_id: Option<String>,
-    client_secret: Option<String>,
-    project_id: Option<String>,
-    environment: Option<PipedreamEnvironment>,
+struct FileNangoConfig {
+    secret_key: Option<String>,
+    base_url: Option<String>,
+    webhook_secret: Option<String>,
+    intercom_integration_id: Option<String>,
+    slack_integration_id: Option<String>,
+    front_integration_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

@@ -189,65 +189,6 @@ pub struct UpsertFeatureFlagOverrideRequest {
     pub reason: Option<String>,
 }
 
-// ── Pipedream ──
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ListAppsParams {
-    pub q: Option<String>,
-    pub limit: Option<u64>,
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ListTriggersParams {
-    pub app: Option<String>,
-    pub q: Option<String>,
-    pub limit: Option<u64>,
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct DeployTriggerRequest {
-    pub trigger_id: String,
-    pub connection_id: Option<String>,
-    pub webhook_url: Option<String>,
-    pub configured_props: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct PipedreamTrigger {
-    pub id: String,
-    pub tenant_id: String,
-    pub connection_id: String,
-    pub trigger_id: String,
-    pub deployment_id: String,
-    pub configured_props: Option<serde_json::Value>,
-    pub status: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct DeployedTriggersResponse {
-    pub data: serde_json::Value,
-    pub triggers: Vec<PipedreamTrigger>,
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct PipedreamTokenRequest {
-    pub app_id: Option<String>,
-}
-
 // ── Sandbox AI ──
 
 #[derive(Debug, Deserialize, TS)]

@@ -99,12 +99,12 @@ graph TB
 
     subgraph Backend["Backend — Rust / Axum &nbsp;/&nbsp; backend/"]
         subgraph APILayer["API Layer — crates/api"]
-            SAAS_API["SaaS Routes<br/>auth · runs · connections<br/>dashboard · settings · audit<br/>pipedream · tenant · webhooks"]
+            SAAS_API["SaaS Routes<br/>auth · runs · connections<br/>dashboard · settings · audit<br/>integrations · tenant · webhooks"]
             EVENT_API["Event Routes<br/>ingest · stream · query"]
         end
 
         subgraph Core["Core — crates/domain + crates/auth"]
-            DOMAIN["Domain Models<br/>Tenant · User · Run<br/>Connection · AuditLog<br/>PipedreamTrigger"]
+            DOMAIN["Domain Models<br/>Tenant · User · Run<br/>Connection · AuditLog<br/>IntegrationSync"]
             AUTH["Auth Service<br/>JWT · bcrypt"]
             API_TYPES["API Types<br/>Request / Response structs"]
         end
@@ -121,7 +121,7 @@ graph TB
         end
 
         subgraph Integrations
-            PD_CLIENT["Pipedream Client<br/>crates/pipedream-connect"]
+            PD_CLIENT["Nango Client<br/>crates/chronicle_nango"]
             STRIPE_INT["Stripe<br/>crates/integrations"]
             ENCRYPTION["Encryption<br/>crates/integrations"]
         end
@@ -135,7 +135,7 @@ graph TB
     end
 
     subgraph External["External Services"]
-        PIPEDREAM["Pipedream<br/>Event Sources"]
+        NANGO["Nango<br/>OAuth + Syncs"]
         POSTHOG["PostHog<br/>Product Analytics"]
         SENTRY["Sentry<br/>Errors · Tracing · Replay"]
         STRIPE["Stripe<br/>Payments"]
@@ -177,9 +177,9 @@ graph TB
 
     SAAS_API --> PD_CLIENT
     SAAS_API --> STRIPE_INT
-    PD_CLIENT --> PIPEDREAM
+    PD_CLIENT --> NANGO
     STRIPE_INT --> STRIPE
-    PIPEDREAM -->|webhooks| SAAS_API
+    NANGO -->|webhooks| SAAS_API
     STRIPE -->|webhooks| SAAS_API
 
     SRC_CORE --> SRC_REGISTRY
@@ -197,7 +197,7 @@ graph TB
     class NEXTJS,NEXTAUTH,API_CLIENT,ANALYTICS frontend
     class TS_TYPES shared
     class SAAS_API,EVENT_API,DOMAIN,AUTH,API_TYPES,TRAITS,IN_MEM,PG_STORES,HELIX_GRAPH,KAFKA_STREAM,PD_CLIENT,STRIPE_INT,ENCRYPTION,SRC_CORE,SRC_REGISTRY,SRC_MOCK,SRC_INTERCOM backend
-    class PIPEDREAM,POSTHOG,SENTRY,STRIPE external
+    class NANGO,POSTHOG,SENTRY,STRIPE external
     class POSTGRES,HELIX_DB,KAFKA datastore
     </pre>
   </div>
@@ -209,7 +209,7 @@ graph TB
     </div>
     <div class="legend-card">
       <h3>Backend</h3>
-      <p>Rust / Axum HTTP server. SaaS routes handle auth, runs, connections, dashboard, settings, audit, pipedream, and webhooks. Event routes handle ingest, stream, and query, with an optional Helix-backed graph read model for vector and traversal workloads.</p>
+      <p>Rust / Axum HTTP server. SaaS routes handle auth, runs, connections, dashboard, settings, audit, integrations, and webhooks. Event routes handle ingest, stream, and query, with an optional Helix-backed graph read model for vector and traversal workloads.</p>
     </div>
     <div class="legend-card">
       <h3>Type Safety</h3>
@@ -221,7 +221,7 @@ graph TB
     </div>
     <div class="legend-card">
       <h3>External Integrations</h3>
-      <p><strong>Pipedream</strong> provides event source triggers. <strong>Stripe</strong> handles payments and subscriptions. <strong>PostHog</strong> receives frontend analytics events through the app's vendor-agnostic analytics provider, and <strong>Sentry</strong> receives frontend browser errors, traces, and replay data.</p>
+      <p><strong>Nango</strong> provides OAuth and sync orchestration for supported integrations. <strong>Stripe</strong> handles payments and subscriptions. <strong>PostHog</strong> receives frontend analytics events through the app's vendor-agnostic analytics provider, and <strong>Sentry</strong> receives frontend browser errors, traces, and replay data.</p>
     </div>
     <div class="legend-card">
       <h3>Deployment</h3>

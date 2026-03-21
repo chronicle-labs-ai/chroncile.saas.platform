@@ -11,7 +11,7 @@
       "features": [
         "Event ingestion and timeline",
         "Runs and workflow processing",
-        "1 Pipedream connection",
+        "1 connected integration",
         "Agent endpoint configuration",
         "Audit log (30 days)"
       ]
@@ -26,7 +26,7 @@
       "lookupKey": "pro_monthly",
       "features": [
         "Everything in Starter",
-        "Up to 5 Pipedream connections",
+        "Up to 5 connected integrations",
         "Runs by workflow filter",
         "Audit log (90 days)"
       ]
@@ -41,7 +41,7 @@
       "lookupKey": "enterprise_monthly",
       "features": [
         "Everything in Pro",
-        "Unlimited Pipedream connections",
+        "Unlimited connected integrations",
         "Extended audit retention",
         "Priority support",
         "Custom agent workflows"
@@ -57,7 +57,7 @@
       "lookupKey": "custom_enterprise_monthly",
       "features": [
         "Everything in Enterprise",
-        "Unlimited Pipedream connections and workflows",
+        "Unlimited connected integrations and workflows",
         "Unlimited audit retention",
         "Dedicated success manager",
         "Custom integrations and SLA",

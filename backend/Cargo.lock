@@ -1553,7 +1553,6 @@ dependencies = [
  "chronicle_link",
  "chronicle_mock_connector",
  "chronicle_nango",
- "chronicle_pipedream_connect",
  "chronicle_query",
  "chronicle_sources_core",
  "chronicle_sources_registry",
@@ -1618,7 +1617,6 @@ dependencies = [
  "chronicle_interfaces",
  "chronicle_mock_connector",
  "chronicle_nango",
- "chronicle_pipedream_connect",
  "chrono",
  "dotenvy",
  "sentry",
@@ -1849,20 +1847,6 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
- "wiremock",
-]
-
-[[package]]
-name = "chronicle_pipedream_connect"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "tokio",
- "urlencoding",
  "wiremock",
 ]
 

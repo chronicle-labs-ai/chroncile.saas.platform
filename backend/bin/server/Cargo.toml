@@ -26,7 +26,6 @@ chronicle_mock_connector = { workspace = true }
 chronicle_api = { workspace = true }
 chronicle_auth = { workspace = true }
 chronicle_integrations = { workspace = true }
-chronicle_pipedream_connect = { workspace = true }
 chronicle_nango = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
