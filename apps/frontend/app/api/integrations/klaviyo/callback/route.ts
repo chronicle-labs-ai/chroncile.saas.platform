@@ -3,8 +3,12 @@ import { fetchFromBackend } from "@/server/backend/fetch-from-backend";
 
 export const dynamic = "force-dynamic";
 
+function appOrigin(request: NextRequest) {
+  return process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+}
+
 function redirectToConnections(request: NextRequest, params: Record<string, string>) {
-  const url = new URL("/dashboard/connections", request.url);
+  const url = new URL("/dashboard/connections", appOrigin(request));
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
