@@ -86,6 +86,30 @@ function UtilizationPanel({ envId }: { envId: string }) {
   );
 }
 
+// ── Service Status Badge ─────────────────────────────────────────────────────
+
+function ServiceBadge({ name, status }: { name: string; status: { status: string; latencyMs?: number; error?: string } }) {
+  const dotClass =
+    status.status === "up"
+      ? "status-dot--nominal"
+      : status.status === "down"
+        ? "status-dot--critical"
+        : "status-dot--offline";
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 font-mono text-[10px]"
+      title={status.error ? `${name}: ${status.error}` : name}
+    >
+      <span className={`status-dot ${dotClass}`} />
+      <span className="text-secondary">{name}</span>
+      {status.latencyMs != null && (
+        <span className="text-tertiary">{status.latencyMs}ms</span>
+      )}
+    </span>
+  );
+}
+
 // ── Health History ────────────────────────────────────────────────────────────
 
 function HealthHistoryPanel({ envId }: { envId: string }) {
@@ -96,6 +120,7 @@ function HealthHistoryPanel({ envId }: { envId: string }) {
   );
 
   const checks = data?.healthChecks ?? [];
+  const hasServiceStatuses = checks.some((c) => c.serviceStatuses != null);
 
   return (
     <div className="panel">
@@ -103,7 +128,7 @@ function HealthHistoryPanel({ envId }: { envId: string }) {
         <span className="panel__title">Health History</span>
         <span className="font-mono text-[10px] text-tertiary">Last {checks.length} checks</span>
       </div>
-      <div className="max-h-60 overflow-y-auto">
+      <div className="max-h-80 overflow-y-auto">
         {checks.length === 0 ? (
           <div className="panel__content text-xs text-tertiary font-mono text-center py-6">
             No health checks recorded yet
@@ -117,6 +142,7 @@ function HealthHistoryPanel({ envId }: { envId: string }) {
                 <th>Frontend</th>
                 <th>B. Latency</th>
                 <th>F. Latency</th>
+                {hasServiceStatuses && <th>Services</th>}
               </tr>
             </thead>
             <tbody>
@@ -135,6 +161,19 @@ function HealthHistoryPanel({ envId }: { envId: string }) {
                   </td>
                   <td>{c.backendMs ? `${c.backendMs}ms` : "—"}</td>
                   <td>{c.frontendMs ? `${c.frontendMs}ms` : "—"}</td>
+                  {hasServiceStatuses && (
+                    <td>
+                      {c.serviceStatuses ? (
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(c.serviceStatuses).map(([name, svc]) => (
+                            <ServiceBadge key={name} name={name} status={svc} />
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-tertiary">—</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

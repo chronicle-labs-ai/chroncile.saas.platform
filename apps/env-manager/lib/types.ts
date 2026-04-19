@@ -35,6 +35,12 @@ export interface EnvironmentRecord {
 
 // ── Health Checks ────────────────────────────────────────────────────────────
 
+export interface ServiceHealthStatus {
+  status: "up" | "down" | "unconfigured";
+  latencyMs?: number;
+  error?: string;
+}
+
 export interface HealthCheckRecord {
   id: string;
   environmentId: string;
@@ -43,6 +49,7 @@ export interface HealthCheckRecord {
   backendMs: number | null;
   frontendMs: number | null;
   gitSha: string | null;
+  serviceStatuses: Record<string, ServiceHealthStatus> | null;
   checkedAt: string;
 }
 

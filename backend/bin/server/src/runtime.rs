@@ -105,6 +105,11 @@ pub async fn build_platform_runtime(
                 .clone(),
             webhook_secret: launch_config.integrations.nango.webhook_secret.clone(),
         },
+        health: HealthMetadata {
+            environment: launch_config.health.environment.clone(),
+            git_sha: launch_config.health.git_sha.clone(),
+            git_tag: launch_config.health.git_tag.clone(),
+        },
         intercom_client_id: launch_config.integrations.intercom.client_id.clone(),
         intercom_client_secret: launch_config.integrations.intercom.client_secret.clone(),
         klaviyo_client_id: launch_config.integrations.klaviyo.client_id.clone(),

@@ -86,6 +86,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/auth/accept-invite/:token",
             post(team::accept_invite),
         )
+        .route("/health/ready", get(super::health::deep_health_check))
         .with_state(state.clone());
 
     let protected = Router::new()

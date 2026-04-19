@@ -55,15 +55,16 @@ model Environment {
 }
 
 model HealthCheck {
-  id             String      @id @default(cuid())
-  environmentId  String
-  environment    Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  backendStatus  Int?
-  frontendStatus Int?
-  backendMs      Int?
-  frontendMs     Int?
-  gitSha         String?
-  checkedAt      DateTime    @default(now())
+  id               String      @id @default(cuid())
+  environmentId    String
+  environment      Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  backendStatus    Int?
+  frontendStatus   Int?
+  backendMs        Int?
+  frontendMs       Int?
+  gitSha           String?
+  serviceStatuses  Json?
+  checkedAt        DateTime    @default(now())
 
   @@index([environmentId, checkedAt])
 }
