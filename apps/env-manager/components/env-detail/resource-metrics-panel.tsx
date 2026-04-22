@@ -33,10 +33,10 @@ function UtilizationPanel({ envId }: { envId: string }) {
   );
 
   const hasData = data && (
-    data.cpu.series.length > 0 ||
-    data.memory.series.length > 0 ||
-    data.disk.series.length > 0 ||
-    data.requests.series.length > 0
+    (data.cpu?.series?.length ?? 0) > 0 ||
+    (data.memory?.series?.length ?? 0) > 0 ||
+    (data.disk?.series?.length ?? 0) > 0 ||
+    (data.requests?.series?.length ?? 0) > 0
   );
 
   return (

@@ -1,7 +1,91 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/data/db";
 
+const BACKEND_URL = process.env.LOCAL_BACKEND_URL ?? "http://localhost:8080";
 const FLY_API_BASE = "https://api.machines.dev/v1";
+
+async function buildLocalResources() {
+  let backendMetrics: {
+    process?: { pid: number; uptimeSecs: number; memoryBytes: number | null; numThreads: number | null };
+    services?: Array<{ name: string; status: string; latencyMs: number; error?: string }>;
+    version?: string;
+    gitSha?: string;
+  } | null = null;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/platform/metrics`, {
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (res.ok) backendMetrics = await res.json();
+  } catch { /* backend not reachable */ }
+
+  const memoryMb = backendMetrics?.process?.memoryBytes
+    ? Math.round(backendMetrics.process.memoryBytes / (1024 * 1024))
+    : null;
+
+  const machine = {
+    id: backendMetrics?.process?.pid?.toString() ?? "local",
+    name: "chronicle-backend",
+    state: backendMetrics ? "started" : "stopped",
+    region: "local",
+    cpus: 1,
+    cpuKind: "host",
+    memoryMb,
+    imageRef: `rust/${backendMetrics?.version ?? "dev"}`,
+    updatedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    checks: (backendMetrics?.services ?? []).map((s) => ({
+      name: s.name,
+      status: s.status === "up" ? "passing" : s.status === "unconfigured" ? "warning" : "critical",
+      output: s.error ?? `${s.latencyMs}ms`,
+    })),
+    events: [],
+  };
+
+  let dockerVolume = null;
+  try {
+    const { execFile } = await import("child_process");
+    const { promisify } = await import("util");
+    const exec = promisify(execFile);
+    const { stdout } = await exec("docker", [
+      "system", "df", "--format", "{{.Size}}",
+    ], { timeout: 5_000 });
+    const sizeStr = stdout.trim().split("\n")[0];
+    dockerVolume = {
+      id: "chronicle-local-pgdata",
+      name: "chronicle-local-pgdata",
+      state: "created",
+      sizeGb: sizeStr ? 1 : null,
+      region: "local",
+      encrypted: false,
+      attachedMachineId: null,
+    };
+  } catch { /* docker not available */ }
+
+  return NextResponse.json({
+    machines: [machine],
+    volumes: dockerVolume ? [dockerVolume] : [],
+    ips: [{ address: "127.0.0.1", type: "v4", region: "local" }],
+    postgres: {
+      name: "chronicle-local-pg",
+      url: "postgresql://chronicle:chronicle_dev@localhost:5432/chronicle",
+      storageGb: 0,
+      volumes: [],
+      machines: [{ id: "chronicle-local-pg", state: backendMetrics ? "started" : "stopped", region: "local" }],
+    },
+    metrics: {
+      totalCpus: 1,
+      totalMemoryMb: memoryMb ?? 0,
+      runningMachines: backendMetrics ? 1 : 0,
+      stoppedMachines: backendMetrics ? 0 : 1,
+      totalMachines: 1,
+      totalVolumeGb: 0,
+      totalIps: 1,
+      dbStorageGb: 0,
+      dbMachines: 1,
+    },
+  });
+}
 
 function flyV1Header() {
   const token = process.env.FLY_API_TOKEN ?? "";
@@ -46,6 +130,10 @@ export async function GET(
   const { id } = await params;
   const env = await prisma.environment.findUnique({ where: { id } });
   if (!env) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (env.type === "LOCAL") {
+    return buildLocalResources();
+  }
 
   if (!env.flyAppName) return NextResponse.json({ machines: [], volumes: [], ips: [], postgres: null, metrics: null });
 

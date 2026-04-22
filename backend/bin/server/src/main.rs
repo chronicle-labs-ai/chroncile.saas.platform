@@ -37,6 +37,7 @@ fn main() -> Result<()> {
 }
 
 async fn run(launch_config: config::LaunchConfig, config_path: Option<PathBuf>) -> Result<()> {
+    chronicle_api::init_metrics_start_time();
     tracing::info!("Starting Chronicle backend");
     if let Some(path) = config_path.as_ref() {
         tracing::info!(path = %path.display(), "Loaded launch configuration file");

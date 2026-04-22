@@ -29,3 +29,7 @@ pub fn build_router(state: AppState) -> Router {
 pub fn build_saas_router(state: SaasAppState) -> Router {
     routes::saas::build_saas_routes(state)
 }
+
+pub fn init_metrics_start_time() {
+    routes::saas::metrics::init_start_time();
+}

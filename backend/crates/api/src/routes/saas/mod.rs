@@ -8,6 +8,7 @@ pub mod feature_access;
 pub mod integrations;
 pub mod intercom;
 pub mod klaviyo;
+pub mod metrics;
 pub mod runs;
 pub mod sandboxes;
 pub mod settings;
@@ -87,6 +88,7 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             post(team::accept_invite),
         )
         .route("/health/ready", get(super::health::deep_health_check))
+        .route("/api/platform/metrics", get(metrics::platform_metrics))
         .with_state(state.clone());
 
     let protected = Router::new()

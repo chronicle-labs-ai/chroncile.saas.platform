@@ -17,10 +17,13 @@ import {
   StatCard,
   TenantsPanel,
 } from "@/features/environments/components/detail";
+import { DatabaseTab } from "@/features/local-db/components/database-tab";
 
-type DetailTab = "deployment" | "users" | "resources" | "load-tests";
+type DetailTab = "deployment" | "users" | "resources" | "load-tests" | "database";
 
-const DETAIL_TABS: { id: DetailTab; label: string; icon: React.ReactNode }[] = [
+interface TabDef { id: DetailTab; label: string; icon: React.ReactNode }
+
+const BASE_TABS: TabDef[] = [
   {
     id: "deployment",
     label: "Deployment",
@@ -42,6 +45,17 @@ const DETAIL_TABS: { id: DetailTab; label: string; icon: React.ReactNode }[] = [
     icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>,
   },
 ];
+
+const DATABASE_TAB: TabDef = {
+  id: "database",
+  label: "Database",
+  icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>,
+};
+
+function getTabsForEnv(envType: string): TabDef[] {
+  if (envType === "LOCAL") return [...BASE_TABS, DATABASE_TAB];
+  return BASE_TABS;
+}
 
 function DeploymentTab({
   env,
@@ -130,11 +144,12 @@ function EnvDetailTabs({
   isProvisioning: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<DetailTab>("deployment");
+  const tabs = getTabsForEnv(env.type);
 
   return (
     <div>
       <div className="flex border-b border-border-dim mb-6">
-        {DETAIL_TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -171,7 +186,7 @@ function EnvDetailTabs({
 
       {activeTab === "resources" && (
         <div className="space-y-6">
-          {env.status === "RUNNING" ? (
+          {env.status === "RUNNING" || env.type === "LOCAL" ? (
             <ResourceMetricsPanel envId={envId} />
           ) : (
             <div className="panel">
@@ -185,6 +200,10 @@ function EnvDetailTabs({
 
       {activeTab === "load-tests" && (
         <LoadTestsPanel envId={envId} isRunning={env.status === "RUNNING"} />
+      )}
+
+      {activeTab === "database" && env.type === "LOCAL" && (
+        <DatabaseTab />
       )}
     </div>
   );
@@ -266,7 +285,9 @@ export function EnvironmentDetailPage({
           <Link href="/dashboard" className="btn btn--ghost btn--sm mb-4 inline-flex">&larr; All Environments</Link>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <span className={`badge ${BADGE_CLASS[env.type]}`}>{TYPE_LABELS[env.type]}</span>
+              {env.type !== "LOCAL" && (
+                <span className={`badge ${BADGE_CLASS[env.type]}`}>{TYPE_LABELS[env.type]}</span>
+              )}
               <h1 className="text-xl font-sans font-semibold">{env.name}</h1>
               <span className={`status-dot ${env.isHealthy ? "status-dot--nominal status-dot--pulse" : "status-dot--critical"}`} />
             </div>

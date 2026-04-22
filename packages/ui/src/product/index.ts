@@ -45,3 +45,5 @@ export type {
 
 export { Minimap, generateMinimapBars } from "./minimap";
 export type { MinimapProps, MinimapBar } from "./minimap";
+
+export * from "./filters";
