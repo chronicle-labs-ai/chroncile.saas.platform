@@ -139,7 +139,12 @@ export { ScrollShadow } from "./scroll-shadow";
 export type { ScrollShadowProps } from "./scroll-shadow";
 
 export { EmptyState } from "./empty-state";
-export type { EmptyStateProps } from "./empty-state";
+export type {
+  EmptyStateProps,
+  EmptyStateSize,
+  EmptyStateChrome,
+  EmptyStateMediaVariant,
+} from "./empty-state";
 
 export {
   Table,

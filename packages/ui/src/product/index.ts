@@ -46,4 +46,49 @@ export type {
 export { Minimap, generateMinimapBars } from "./minimap";
 export type { MinimapProps, MinimapBar } from "./minimap";
 
+export {
+  ActionBar,
+  Carousel,
+  DataGrid,
+  FileTree,
+  FloatingToc,
+  HoverCard,
+  ItemCard,
+  ItemCardGroup,
+  KPI,
+  KPIGroup,
+  Kanban,
+  ListView,
+  Widget,
+  useCarousel,
+  useFileTree,
+} from "./data-display";
+export type {
+  ActionBarProps,
+  CarouselProps,
+  CarouselThumbnailProps,
+  DataDisplayStatus,
+  DataGridColumn,
+  DataGridProps,
+  DataGridSortDescriptor,
+  DataGridSortDirection,
+  FileTreeNode,
+  FileTreeProps,
+  FloatingTocItem,
+  FloatingTocProps,
+  HoverCardProps,
+  HoverCardContentProps,
+  ItemCardProps,
+  ItemCardGroupProps,
+  KPIProps,
+  KPIValueProps,
+  KPITrendProps,
+  KPIProgressProps,
+  KPIChartProps,
+  KPIGroupProps,
+  KanbanProps,
+  ListViewProps,
+  WidgetProps,
+} from "./data-display";
+
 export * from "./filters";
