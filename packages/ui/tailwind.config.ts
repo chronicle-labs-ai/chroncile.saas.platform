@@ -94,6 +94,42 @@ const preset: Config = {
           active: "var(--c-row-active)",
         },
 
+        // ── Linear-density layer (`--l-*`) ──
+        // Reach for `l-*` utilities when building product-surface chrome
+        // (denser app-feel). Brand/marketing surfaces stay on the
+        // brand `--c-*` palette above.
+        l: {
+          surface: "var(--l-surface)",
+          "surface-raised": "var(--l-surface-raised)",
+          "surface-raised-2": "var(--l-surface-raised-2)",
+          "surface-input": "var(--l-surface-input)",
+          "surface-bar": "var(--l-surface-bar)",
+          "surface-bar-2": "var(--l-surface-bar-2)",
+          "surface-hover": "var(--l-surface-hover)",
+          "surface-selected": "var(--l-surface-selected)",
+          "wash-1": "var(--l-wash-1)",
+          "wash-2": "var(--l-wash-2)",
+          "wash-3": "var(--l-wash-3)",
+          "wash-5": "var(--l-wash-5)",
+          ink: "var(--l-ink)",
+          "ink-lo": "var(--l-ink-lo)",
+          "ink-dim": "var(--l-ink-dim)",
+          border: "var(--l-border)",
+          "border-strong": "var(--l-border-strong)",
+          "border-hover": "var(--l-border-hover)",
+          "border-faint": "var(--l-border-faint)",
+          "p-urgent": "var(--l-p-urgent)",
+          "p-high": "var(--l-p-high)",
+          "p-med": "var(--l-p-med)",
+          "p-low": "var(--l-p-low)",
+          "p-none": "var(--l-p-none)",
+          "status-backlog": "var(--l-status-backlog)",
+          "status-todo": "var(--l-status-todo)",
+          "status-inprogress": "var(--l-status-inprogress)",
+          "status-done": "var(--l-status-done)",
+          "status-canceled": "var(--l-status-canceled)",
+        },
+
         // Legacy aliases — kept so older variant names in consumer code
         // don't 500 during the migration. Map to the closest new token.
         critical: "var(--c-event-red)",
@@ -159,6 +195,11 @@ const preset: Config = {
         "s-12": "var(--s-12)",
         "s-16": "var(--s-16)",
         "s-20": "var(--s-20)",
+        // Linear-density heights — `h-l-row`, `h-l-input`, etc.
+        "l-row": "var(--l-row-h)",
+        "l-row-sm": "var(--l-row-h-sm)",
+        "l-input": "var(--l-input-h)",
+        "l-input-md": "var(--l-input-h-md)",
       },
 
       borderRadius: {
@@ -169,12 +210,17 @@ const preset: Config = {
         lg: "var(--r-lg)",
         xl: "var(--r-xl)",
         pill: "var(--r-pill)",
+        // Linear-density radii — `rounded-l` (4px) / `rounded-l-sm` (2px)
+        l: "var(--l-radius)",
+        "l-sm": "var(--l-radius-sm)",
       },
 
       boxShadow: {
         card: "var(--shadow-card)",
         panel: "var(--shadow-panel)",
         "glow-ember": "var(--shadow-glow-ember)",
+        // Linear popover shadow — `shadow-l-pop`
+        "l-pop": "var(--l-pop-shadow)",
       },
 
       backgroundImage: {

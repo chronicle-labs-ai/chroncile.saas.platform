@@ -48,56 +48,66 @@ import { Avatar } from "../primitives/avatar";
 
 const sidebarStyles = tv({
   slots: {
-    root:
-      "flex-col bg-surface-01 border-r border-hairline " +
-      "[&>*]:border-hairline",
+    root: "flex-col [&>*]:border-hairline",
     inner: "flex h-full flex-col",
   },
   variants: {
+    density: {
+      compact: { root: "bg-l-surface-bar-2 border-r border-l-border" },
+      brand: { root: "bg-surface-01 border-r border-hairline" },
+    },
     variant: {
       /** Fixed-width panel pinned to the viewport edge (dashboard shells). */
       fixed:
-        "hidden lg:fixed lg:inset-y-0 lg:flex lg:w-[240px] lg:flex-col",
+        "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col",
       /** Static flex column (hosts render it inside their own grid). */
-      static: "flex w-[240px] flex-col",
+      static: "flex flex-col",
     },
     width: {
       sm: "lg:w-[200px] w-[200px]",
-      md: "lg:w-[240px] w-[240px]",
+      md: "lg:w-[224px] w-[224px]",
       lg: "lg:w-[280px] w-[280px]",
     },
   },
-  defaultVariants: { variant: "fixed", width: "md" },
+  defaultVariants: { density: "compact", variant: "fixed", width: "md" },
 });
 
 type SidebarVariantProps = VariantProps<typeof sidebarStyles>;
+export type SidebarDensity = "compact" | "brand";
 
 export interface SidebarProps
   extends React.HTMLAttributes<HTMLElement>,
     SidebarVariantProps {
   variant?: "fixed" | "static";
   width?: "sm" | "md" | "lg";
+  density?: SidebarDensity;
 }
+
+const SidebarDensityContext = React.createContext<SidebarDensity>("compact");
 
 function SidebarRoot({
   variant = "fixed",
   width = "md",
+  density = "compact",
   className,
   children,
   ...props
 }: SidebarProps) {
   const slots = React.useMemo(
-    () => sidebarStyles({ variant, width }),
-    [variant, width],
+    () => sidebarStyles({ density, variant, width }),
+    [density, variant, width],
   );
   return (
-    <aside
-      data-slot="sidebar"
-      className={slots.root({ className })}
-      {...props}
-    >
-      <div className={slots.inner()}>{children}</div>
-    </aside>
+    <SidebarDensityContext.Provider value={density}>
+      <aside
+        data-slot="sidebar"
+        data-density={density}
+        className={slots.root({ className })}
+        {...props}
+      >
+        <div className={slots.inner()}>{children}</div>
+      </aside>
+    </SidebarDensityContext.Provider>
   );
 }
 
@@ -106,16 +116,19 @@ function SidebarRoot({
 // ─────────────────────────────────────────────────────────────
 
 const headerStyles = tv({
-  base:
-    "flex items-center px-s-4 border-b border-hairline bg-surface-02",
+  base: "flex items-center",
   variants: {
+    density: {
+      compact: "px-s-2 py-[6px] border-0",
+      brand: "px-s-4 border-b border-hairline bg-surface-02",
+    },
     height: {
       sm: "h-[44px]",
       md: "h-[52px]",
       lg: "h-[64px]",
     },
   },
-  defaultVariants: { height: "md" },
+  defaultVariants: { density: "compact", height: "md" },
 });
 
 export interface SidebarHeaderProps
@@ -129,9 +142,10 @@ export function SidebarHeader({
   children,
   ...props
 }: SidebarHeaderProps) {
+  const density = React.useContext(SidebarDensityContext);
   const cls = React.useMemo(
-    () => headerStyles({ height, className }),
-    [height, className],
+    () => headerStyles({ density, height, className }),
+    [density, height, className],
   );
   return (
     <div data-slot="sidebar-header" className={cls} {...props}>
@@ -236,11 +250,28 @@ export function SidebarStatus({
 
 const navStyles = tv({
   slots: {
-    root: "flex-1 overflow-y-auto py-s-4",
+    root: "flex-1 overflow-y-auto",
     sectionHeader:
-      "px-s-4 mb-s-2 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
-    sectionBody: "flex flex-col gap-[2px] px-s-2",
+      "font-mono uppercase tracking-eyebrow",
+    sectionBody: "flex flex-col gap-[2px]",
   },
+  variants: {
+    density: {
+      compact: {
+        root: "px-s-2 py-s-2",
+        sectionHeader:
+          "px-s-3 pt-s-3 pb-[4px] text-[10.5px] text-l-ink-dim",
+        sectionBody: "px-0",
+      },
+      brand: {
+        root: "py-s-4",
+        sectionHeader:
+          "px-s-4 mb-s-2 text-mono-sm tracking-tactical text-ink-dim",
+        sectionBody: "px-s-2",
+      },
+    },
+  },
+  defaultVariants: { density: "compact" },
 });
 
 export interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -253,7 +284,8 @@ export function SidebarNav({
   children,
   ...props
 }: SidebarNavProps) {
-  const slots = React.useMemo(() => navStyles(), []);
+  const density = React.useContext(SidebarDensityContext);
+  const slots = React.useMemo(() => navStyles({ density }), [density]);
   return (
     <nav
       data-slot="sidebar-nav"
@@ -277,7 +309,8 @@ export function SidebarNavSection({
   children,
   ...props
 }: SidebarNavSectionProps) {
-  const slots = React.useMemo(() => navStyles(), []);
+  const density = React.useContext(SidebarDensityContext);
+  const slots = React.useMemo(() => navStyles({ density }), [density]);
   return (
     <div data-slot="sidebar-nav-section" className={className} {...props}>
       {title ? <div className={slots.sectionHeader()}>{title}</div> : null}
@@ -293,30 +326,73 @@ export function SidebarNavSection({
 const navItemStyles = tv({
   slots: {
     root:
-      "relative flex items-center gap-s-3 px-s-3 py-s-2 " +
-      "font-sans text-sm outline-none " +
+      "relative flex items-center outline-none " +
       "transition-colors duration-fast ease-out " +
-      "border-l-2 border-transparent " +
-      "data-[hovered=true]:bg-surface-02 data-[hovered=true]:text-ink-hi " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember " +
       "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
-    icon: "shrink-0 text-ink-dim",
+    icon: "shrink-0",
     label: "flex-1 truncate",
     status:
-      "ml-auto flex items-center gap-s-1 px-s-2 py-[2px] rounded-xs " +
-      "font-mono text-mono-xs uppercase tracking-tactical",
+      "ml-auto flex items-center gap-s-1 rounded-xs " +
+      "font-mono uppercase tracking-tactical",
   },
   variants: {
+    density: {
+      compact: {
+        root:
+          "h-[26px] gap-s-2 px-s-3 rounded-l font-sans text-[13px] " +
+          "data-[hovered=true]:bg-l-wash-3 data-[hovered=true]:text-l-ink",
+        icon: "text-l-ink-dim",
+        status: "px-[5px] py-[1px] text-mono-xs",
+      },
+      brand: {
+        root:
+          "gap-s-3 px-s-3 py-s-2 font-sans text-sm border-l-2 border-transparent " +
+          "data-[hovered=true]:bg-surface-02 data-[hovered=true]:text-ink-hi",
+        icon: "text-ink-dim",
+        status: "px-s-2 py-[2px] text-mono-xs",
+      },
+    },
     isActive: {
-      true: {
+      true: {},
+      false: {},
+    },
+  },
+  compoundVariants: [
+    {
+      density: "compact",
+      isActive: true,
+      class: {
+        // Linear-style active row: ember left bar via `::before`,
+        // tinted bg, ink hi.
+        root:
+          "bg-l-surface-selected text-l-ink " +
+          "before:content-[''] before:absolute before:left-0 before:top-1/2 " +
+          "before:-translate-y-1/2 before:h-[14px] before:w-[2px] before:bg-ember before:rounded-r-sm",
+        icon: "text-l-ink",
+      },
+    },
+    {
+      density: "compact",
+      isActive: false,
+      class: { root: "text-l-ink-lo" },
+    },
+    {
+      density: "brand",
+      isActive: true,
+      class: {
         root: "border-l-ember bg-row-active text-ink-hi",
         icon: "text-ember",
       },
-      false: { root: "text-ink-lo" },
     },
-  },
-  defaultVariants: { isActive: false },
+    {
+      density: "brand",
+      isActive: false,
+      class: { root: "text-ink-lo" },
+    },
+  ],
+  defaultVariants: { density: "compact", isActive: false },
 });
 
 export interface SidebarNavItemProps {
@@ -358,7 +434,11 @@ export function SidebarNavItem({
   className,
   children,
 }: SidebarNavItemProps) {
-  const slots = React.useMemo(() => navItemStyles({ isActive }), [isActive]);
+  const density = React.useContext(SidebarDensityContext);
+  const slots = React.useMemo(
+    () => navItemStyles({ density, isActive }),
+    [density, isActive],
+  );
   const content = (
     <>
       {icon ? <span className={slots.icon()}>{icon}</span> : null}

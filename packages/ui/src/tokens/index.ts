@@ -4,3 +4,4 @@ export * from "./spacing";
 export * from "./radius";
 export * from "./motion";
 export * from "./shadows";
+export * from "./linear";

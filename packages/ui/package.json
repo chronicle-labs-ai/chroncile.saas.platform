@@ -12,6 +12,7 @@
     "./tailwind.config": "./tailwind.config.ts",
     "./styles/globals.css": "./src/styles/globals.css",
     "./styles/tokens.css": "./src/styles/tokens.css",
+    "./styles/linear.css": "./src/styles/linear.css",
     "./styles/fonts.css": "./src/styles/fonts.css",
     "./tokens": "./src/tokens/index.ts"
   },

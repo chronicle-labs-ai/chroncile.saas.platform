@@ -46,7 +46,7 @@ const styles = tv({
   },
 });
 
-export interface FilterPillProps<TRow> {
+export interface DataTableFilterPillProps<TRow> {
   column: ColumnConfig<TRow>;
   filter: FilterState;
   onOperatorChange: (next: FilterOperator) => void;
@@ -54,13 +54,22 @@ export interface FilterPillProps<TRow> {
   onRemove: () => void;
 }
 
-export function FilterPill<TRow>({
+/**
+ * DataTableFilterPill — the brand-density, fully-stateful filter pill
+ * used inside the legacy `<FilterBar>` data-table primitive. Carries a
+ * column descriptor, a `FilterState`, and edit/operator/remove
+ * callbacks; opens a popover with the appropriate value editor.
+ *
+ * For a presentation-only Linear-style verb pill (`dim | verb | val |
+ * ×`), use the `<FilterPill>` primitive in `primitives/`.
+ */
+export function DataTableFilterPill<TRow>({
   column,
   filter,
   onOperatorChange,
   onValueChange,
   onRemove,
-}: FilterPillProps<TRow>) {
+}: DataTableFilterPillProps<TRow>) {
   const [open, setOpen] = React.useState(false);
   const slots = styles({});
 

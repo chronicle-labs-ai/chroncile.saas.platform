@@ -38,7 +38,14 @@ const preview: Preview = {
         order: [
           "Introduction",
           "Foundations",
-          ["Colors", "Typography", "Spacing", "Motion", "Gradients & Glass"],
+          [
+            "Colors",
+            "Typography",
+            "Spacing",
+            "Motion",
+            "Gradients & Glass",
+            "Density",
+          ],
           "Brand",
           "Primitives",
           "Typography",

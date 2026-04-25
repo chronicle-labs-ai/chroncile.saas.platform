@@ -17,44 +17,67 @@ import {
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
 
+export type SearchFieldDensity = "compact" | "brand";
+
 const searchFieldStyles = tv({
   slots: {
-    root:
-      "relative flex w-full items-center rounded-sm border border-hairline-strong " +
-      "bg-surface-00 pl-[40px] pr-[8px] " +
-      "transition-colors duration-fast ease-out " +
-      "data-[focus-within=true]:border-ember " +
-      "data-[disabled=true]:opacity-50",
-    input:
-      "flex-1 bg-transparent py-s-2 font-mono text-mono-lg text-ink " +
-      "placeholder:text-ink-faint outline-none " +
-      "data-[empty=true]:pr-0",
-    icon:
-      "pointer-events-none absolute left-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim",
+    root: "relative flex w-full items-center transition-colors duration-fast ease-out",
+    input: "flex-1 bg-transparent outline-none data-[empty=true]:pr-0",
+    icon: "pointer-events-none absolute top-1/2 -translate-y-1/2",
     clear:
-      "inline-flex h-6 w-6 items-center justify-center rounded-xs text-ink-dim " +
+      "inline-flex items-center justify-center rounded-l " +
+      "transition-colors duration-fast ease-out " +
       "data-[empty=true]:hidden " +
-      "data-[hovered=true]:text-ink-hi data-[hovered=true]:bg-surface-03 " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember",
   },
+  variants: {
+    density: {
+      compact: {
+        root:
+          "h-[28px] rounded-l border border-l-border bg-l-surface-input pl-[34px] pr-[6px] " +
+          "data-[focus-within=true]:border-[rgba(216,67,10,0.5)] " +
+          "data-[focus-within=true]:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] " +
+          "data-[disabled=true]:opacity-50",
+        input:
+          "font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim",
+        icon: "left-[10px] h-[14px] w-[14px] text-l-ink-dim",
+        clear:
+          "h-[20px] w-[20px] text-l-ink-dim data-[hovered=true]:text-l-ink data-[hovered=true]:bg-l-wash-3",
+      },
+      brand: {
+        root:
+          "rounded-sm border border-hairline-strong bg-surface-00 pl-[40px] pr-[8px] " +
+          "data-[focus-within=true]:border-ember data-[disabled=true]:opacity-50",
+        input:
+          "py-s-2 font-mono text-mono-lg text-ink placeholder:text-ink-faint",
+        icon: "left-s-3 h-4 w-4 text-ink-dim",
+        clear:
+          "h-6 w-6 text-ink-dim data-[hovered=true]:text-ink-hi data-[hovered=true]:bg-surface-03",
+      },
+    },
+  },
+  defaultVariants: { density: "compact" },
 });
 
 export interface SearchFieldProps
   extends Omit<RACSearchFieldProps, "className" | "children"> {
   className?: string;
   placeholder?: string;
+  density?: SearchFieldDensity;
 }
 
 export function SearchField({
   className,
   placeholder,
+  density = "compact",
   ...rest
 }: SearchFieldProps) {
-  const slots = searchFieldStyles({});
+  const slots = searchFieldStyles({ density });
   return (
     <RACSearchField
       {...rest}
+      data-density={density}
       className={composeTwRenderProps(className, slots.root())}
     >
       <svg

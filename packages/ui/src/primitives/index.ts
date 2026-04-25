@@ -16,6 +16,24 @@ export type { CopyButtonProps } from "./copy-button";
 export { Eyebrow } from "./eyebrow";
 export type { EyebrowProps } from "./eyebrow";
 
+export { Chip } from "./chip";
+export type { ChipProps } from "./chip";
+
+export { FilterPill } from "./filter-pill";
+export type { FilterPillProps } from "./filter-pill";
+
+export { Kbd } from "./kbd";
+export type { KbdProps } from "./kbd";
+
+export { Label } from "./label";
+export type { LabelProps, LabelColor } from "./label";
+
+export { Priority } from "./priority";
+export type { PriorityProps, PriorityLevel } from "./priority";
+
+export { Status } from "./status";
+export type { StatusProps, StatusKind } from "./status";
+
 export { FormField } from "./form-field";
 export type { FormFieldProps } from "./form-field";
 
@@ -29,11 +47,7 @@ export { Modal, ConfirmModal } from "./modal";
 export type { ModalProps, ConfirmModalProps } from "./modal";
 
 export { Panel, PanelHeader, PanelContent } from "./panel";
-export type {
-  PanelProps,
-  PanelHeaderProps,
-  PanelContentProps,
-} from "./panel";
+export type { PanelProps, PanelHeaderProps, PanelContentProps } from "./panel";
 
 export { Select, SelectItem, SelectSection } from "./select";
 export type {
@@ -105,12 +119,7 @@ export { Form } from "./form";
 export type { FormProps } from "./form";
 
 export { Tabs, TabList, Tab, TabPanel } from "./tabs";
-export type {
-  TabsProps,
-  TabListProps,
-  TabProps,
-  TabPanelProps,
-} from "./tabs";
+export type { TabsProps, TabListProps, TabProps, TabPanelProps } from "./tabs";
 
 export { Accordion, AccordionItem } from "./accordion";
 export type { AccordionProps, AccordionItemProps } from "./accordion";
@@ -146,14 +155,7 @@ export type {
   EmptyStateMediaVariant,
 } from "./empty-state";
 
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  Column,
-  Row,
-  Cell,
-} from "./table";
+export { Table, TableHeader, TableBody, Column, Row, Cell } from "./table";
 export type {
   TableProps,
   TableHeaderProps,

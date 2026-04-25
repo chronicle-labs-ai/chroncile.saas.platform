@@ -92,6 +92,7 @@ function ResetPasswordForm() {
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
+              density="brand"
               variant="auth"
               invalid={!!form.formState.errors.password}
               {...form.register("password")}
@@ -109,6 +110,7 @@ function ResetPasswordForm() {
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
+              density="brand"
               variant="auth"
               invalid={!!form.formState.errors.confirmPassword}
               {...form.register("confirmPassword")}

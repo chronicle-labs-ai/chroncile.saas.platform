@@ -36,7 +36,7 @@ function ScenarioRunner() {
           <Mono size="md" tone="hi" uppercase tactical>
             SCENARIO — REFUND ESCALATION
           </Mono>
-          <Button variant="primary" size="sm">
+          <Button density="brand" variant="primary" size="sm">
             <span className="text-ember">⚡</span> Inject edge case
           </Button>
         </div>
@@ -162,8 +162,12 @@ function Page07() {
               <b className="text-event-red font-normal">2</b>
             </Mono>
             <div className="ml-auto flex gap-s-3">
-              <Button variant="secondary" size="sm">Export report</Button>
-              <Button variant="primary" size="sm">▶ Re-run suite</Button>
+              <Button density="brand" variant="secondary" size="sm">
+                Export report
+              </Button>
+              <Button density="brand" variant="primary" size="sm">
+                ▶ Re-run suite
+              </Button>
             </div>
           </div>
           <div className="flex flex-col gap-s-3 border-b border-hairline bg-surface-00 p-s-4">

@@ -28,35 +28,67 @@ const radioStyles = tv({
       "inline-flex items-center gap-s-2 cursor-pointer " +
       "data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50",
     indicator:
-      "relative flex h-[16px] w-[16px] shrink-0 items-center justify-center " +
-      "rounded-full border border-hairline-strong bg-surface-00 " +
+      "relative flex shrink-0 items-center justify-center rounded-full " +
       "transition-colors duration-fast ease-out " +
-      "data-[hovered=true]:border-ink-dim " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember " +
       "data-[selected=true]:border-ember " +
       "data-[invalid=true]:border-event-red",
-    dot:
-      "h-[6px] w-[6px] rounded-full bg-ember opacity-0 " +
-      "data-[selected=true]:opacity-100",
+    dot: "rounded-full bg-ember opacity-0 data-[selected=true]:opacity-100",
     label: "font-sans text-sm text-ink",
   },
+  variants: {
+    size: {
+      sm: {
+        indicator:
+          "h-[14px] w-[14px] border border-l-border-strong bg-transparent " +
+          "data-[hovered=true]:border-l-border-hover",
+        dot: "h-[6px] w-[6px]",
+        label: "text-[12.5px] text-l-ink",
+      },
+      md: {
+        indicator:
+          "h-[16px] w-[16px] border border-hairline-strong bg-surface-00 " +
+          "data-[hovered=true]:border-ink-dim",
+        dot: "h-[6px] w-[6px]",
+        label: "text-sm text-ink",
+      },
+    },
+  },
+  defaultVariants: { size: "md" },
 });
+
+export type RadioSize = "sm" | "md";
 
 export interface RadioGroupProps
   extends Omit<RACRadioGroupProps, "className" | "children"> {
   className?: string;
   children: React.ReactNode;
+  /**
+   * Default size for Radios inside this group. Individual `<Radio size>`
+   * still wins. Reach for `"sm"` on Linear-density product surfaces.
+   */
+  size?: RadioSize;
 }
 
-export function RadioGroup({ className, children, ...rest }: RadioGroupProps) {
-  const slots = radioStyles({});
+const RadioSizeContext = React.createContext<RadioSize>("md");
+
+export function RadioGroup({
+  className,
+  children,
+  size = "md",
+  ...rest
+}: RadioGroupProps) {
+  const slots = radioStyles({ size });
   return (
     <RACRadioGroup
       {...rest}
+      data-density={size === "sm" ? "compact" : "brand"}
       className={composeTwRenderProps(className, slots.group())}
     >
-      {children as React.ReactNode}
+      <RadioSizeContext.Provider value={size}>
+        {children as React.ReactNode}
+      </RadioSizeContext.Provider>
     </RACRadioGroup>
   );
 }
@@ -66,10 +98,19 @@ export interface RadioProps
   className?: string;
   classNames?: { base?: string; indicator?: string; dot?: string; label?: string };
   children?: React.ReactNode;
+  size?: RadioSize;
 }
 
-export function Radio({ className, classNames, children, ...rest }: RadioProps) {
-  const slots = radioStyles({});
+export function Radio({
+  className,
+  classNames,
+  children,
+  size,
+  ...rest
+}: RadioProps) {
+  const ctxSize = React.useContext(RadioSizeContext);
+  const resolved: RadioSize = size ?? ctxSize;
+  const slots = radioStyles({ size: resolved });
   return (
     <RACRadio
       {...rest}

@@ -28,19 +28,16 @@ const checkbox = tv({
       "inline-flex items-center gap-s-2 cursor-pointer " +
       "data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50",
     box:
-      "relative flex h-[16px] w-[16px] shrink-0 items-center justify-center " +
-      "rounded-xs border border-hairline-strong bg-surface-00 " +
+      "relative flex shrink-0 items-center justify-center " +
       "transition-colors duration-fast ease-out " +
-      "data-[hovered=true]:border-ink-dim " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember " +
       "data-[selected=true]:bg-ember data-[selected=true]:border-ember " +
       "data-[indeterminate=true]:bg-ember data-[indeterminate=true]:border-ember " +
       "data-[invalid=true]:border-event-red",
     mark:
-      "h-[10px] w-[10px] stroke-white stroke-[3] " +
-      "opacity-0 data-[selected=true]:opacity-100 " +
-      "data-[indeterminate=true]:opacity-100",
+      "stroke-white stroke-[3] opacity-0 " +
+      "data-[selected=true]:opacity-100 data-[indeterminate=true]:opacity-100",
     label: "font-sans text-sm text-ink",
   },
   variants: {
@@ -48,8 +45,24 @@ const checkbox = tv({
       default: {},
       auth: { box: "bg-transparent" },
     },
+    size: {
+      sm: {
+        box:
+          "h-[14px] w-[14px] rounded-l-sm border border-l-border-strong bg-transparent " +
+          "data-[hovered=true]:border-l-border-hover",
+        mark: "h-[10px] w-[10px]",
+        label: "text-[12.5px] text-l-ink",
+      },
+      md: {
+        box:
+          "h-[16px] w-[16px] rounded-xs border border-hairline-strong bg-surface-00 " +
+          "data-[hovered=true]:border-ink-dim",
+        mark: "h-[10px] w-[10px]",
+        label: "text-sm text-ink",
+      },
+    },
   },
-  defaultVariants: { variant: "default" },
+  defaultVariants: { variant: "default", size: "md" },
 });
 
 type CheckboxVariantProps = VariantProps<typeof checkbox>;
@@ -68,6 +81,11 @@ export interface CheckboxProps
     mark?: string;
     label?: string;
   };
+  /**
+   * Visual size. `"sm"` (14 px, Linear-density product chrome) or
+   * `"md"` (16 px, brand surface, default).
+   */
+  size?: "sm" | "md";
   /** Native-style selection (alias for `isSelected`). */
   checked?: boolean;
   /** Native-style default selection (alias for `defaultSelected`). */
@@ -132,11 +150,12 @@ export function Checkbox({
   className,
   classNames,
   variant = "default",
+  size = "md",
   ref,
   children,
   ...rest
 }: CheckboxProps) {
-  const slots = checkbox({ variant });
+  const slots = checkbox({ variant, size });
 
   const resolvedIsSelected = isSelected ?? checked;
   const resolvedDefaultSelected = defaultSelected ?? defaultChecked;

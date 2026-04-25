@@ -104,6 +104,7 @@ export default function SignupPage() {
               type="text"
               autoComplete="name"
               placeholder="Your name"
+              density="brand"
               variant="auth"
               invalid={!!form.formState.errors.name}
               {...form.register("name")}
@@ -121,6 +122,7 @@ export default function SignupPage() {
               type="email"
               autoComplete="email"
               placeholder="you@company.com"
+              density="brand"
               variant="auth"
               invalid={!!form.formState.errors.email}
               {...form.register("email")}
@@ -143,6 +145,7 @@ export default function SignupPage() {
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
+              density="brand"
               variant="auth"
               invalid={!!form.formState.errors.password}
               {...form.register("password")}
@@ -159,6 +162,7 @@ export default function SignupPage() {
               id="organizationName"
               type="text"
               placeholder="Company name"
+              density="brand"
               variant="auth"
               invalid={!!form.formState.errors.organizationName}
               {...form.register("organizationName")}

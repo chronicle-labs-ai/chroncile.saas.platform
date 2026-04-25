@@ -21,27 +21,49 @@ import { composeTwRenderProps } from "../utils/compose";
  * a plain input.
  */
 
+/**
+ * Two density flavors:
+ *   `"compact"` (default) — Linear-density 28 px h, 13 px sans, ember
+ *                            focus halo. Use on product surfaces.
+ *   `"brand"`             — 36 px-ish mono input on the brand surface
+ *                            stack (`bg-surface-00`). Reach for this on
+ *                            marketing forms / auth.
+ */
+export type InputDensity = "compact" | "brand";
+
 const input = tv({
   base:
-    "w-full rounded-sm border bg-surface-00 px-s-3 py-s-2 font-mono " +
-    "text-mono-lg text-ink placeholder:text-ink-faint " +
-    "transition-colors duration-fast ease-out outline-none " +
-    "data-[hovered=true]:border-ink-dim " +
-    "data-[focused=true]:border-ember " +
-    "data-[invalid=true]:border-event-red " +
-    "data-[focused=true]:data-[invalid=true]:border-event-red " +
+    "w-full border outline-none " +
+    "transition-[border-color,box-shadow,background-color] duration-fast ease-out " +
     "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
   variants: {
+    density: {
+      compact:
+        "h-[28px] rounded-l border-l-border bg-l-surface-input px-[10px] " +
+        "font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim " +
+        "data-[hovered=true]:border-l-border-strong " +
+        "data-[focused=true]:border-[rgba(216,67,10,0.5)] " +
+        "data-[focused=true]:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] " +
+        "data-[invalid=true]:border-event-red " +
+        "data-[focused=true]:data-[invalid=true]:border-event-red",
+      brand:
+        "rounded-sm border-hairline-strong bg-surface-00 px-s-3 py-s-2 " +
+        "font-mono text-mono-lg text-ink placeholder:text-ink-faint " +
+        "data-[hovered=true]:border-ink-dim " +
+        "data-[focused=true]:border-ember " +
+        "data-[invalid=true]:border-event-red " +
+        "data-[focused=true]:data-[invalid=true]:border-event-red",
+    },
     variant: {
-      default: "border-hairline-strong",
+      default: "",
       auth:
         "bg-transparent border-hairline-strong text-ink-hi " +
         "data-[focused=true]:border-ink-hi",
     },
-    search: { true: "pl-[40px]" },
+    search: { true: "pl-[36px]" },
     invalid: { true: "border-event-red data-[focused=true]:border-event-red" },
   },
-  defaultVariants: { variant: "default" },
+  defaultVariants: { density: "compact", variant: "default" },
 });
 
 type InputVariantProps = VariantProps<typeof input>;
@@ -50,6 +72,7 @@ export interface InputProps
   extends Omit<RACInputProps, "className">,
     InputVariantProps {
   className?: string;
+  density?: InputDensity;
   /** Render a leading search glyph and adjust padding. */
   search?: boolean;
   invalid?: boolean;
@@ -61,6 +84,7 @@ export interface InputProps
 export function Input({
   search = false,
   invalid = false,
+  density = "compact",
   variant = "default",
   className,
   wrapperClassName,
@@ -71,9 +95,10 @@ export function Input({
     <RACInput
       {...props}
       ref={ref}
+      data-density={density}
       className={composeTwRenderProps(
         undefined,
-        input({ variant, search, invalid, className }),
+        input({ density, variant, search, invalid, className }),
       )}
     />
   );
@@ -88,7 +113,11 @@ export function Input({
         fill="none"
         stroke="currentColor"
         strokeWidth={1.5}
-        className="pointer-events-none absolute left-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim"
+        className={
+          density === "compact"
+            ? "pointer-events-none absolute left-[10px] top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-l-ink-dim"
+            : "pointer-events-none absolute left-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim"
+        }
       >
         <path
           strokeLinecap="round"

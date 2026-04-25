@@ -6,7 +6,7 @@ import { PageHeader } from "../../layout/page-header";
 import { Eyebrow } from "../../primitives/eyebrow";
 import { Tag } from "../../primitives/tag";
 import {
-  FilterBar,
+  DataTableFilterBar,
   useDataTableFilters,
   type ColumnConfig,
   type FilterState,
@@ -256,7 +256,11 @@ function RunsView({ initial }: { initial?: FilterState[] }) {
             {visible.length} / {RUNS.length} rows
           </Eyebrow>
         </div>
-        <FilterBar columns={COLUMNS} filters={filters} actions={actions} />
+        <DataTableFilterBar
+          columns={COLUMNS}
+          filters={filters}
+          actions={actions}
+        />
       </div>
       <RunsTable>
         <RunsTableHead>

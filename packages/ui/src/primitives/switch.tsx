@@ -20,18 +20,33 @@ const switchStyles = tv({
       "inline-flex items-center gap-s-2 cursor-pointer " +
       "data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50",
     track:
-      "relative inline-flex h-[20px] w-[36px] shrink-0 items-center rounded-pill " +
-      "border border-hairline-strong bg-surface-03 " +
+      "relative inline-flex shrink-0 items-center rounded-pill " +
       "transition-colors duration-fast ease-out " +
       "data-[selected=true]:bg-ember data-[selected=true]:border-ember " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember",
     thumb:
-      "inline-block h-[14px] w-[14px] translate-x-[2px] rounded-full bg-white " +
-      "shadow-sm transition-transform duration-fast ease-out " +
-      "data-[selected=true]:translate-x-[18px]",
+      "inline-block rounded-full bg-white shadow-sm " +
+      "transition-transform duration-fast ease-out",
     label: "font-sans text-sm text-ink",
   },
+  variants: {
+    size: {
+      sm: {
+        track: "h-[14px] w-[26px] border-0 bg-l-wash-5",
+        thumb:
+          "h-[10px] w-[10px] translate-x-[2px] data-[selected=true]:translate-x-[12px]",
+        label: "text-[12.5px] text-l-ink",
+      },
+      md: {
+        track: "h-[20px] w-[36px] border border-hairline-strong bg-surface-03",
+        thumb:
+          "h-[14px] w-[14px] translate-x-[2px] data-[selected=true]:translate-x-[18px]",
+        label: "text-sm text-ink",
+      },
+    },
+  },
+  defaultVariants: { size: "md" },
 });
 
 export interface SwitchProps
@@ -39,15 +54,21 @@ export interface SwitchProps
   className?: string;
   classNames?: { base?: string; track?: string; thumb?: string; label?: string };
   children?: React.ReactNode;
+  /**
+   * Visual size. `"sm"` is the Linear-density 26×14 mini-toggle, `"md"`
+   * (default) is the 36×20 brand-density iOS-style toggle.
+   */
+  size?: "sm" | "md";
 }
 
 export function Switch({
   className,
   classNames,
   children,
+  size = "md",
   ...rest
 }: SwitchProps) {
-  const slots = switchStyles({});
+  const slots = switchStyles({ size });
   return (
     <RACSwitch
       {...rest}

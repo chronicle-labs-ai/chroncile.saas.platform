@@ -77,6 +77,7 @@ export default function ForgotPasswordPage() {
             type="email"
             autoComplete="email"
             placeholder="you@company.com"
+            density="brand"
             variant="auth"
             invalid={!!form.formState.errors.email}
             {...form.register("email")}

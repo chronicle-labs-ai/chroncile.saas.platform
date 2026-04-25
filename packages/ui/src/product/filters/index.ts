@@ -26,11 +26,11 @@ export type {
   UseDataTableFiltersResult,
 } from "./use-data-table-filters";
 
-export { FilterBar } from "./filter-bar";
-export type { FilterBarProps } from "./filter-bar";
+export { DataTableFilterBar } from "./filter-bar";
+export type { DataTableFilterBarProps } from "./filter-bar";
 
-export { FilterPill } from "./filter-pill";
-export type { FilterPillProps } from "./filter-pill";
+export { DataTableFilterPill } from "./filter-pill";
+export type { DataTableFilterPillProps } from "./filter-pill";
 
 export { FilterSelector } from "./filter-selector";
 export type { FilterSelectorProps } from "./filter-selector";

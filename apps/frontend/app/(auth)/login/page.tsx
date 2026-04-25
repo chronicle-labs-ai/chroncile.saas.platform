@@ -134,6 +134,7 @@ function LoginForm() {
               type="email"
               autoComplete="email"
               placeholder="you@company.com"
+              density="brand"
               variant="auth"
               disabled={isAuthPending}
               invalid={!!form.formState.errors.email}
@@ -152,6 +153,7 @@ function LoginForm() {
               type="password"
               autoComplete="current-password"
               placeholder="••••••••"
+              density="brand"
               variant="auth"
               disabled={isAuthPending}
               invalid={!!form.formState.errors.password}

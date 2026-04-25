@@ -14,10 +14,15 @@ export { EventTag } from "./event-tag";
 export type { EventTagProps, EventRole } from "./event-tag";
 
 export { EventRow } from "./event-row";
-export type { EventRowProps, EventLane } from "./event-row";
+export type { EventRowProps, EventLane, EventRowDensity } from "./event-row";
 
 export { EventStream } from "./event-stream";
 export type { EventStreamProps, EventStreamItem } from "./event-stream";
+
+export { TraceRow } from "./trace-row";
+export type { TraceRowProps, TraceRowEventSpan } from "./trace-row";
+
+export { InspectorDrawer } from "./inspector-drawer";
 
 export { ReplayBar } from "./replay-bar";
 export type { ReplayBarProps } from "./replay-bar";
@@ -44,7 +49,7 @@ export type {
 } from "./runs-table";
 
 export { Minimap, generateMinimapBars } from "./minimap";
-export type { MinimapProps, MinimapBar } from "./minimap";
+export type { MinimapProps, MinimapBar, MinimapDensity } from "./minimap";
 
 export {
   ActionBar,

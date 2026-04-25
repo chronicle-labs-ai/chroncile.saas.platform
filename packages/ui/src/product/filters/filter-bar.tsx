@@ -5,7 +5,7 @@ import * as React from "react";
 import { Button } from "../../primitives/button";
 import { tv } from "../../utils/tv";
 
-import { FilterPill } from "./filter-pill";
+import { DataTableFilterPill } from "./filter-pill";
 import { FilterSelector } from "./filter-selector";
 import type { ColumnConfig, FilterActions, FilterState } from "./types";
 
@@ -16,7 +16,7 @@ const styles = tv({
   },
 });
 
-export interface FilterBarProps<TRow> {
+export interface DataTableFilterBarProps<TRow> {
   columns: ColumnConfig<TRow>[];
   filters: FilterState[];
   actions: FilterActions;
@@ -27,14 +27,23 @@ export interface FilterBarProps<TRow> {
   className?: string;
 }
 
-export function FilterBar<TRow>({
+/**
+ * DataTableFilterBar — brand-density data-table toolbar that hosts a row of
+ * `<DataTableFilterPill>` for an active filter set, a "Clear all" affordance,
+ * and a `<FilterSelector>` to add new filters from a column list.
+ *
+ * For Linear-density product chrome (presentation-only filter rail with
+ * filter pills + add-filter + display + count), use `<FilterBar>` from
+ * `ui/layout`.
+ */
+export function DataTableFilterBar<TRow>({
   columns,
   filters,
   actions,
   showClearAll = true,
   trailing,
   className,
-}: FilterBarProps<TRow>) {
+}: DataTableFilterBarProps<TRow>) {
   const columnById = React.useMemo(
     () => new Map(columns.map((c) => [c.id, c] as const)),
     [columns],
@@ -47,7 +56,7 @@ export function FilterBar<TRow>({
         const col = columnById.get(f.columnId);
         if (!col) return null;
         return (
-          <FilterPill
+          <DataTableFilterPill
             key={f.id}
             column={col}
             filter={f}

@@ -141,11 +141,13 @@ function Page05() {
             thumb={
               <div className="flex h-full flex-col justify-center gap-s-3 bg-surface-00 p-s-5">
                 <div className="flex flex-wrap gap-s-2">
-                  <Button size="sm">Run replay</Button>
-                  <Button size="sm" variant="secondary">
+                  <Button density="brand" size="sm">
+                    Run replay
+                  </Button>
+                  <Button density="brand" size="sm" variant="secondary">
                     All sources
                   </Button>
-                  <Button size="sm" variant="ember">
+                  <Button density="brand" size="sm" variant="ember">
                     ⚡ Inject
                   </Button>
                 </div>
