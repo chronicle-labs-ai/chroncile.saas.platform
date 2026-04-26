@@ -30,6 +30,14 @@ as:
 - `RESEND_FROM_ADDRESS`
 - `SERVICE_SECRET`
 - `STRIPE_WEBHOOK_SECRET`
+- `WORKOS_API_KEY` — server-side WorkOS API key (`sk_...`); used by
+  `chronicle_auth::workos` (`workos_exchange`, invitation send/resend,
+  SCIM webhook validation, and the bulk importer).
+- `WORKOS_CLIENT_ID` — WorkOS project client id (`client_...`); used to
+  validate access tokens and as a default when calling AuthKit endpoints.
+- `WORKOS_WEBHOOK_SECRET` — HMAC-SHA256 secret used to verify the
+  `WorkOS-Signature` header on `POST /api/webhooks/workos`
+  (`directory.user.*` SCIM events).
 
 ### Frontend configs
 
@@ -41,8 +49,9 @@ files and the permanent Vercel environment variables that env-manager syncs:
 - `AUTH_URL`
 - `ENCRYPTION_KEY`
 - `EVENTS_MANAGER_URL`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CLIENT_ID` — to be removed once Phase 3 cleanup lands
+  (WorkOS handles Google OAuth via AuthKit).
+- `GOOGLE_CLIENT_SECRET` — to be removed once Phase 3 cleanup lands.
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_BACKEND_URL`
 - `NEXT_PUBLIC_POSTHOG_HOST`
@@ -53,6 +62,15 @@ files and the permanent Vercel environment variables that env-manager syncs:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `SERVICE_SECRET`
 - `STRIPE_SECRET_KEY`
+- `WORKOS_API_KEY` — same value as the backend config; consumed by
+  `@workos-inc/authkit-nextjs` and `@workos-inc/node` from server actions
+  in Phase 2.
+- `WORKOS_CLIENT_ID` — same value as the backend config.
+- `WORKOS_REDIRECT_URI` — public AuthKit callback URL, e.g.
+  `https://app.chronicle-labs.com/api/auth/[...workos]`.
+- `WORKOS_COOKIE_PASSWORD` — 32-byte hex string used to seal the
+  `wos-session` cookie. Generate via
+  `openssl rand -hex 32`.
 
 ### Env-manager configs
 

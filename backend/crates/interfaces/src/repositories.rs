@@ -25,12 +25,27 @@ pub trait TenantRepository: Send + Sync {
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<Tenant>>;
     async fn find_by_slug(&self, slug: &str) -> RepoResult<Option<Tenant>>;
     async fn find_by_stripe_customer_id(&self, customer_id: &str) -> RepoResult<Option<Tenant>>;
+    /// Lookup the local Tenant row that's been linked to a WorkOS Organization
+    /// via `workos_organization_id`. Returns `None` when no link exists yet
+    /// (typically during the first-import window or for legacy tenants).
+    async fn find_by_workos_organization_id(
+        &self,
+        workos_organization_id: &str,
+    ) -> RepoResult<Option<Tenant>>;
     async fn update_stripe_fields(
         &self,
         id: &str,
         customer_id: Option<&str>,
         subscription_status: Option<&str>,
         price_id: Option<&str>,
+    ) -> RepoResult<Tenant>;
+    /// Sets the WorkOS organization id on a tenant. Used by the importer and
+    /// by the `provisionWorkspace` self-serve path right after
+    /// `organizations.create`.
+    async fn set_workos_organization_id(
+        &self,
+        id: &str,
+        workos_organization_id: &str,
     ) -> RepoResult<Tenant>;
     async fn update_name(&self, id: &str, name: &str) -> RepoResult<Tenant>;
     async fn delete(&self, id: &str) -> RepoResult<()>;
@@ -43,10 +58,25 @@ pub trait UserRepository: Send + Sync {
     async fn create(&self, input: CreateUserInput) -> RepoResult<User>;
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<User>>;
     async fn find_by_email(&self, email: &str) -> RepoResult<Option<User>>;
+    /// Lookup by linked WorkOS user id. Returns `None` for legacy rows that
+    /// have not been imported yet.
+    async fn find_by_workos_user_id(
+        &self,
+        workos_user_id: &str,
+    ) -> RepoResult<Option<User>>;
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<User>>;
+    async fn list_all(&self) -> RepoResult<Vec<User>>;
     async fn delete(&self, id: &str) -> RepoResult<()>;
     async fn update_role(&self, id: &str, role: &str) -> RepoResult<User>;
     async fn update_password(&self, id: &str, password_hash: &str) -> RepoResult<User>;
+    /// Backfills the WorkOS user id on a row. Used by the importer after
+    /// `userManagement.bulkCreateUsers` and by the SCIM webhook on
+    /// directory.user.created events that match an existing email.
+    async fn set_workos_user_id(
+        &self,
+        id: &str,
+        workos_user_id: &str,
+    ) -> RepoResult<User>;
 }
 
 #[async_trait]

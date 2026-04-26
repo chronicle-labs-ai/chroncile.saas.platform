@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 
-import { WorkspaceSwitcher, type Workspace } from "./workspace-switcher";
+import {
+  WorkspaceSwitcher,
+  type WorkspaceSwitcherEntry,
+} from "./workspace-switcher";
 
 const meta: Meta<typeof WorkspaceSwitcher> = {
   title: "Layout/WorkspaceSwitcher",
@@ -11,13 +14,13 @@ const meta: Meta<typeof WorkspaceSwitcher> = {
 export default meta;
 type Story = StoryObj<typeof WorkspaceSwitcher>;
 
-const smallList: Workspace[] = [
+const smallList: WorkspaceSwitcherEntry[] = [
   { id: "acme", name: "Acme Inc", plan: "Pro", avatarTone: "ember" },
   { id: "north", name: "Northwind", plan: "Pro", avatarTone: "teal" },
   { id: "globex", name: "Globex", plan: "Free", avatarTone: "violet" },
 ];
 
-const longList: Workspace[] = [
+const longList: WorkspaceSwitcherEntry[] = [
   ...smallList,
   {
     id: "stark",
@@ -44,7 +47,7 @@ function Harness({
   initial,
   ...rest
 }: {
-  workspaces: Workspace[];
+  workspaces: WorkspaceSwitcherEntry[];
   initial?: string;
   onCreate?: () => void;
   onManage?: () => void;
@@ -101,10 +104,10 @@ function ComposedDemo({
   initial,
   children,
 }: {
-  workspaces: Workspace[];
+  workspaces: WorkspaceSwitcherEntry[];
   initial?: string;
   children: (args: {
-    current: Workspace;
+    current: WorkspaceSwitcherEntry;
     setSelected: (id: string) => void;
   }) => React.ReactNode;
 }) {

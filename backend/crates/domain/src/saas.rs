@@ -64,6 +64,9 @@ pub struct Tenant {
     pub stripe_customer_id: Option<String>,
     pub stripe_subscription_status: Option<String>,
     pub stripe_price_id: Option<String>,
+    /// Linked WorkOS Organization id. Populated lazily during the WorkOS
+    /// importer (Phase 1) or eagerly via `provisionWorkspace` (Phase 2).
+    pub workos_organization_id: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -80,6 +83,17 @@ pub struct User {
     pub auth_provider: String,
     pub role: UserRole,
     pub tenant_id: String,
+    /// Linked WorkOS user id (`user_…`). Populated by the importer for
+    /// pre-existing accounts and at JIT-create time for new accounts.
+    pub workos_user_id: Option<String>,
+    /// Mirror of WorkOS `emailVerified` state. Mirrored at JIT-create and
+    /// SCIM-sync time so audit code can answer "did this person ever verify
+    /// their email?" without round-tripping to WorkOS.
+    pub email_verified_at: Option<DateTime<Utc>>,
+    /// Free-form provenance tag. One of `self_serve`, `invite`, `scim`,
+    /// `import`. Used by the F.2 admin user-detail surface and to bucket
+    /// audit reports across provisioning paths.
+    pub created_via: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -237,6 +251,11 @@ pub struct CreateUserInput {
     pub auth_provider: String,
     pub role: UserRole,
     pub tenant_id: String,
+    /// Optional WorkOS user id; populated during JIT-provision paths and the
+    /// importer. `None` for pre-WorkOS rows.
+    pub workos_user_id: Option<String>,
+    /// Provenance tag matching `User.created_via`.
+    pub created_via: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -350,6 +369,9 @@ mod tests {
             auth_provider: "credentials".to_string(),
             role: UserRole::Member,
             tenant_id: "t1".to_string(),
+            workos_user_id: None,
+            email_verified_at: None,
+            created_via: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
@@ -386,6 +408,7 @@ mod tests {
             stripe_customer_id: Some("cus_123".to_string()),
             stripe_subscription_status: Some("active".to_string()),
             stripe_price_id: None,
+            workos_organization_id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };

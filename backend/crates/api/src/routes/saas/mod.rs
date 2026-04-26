@@ -32,21 +32,28 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
     let feature_access = state.feature_access.clone();
 
     let public = Router::new()
-        .route("/api/platform/auth/signup", post(auth::signup))
-        .route("/api/platform/auth/login", post(auth::login))
+        // WorkOS AuthKit migration (Phase 0b). The legacy bcrypt
+        // signup/login/forgot/reset/oauth_signup handlers have been
+        // removed; the frontend talks to WorkOS directly and trades
+        // the resulting access token for a Chronicle JWT here.
         .route(
-            "/api/platform/auth/forgot-password",
-            post(auth::forgot_password),
+            "/api/platform/auth/workos-exchange",
+            post(auth::workos_exchange),
         )
         .route(
-            "/api/platform/auth/reset-password",
-            post(auth::reset_password),
+            "/api/platform/auth/workspace/provision",
+            post(auth::provision_workspace),
+        )
+        .route("/api/platform/auth/discover", get(auth::discover))
+        .route(
+            "/api/platform/auth/invitations/send",
+            post(auth::send_invitation),
         )
         .route(
-            "/api/platform/auth/token-exchange",
-            post(auth::exchange_token),
+            "/api/platform/auth/invitations/resend",
+            post(auth::resend_invitation),
         )
-        .route("/api/platform/auth/oauth-signup", post(auth::oauth_signup))
+        .route("/api/webhooks/workos", post(auth::workos_webhook))
         .route("/api/platform/admin/stats", get(dashboard::admin_stats))
         .route(
             "/api/platform/admin/feature-flags",

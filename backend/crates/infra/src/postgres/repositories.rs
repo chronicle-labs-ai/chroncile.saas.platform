@@ -73,6 +73,7 @@ fn tenant_from_row(row: sqlx::postgres::PgRow) -> Result<Tenant, sqlx::Error> {
         stripe_customer_id: row.try_get("stripeCustomerId")?,
         stripe_subscription_status: row.try_get("stripeSubscriptionStatus")?,
         stripe_price_id: row.try_get("stripePriceId")?,
+        workos_organization_id: row.try_get("workosOrganizationId").unwrap_or(None),
         created_at: naive_to_utc(created),
         updated_at: naive_to_utc(updated),
     })
@@ -85,6 +86,8 @@ fn user_from_row(row: sqlx::postgres::PgRow) -> Result<User, sqlx::Error> {
     let role_str: String = row
         .try_get::<String, _>("role")
         .unwrap_or_else(|_| "member".to_string());
+    let email_verified: Option<NaiveDateTime> =
+        row.try_get("emailVerifiedAt").unwrap_or(None);
     Ok(User {
         id: row.try_get("id")?,
         email: row.try_get("email")?,
@@ -95,6 +98,9 @@ fn user_from_row(row: sqlx::postgres::PgRow) -> Result<User, sqlx::Error> {
             .unwrap_or_else(|_| "credentials".to_string()),
         role: role_str.parse().unwrap_or(UserRole::Member),
         tenant_id: row.try_get("tenantId")?,
+        workos_user_id: row.try_get("workosUserId").unwrap_or(None),
+        email_verified_at: email_verified.map(naive_to_utc),
+        created_via: row.try_get("createdVia").unwrap_or(None),
         created_at: naive_to_utc(created),
         updated_at: naive_to_utc(updated),
     })
@@ -236,6 +242,37 @@ impl TenantRepository for PgTenantRepo {
             .await
             .map_err(to_repo_err)
     }
+
+    async fn find_by_workos_organization_id(
+        &self,
+        workos_organization_id: &str,
+    ) -> RepoResult<Option<Tenant>> {
+        sqlx::query("SELECT * FROM \"Tenant\" WHERE \"workosOrganizationId\" = $1")
+            .bind(workos_organization_id)
+            .try_map(tenant_from_row)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(to_repo_err)
+    }
+
+    async fn set_workos_organization_id(
+        &self,
+        id: &str,
+        workos_organization_id: &str,
+    ) -> RepoResult<Tenant> {
+        sqlx::query(
+            "UPDATE \"Tenant\" SET \"workosOrganizationId\" = $2, \"updatedAt\" = $3 \
+             WHERE id = $1 RETURNING *",
+        )
+        .bind(id)
+        .bind(workos_organization_id)
+        .bind(Utc::now().naive_utc())
+        .try_map(tenant_from_row)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
+
     async fn update_stripe_fields(
         &self,
         id: &str,
@@ -312,10 +349,27 @@ impl UserRepository for PgUserRepo {
         let id = new_id();
         let now = Utc::now().naive_utc();
         let role_str = input.role.as_str();
-        sqlx::query("INSERT INTO \"User\" (id, email, name, password, \"authProvider\", role, \"tenantId\", \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
-            .bind(&id).bind(&input.email).bind(&input.name).bind(&input.password_hash).bind(&input.auth_provider).bind(role_str).bind(&input.tenant_id).bind(now).bind(now)
-            .try_map(user_from_row)
-            .fetch_one(&self.pool).await.map_err(to_repo_err)
+        sqlx::query(
+            "INSERT INTO \"User\" \
+             (id, email, name, password, \"authProvider\", role, \"tenantId\", \
+              \"workosUserId\", \"createdVia\", \"createdAt\", \"updatedAt\") \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
+        )
+        .bind(&id)
+        .bind(&input.email)
+        .bind(&input.name)
+        .bind(&input.password_hash)
+        .bind(&input.auth_provider)
+        .bind(role_str)
+        .bind(&input.tenant_id)
+        .bind(&input.workos_user_id)
+        .bind(&input.created_via)
+        .bind(now)
+        .bind(now)
+        .try_map(user_from_row)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(to_repo_err)
     }
 
     async fn find_by_id(&self, id: &str) -> RepoResult<Option<User>> {
@@ -336,9 +390,29 @@ impl UserRepository for PgUserRepo {
             .map_err(to_repo_err)
     }
 
+    async fn find_by_workos_user_id(
+        &self,
+        workos_user_id: &str,
+    ) -> RepoResult<Option<User>> {
+        sqlx::query("SELECT * FROM \"User\" WHERE \"workosUserId\" = $1")
+            .bind(workos_user_id)
+            .try_map(user_from_row)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(to_repo_err)
+    }
+
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<User>> {
         sqlx::query("SELECT * FROM \"User\" WHERE \"tenantId\" = $1 ORDER BY \"createdAt\" ASC")
             .bind(tenant_id)
+            .try_map(user_from_row)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(to_repo_err)
+    }
+
+    async fn list_all(&self) -> RepoResult<Vec<User>> {
+        sqlx::query("SELECT * FROM \"User\" ORDER BY \"createdAt\" ASC")
             .try_map(user_from_row)
             .fetch_all(&self.pool)
             .await
@@ -373,6 +447,24 @@ impl UserRepository for PgUserRepo {
             "UPDATE \"User\" SET password = $1, \"updatedAt\" = $3 WHERE id = $2 RETURNING *",
         )
         .bind(password_hash)
+        .bind(id)
+        .bind(Utc::now().naive_utc())
+        .try_map(user_from_row)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
+
+    async fn set_workos_user_id(
+        &self,
+        id: &str,
+        workos_user_id: &str,
+    ) -> RepoResult<User> {
+        sqlx::query(
+            "UPDATE \"User\" SET \"workosUserId\" = $1, \"updatedAt\" = $3 \
+             WHERE id = $2 RETURNING *",
+        )
+        .bind(workos_user_id)
         .bind(id)
         .bind(Utc::now().naive_utc())
         .try_map(user_from_row)

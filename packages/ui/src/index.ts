@@ -10,6 +10,11 @@ export * from "./surfaces";
 export * from "./product";
 export * from "./layout";
 export * from "./providers";
+export * from "./icons";
+export * from "./auth";
+export * from "./admin";
+export * from "./onboarding";
+export * from "./connectors";
 
 // Theme
 export {

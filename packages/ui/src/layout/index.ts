@@ -39,7 +39,7 @@ export type {
 
 export { WorkspaceSwitcher } from "./workspace-switcher";
 export type {
-  Workspace,
+  WorkspaceSwitcherEntry,
   WorkspaceSwitcherProps,
   WorkspaceSwitcherRootProps,
   WorkspaceSwitcherTriggerProps,

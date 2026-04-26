@@ -25,21 +25,6 @@ pub struct Claims {
     pub iat: i64,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SignupRequest {
-    pub email: String,
-    pub password: String,
-    pub name: String,
-    #[serde(rename = "orgName")]
-    pub org_name: String,
-}
-
 #[derive(Debug, Serialize, TS)]
 #[ts(export, export_to = "generated/")]
 pub struct AuthResponse {

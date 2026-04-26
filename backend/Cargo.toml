@@ -33,6 +33,7 @@ members = [
     "crates/timeline-widget",
     "bin/chronicle-mcp",
     "bin/server",
+    "bin/workos-import",
 ]
 
 [workspace.package]

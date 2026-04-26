@@ -212,51 +212,8 @@ pub struct SandboxAiChatResponse {
     pub errors: Vec<GraphEditValidationError>,
 }
 
-// ── Auth (request types for login/signup) ──
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct SignupRequest {
-    pub email: String,
-    pub password: String,
-    pub name: String,
-    pub org_name: String,
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ForgotPasswordRequest {
-    pub email: String,
-}
-
-#[derive(Debug, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ForgotPasswordResponse {
-    pub message: String,
-}
-
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ResetPasswordRequest {
-    pub token: String,
-    pub new_password: String,
-}
-
-#[derive(Debug, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ResetPasswordResponse {
-    pub message: String,
-}
+// Legacy bcrypt-era request/response types (LoginRequest, SignupRequest,
+// ForgotPasswordRequest, ResetPasswordRequest) were removed as part of
+// Phase 0b of the WorkOS migration. The frontend now talks to WorkOS
+// directly for those flows; the only auth surface the backend exposes
+// is /api/platform/auth/workos-exchange (see crates/api routes/saas/auth.rs).

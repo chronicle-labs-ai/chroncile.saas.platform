@@ -39,6 +39,7 @@ impl TenantRepository for InMemoryTenantRepo {
             stripe_customer_id: None,
             stripe_subscription_status: None,
             stripe_price_id: None,
+            workos_organization_id: None,
             created_at: now,
             updated_at: now,
         };
@@ -64,6 +65,33 @@ impl TenantRepository for InMemoryTenantRepo {
             .iter()
             .find(|e| e.value().stripe_customer_id.as_deref() == Some(customer_id))
             .map(|e| e.value().clone()))
+    }
+
+    async fn find_by_workos_organization_id(
+        &self,
+        workos_organization_id: &str,
+    ) -> RepoResult<Option<Tenant>> {
+        Ok(self
+            .store
+            .iter()
+            .find(|e| {
+                e.value().workos_organization_id.as_deref() == Some(workos_organization_id)
+            })
+            .map(|e| e.value().clone()))
+    }
+
+    async fn set_workos_organization_id(
+        &self,
+        id: &str,
+        workos_organization_id: &str,
+    ) -> RepoResult<Tenant> {
+        let mut entry = self
+            .store
+            .get_mut(id)
+            .ok_or_else(|| RepoError::NotFound(format!("tenant: {id}")))?;
+        entry.workos_organization_id = Some(workos_organization_id.to_string());
+        entry.updated_at = Utc::now();
+        Ok(entry.clone())
     }
 
     async fn update_stripe_fields(
@@ -131,6 +159,17 @@ impl UserRepository for InMemoryUserRepo {
         if self.store.iter().any(|e| e.value().email == input.email) {
             return Err(RepoError::AlreadyExists(format!("email: {}", input.email)));
         }
+        if let Some(workos_id) = input.workos_user_id.as_deref() {
+            if self
+                .store
+                .iter()
+                .any(|e| e.value().workos_user_id.as_deref() == Some(workos_id))
+            {
+                return Err(RepoError::AlreadyExists(format!(
+                    "workosUserId: {workos_id}"
+                )));
+            }
+        }
         let now = Utc::now();
         let user = User {
             id: new_id(),
@@ -140,6 +179,9 @@ impl UserRepository for InMemoryUserRepo {
             auth_provider: input.auth_provider,
             role: input.role,
             tenant_id: input.tenant_id,
+            workos_user_id: input.workos_user_id,
+            email_verified_at: None,
+            created_via: input.created_via,
             created_at: now,
             updated_at: now,
         };
@@ -159,6 +201,17 @@ impl UserRepository for InMemoryUserRepo {
             .map(|e| e.value().clone()))
     }
 
+    async fn find_by_workos_user_id(
+        &self,
+        workos_user_id: &str,
+    ) -> RepoResult<Option<User>> {
+        Ok(self
+            .store
+            .iter()
+            .find(|e| e.value().workos_user_id.as_deref() == Some(workos_user_id))
+            .map(|e| e.value().clone()))
+    }
+
     async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<User>> {
         let mut users: Vec<User> = self
             .store
@@ -166,6 +219,13 @@ impl UserRepository for InMemoryUserRepo {
             .filter(|e| e.value().tenant_id == tenant_id)
             .map(|e| e.value().clone())
             .collect();
+        users.sort_by_key(|u| u.created_at);
+        Ok(users)
+    }
+
+    async fn list_all(&self) -> RepoResult<Vec<User>> {
+        let mut users: Vec<User> =
+            self.store.iter().map(|e| e.value().clone()).collect();
         users.sort_by_key(|u| u.created_at);
         Ok(users)
     }
@@ -196,6 +256,29 @@ impl UserRepository for InMemoryUserRepo {
             .get_mut(id)
             .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
         entry.password = Some(password_hash.to_string());
+        entry.updated_at = Utc::now();
+        Ok(entry.clone())
+    }
+
+    async fn set_workos_user_id(
+        &self,
+        id: &str,
+        workos_user_id: &str,
+    ) -> RepoResult<User> {
+        if self
+            .store
+            .iter()
+            .any(|e| e.key() != id && e.value().workos_user_id.as_deref() == Some(workos_user_id))
+        {
+            return Err(RepoError::AlreadyExists(format!(
+                "workosUserId: {workos_user_id}"
+            )));
+        }
+        let mut entry = self
+            .store
+            .get_mut(id)
+            .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
+        entry.workos_user_id = Some(workos_user_id.to_string());
         entry.updated_at = Utc::now();
         Ok(entry.clone())
     }
@@ -793,6 +876,8 @@ mod tests {
                 auth_provider: "credentials".to_string(),
                 role: UserRole::Member,
                 tenant_id: "t1".to_string(),
+                workos_user_id: None,
+                created_via: None,
             })
             .await
             .unwrap();
@@ -818,6 +903,8 @@ mod tests {
             auth_provider: "credentials".to_string(),
             role: UserRole::Member,
             tenant_id: "t1".to_string(),
+            workos_user_id: None,
+            created_via: None,
         })
         .await
         .unwrap();
@@ -830,6 +917,8 @@ mod tests {
                 auth_provider: "credentials".to_string(),
                 role: UserRole::Member,
                 tenant_id: "t2".to_string(),
+                workos_user_id: None,
+                created_via: None,
             })
             .await;
 

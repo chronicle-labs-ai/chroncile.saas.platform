@@ -480,6 +480,7 @@ mod tests {
             stripe_customer_id: None,
             stripe_subscription_status: Some("active".to_string()),
             stripe_price_id: Some("price_unknown".to_string()),
+            workos_organization_id: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         };
@@ -686,6 +687,21 @@ mod tests {
             &self,
             _customer_id: &str,
         ) -> RepoResult<Option<Tenant>> {
+            unreachable!()
+        }
+
+        async fn find_by_workos_organization_id(
+            &self,
+            _workos_organization_id: &str,
+        ) -> RepoResult<Option<Tenant>> {
+            unreachable!()
+        }
+
+        async fn set_workos_organization_id(
+            &self,
+            _id: &str,
+            _workos_organization_id: &str,
+        ) -> RepoResult<Tenant> {
             unreachable!()
         }
 

@@ -60,7 +60,14 @@ import { Avatar } from "../primitives/avatar";
 // Public types
 // ─────────────────────────────────────────────────────────────
 
-export interface Workspace {
+/**
+ * One row in the workspace switcher dropdown. Renamed from `Workspace`
+ * so the simpler `Workspace` name can live in `auth/` (where it
+ * describes a workspace membership in the picker page). The package
+ * barrel re-exports both `layout` and `auth`, so the names cannot
+ * collide.
+ */
+export interface WorkspaceSwitcherEntry {
   id: string;
   name: string;
   /** Free-form plan label (e.g. "Pro", "Free", "Enterprise"). */
@@ -142,9 +149,9 @@ type SwitcherSlots = ReturnType<typeof switcherStyles>;
 
 interface WorkspaceSwitcherContextValue {
   slots: SwitcherSlots;
-  current: Workspace;
-  workspaces: Workspace[];
-  filteredWorkspaces: Workspace[];
+  current: WorkspaceSwitcherEntry;
+  workspaces: WorkspaceSwitcherEntry[];
+  filteredWorkspaces: WorkspaceSwitcherEntry[];
   onSelect?: (workspaceId: string) => void;
   query: string;
   setQuery: (q: string) => void;
@@ -176,9 +183,9 @@ function useSwitcherContext(from: string): WorkspaceSwitcherContextValue {
 
 export interface WorkspaceSwitcherRootProps {
   /** Currently selected workspace. */
-  current: Workspace;
+  current: WorkspaceSwitcherEntry;
   /** Full list of workspaces available to switch to. */
-  workspaces: Workspace[];
+  workspaces: WorkspaceSwitcherEntry[];
   /** Called with the selected workspace's id. */
   onSelect?: (workspaceId: string) => void;
   /**
@@ -600,7 +607,7 @@ function WorkspaceSwitcherSection({
 }
 
 export interface WorkspaceSwitcherItemProps {
-  workspace: Workspace;
+  workspace: WorkspaceSwitcherEntry;
   className?: string;
   /**
    * Replace the default item body. Receives the workspace and its
@@ -609,7 +616,7 @@ export interface WorkspaceSwitcherItemProps {
   children?:
     | React.ReactNode
     | ((state: {
-        workspace: Workspace;
+        workspace: WorkspaceSwitcherEntry;
         isSelected: boolean;
       }) => React.ReactNode);
 }

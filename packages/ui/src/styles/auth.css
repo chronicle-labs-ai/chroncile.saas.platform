@@ -1,0 +1,222 @@
+/* ─────────────────────────────────────────────────────────────
+   Chronicle Labs — Auth + Onboarding helpers
+
+   A handful of typography classes the auth/onboarding screens use
+   verbatim from the Auth Flow source — kept here (rather than
+   per-component Tailwind) because they appear inside many
+   components and the cascade lets `data-theme` swap-in correctly
+   without touching every node.
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Display headline (with serif italic for emphasis) ────── */
+.cg-display-h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(40px, 6vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--c-ink-hi);
+  margin: 0;
+}
+.cg-display-h1 em {
+  font-style: italic;
+  color: var(--c-ember);
+  font-weight: 500;
+}
+
+/* ── Lede paragraph ───────────────────────────────────────── */
+.cg-lede {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--c-ink-lo);
+  max-width: 52ch;
+  margin: 16px 0 0;
+}
+
+/* ── Sticky step footer (back / continue rail) ────────────── */
+.cg-step-foot {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--c-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ── Ambient backdrop blob (used by AuthShell single-col) ─ */
+.cg-auth-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cg-auth-ambient::before {
+  content: "";
+  position: absolute;
+  width: 80%;
+  aspect-ratio: 1 / 1.4;
+  border-radius: 50%;
+  background: var(--grad-lightsource);
+  opacity: 0.12;
+  filter: blur(140px);
+  top: -25%;
+  left: -15%;
+  transform: rotate(-22deg);
+}
+.cg-auth-ambient::after {
+  content: "";
+  position: absolute;
+  width: 60%;
+  aspect-ratio: 1 / 1.4;
+  border-radius: 50%;
+  background: var(--grad-lightsource-45);
+  opacity: 0.08;
+  filter: blur(160px);
+  bottom: -25%;
+  right: -10%;
+  transform: rotate(-22deg);
+}
+[data-theme="light"] .cg-auth-ambient::before {
+  opacity: 0.08;
+}
+[data-theme="light"] .cg-auth-ambient::after {
+  opacity: 0.05;
+}
+
+/* ── Animations: fade-up, slide-in, blink, pulse-ember ───── */
+@keyframes cg-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.cg-fade-up {
+  animation: cg-fade-up 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.cg-fade-up-1 {
+  animation-delay: 80ms;
+}
+.cg-fade-up-2 {
+  animation-delay: 160ms;
+}
+.cg-fade-up-3 {
+  animation-delay: 240ms;
+}
+
+@keyframes cg-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.cg-slide-in {
+  animation: cg-slide-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes cg-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.cg-blink {
+  animation: cg-blink 1s step-end infinite;
+}
+
+@keyframes cg-pulse-ember {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(216, 67, 10, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(216, 67, 10, 0);
+  }
+}
+.cg-pulse-ember {
+  animation: cg-pulse-ember 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-fade-up,
+  .cg-slide-in,
+  .cg-blink,
+  .cg-pulse-ember {
+    animation: none;
+  }
+}
+
+/* ── ScanLoader (horizontal scanning bar) ─────────────────
+   Used in the provisioning + auto-route screens (A.5, G.1) as
+   the "we're working on it" indicator. The :after pseudo runs
+   the ember sweep across the track. */
+.cg-scan-loader {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--c-hairline);
+}
+.cg-scan-loader::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  left: -30%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--c-ember) 50%,
+    transparent
+  );
+  animation: cg-scan-loader 1.4s ease-in-out infinite;
+}
+@keyframes cg-scan-loader {
+  0% {
+    left: -30%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cg-scan-loader::after {
+    animation: none;
+  }
+}
+
+/* ── CodeGrid (re-skinned OTP cells for SignUpVerify A.3) ──
+   Promoted from the auth flow prototype: taller cells (52×64 ish)
+   with a centered "•" placeholder that fades out on focus. Cursor
+   blink + thicker caret for the deliberate code-entry beat. */
+.cg-code-grid-cell {
+  position: relative;
+}
+.cg-code-grid-cell::before {
+  content: "•";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--c-ink-faint);
+  transition: opacity 120ms ease-out;
+}
+.cg-code-grid-cell[data-filled="true"]::before,
+.cg-code-grid-cell[data-focused="true"]::before {
+  opacity: 0;
+}

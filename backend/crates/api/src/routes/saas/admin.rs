@@ -155,6 +155,8 @@ pub async fn invite_user(
             auth_provider: "google".to_string(),
             role: UserRole::Member,
             tenant_id: tenant_id.clone(),
+            workos_user_id: None,
+            created_via: Some("invite".to_string()),
         })
         .await?;
 
@@ -219,6 +221,8 @@ pub async fn create_org(
             auth_provider: "google".to_string(),
             role: UserRole::Owner,
             tenant_id: tenant.id.clone(),
+            workos_user_id: None,
+            created_via: Some("self_serve".to_string()),
         })
         .await?;
 

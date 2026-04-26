@@ -13,8 +13,14 @@
     "./styles/globals.css": "./src/styles/globals.css",
     "./styles/tokens.css": "./src/styles/tokens.css",
     "./styles/linear.css": "./src/styles/linear.css",
+    "./styles/auth.css": "./src/styles/auth.css",
+    "./styles/connectors.css": "./src/styles/connectors.css",
     "./styles/fonts.css": "./src/styles/fonts.css",
-    "./tokens": "./src/tokens/index.ts"
+    "./tokens": "./src/tokens/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./onboarding": "./src/onboarding/index.ts",
+    "./connectors": "./src/connectors/index.ts",
+    "./icons": "./src/icons/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -262,6 +262,8 @@ pub async fn accept_invite(
             auth_provider: "google".to_string(),
             role: invitation.role.clone(),
             tenant_id: invitation.tenant_id.clone(),
+            workos_user_id: None,
+            created_via: Some("invite".to_string()),
         })
         .await?;
 

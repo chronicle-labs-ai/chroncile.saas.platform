@@ -35,6 +35,7 @@ export type { GeneratorConfig } from './GeneratorConfig';
 export type { GraphEditCommand } from './GraphEditCommand';
 export type { GraphEditPreview } from './GraphEditPreview';
 export type { GraphEditValidationError } from './GraphEditValidationError';
+export type { IntegrationSync } from './IntegrationSync';
 export type { Invitation } from './Invitation';
 export type { ListRunsParams } from './ListRunsParams';
 export type { ListRunsResponse } from './ListRunsResponse';
