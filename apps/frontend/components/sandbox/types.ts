@@ -211,4 +211,3 @@ export interface SandboxDetailResponse {
 export interface SandboxListResponse {
   sandboxes: Sandbox[];
 }
-

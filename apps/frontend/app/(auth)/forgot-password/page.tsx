@@ -34,8 +34,7 @@ export default function ForgotPasswordPage() {
       setSuccessMessage(response.message);
     } catch (error) {
       form.setError("root", {
-        message:
-          error instanceof ApiError ? error.message : "Connection error",
+        message: error instanceof ApiError ? error.message : "Connection error",
       });
     }
   });
@@ -62,7 +61,9 @@ export default function ForgotPasswordPage() {
         <p className="text-sm text-[#00ff88]">{successMessage}</p>
       )}
       {form.formState.errors.root?.message && (
-        <p className="text-sm text-[#ff3b3b]">{form.formState.errors.root.message}</p>
+        <p className="text-sm text-[#ff3b3b]">
+          {form.formState.errors.root.message}
+        </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">

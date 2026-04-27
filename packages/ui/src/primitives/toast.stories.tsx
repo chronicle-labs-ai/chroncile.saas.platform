@@ -15,9 +15,7 @@ const Demo = () => {
     <ToastProvider>
       <div className="flex flex-wrap gap-s-2">
         <Button
-          onPress={() =>
-            toast.add({ title: "Deploy started", tone: "info" })
-          }
+          onPress={() => toast.add({ title: "Deploy started", tone: "info" })}
         >
           Info
         </Button>

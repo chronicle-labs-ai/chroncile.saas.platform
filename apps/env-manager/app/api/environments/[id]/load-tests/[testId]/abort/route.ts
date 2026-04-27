@@ -21,10 +21,7 @@ export async function POST(
     test.status === "aborted" ||
     test.status === "error"
   ) {
-    return NextResponse.json(
-      { error: "Test is not active" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Test is not active" }, { status: 400 });
   }
 
   try {

@@ -133,7 +133,11 @@ function buildUpdatedSandbox(
     lastDeliveryAt = data.lastDeliveryAt;
   }
 
-  if (!pendingConfigApply && nextStatus !== "active" && data.appliedConfigVersion === undefined) {
+  if (
+    !pendingConfigApply &&
+    nextStatus !== "active" &&
+    data.appliedConfigVersion === undefined
+  ) {
     appliedConfigVersion = configVersion;
   }
 
@@ -193,7 +197,9 @@ class InMemorySandboxStore implements SandboxRepository {
       );
       this.actions.set(
         clonedId,
-        demoActions.map((action) => cloneAgentActionForSandbox(clonedId, action))
+        demoActions.map((action) =>
+          cloneAgentActionForSandbox(clonedId, action)
+        )
       );
     }
   }
@@ -215,10 +221,7 @@ class InMemorySandboxStore implements SandboxRepository {
     return this.sandboxes.get(id) ?? null;
   }
 
-  async create(
-    tenantId: string,
-    data: CreateSandboxPayload
-  ): Promise<Sandbox> {
+  async create(tenantId: string, data: CreateSandboxPayload): Promise<Sandbox> {
     const now = new Date().toISOString();
     const status = "draft";
     const playbackMode = "paused";
@@ -337,7 +340,8 @@ export async function getSandboxStore(): Promise<SandboxRepository> {
   if (!seeded) {
     seeded = true;
     // Dynamic import to avoid circular deps
-    const { seedStore } = await import("@/shared/testing/fixtures/sandbox/mock-data");
+    const { seedStore } =
+      await import("@/shared/testing/fixtures/sandbox/mock-data");
     seedStore(sandboxStore);
   }
   return sandboxStore;

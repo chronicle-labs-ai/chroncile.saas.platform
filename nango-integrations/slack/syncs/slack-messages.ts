@@ -103,7 +103,10 @@ function normalizeUserName(user?: SlackUser | null): string | null {
   );
 }
 
-function maxSlackTs(current?: string, candidate?: string | null): string | undefined {
+function maxSlackTs(
+  current?: string,
+  candidate?: string | null
+): string | undefined {
   if (!candidate) return current;
   if (!current) return candidate;
   return Number(candidate) > Number(current) ? candidate : current;
@@ -122,7 +125,7 @@ function topLevelThreadTs(message: SlackHistoryMessage): string | undefined {
 function mapSlackMessage(
   message: SlackHistoryMessage,
   channel: SlackConversation,
-  userMap: Map<string, string>,
+  userMap: Map<string, string>
 ): SlackMessageRecord | null {
   const ts = message.ts;
   if (!ts) return null;
@@ -147,7 +150,9 @@ function mapSlackMessage(
     thread_ts: threadTs,
     event_type: isReply ? "thread_reply" : "message",
     reactions: (message.reactions ?? [])
-      .filter((reaction): reaction is NonNullable<typeof reaction> => Boolean(reaction?.name))
+      .filter((reaction): reaction is NonNullable<typeof reaction> =>
+        Boolean(reaction?.name)
+      )
       .map((reaction) => ({
         name: reaction.name as string,
         count: reaction.count,
@@ -160,7 +165,7 @@ function mapSlackMessage(
 async function slackUserGet<T>(
   endpoint: string,
   token: string,
-  params: Record<string, string | number | undefined>,
+  params: Record<string, string | number | undefined>
 ): Promise<SlackResponse<T>> {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -171,20 +176,23 @@ async function slackUserGet<T>(
 
   const fetchFn = (globalThis as any).fetch as (
     input: string,
-    init?: { headers?: Record<string, string> },
+    init?: { headers?: Record<string, string> }
   ) => Promise<{ ok: boolean; json(): Promise<SlackResponse<T>> }>;
 
-  const response = await fetchFn(`https://slack.com/api${endpoint}?${query.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetchFn(
+    `https://slack.com/api${endpoint}?${query.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   const data = await response.json();
 
   if (!response.ok || !data.ok) {
     throw new Error(
-      `Slack API request failed for ${endpoint}: ${data.error || "unknown_error"}`,
+      `Slack API request failed for ${endpoint}: ${data.error || "unknown_error"}`
     );
   }
 
@@ -207,13 +215,15 @@ async function fetchConversations(nango: any): Promise<SlackConversation[]> {
     })) as { data: SlackResponse<{ channels: SlackConversation[] }> };
 
     if (!response.data?.ok) {
-      throw new Error(`Slack conversations.list failed: ${response.data?.error || "unknown_error"}`);
+      throw new Error(
+        `Slack conversations.list failed: ${response.data?.error || "unknown_error"}`
+      );
     }
 
     conversations.push(
       ...(response.data.channels ?? []).filter(
-        (channel: SlackConversation) => !channel.is_archived,
-      ),
+        (channel: SlackConversation) => !channel.is_archived
+      )
     );
     cursor = nextCursor(response.data);
   } while (cursor);
@@ -235,7 +245,9 @@ async function fetchUsers(nango: any): Promise<Map<string, string>> {
     })) as { data: SlackResponse<{ members: SlackUser[] }> };
 
     if (!response.data?.ok) {
-      throw new Error(`Slack users.list failed: ${response.data?.error || "unknown_error"}`);
+      throw new Error(
+        `Slack users.list failed: ${response.data?.error || "unknown_error"}`
+      );
     }
 
     for (const member of response.data.members ?? []) {
@@ -252,7 +264,7 @@ async function fetchUsers(nango: any): Promise<Map<string, string>> {
 async function fetchChannelMessages(
   nango: any,
   channelId: string,
-  oldest?: string,
+  oldest?: string
 ): Promise<SlackHistoryMessage[]> {
   const messages: SlackHistoryMessage[] = [];
   let cursor: string | undefined;
@@ -271,7 +283,7 @@ async function fetchChannelMessages(
 
     if (!response.data?.ok) {
       throw new Error(
-        `Slack conversations.history failed for channel ${channelId}: ${response.data?.error || "unknown_error"}`,
+        `Slack conversations.history failed for channel ${channelId}: ${response.data?.error || "unknown_error"}`
       );
     }
 
@@ -287,7 +299,7 @@ async function fetchThreadReplies(
   channelId: string,
   threadTs: string,
   oldest?: string,
-  userToken?: string | null,
+  userToken?: string | null
 ): Promise<SlackHistoryMessage[]> {
   const replies: SlackHistoryMessage[] = [];
   let cursor: string | undefined;
@@ -304,9 +316,9 @@ async function fetchThreadReplies(
             inclusive: oldest ? "false" : undefined,
             limit: 200,
             cursor,
-          },
+          }
         )
-      : (
+      : ((
           await nango.get({
             endpoint: "/conversations.replies",
             params: {
@@ -318,11 +330,11 @@ async function fetchThreadReplies(
               cursor,
             },
           })
-        ).data as SlackResponse<{ messages: SlackHistoryMessage[] }>;
+        ).data as SlackResponse<{ messages: SlackHistoryMessage[] }>);
 
     if (!response.ok) {
       throw new Error(
-        `Slack conversations.replies failed for thread ${threadTs}: ${response.error || "unknown_error"}`,
+        `Slack conversations.replies failed for thread ${threadTs}: ${response.error || "unknown_error"}`
       );
     }
 
@@ -334,7 +346,8 @@ async function fetchThreadReplies(
 }
 
 export default createSync({
-  description: "Fetch Slack channel messages, thread replies, and reactions with historical backfill.",
+  description:
+    "Fetch Slack channel messages, thread replies, and reactions with historical backfill.",
   version: "1.0.0",
   frequency: "every hour",
   autoStart: false,
@@ -346,21 +359,23 @@ export default createSync({
 
   exec: async (nango: any) => {
     await nango.log(
-      `Starting Slack sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`,
+      `Starting Slack sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`
     );
 
     await nango.setMergingStrategy(
       { strategy: "ignore_if_modified_after" },
-      "SlackMessage",
+      "SlackMessage"
     );
 
-    const connection = (await nango.getConnection()) as SlackConnectionWithCredentials;
+    const connection =
+      (await nango.getConnection()) as SlackConnectionWithCredentials;
     const userToken =
       connection.credentials?.raw?.authed_user?.access_token ?? null;
-    const checkpoint = ((await nango.getCheckpoint()) as SlackCheckpoint | null) ?? {
-      channels: {},
-      threads: {},
-    };
+    const checkpoint =
+      ((await nango.getCheckpoint()) as SlackCheckpoint | null) ?? {
+        channels: {},
+        threads: {},
+      };
 
     const channels = await fetchConversations(nango);
     const userMap = await fetchUsers(nango);
@@ -374,7 +389,7 @@ export default createSync({
       const channelMessages = await fetchChannelMessages(
         nango,
         channel.id,
-        channelCheckpoint,
+        channelCheckpoint
       );
 
       const batch: SlackMessageRecord[] = [];
@@ -392,15 +407,18 @@ export default createSync({
 
         const rootThreadTs = topLevelThreadTs(message);
         if (rootThreadTs) {
-          const nextThreadTs = maxSlackTs(knownThreads[rootThreadTs], rootThreadTs);
+          const nextThreadTs = maxSlackTs(
+            knownThreads[rootThreadTs],
+            rootThreadTs
+          );
           if (nextThreadTs) {
             knownThreads[rootThreadTs] = nextThreadTs;
           }
         }
       }
 
-      const threadEntries = Object.entries(knownThreads).sort(([left], [right]) =>
-        Number(left) - Number(right),
+      const threadEntries = Object.entries(knownThreads).sort(
+        ([left], [right]) => Number(left) - Number(right)
       );
 
       for (const [threadTs, threadCheckpoint] of threadEntries) {
@@ -409,7 +427,7 @@ export default createSync({
           channel.id,
           threadTs,
           threadCheckpoint,
-          userToken,
+          userToken
         );
 
         for (const reply of replies) {
@@ -429,7 +447,7 @@ export default createSync({
 
       if (batch.length) {
         await nango.log(
-          `Saving ${batch.length} Slack records for channel ${channel.name ?? channel.id}.`,
+          `Saving ${batch.length} Slack records for channel ${channel.name ?? channel.id}.`
         );
         await nango.batchSave(batch, "SlackMessage");
       }

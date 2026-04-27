@@ -58,8 +58,7 @@ const sidebarStyles = tv({
     },
     variant: {
       /** Fixed-width panel pinned to the viewport edge (dashboard shells). */
-      fixed:
-        "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col",
+      fixed: "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col",
       /** Static flex column (hosts render it inside their own grid). */
       static: "flex flex-col",
     },
@@ -76,8 +75,7 @@ type SidebarVariantProps = VariantProps<typeof sidebarStyles>;
 export type SidebarDensity = "compact" | "brand";
 
 export interface SidebarProps
-  extends React.HTMLAttributes<HTMLElement>,
-    SidebarVariantProps {
+  extends React.HTMLAttributes<HTMLElement>, SidebarVariantProps {
   variant?: "fixed" | "static";
   width?: "sm" | "md" | "lg";
   density?: SidebarDensity;
@@ -95,7 +93,7 @@ function SidebarRoot({
 }: SidebarProps) {
   const slots = React.useMemo(
     () => sidebarStyles({ density, variant, width }),
-    [density, variant, width],
+    [density, variant, width]
   );
   return (
     <SidebarDensityContext.Provider value={density}>
@@ -131,8 +129,7 @@ const headerStyles = tv({
   defaultVariants: { density: "compact", height: "md" },
 });
 
-export interface SidebarHeaderProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface SidebarHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: "sm" | "md" | "lg";
 }
 
@@ -145,7 +142,7 @@ export function SidebarHeader({
   const density = React.useContext(SidebarDensityContext);
   const cls = React.useMemo(
     () => headerStyles({ density, height, className }),
-    [density, height, className],
+    [density, height, className]
   );
   return (
     <div data-slot="sidebar-header" className={cls} {...props}>
@@ -160,13 +157,11 @@ export function SidebarHeader({
 
 const statusStyles = tv({
   slots: {
-    root:
-      "flex items-center justify-between gap-s-2 border-b border-hairline px-s-4 py-s-3",
+    root: "flex items-center justify-between gap-s-2 border-b border-hairline px-s-4 py-s-3",
     label:
       "inline-flex items-center gap-s-2 font-mono text-mono-sm uppercase tracking-tactical",
     dot: "h-[6px] w-[6px] shrink-0 rounded-full animate-chron-pulse",
-    trailing:
-      "font-mono text-mono-sm tabular-nums text-ink-dim text-right",
+    trailing: "font-mono text-mono-sm tabular-nums text-ink-dim text-right",
   },
   variants: {
     tone: {
@@ -208,7 +203,8 @@ const statusStyles = tv({
 type SidebarStatusVariantProps = VariantProps<typeof statusStyles>;
 
 export interface SidebarStatusProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "children">,
     SidebarStatusVariantProps {
   label: React.ReactNode;
   trailing?: React.ReactNode;
@@ -251,16 +247,14 @@ export function SidebarStatus({
 const navStyles = tv({
   slots: {
     root: "flex-1 overflow-y-auto",
-    sectionHeader:
-      "font-mono uppercase tracking-eyebrow",
+    sectionHeader: "font-mono uppercase tracking-eyebrow",
     sectionBody: "flex flex-col gap-[2px]",
   },
   variants: {
     density: {
       compact: {
         root: "px-s-2 py-s-2",
-        sectionHeader:
-          "px-s-3 pt-s-3 pb-[4px] text-[10.5px] text-l-ink-dim",
+        sectionHeader: "px-s-3 pt-s-3 pb-[4px] text-[10.5px] text-l-ink-dim",
         sectionBody: "px-0",
       },
       brand: {
@@ -298,8 +292,10 @@ export function SidebarNav({
   );
 }
 
-export interface SidebarNavSectionProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+export interface SidebarNavSectionProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   title?: React.ReactNode;
 }
 
@@ -437,7 +433,7 @@ export function SidebarNavItem({
   const density = React.useContext(SidebarDensityContext);
   const slots = React.useMemo(
     () => navItemStyles({ density, isActive }),
-    [density, isActive],
+    [density, isActive]
   );
   const content = (
     <>
@@ -512,8 +508,10 @@ export interface SidebarMetaRow {
   tone?: "default" | "nominal" | "caution" | "critical" | "ember" | "data";
 }
 
-export interface SidebarMetaProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+export interface SidebarMetaProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   title?: React.ReactNode;
   rows: SidebarMetaRow[];
 }
@@ -562,8 +560,7 @@ const footerStyles = tv({
 type SidebarFooterVariantProps = VariantProps<typeof footerStyles>;
 
 export interface SidebarFooterProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    SidebarFooterVariantProps {
+  extends React.HTMLAttributes<HTMLDivElement>, SidebarFooterVariantProps {
   padded?: boolean;
 }
 
@@ -575,7 +572,7 @@ export function SidebarFooter({
 }: SidebarFooterProps) {
   const cls = React.useMemo(
     () => footerStyles({ padded, className }),
-    [padded, className],
+    [padded, className]
   );
   return (
     <div data-slot="sidebar-footer" className={cls} {...props}>
@@ -590,8 +587,7 @@ export function SidebarFooter({
 
 const userCardStyles = tv({
   slots: {
-    root:
-      "flex items-center justify-between gap-s-2 bg-surface-02 px-s-4 py-s-3",
+    root: "flex items-center justify-between gap-s-2 bg-surface-02 px-s-4 py-s-3",
     identity: "flex min-w-0 items-center gap-s-2",
     text: "min-w-0 flex-1",
     name: "truncate text-xs text-ink-hi",
@@ -604,8 +600,10 @@ const userCardStyles = tv({
   },
 });
 
-export interface SidebarUserCardProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children"> {
+export interface SidebarUserCardProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "children"
+> {
   name?: string | null;
   email?: string | null;
   avatarUrl?: string | null;
@@ -648,8 +646,8 @@ export function SidebarUserCard({
         </div>
       </div>
 
-      {trailing ?? (
-        onSignOut ? (
+      {trailing ??
+        (onSignOut ? (
           <button
             type="button"
             onClick={onSignOut}
@@ -671,8 +669,7 @@ export function SidebarUserCard({
               />
             </svg>
           </button>
-        ) : null
-      )}
+        ) : null)}
     </div>
   );
 }
@@ -712,4 +709,3 @@ Sidebar.Footer = SidebarFooter;
 Sidebar.UserCard = SidebarUserCard;
 
 export { Sidebar };
-

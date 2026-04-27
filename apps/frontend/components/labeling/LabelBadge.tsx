@@ -27,7 +27,11 @@ const VERDICT_VARIANT: Record<string, LabelBadgeProps["variant"]> = {
   unnecessary: "neutral",
 };
 
-export function LabelBadge({ label, value, variant = "neutral" }: LabelBadgeProps) {
+export function LabelBadge({
+  label,
+  value,
+  variant = "neutral",
+}: LabelBadgeProps) {
   const displayValue = LABEL_DISPLAY[value] ?? value;
   // Auto-detect variant for verdict values
   const resolvedVariant = VERDICT_VARIANT[value] ?? variant;

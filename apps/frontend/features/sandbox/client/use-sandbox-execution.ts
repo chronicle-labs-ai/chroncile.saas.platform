@@ -68,7 +68,7 @@ function makeGeneratedEvent(
   const availableTypes =
     config.eventTypes.length > 0
       ? config.eventTypes
-      : provider?.eventTypes ?? ["generated.event"];
+      : (provider?.eventTypes ?? ["generated.event"]);
   const eventType = randomChoice(availableTypes);
   const now = new Date().toISOString();
 
@@ -122,18 +122,18 @@ export function useSandboxExecution({
   const lastStreamingPatchAtRef = useRef(0);
   const sandboxRef = useRef<SandboxDetailResponse["sandbox"] | null>(null);
 
-  const {
-    data,
-    mutate,
-    isLoading,
-    error,
-  } = useSWR<SandboxDetailResponse>(`/api/sandbox/${sandboxId}`, fetcher, {
-    refreshInterval: (latest) =>
-      latest?.sandbox.status === "active" || latest?.sandbox.pendingConfigApply
-        ? 1000
-        : 0,
-    revalidateOnFocus: false,
-  });
+  const { data, mutate, isLoading, error } = useSWR<SandboxDetailResponse>(
+    `/api/sandbox/${sandboxId}`,
+    fetcher,
+    {
+      refreshInterval: (latest) =>
+        latest?.sandbox.status === "active" ||
+        latest?.sandbox.pendingConfigApply
+          ? 1000
+          : 0,
+      revalidateOnFocus: false,
+    }
+  );
 
   const sandbox = data?.sandbox ?? null;
   const storedEvents = useMemo(
@@ -307,7 +307,8 @@ export function useSandboxExecution({
         playbackMode: "paused",
         runtimePhase: "replayComplete",
         pendingConfigApply: false,
-        lastDeliveryAt: lastDeliveryAt ?? sandboxRef.current?.lastDeliveryAt ?? null,
+        lastDeliveryAt:
+          lastDeliveryAt ?? sandboxRef.current?.lastDeliveryAt ?? null,
         lastError: null,
       }).catch((replayError) => {
         setSaveState("saveError");
@@ -523,7 +524,9 @@ export function useSandboxExecution({
 
     if (batch.length > 0) {
       setRuntimeEvents((previous) => appendRuntimeEvents(previous, batch));
-      markStreaming(batch.at(-1)?.event.occurred_at ?? newEvents.at(-1)?.occurred_at ?? "");
+      markStreaming(
+        batch.at(-1)?.event.occurred_at ?? newEvents.at(-1)?.occurred_at ?? ""
+      );
     } else {
       scheduleLiveWaiting();
     }
@@ -562,11 +565,21 @@ export function useSandboxExecution({
       });
 
       setRuntimeEvents((previous) => appendRuntimeEvents(previous, batch));
-      markStreaming(batch.at(-1)?.event.occurred_at ?? new Date().toISOString());
+      markStreaming(
+        batch.at(-1)?.event.occurred_at ?? new Date().toISOString()
+      );
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [generatorRoots, graphReady, markStreaming, sandbox, sandboxId, saveState, speed]);
+  }, [
+    generatorRoots,
+    graphReady,
+    markStreaming,
+    sandbox,
+    sandboxId,
+    saveState,
+    speed,
+  ]);
 
   const setPlayback = useCallback(
     async (nextPlayback: PlaybackState) => {

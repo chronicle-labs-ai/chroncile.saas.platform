@@ -45,16 +45,24 @@ interface ExportedTrace {
     critical_errors: string[];
     correction_summary: string;
     ood_score: Trace["autoAudit"] extends infer A
-      ? A extends { ood_score: infer O } ? O : never
+      ? A extends { ood_score: infer O }
+        ? O
+        : never
       : never;
     context_integrity: Trace["autoAudit"] extends infer A
-      ? A extends { context_integrity: infer C } ? C : never
+      ? A extends { context_integrity: infer C }
+        ? C
+        : never
       : never;
     instruction_violations_summary: Trace["autoAudit"] extends infer A
-      ? A extends { instruction_violations_summary: infer I } ? I : never
+      ? A extends { instruction_violations_summary: infer I }
+        ? I
+        : never
       : never;
     action_annotations: Trace["autoAudit"] extends infer A
-      ? A extends { action_annotations: infer AA } ? AA : never
+      ? A extends { action_annotations: infer AA }
+        ? AA
+        : never
       : never;
   } | null;
 
@@ -100,7 +108,8 @@ function exportTrace(t: Trace): ExportedTrace {
           correction_summary: t.autoAudit.correction_summary,
           ood_score: t.autoAudit.ood_score,
           context_integrity: t.autoAudit.context_integrity,
-          instruction_violations_summary: t.autoAudit.instruction_violations_summary,
+          instruction_violations_summary:
+            t.autoAudit.instruction_violations_summary,
           action_annotations: t.autoAudit.action_annotations,
         }
       : null,

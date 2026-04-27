@@ -111,12 +111,7 @@ export function DataTableFilterPill<TRow>({
         onPress={onRemove}
         aria-label={`Remove ${column.label} filter`}
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="h-3 w-3"
-          aria-hidden
-        >
+        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden>
           <path
             d="M6 6l12 12M18 6l-12 12"
             stroke="currentColor"
@@ -182,7 +177,7 @@ function ValueEditor<TRow>({
 function renderValueSummary<TRow>(
   column: ColumnConfig<TRow>,
   filter: FilterState,
-  placeholderClass: string,
+  placeholderClass: string
 ): React.ReactNode {
   const placeholder = (text: string) => (
     <span className={placeholderClass}>{text}</span>
@@ -196,16 +191,11 @@ function renderValueSummary<TRow>(
       return opt?.label ?? v;
     }
     case "multiOption": {
-      const arr = Array.isArray(filter.value)
-        ? (filter.value as string[])
-        : [];
+      const arr = Array.isArray(filter.value) ? (filter.value as string[]) : [];
       if (!arr.length) return placeholder("select\u2026");
       if (arr.length <= 2) {
         return arr
-          .map(
-            (v) =>
-              column.options?.find((o) => o.value === v)?.label ?? v,
-          )
+          .map((v) => column.options?.find((o) => o.value === v)?.label ?? v)
           .join(", ");
       }
       return `${arr.length} selected`;

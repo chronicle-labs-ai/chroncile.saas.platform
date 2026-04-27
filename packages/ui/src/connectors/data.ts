@@ -32,15 +32,35 @@ export const STRIPE_EVENT_TYPES: readonly StripeEventType[] = [
   { id: "charge.refunded", object: "charge", defaultOn: true },
   { id: "customer.created", object: "customer", defaultOn: true },
   { id: "customer.updated", object: "customer", defaultOn: false },
-  { id: "customer.subscription.created", object: "subscription", defaultOn: true },
-  { id: "customer.subscription.updated", object: "subscription", defaultOn: true },
-  { id: "customer.subscription.deleted", object: "subscription", defaultOn: true },
+  {
+    id: "customer.subscription.created",
+    object: "subscription",
+    defaultOn: true,
+  },
+  {
+    id: "customer.subscription.updated",
+    object: "subscription",
+    defaultOn: true,
+  },
+  {
+    id: "customer.subscription.deleted",
+    object: "subscription",
+    defaultOn: true,
+  },
   { id: "invoice.paid", object: "invoice", defaultOn: true },
   { id: "invoice.payment_failed", object: "invoice", defaultOn: true },
   { id: "invoice.finalized", object: "invoice", defaultOn: false },
   { id: "payment_intent.succeeded", object: "payment_intent", defaultOn: true },
-  { id: "payment_intent.payment_failed", object: "payment_intent", defaultOn: true },
-  { id: "checkout.session.completed", object: "checkout.session", defaultOn: true },
+  {
+    id: "payment_intent.payment_failed",
+    object: "payment_intent",
+    defaultOn: true,
+  },
+  {
+    id: "checkout.session.completed",
+    object: "checkout.session",
+    defaultOn: true,
+  },
   { id: "payout.paid", object: "payout", defaultOn: false },
   { id: "payout.failed", object: "payout", defaultOn: true },
 ];
@@ -58,13 +78,37 @@ export interface SlackScope {
 }
 
 export const SLACK_SCOPES: readonly SlackScope[] = [
-  { id: "channels:read", reason: "List public channels for the picker", required: true },
-  { id: "channels:history", reason: "Read messages from chosen channels", required: true },
-  { id: "groups:read", reason: "List private channels (when invited)", required: false },
-  { id: "groups:history", reason: "Read messages from invited private channels", required: false },
+  {
+    id: "channels:read",
+    reason: "List public channels for the picker",
+    required: true,
+  },
+  {
+    id: "channels:history",
+    reason: "Read messages from chosen channels",
+    required: true,
+  },
+  {
+    id: "groups:read",
+    reason: "List private channels (when invited)",
+    required: false,
+  },
+  {
+    id: "groups:history",
+    reason: "Read messages from invited private channels",
+    required: false,
+  },
   { id: "chat:write", reason: "Post messages and replies", required: false },
-  { id: "users:read", reason: "Resolve user ids in event payloads", required: true },
-  { id: "reactions:read", reason: "Capture reaction-added events", required: false },
+  {
+    id: "users:read",
+    reason: "Resolve user ids in event payloads",
+    required: true,
+  },
+  {
+    id: "reactions:read",
+    reason: "Capture reaction-added events",
+    required: false,
+  },
 ];
 
 export type SlackDirection = "listen" | "post" | "both";
@@ -169,7 +213,11 @@ export interface SalesforceRegion {
 }
 
 export const SALESFORCE_REGIONS: readonly SalesforceRegion[] = [
-  { id: "prod", label: "Production / Developer", loginHost: "login.salesforce.com" },
+  {
+    id: "prod",
+    label: "Production / Developer",
+    loginHost: "login.salesforce.com",
+  },
   { id: "sandbox", label: "Sandbox", loginHost: "test.salesforce.com" },
   { id: "eu", label: "EU pod", loginHost: "eu.login.salesforce.com" },
   { id: "ap", label: "APAC pod", loginHost: "ap.login.salesforce.com" },

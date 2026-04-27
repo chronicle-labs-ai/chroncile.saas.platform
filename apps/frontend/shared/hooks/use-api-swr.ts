@@ -33,7 +33,7 @@ function buildFetcher(token: string | undefined) {
 
 export function useApiSwr<T>(
   path: string | null,
-  config?: SWRConfiguration<T>,
+  config?: SWRConfiguration<T>
 ): SWRResponse<T> {
   const { data: session } = useSession();
   const token = session?.backendToken;

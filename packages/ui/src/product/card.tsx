@@ -37,8 +37,10 @@ const cardStyles = tv({
   },
 });
 
-export interface CardProps
-  extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "title"> {
+export interface CardProps extends Omit<
+  React.AnchorHTMLAttributes<HTMLAnchorElement>,
+  "title"
+> {
   /** Visual top slot. */
   thumb?: React.ReactNode;
   /** Two-digit ordinal shown next to the title (e.g. "01"). */

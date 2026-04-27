@@ -72,8 +72,7 @@ const eventRow = tv({
 type EventRowVariantProps = VariantProps<typeof eventRow>;
 
 export interface EventRowProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    EventRowVariantProps {
+  extends React.HTMLAttributes<HTMLDivElement>, EventRowVariantProps {
   time: React.ReactNode;
   lane: EventLane;
   topic: React.ReactNode;

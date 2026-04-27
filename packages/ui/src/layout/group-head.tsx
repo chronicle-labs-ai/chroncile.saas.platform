@@ -37,7 +37,10 @@ const ChevronDown = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface GroupHeadProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onToggle"> {
+interface GroupHeadProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onToggle"
+> {
   /** Drives the chevron rotation; chevron points down when expanded. */
   expanded?: boolean;
   /** Fires when the group head is clicked / toggled. */
@@ -56,10 +59,7 @@ const Count = ({
   children?: React.ReactNode;
 }) => (
   <span
-    className={cx(
-      "font-mono text-[11px] text-l-ink-dim",
-      className,
-    )}
+    className={cx("font-mono text-[11px] text-l-ink-dim", className)}
     data-slot="group-head-count"
   >
     {children}
@@ -87,7 +87,7 @@ function GroupHeadRoot({
         "text-[12.5px] font-medium text-l-ink",
         onToggle ? "cursor-pointer hover:bg-l-wash-3" : null,
         "transition-colors duration-fast",
-        className,
+        className
       )}
       onClick={(e) => {
         onClick?.(e);
@@ -109,7 +109,7 @@ function GroupHeadRoot({
         <ChevronDown
           className={cx(
             "shrink-0 text-l-ink-dim transition-transform duration-fast",
-            expanded ? "" : "-rotate-90",
+            expanded ? "" : "-rotate-90"
           )}
         />
       ) : null}

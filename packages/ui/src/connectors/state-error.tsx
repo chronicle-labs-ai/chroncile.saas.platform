@@ -19,7 +19,11 @@ import { CodeBlock, FieldRow } from "./_internal";
  * own the retry mutation.
  */
 
-export type ConnectorErrorKind = "auth" | "signature" | "rate-limit" | "unknown";
+export type ConnectorErrorKind =
+  | "auth"
+  | "signature"
+  | "rate-limit"
+  | "unknown";
 
 export interface StateErrorProps {
   source: Source;
@@ -78,15 +82,10 @@ export function StateError({
         ),
         actions: (
           <>
-            <Button density="brand" variant="ghost" onPress={onClose}>
+            <Button variant="ghost" onPress={onClose}>
               Dismiss
             </Button>
-            <Button
-              density="brand"
-              variant="ember"
-              onPress={onRetry}
-              isDisabled={!onRetry}
-            >
+            <Button variant="ember" onPress={onRetry} isDisabled={!onRetry}>
               Retry now →
             </Button>
           </>

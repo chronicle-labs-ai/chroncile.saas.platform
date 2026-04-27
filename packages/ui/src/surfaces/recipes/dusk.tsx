@@ -6,8 +6,10 @@ import { GlassScene } from "../glass-scene";
 import { GlassStack } from "../glass-stack";
 import { LightSource } from "../light-source";
 
-export interface DuskProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "color"> {
+export interface DuskProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "color"
+> {
   /** Optional overlay content (e.g. a wordmark). */
   children?: ReactNode;
   /** Number of slats. @default 11 */

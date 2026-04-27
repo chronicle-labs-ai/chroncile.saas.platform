@@ -58,25 +58,29 @@ const WINDOW_MS: Record<string, number> = {
 
 function buildSeries(
   windowMs: number,
-  extractor: (s: Sample) => number | null,
+  extractor: (s: Sample) => number | null
 ): { series: Array<{ t: number; v: number | null }>; current: number | null } {
   const cutoff = Date.now() - windowMs;
   const filtered = sampleBuffer.filter((s) => s.t >= cutoff);
   const series = filtered.map((s) => ({ t: s.t, v: extractor(s) }));
-  const last = filtered.length > 0 ? extractor(filtered[filtered.length - 1]) : null;
+  const last =
+    filtered.length > 0 ? extractor(filtered[filtered.length - 1]) : null;
   return { series, current: last };
 }
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const env = await prisma.environment.findUnique({ where: { id } });
   if (!env) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (env.type !== "LOCAL") {
-    return NextResponse.json({ error: "Metrics not available for this environment type" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Metrics not available for this environment type" },
+      { status: 404 }
+    );
   }
 
   startSampler();
@@ -92,7 +96,9 @@ export async function GET(
   const memoryPct = buildSeries(windowMs, (s) => {
     if (s.memoryBytes == null) return null;
     const totalMemMb = 16 * 1024;
-    return Math.round((s.memoryBytes / (totalMemMb * 1024 * 1024)) * 10000) / 100;
+    return (
+      Math.round((s.memoryBytes / (totalMemMb * 1024 * 1024)) * 10000) / 100
+    );
   });
 
   const cpuSeries = buildSeries(windowMs, (s) => {

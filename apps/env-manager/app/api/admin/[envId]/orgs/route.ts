@@ -10,7 +10,10 @@ export async function POST(
   const { envId } = await params;
   const env = await prisma.environment.findUnique({ where: { id: envId } });
   if (!env?.flyAppUrl) {
-    return NextResponse.json({ error: "Environment not found or has no backend" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Environment not found or has no backend" },
+      { status: 404 }
+    );
   }
 
   let body: {
@@ -55,14 +58,20 @@ export async function POST(
       data = text ? JSON.parse(text) : {};
     } catch {
       return NextResponse.json(
-        { error: `Backend returned invalid JSON (HTTP ${res.status}): ${text.slice(0, 200)}` },
+        {
+          error: `Backend returned invalid JSON (HTTP ${res.status}): ${text.slice(0, 200)}`,
+        },
         { status: 502 }
       );
     }
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: (data.error as string) ?? `Failed to create organization (HTTP ${res.status})` },
+        {
+          error:
+            (data.error as string) ??
+            `Failed to create organization (HTTP ${res.status})`,
+        },
         { status: res.status }
       );
     }

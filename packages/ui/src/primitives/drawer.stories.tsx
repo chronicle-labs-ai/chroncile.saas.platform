@@ -11,7 +11,11 @@ const meta: Meta<typeof Drawer> = {
 export default meta;
 type Story = StoryObj<typeof Drawer>;
 
-const DrawerDemo = ({ placement }: { placement?: "left" | "right" | "top" | "bottom" }) => {
+const DrawerDemo = ({
+  placement,
+}: {
+  placement?: "left" | "right" | "top" | "bottom";
+}) => {
   const [open, setOpen] = React.useState(false);
   return (
     <>
@@ -33,8 +37,8 @@ const DrawerDemo = ({ placement }: { placement?: "left" | "right" | "top" | "bot
         }
       >
         <p>
-          Drawers slide in from the edge of the viewport. ESC, outside
-          click, and the close button all dismiss.
+          Drawers slide in from the edge of the viewport. ESC, outside click,
+          and the close button all dismiss.
         </p>
       </Drawer>
     </>

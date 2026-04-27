@@ -7,9 +7,7 @@ export default function DocsPage() {
         <div className="text-xs text-tertiary tracking-wide uppercase mb-1">
           Help
         </div>
-        <h1 className="text-2xl font-semibold text-primary">
-          User Manual
-        </h1>
+        <h1 className="text-2xl font-semibold text-primary">User Manual</h1>
         <p className="text-sm text-tertiary mt-1">
           Learn how to use Chronicle Labs.
         </p>
@@ -51,9 +49,7 @@ export default function DocsPage() {
           <span className="panel__title">Dashboard overview</span>
         </div>
         <div className="panel__content space-y-4 text-sm text-secondary">
-          <p>
-            The main dashboard gives you a quick snapshot of your account:
-          </p>
+          <p>The main dashboard gives you a quick snapshot of your account:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>
               <strong className="text-primary">Events Today</strong> — How many
@@ -71,8 +67,8 @@ export default function DocsPage() {
             </li>
             <li>
               <strong className="text-primary">System status</strong> — A short
-              message at the top (e.g. “All Systems Operational”) so you know the
-              service is running normally.
+              message at the top (e.g. “All Systems Operational”) so you know
+              the service is running normally.
             </li>
           </ul>
           <p>
@@ -88,13 +84,17 @@ export default function DocsPage() {
           <span className="panel__title">Getting Started checklist</span>
         </div>
         <div className="panel__content space-y-4 text-sm text-secondary">
-          <p>
-            The checklist on the dashboard has three steps:
-          </p>
+          <p>The checklist on the dashboard has three steps:</p>
           <ol className="list-decimal list-inside space-y-2">
             <li>
-              <strong className="text-primary">Connect your first integration</strong> — Go to{" "}
-              <Link href="/dashboard/connections" className="text-data hover:underline">
+              <strong className="text-primary">
+                Connect your first integration
+              </strong>{" "}
+              — Go to{" "}
+              <Link
+                href="/dashboard/connections"
+                className="text-data hover:underline"
+              >
                 Connections
               </Link>{" "}
               and add at least one connection. When it’s active, this step is
@@ -103,7 +103,10 @@ export default function DocsPage() {
             <li>
               <strong className="text-primary">See your events</strong> — Once
               events are flowing, the second step completes. You can check{" "}
-              <Link href="/dashboard/events" className="text-data hover:underline">
+              <Link
+                href="/dashboard/events"
+                className="text-data hover:underline"
+              >
                 Events
               </Link>{" "}
               and the “Events Today” number on the dashboard to confirm.
@@ -124,9 +127,13 @@ export default function DocsPage() {
         </div>
         <div className="panel__content space-y-3 text-sm text-secondary">
           <p>
-            A connection is a link between Chronicle Labs and an external service
-            (for example a webhook source or a synced support integration). On the{" "}
-            <Link href="/dashboard/connections" className="text-data hover:underline">
+            A connection is a link between Chronicle Labs and an external
+            service (for example a webhook source or a synced support
+            integration). On the{" "}
+            <Link
+              href="/dashboard/connections"
+              className="text-data hover:underline"
+            >
               Connections
             </Link>{" "}
             page you can add new connections and manage existing ones. When a
@@ -145,7 +152,10 @@ export default function DocsPage() {
         <div className="panel__content space-y-3 text-sm text-secondary">
           <p>
             The{" "}
-            <Link href="/dashboard/events" className="text-data hover:underline">
+            <Link
+              href="/dashboard/events"
+              className="text-data hover:underline"
+            >
               Events
             </Link>{" "}
             page shows the events that have been received for your account. You
@@ -163,7 +173,8 @@ export default function DocsPage() {
         </div>
         <div className="panel__content space-y-3 text-sm text-secondary">
           <p>
-            On the main dashboard, the <strong className="text-primary">Recent Activity</strong> section
+            On the main dashboard, the{" "}
+            <strong className="text-primary">Recent Activity</strong> section
             shows the latest events from the last 24 hours. It’s a quick way to
             see what’s been happening without opening the full Events page. If
             there are no events yet, you’ll see an empty state—add a connection
@@ -179,7 +190,10 @@ export default function DocsPage() {
         <div className="panel__content space-y-4 text-sm text-secondary">
           <p>
             In{" "}
-            <Link href="/dashboard/settings" className="text-data hover:underline">
+            <Link
+              href="/dashboard/settings"
+              className="text-data hover:underline"
+            >
               Settings
             </Link>{" "}
             you can:
@@ -197,7 +211,8 @@ export default function DocsPage() {
             </li>
             <li>
               <strong className="text-primary">API / Webhook</strong> — See the
-              webhook endpoint and API details used to send events into Chronicle.ai. Use these when configuring external tools.
+              webhook endpoint and API details used to send events into
+              Chronicle.ai. Use these when configuring external tools.
             </li>
             <li>
               <strong className="text-primary">System Status</strong> — Check
@@ -205,9 +220,9 @@ export default function DocsPage() {
               working.
             </li>
             <li>
-              <strong className="text-primary">Danger Zone</strong> — Options
-              to delete your organization and data. These actions are permanent
-              and may be disabled by your administrator.
+              <strong className="text-primary">Danger Zone</strong> — Options to
+              delete your organization and data. These actions are permanent and
+              may be disabled by your administrator.
             </li>
           </ul>
         </div>

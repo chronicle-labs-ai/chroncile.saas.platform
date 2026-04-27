@@ -22,8 +22,16 @@ interface DbTemplate {
 }
 
 const SECRET_FIELDS = [
-  { key: "AUTH_SECRET", label: "Auth Secret", placeholder: "Override or leave blank for default" },
-  { key: "STRIPE_SECRET_KEY", label: "Stripe Secret Key", placeholder: "sk_test_..." },
+  {
+    key: "AUTH_SECRET",
+    label: "Auth Secret",
+    placeholder: "Override or leave blank for default",
+  },
+  {
+    key: "STRIPE_SECRET_KEY",
+    label: "Stripe Secret Key",
+    placeholder: "sk_test_...",
+  },
 ];
 
 const TTL_OPTIONS = [
@@ -36,8 +44,14 @@ const TTL_OPTIONS = [
 
 export function NewEnvironmentPage() {
   const router = useRouter();
-  const { data: branches, isLoading: branchesLoading } = useSWR<Branch[]>("/api/branches", fetcher);
-  const { data: templates } = useSWR<DbTemplate[]>("/api/db-templates", fetcher);
+  const { data: branches, isLoading: branchesLoading } = useSWR<Branch[]>(
+    "/api/branches",
+    fetcher
+  );
+  const { data: templates } = useSWR<DbTemplate[]>(
+    "/api/db-templates",
+    fetcher
+  );
 
   const [selectedBranch, setSelectedBranch] = useState("");
   const [ttlHours, setTtlHours] = useState(24);
@@ -95,7 +109,9 @@ export function NewEnvironmentPage() {
       </div>
 
       <div className="mb-6">
-        <h1 className="text-xl font-sans font-semibold">New Ephemeral Environment</h1>
+        <h1 className="text-xl font-sans font-semibold">
+          New Ephemeral Environment
+        </h1>
         <p className="text-xs text-tertiary mt-1">
           Spin up an isolated environment for any git branch
         </p>
@@ -143,14 +159,19 @@ export function NewEnvironmentPage() {
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Database</span>
-            <Link href="/dashboard/templates" className="text-[10px] text-data font-mono hover:underline">
+            <Link
+              href="/dashboard/templates"
+              className="text-[10px] text-data font-mono hover:underline"
+            >
               Manage Templates
             </Link>
           </div>
           <div className="panel__content space-y-3">
             <label
               className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
-                !dbTemplateId ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"
+                !dbTemplateId
+                  ? "border-data bg-data-bg"
+                  : "border-border-dim hover:border-border-bright"
               }`}
             >
               <input
@@ -161,7 +182,9 @@ export function NewEnvironmentPage() {
                 className="mt-0.5"
               />
               <div>
-                <span className={`text-sm font-medium ${!dbTemplateId ? "text-data" : "text-primary"}`}>
+                <span
+                  className={`text-sm font-medium ${!dbTemplateId ? "text-data" : "text-primary"}`}
+                >
                   Fresh empty database
                 </span>
                 <p className="text-[10px] text-tertiary mt-0.5">
@@ -174,7 +197,9 @@ export function NewEnvironmentPage() {
               <label
                 key={t.id}
                 className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
-                  dbTemplateId === t.id ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"
+                  dbTemplateId === t.id
+                    ? "border-data bg-data-bg"
+                    : "border-border-dim hover:border-border-bright"
                 }`}
               >
                 <input
@@ -186,15 +211,23 @@ export function NewEnvironmentPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium ${dbTemplateId === t.id ? "text-data" : "text-primary"}`}>
+                    <span
+                      className={`text-sm font-medium ${dbTemplateId === t.id ? "text-data" : "text-primary"}`}
+                    >
                       {t.name}
                     </span>
                     <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-elevated text-tertiary">
-                      {t.mode === "FLY_DB" ? "Fork" : t.mode === "ENVIRONMENT" ? "Env" : "Seed"}
+                      {t.mode === "FLY_DB"
+                        ? "Fork"
+                        : t.mode === "ENVIRONMENT"
+                          ? "Env"
+                          : "Seed"}
                     </span>
                   </div>
                   {t.description && (
-                    <p className="text-[10px] text-tertiary mt-0.5">{t.description}</p>
+                    <p className="text-[10px] text-tertiary mt-0.5">
+                      {t.description}
+                    </p>
                   )}
                 </div>
               </label>
@@ -203,7 +236,12 @@ export function NewEnvironmentPage() {
             {(templates ?? []).length === 0 && (
               <p className="text-xs text-tertiary pl-7">
                 No templates created yet.{" "}
-                <Link href="/dashboard/templates" className="text-data hover:underline">Create one</Link>
+                <Link
+                  href="/dashboard/templates"
+                  className="text-data hover:underline"
+                >
+                  Create one
+                </Link>
               </p>
             )}
           </div>
@@ -212,14 +250,20 @@ export function NewEnvironmentPage() {
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Secrets</span>
-            <span className="font-mono text-[10px] text-tertiary">Optional overrides</span>
+            <span className="font-mono text-[10px] text-tertiary">
+              Optional overrides
+            </span>
           </div>
           <div className="panel__content space-y-4">
             <p className="text-xs text-tertiary">
               Leave blank to use defaults from SECRETS_TEMPLATE.
             </p>
             {SECRET_FIELDS.map((field) => (
-              <FormField key={field.key} label={field.label} htmlFor={field.key}>
+              <FormField
+                key={field.key}
+                label={field.label}
+                htmlFor={field.key}
+              >
                 <Input
                   id={field.key}
                   type="text"

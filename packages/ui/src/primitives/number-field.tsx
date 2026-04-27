@@ -17,6 +17,7 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 export type NumberFieldDensity = "compact" | "brand";
 
@@ -60,8 +61,10 @@ const numberFieldStyles = tv({
   defaultVariants: { density: "compact" },
 });
 
-export interface NumberFieldProps
-  extends Omit<RACNumberFieldProps, "className" | "children"> {
+export interface NumberFieldProps extends Omit<
+  RACNumberFieldProps,
+  "className" | "children"
+> {
   className?: string;
   placeholder?: string;
   density?: NumberFieldDensity;
@@ -70,9 +73,10 @@ export interface NumberFieldProps
 export function NumberField({
   className,
   placeholder,
-  density = "compact",
+  density: densityProp,
   ...rest
 }: NumberFieldProps) {
+  const density = useResolvedChromeDensity(densityProp);
   const slots = numberFieldStyles({ density });
   return (
     <RACNumberField
@@ -81,11 +85,19 @@ export function NumberField({
       className={composeTwRenderProps(className, slots.root())}
     >
       <RACGroup className={slots.group()}>
-        <RACButton slot="decrement" className={slots.button()} aria-label="Decrement">
+        <RACButton
+          slot="decrement"
+          className={slots.button()}
+          aria-label="Decrement"
+        >
           −
         </RACButton>
         <RACInput placeholder={placeholder} className={slots.input()} />
-        <RACButton slot="increment" className={slots.button()} aria-label="Increment">
+        <RACButton
+          slot="increment"
+          className={slots.button()}
+          aria-label="Increment"
+        >
           +
         </RACButton>
       </RACGroup>

@@ -13,10 +13,7 @@ import {
   type SignInValue,
   type SignUpEmailValue,
 } from "../auth";
-import {
-  OnboardingShell,
-  type OnboardingStepId,
-} from "./onboarding-shell";
+import { OnboardingShell, type OnboardingStepId } from "./onboarding-shell";
 import { StepBilling, type BillingState } from "./step-billing";
 import { StepConnect, type ConnectState } from "./step-connect";
 import { StepDescribe, type DescribeState } from "./step-describe";
@@ -36,8 +33,8 @@ export const Default: Story = {
   render: () => (
     <OnboardingShell currentStep="describe">
       <p className="font-mono text-mono uppercase tracking-tactical text-ink-dim">
-        Drop your Step* component here. The shell paints the topbar +
-        ambient backdrop and the stepper reflects `currentStep`.
+        Drop your Step* component here. The shell paints the topbar + ambient
+        backdrop and the stepper reflects `currentStep`.
       </p>
     </OnboardingShell>
   ),
@@ -151,7 +148,7 @@ export const FullFlow: Story = {
                 ? "password"
                 : screen === "signup-verify"
                   ? "verify"
-                  : "success"),
+                  : "success")
         )
       : -1;
 
@@ -187,9 +184,7 @@ export const FullFlow: Story = {
                 className="text-ink-lo hover:text-ink-hi transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
-                  setScreen(
-                    screen === "signin" ? "signup-email" : "signin",
-                  );
+                  setScreen(screen === "signin" ? "signup-email" : "signin");
                 }}
               >
                 {screen === "signin" ? "Create account →" : "Sign in →"}
@@ -219,9 +214,7 @@ export const FullFlow: Story = {
       case "signin-success":
         body = (
           <AuthSuccess
-            caption={
-              <span className="text-ink-lo">chronicle.app/inbox</span>
-            }
+            caption={<span className="text-ink-lo">chronicle.app/inbox</span>}
           />
         );
         break;

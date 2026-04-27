@@ -56,8 +56,8 @@ export const A6WorkspaceReady: Story = {
         }
         caption={
           <span className="text-ink-lo">
-            Routing to <code className="font-mono">chronicle.app/dashboard</code>
-            …
+            Routing to{" "}
+            <code className="font-mono">chronicle.app/dashboard</code>…
           </span>
         }
       />

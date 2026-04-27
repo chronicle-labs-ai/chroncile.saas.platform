@@ -107,7 +107,11 @@ export function ReviewerRecommendation({
             viewBox="0 0 24 24"
             strokeWidth={2}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+            />
           </svg>
         </button>
 
@@ -167,9 +171,15 @@ function RecommendedCard({
           <span className="text-[11px] text-tertiary">{member.role}</span>
         </div>
         <div className="shrink-0 text-right">
-          <span className={`font-mono text-[11px] font-medium tabular-nums ${
-            matchScore >= 70 ? "text-nominal" : matchScore >= 40 ? "text-caution" : "text-secondary"
-          }`}>
+          <span
+            className={`font-mono text-[11px] font-medium tabular-nums ${
+              matchScore >= 70
+                ? "text-nominal"
+                : matchScore >= 40
+                  ? "text-caution"
+                  : "text-secondary"
+            }`}
+          >
             {matchScore}%
           </span>
           <div className="text-[9px] text-disabled">match</div>
@@ -237,9 +247,7 @@ function OrgTreeNode({
     <div>
       <div
         className={`flex items-center gap-2 py-1.5 px-2 rounded-sm ${
-          isRecommended
-            ? "bg-data-bg border border-data-dim"
-            : "hover:bg-hover"
+          isRecommended ? "bg-data-bg border border-data-dim" : "hover:bg-hover"
         }`}
         style={{ marginLeft: depth * 16 }}
       >
@@ -251,9 +259,11 @@ function OrgTreeNode({
         <Avatar member={member} size="sm" />
 
         <div className="flex-1 min-w-0">
-          <span className={`text-[11px] truncate block ${
-            isRecommended ? "text-data font-medium" : "text-secondary"
-          }`}>
+          <span
+            className={`text-[11px] truncate block ${
+              isRecommended ? "text-data font-medium" : "text-secondary"
+            }`}
+          >
             {member.name}
           </span>
           <span className="text-[9px] text-disabled truncate block">
@@ -362,8 +372,18 @@ function NotifyButton({
   if (done) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 font-mono text-[10px] text-nominal bg-nominal-bg border border-nominal-dim rounded-sm">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        <svg
+          className="w-3 h-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 12.75l6 6 9-13.5"
+          />
         </svg>
         Sent
       </span>
@@ -399,8 +419,18 @@ function SlackIcon({ className = "w-3 h-3" }: { className?: string }) {
 
 function EmailIcon({ className = "w-3 h-3" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+      />
     </svg>
   );
 }

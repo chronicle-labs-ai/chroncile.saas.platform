@@ -114,9 +114,9 @@ export function useSandboxVisualization({
   graphRevisionKey: string;
   enabled: boolean;
 }) {
-  const [nodeActivity, setNodeActivity] = useState<Record<string, NodeActivity>>(
-    {}
-  );
+  const [nodeActivity, setNodeActivity] = useState<
+    Record<string, NodeActivity>
+  >({});
   const [edgeParticles, setEdgeParticles] = useState<EdgeParticle[]>([]);
 
   const processedEventKeysRef = useRef<Set<string>>(new Set());
@@ -174,31 +174,34 @@ export function useSandboxVisualization({
     ]);
   }, []);
 
-  const bumpNode = useCallback((nodeId: string, kind: "emit" | "pass" | "reject") => {
-    setNodeActivity((previous) => {
-      const existing = previous[nodeId] ?? {
-        total: 0,
-        rate: 0,
-        passed: 0,
-        rejected: 0,
-        active: false,
-        lastEventAt: 0,
-      };
+  const bumpNode = useCallback(
+    (nodeId: string, kind: "emit" | "pass" | "reject") => {
+      setNodeActivity((previous) => {
+        const existing = previous[nodeId] ?? {
+          total: 0,
+          rate: 0,
+          passed: 0,
+          rejected: 0,
+          active: false,
+          lastEventAt: 0,
+        };
 
-      return {
-        ...previous,
-        [nodeId]: {
-          ...existing,
-          total: existing.total + 1,
-          passed: kind === "pass" ? existing.passed + 1 : existing.passed,
-          rejected:
-            kind === "reject" ? existing.rejected + 1 : existing.rejected,
-          active: true,
-          lastEventAt: Date.now(),
-        },
-      };
-    });
-  }, []);
+        return {
+          ...previous,
+          [nodeId]: {
+            ...existing,
+            total: existing.total + 1,
+            passed: kind === "pass" ? existing.passed + 1 : existing.passed,
+            rejected:
+              kind === "reject" ? existing.rejected + 1 : existing.rejected,
+            active: true,
+            lastEventAt: Date.now(),
+          },
+        };
+      });
+    },
+    []
+  );
 
   const propagateEvent = useCallback(
     (event: SandboxEvent, startNodeId: string) => {

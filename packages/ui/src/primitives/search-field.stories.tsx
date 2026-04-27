@@ -12,7 +12,10 @@ type Story = StoryObj<typeof SearchField>;
 export const Default: Story = {
   render: () => (
     <div className="w-[360px]">
-      <SearchField aria-label="Search" placeholder="Search runs, events, rules…" />
+      <SearchField
+        aria-label="Search"
+        placeholder="Search runs, events, rules…"
+      />
     </div>
   ),
 };

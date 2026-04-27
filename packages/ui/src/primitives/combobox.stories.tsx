@@ -26,7 +26,10 @@ export const Default: Story = {
 export const WithSections: Story = {
   render: () => (
     <div className="w-[320px]">
-      <Combobox aria-label="Grouped integrations" placeholder="Filter integrations">
+      <Combobox
+        aria-label="Grouped integrations"
+        placeholder="Filter integrations"
+      >
         <ComboboxSection title="Support">
           <ComboboxItem id="intercom">Intercom</ComboboxItem>
           <ComboboxItem id="zendesk">Zendesk</ComboboxItem>

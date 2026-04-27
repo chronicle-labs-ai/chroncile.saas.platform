@@ -6,18 +6,10 @@ import { SourceGlyph } from "../icons/source-glyph";
 import { StatusDot } from "../primitives/status-dot";
 import { Spinner } from "../primitives/spinner";
 import { CheckIcon } from "../icons/glyphs";
-import {
-  type Source,
-  type SourceId,
-} from "../onboarding/data";
+import { type Source, type SourceId } from "../onboarding/data";
 import { type BackfillRunConfig } from "../onboarding/step-connect";
 import { ConnectorModalShell } from "./connector-modal-shell";
-import {
-  CodeBlock,
-  EventRecv,
-  FieldRow,
-  ReadonlyInput,
-} from "./_internal";
+import { CodeBlock, EventRecv, FieldRow, ReadonlyInput } from "./_internal";
 import { REVERSE_WEBHOOK_URL_TEMPLATE } from "./data";
 
 /*
@@ -59,7 +51,7 @@ export function ConnectReverseWebhook({
 }: ConnectReverseWebhookProps) {
   const url = endpointBase.replace("{tenant}", tenant);
   const [verifyToken] = React.useState(
-    () => "whsec_" + Math.random().toString(36).slice(2, 12),
+    () => "whsec_" + Math.random().toString(36).slice(2, 12)
   );
   const [received, setReceived] = React.useState(forceReceived);
 
@@ -92,19 +84,15 @@ export function ConnectReverseWebhook({
         ),
         actions: (
           <>
-            <Button density="brand" variant="ghost" onPress={onClose}>
+            <Button variant="ghost" onPress={onClose}>
               Cancel
             </Button>
             {!received ? (
-              <Button
-                density="brand"
-                variant="ember"
-                onPress={() => setReceived(true)}
-              >
+              <Button variant="ember" onPress={() => setReceived(true)}>
                 Send test event →
               </Button>
             ) : (
-              <Button density="brand" variant="ember" onPress={submit}>
+              <Button variant="ember" onPress={submit}>
                 Done →
               </Button>
             )}
@@ -133,7 +121,10 @@ export function ConnectReverseWebhook({
         </FieldRow>
 
         <FieldRow label="Verifier">
-          <div className="evt-recv-list" data-state={received ? "received" : "awaiting"}>
+          <div
+            className="evt-recv-list"
+            data-state={received ? "received" : "awaiting"}
+          >
             {received ? (
               <>
                 <EventRecv

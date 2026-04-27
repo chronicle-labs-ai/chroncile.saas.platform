@@ -19,10 +19,10 @@ export default async function EventsPage() {
   let hasActiveIntercom = false;
   try {
     const data = await fetchFromBackend<{ connections: ConnectionSummary[] }>(
-      "/api/platform/connections",
+      "/api/platform/connections"
     );
     hasActiveIntercom = data.connections.some(
-      (c) => c.provider === "intercom" && c.status === "active",
+      (c) => c.provider === "intercom" && c.status === "active"
     );
   } catch {
     // Backend unavailable

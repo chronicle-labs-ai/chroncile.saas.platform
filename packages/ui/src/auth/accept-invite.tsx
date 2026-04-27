@@ -5,10 +5,7 @@ import { Button } from "../primitives/button";
 import { Eyebrow } from "../primitives/eyebrow";
 import { FormField } from "../primitives/form-field";
 import { Input } from "../primitives/input";
-import {
-  PasswordMeter,
-  scorePassword,
-} from "../primitives/password-meter";
+import { PasswordMeter, scorePassword } from "../primitives/password-meter";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -18,13 +15,9 @@ import {
   MailIcon,
   UserIcon,
 } from "../icons/glyphs";
-import { cx } from "../utils/cx";
-import {
-  AuthDisplay,
-  AuthLede,
-  InlineAlert,
-  StepFoot,
-} from "./_internal";
+import { Body } from "../typography/body";
+import { Display } from "../typography/display";
+import { AuthDisplay, AuthLede, InlineAlert, StepFoot } from "./_internal";
 
 /*
  * AcceptInvite — page-shaped composite covering the two B-scenario
@@ -92,7 +85,10 @@ function hash(s: string) {
   return Math.abs(h);
 }
 function gradientFor(seed: string) {
-  return INVITER_GRADIENTS[hash(seed) % INVITER_GRADIENTS.length] ?? INVITER_GRADIENTS[0];
+  return (
+    INVITER_GRADIENTS[hash(seed) % INVITER_GRADIENTS.length] ??
+    INVITER_GRADIENTS[0]
+  );
 }
 
 /**
@@ -138,21 +134,18 @@ export function AcceptInvite({
     (email && email.includes("@") ? email.split("@")[0] : "back");
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-s-6">
       <Eyebrow>
-        Accept invite ·{" "}
-        <b className="text-ink-hi">
-          {mode === "signup" ? "New user" : "Existing user"}
-        </b>
+        Accept invite · <b className="text-ink-hi">{mode === "signup" ? "New user" : "Existing user"}</b>
       </Eyebrow>
 
       {inviterName ? (
         <div
-          className={cx(
-            "cg-fade-up mt-s-3 inline-flex w-fit items-center gap-s-2 rounded-pill",
-            "border border-hairline-strong bg-surface-01 px-s-3 py-s-1",
-            "font-mono text-mono-sm text-ink-lo",
-          )}
+          className={
+            "cg-fade-up mt-s-3 inline-flex w-fit items-center gap-s-2 rounded-pill " +
+            "border border-hairline-strong bg-surface-01 px-s-3 py-s-1 " +
+            "font-mono text-mono-sm text-ink-lo"
+          }
         >
           <span
             aria-hidden
@@ -168,22 +161,28 @@ export function AcceptInvite({
         </div>
       ) : null}
 
-      <AuthDisplay>
-        {mode === "signup" ? (
-          <>
-            Join <em>{orgName}.</em>
-          </>
-        ) : (
-          <>
+      {mode === "signup" ? (
+        <>
+          <Display as="h1" size="md" className="cg-fade-up">
+            Join <em className="italic font-normal text-bone">{orgName}.</em>
+          </Display>
+          <Body
+            as="p"
+            size="md"
+            tone="lo"
+            className="cg-fade-up cg-fade-up-1 mt-s-4 max-w-[52ch]"
+          >
+            {`${inviterName ? `${inviterName} ` : "An admin "}assigned you a role on ${orgName}. Set up your account to accept the invite.`}
+          </Body>
+        </>
+      ) : (
+        <>
+          <AuthDisplay>
             Welcome back, <em>{greeting}.</em>
-          </>
-        )}
-      </AuthDisplay>
-      <AuthLede>
-        {mode === "signup"
-          ? `${inviterName ? `${inviterName} ` : "An admin "}assigned you a role on ${orgName}. Set up your account to accept the invite.`
-          : `Sign in to accept your invite to ${orgName}.`}
-      </AuthLede>
+          </AuthDisplay>
+          <AuthLede>{`Sign in to accept your invite to ${orgName}.`}</AuthLede>
+        </>
+      )}
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
         {error ? <InlineAlert>{error}</InlineAlert> : null}
@@ -203,18 +202,16 @@ export function AcceptInvite({
               type="email"
               value={email}
               readOnly
-              density="brand"
               variant="auth"
               className={mode === "signup" ? "pr-[110px]" : ""}
             />
             {mode === "signup" ? (
               <span
-                className={cx(
-                  "absolute right-[8px] top-1/2 -translate-y-1/2",
-                  "rounded-xs border border-hairline-strong bg-surface-02",
-                  "px-s-2 py-[2px] font-mono text-mono-sm uppercase tracking-tactical",
-                  "text-ember",
-                )}
+                className={
+                  "absolute right-[8px] top-1/2 -translate-y-1/2 " +
+                  "rounded-xs border border-hairline-strong bg-surface-02 px-s-2 py-[2px] " +
+                  "font-mono text-mono-sm uppercase tracking-tactical text-ember"
+                }
               >
                 FROM INVITE
               </span>
@@ -237,7 +234,6 @@ export function AcceptInvite({
               type="text"
               autoComplete="given-name"
               placeholder="Ada"
-              density="brand"
               variant="auth"
               value={val.firstName ?? ""}
               onChange={(e) =>
@@ -253,8 +249,7 @@ export function AcceptInvite({
           tone="auth"
           label={
             <span className="inline-flex items-center gap-[6px]">
-              <LockIcon />{" "}
-              {mode === "signup" ? "Set a password" : "Password"}
+              <LockIcon /> {mode === "signup" ? "Set a password" : "Password"}
             </span>
           }
           htmlFor="auth-invite-password"
@@ -263,11 +258,12 @@ export function AcceptInvite({
             <Input
               id="auth-invite-password"
               type={showPw ? "text" : "password"}
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              autoComplete={
+                mode === "signup" ? "new-password" : "current-password"
+              }
               placeholder={
                 mode === "signup" ? "At least 8 characters" : "••••••••••"
               }
-              density="brand"
               variant="auth"
               value={val.password}
               onChange={(e) =>
@@ -281,7 +277,7 @@ export function AcceptInvite({
               type="button"
               onClick={() => setShowPw((s) => !s)}
               aria-label={showPw ? "Hide password" : "Show password"}
-              className="absolute right-[10px] top-1/2 -translate-y-1/2 text-ink-dim hover:text-ink-hi transition-colors"
+              className="absolute right-[10px] top-1/2 -translate-y-1/2 text-ink-dim transition-colors hover:text-ink-hi"
             >
               {showPw ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -296,7 +292,6 @@ export function AcceptInvite({
       <StepFoot
         back={
           <Button
-            density="brand"
             variant="ghost"
             onPress={onCancel}
             leadingIcon={<ArrowLeftIcon />}
@@ -306,7 +301,6 @@ export function AcceptInvite({
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             isLoading={isSubmitting}
             isDisabled={!canSubmit}

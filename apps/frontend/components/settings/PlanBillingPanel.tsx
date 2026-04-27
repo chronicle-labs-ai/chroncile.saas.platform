@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createCheckoutSession, createPortalSession } from "@/app/(dashboard)/dashboard/settings/billing-actions";
+import {
+  createCheckoutSession,
+  createPortalSession,
+} from "@/app/(dashboard)/dashboard/settings/billing-actions";
 import type { Plan } from "plans";
 
 interface PlanBillingPanelProps {
@@ -69,7 +72,9 @@ export function PlanBillingPanel({
     }
   };
 
-  const currentPlan = currentPlanId ? plans.find((p) => p.id === currentPlanId) : null;
+  const currentPlan = currentPlanId
+    ? plans.find((p) => p.id === currentPlanId)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -78,7 +83,9 @@ export function PlanBillingPanel({
         <div className="panel border-nominal-dim">
           <div className="flex items-center gap-3 px-4 py-3 bg-nominal-bg border-b border-nominal-dim">
             <div className="status-dot status-dot--nominal" />
-            <span className="text-sm font-medium text-nominal">Your subscription was updated successfully.</span>
+            <span className="text-sm font-medium text-nominal">
+              Your subscription was updated successfully.
+            </span>
           </div>
         </div>
       )}
@@ -112,7 +119,9 @@ export function PlanBillingPanel({
 
       {/* Block 2: Choose a plan */}
       <div>
-        <div className="text-xs text-tertiary tracking-wide uppercase mb-3">Choose a plan</div>
+        <div className="text-xs text-tertiary tracking-wide uppercase mb-3">
+          Choose a plan
+        </div>
         {error && (
           <div className="mb-4 px-4 py-2 rounded-[var(--radius-sm)] bg-critical-bg border border-critical-dim">
             <p className="text-sm text-critical">{error}</p>
@@ -121,8 +130,12 @@ export function PlanBillingPanel({
         {redirectingPlan && (
           <div className="mb-4 px-4 py-3 rounded-[var(--radius-sm)] bg-data-bg border border-data-dim">
             <p className="text-sm text-data">
-              {redirectingPlan.name} — {formatPrice(redirectingPlan.amountCents, redirectingPlan.currency)}/
-              {redirectingPlan.interval}. Redirecting to secure checkout…
+              {redirectingPlan.name} —{" "}
+              {formatPrice(
+                redirectingPlan.amountCents,
+                redirectingPlan.currency
+              )}
+              /{redirectingPlan.interval}. Redirecting to secure checkout…
             </p>
           </div>
         )}
@@ -139,8 +152,12 @@ export function PlanBillingPanel({
               >
                 <div className="panel__header">
                   <span className="panel__title">{plan.name}</span>
-                  {isRecommended && <span className="badge badge--data">Recommended</span>}
-                  {!isRecommended && isCurrent && <span className="badge badge--nominal">Current</span>}
+                  {isRecommended && (
+                    <span className="badge badge--data">Recommended</span>
+                  )}
+                  {!isRecommended && isCurrent && (
+                    <span className="badge badge--nominal">Current</span>
+                  )}
                 </div>
                 <div className="panel__content flex-1 flex flex-col">
                   <div className="metric mb-3">
@@ -149,7 +166,9 @@ export function PlanBillingPanel({
                     </div>
                     <div className="metric__label">per {plan.interval}</div>
                   </div>
-                  <p className="text-xs text-tertiary mb-4">{plan.description}</p>
+                  <p className="text-xs text-tertiary mb-4">
+                    {plan.description}
+                  </p>
                   <ul className="space-y-1.5 text-xs text-tertiary mb-6 flex-1">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2">

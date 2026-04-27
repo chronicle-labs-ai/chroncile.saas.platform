@@ -46,8 +46,7 @@ const scrollShadow = tv({
 type ScrollShadowVariantProps = VariantProps<typeof scrollShadow>;
 
 export interface ScrollShadowProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    ScrollShadowVariantProps {
+  extends React.HTMLAttributes<HTMLDivElement>, ScrollShadowVariantProps {
   orientation?: "vertical" | "horizontal";
   /** Tailwind class for the scroll container (e.g. max-h-[320px]). */
   containerClassName?: string;

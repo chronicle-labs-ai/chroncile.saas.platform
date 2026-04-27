@@ -35,8 +35,10 @@ export interface ProvisioningStep {
   techKey?: string;
 }
 
-export interface ProvisioningChecklistProps
-  extends Omit<React.HTMLAttributes<HTMLOListElement>, "children"> {
+export interface ProvisioningChecklistProps extends Omit<
+  React.HTMLAttributes<HTMLOListElement>,
+  "children"
+> {
   steps: ProvisioningStep[];
 }
 
@@ -72,7 +74,7 @@ function ProvisioningRow({ step }: { step: ProvisioningStep }) {
         "flex items-center gap-s-3 rounded-sm",
         "px-s-3 py-s-2",
         "border border-hairline bg-surface-01",
-        state === "running" ? "border-hairline-strong" : null,
+        state === "running" ? "border-hairline-strong" : null
       )}
     >
       <Indicator state={state} />
@@ -80,7 +82,7 @@ function ProvisioningRow({ step }: { step: ProvisioningStep }) {
         className={cx(
           "flex-1 font-sans text-[13.5px] leading-[1.45]",
           state === "pending" ? "text-ink-dim" : "text-ink-hi",
-          state === "done" ? "text-ink" : null,
+          state === "done" ? "text-ink" : null
         )}
       >
         {label}
@@ -99,7 +101,7 @@ function Indicator({ state }: { state: ProvisioningState }) {
         aria-hidden
         className={cx(
           "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center",
-          "rounded-pill bg-event-green text-ink-inv-hi",
+          "rounded-pill bg-event-green text-ink-inv-hi"
         )}
       >
         <CheckIcon size={11} />
@@ -113,7 +115,7 @@ function Indicator({ state }: { state: ProvisioningState }) {
         className={cx(
           "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center",
           "rounded-pill border-[1.5px] border-ember bg-ember/[0.08]",
-          "cg-pulse-ember",
+          "cg-pulse-ember"
         )}
       >
         <span className="h-[6px] w-[6px] rounded-pill bg-ember" />
@@ -125,7 +127,7 @@ function Indicator({ state }: { state: ProvisioningState }) {
       aria-hidden
       className={cx(
         "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center",
-        "rounded-pill border border-hairline-strong bg-transparent",
+        "rounded-pill border border-hairline-strong bg-transparent"
       )}
     />
   );

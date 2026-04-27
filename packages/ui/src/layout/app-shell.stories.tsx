@@ -34,11 +34,7 @@ const FilterIcon = () => (
   </svg>
 );
 
-const navItem = (
-  label: string,
-  count?: string | number,
-  active?: boolean,
-) => (
+const navItem = (label: string, count?: string | number, active?: boolean) => (
   <div
     key={label}
     className={
@@ -110,7 +106,9 @@ export const Compact: Story = {
               <span className="flex h-[22px] w-[22px] items-center justify-center rounded-l-sm bg-ember font-display text-[12px] font-semibold text-white">
                 C
               </span>
-              <span className="text-[13px] font-medium text-l-ink">Chronicle</span>
+              <span className="text-[13px] font-medium text-l-ink">
+                Chronicle
+              </span>
             </div>
             {sectionHead("Workspace")}
             {navItem("Inbox", 12)}
@@ -215,8 +213,7 @@ export const SidebarCompact: Story = {
         topbar={
           <TopBar>
             <TopBar.Crumb>
-              Chronicle <TopBar.CrumbSep /> support-agent{" "}
-              <TopBar.CrumbSep />
+              Chronicle <TopBar.CrumbSep /> support-agent <TopBar.CrumbSep />
               <TopBar.CrumbActive>Timeline</TopBar.CrumbActive>
             </TopBar.Crumb>
             <TopBar.Spacer />

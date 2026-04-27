@@ -87,14 +87,13 @@ export function SelectWorkspace({
         </AuthLede>
         <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-2">
           <Button
-            density="brand"
             variant="ember"
             onPress={onCreateNew}
             trailingIcon={<ArrowRightIcon />}
           >
             Create a new workspace
           </Button>
-          <Button density="brand" variant="secondary" onPress={onSignOut}>
+          <Button variant="secondary" onPress={onSignOut}>
             I&rsquo;m waiting on an invite
           </Button>
         </div>
@@ -165,7 +164,7 @@ export function SelectWorkspace({
               "rounded-sm border border-dashed border-hairline-strong",
               "px-s-3 py-s-3 font-mono text-mono uppercase tracking-tactical",
               "text-ink-dim transition-colors duration-fast ease-out",
-              "hover:border-ember hover:text-ink-hi",
+              "hover:border-ember hover:text-ink-hi"
             )}
           >
             + Create another workspace
@@ -192,7 +191,6 @@ function SearchByName({
   return (
     <>
       <SearchField
-        density="brand"
         placeholder="Filter by workspace name"
         value={q}
         onChange={setQ}

@@ -63,11 +63,7 @@ export function FilterOperatorMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {available.map((op) => (
-          <DropdownMenuItem
-            key={op}
-            id={op}
-            onAction={() => onChange(op)}
-          >
+          <DropdownMenuItem key={op} id={op} onAction={() => onChange(op)}>
             {OPERATORS[op].label}
           </DropdownMenuItem>
         ))}

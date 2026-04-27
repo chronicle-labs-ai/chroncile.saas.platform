@@ -3,6 +3,7 @@
 import * as React from "react";
 import { CheckIcon } from "../icons/glyphs";
 import { tv } from "../utils/tv";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * scorePassword — heuristic 0..4. The four bars correspond to
@@ -24,28 +25,46 @@ export function scorePassword(pw: string): 0 | 1 | 2 | 3 | 4 {
   return Math.min(4, score) as 0 | 1 | 2 | 3 | 4;
 }
 
-const STRENGTH_LABELS = ["Empty", "Weak", "Fair", "Strong", "Excellent"] as const;
+const STRENGTH_LABELS = [
+  "Empty",
+  "Weak",
+  "Fair",
+  "Strong",
+  "Excellent",
+] as const;
 
 const meter = tv({
   slots: {
-    root: "flex flex-col gap-s-2",
+    root: "flex flex-col",
     bars: "flex gap-[4px]",
-    bar:
-      "h-[3px] flex-1 rounded-pill bg-surface-03 " +
-      "transition-colors duration-fast ease-out",
-    meta:
-      "flex items-center justify-between font-mono text-mono-sm " +
-      "uppercase tracking-tactical text-ink-dim",
-    strength: "text-ink-lo",
+    bar: "h-[3px] flex-1 transition-colors duration-fast ease-out",
+    meta: "flex items-center justify-between",
+    strength: "",
     rules: "grid grid-cols-2 gap-x-s-3 gap-y-[6px] mt-s-1",
-    rule:
-      "inline-flex items-center gap-[6px] font-mono text-mono-sm " +
-      "text-ink-dim",
+    rule: "inline-flex items-center gap-[6px]",
     ruleCheck:
-      "inline-flex h-[12px] w-[12px] items-center justify-center " +
-      "rounded-pill border border-hairline-strong text-transparent",
+      "inline-flex h-[12px] w-[12px] items-center justify-center text-transparent",
   },
   variants: {
+    density: {
+      brand: {
+        root: "gap-s-2",
+        bar: "rounded-pill bg-surface-03",
+        meta:
+          "font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
+        strength: "text-ink-lo",
+        rule: "font-mono text-mono-sm text-ink-dim",
+        ruleCheck: "rounded-pill border border-hairline-strong",
+      },
+      compact: {
+        root: "gap-[6px]",
+        bar: "rounded-pill bg-l-wash-5",
+        meta: "font-sans text-[12px] font-medium text-l-ink-dim",
+        strength: "text-l-ink-lo",
+        rule: "font-sans text-[12px] text-l-ink-dim",
+        ruleCheck: "rounded-pill border border-l-border",
+      },
+    },
     score: {
       0: {},
       1: {},
@@ -54,6 +73,7 @@ const meter = tv({
       4: {},
     },
   },
+  defaultVariants: { density: "brand" },
 });
 
 const SCORE_COLORS: Record<number, string> = {
@@ -75,12 +95,14 @@ const RULE_MET =
   "text-ink-hi border-event-green/60 bg-event-green/15 " +
   "[&>svg]:text-event-green";
 
-export interface PasswordMeterProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export type PasswordMeterDensity = "compact" | "brand";
+
+export interface PasswordMeterProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Password value to score. */
   value: string;
   /** Hide the rule list. The bar + label still render. */
   hideRules?: boolean;
+  density?: PasswordMeterDensity;
 }
 
 /**
@@ -90,11 +112,13 @@ export interface PasswordMeterProps
 export function PasswordMeter({
   value,
   hideRules = false,
+  density: densityProp,
   className,
   ...rest
 }: PasswordMeterProps) {
   const score = scorePassword(value);
-  const slots = meter({ score });
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = meter({ score, density });
   const label = STRENGTH_LABELS[score];
 
   const rules = [
@@ -125,9 +149,7 @@ export function PasswordMeter({
       </div>
       <div className={slots.meta()}>
         <span>Strength</span>
-        <b className={`font-medium ${STRENGTH_TONE[score] ?? ""}`}>
-          {label}
-        </b>
+        <b className={`font-medium ${STRENGTH_TONE[score] ?? ""}`}>{label}</b>
       </div>
       {hideRules ? null : (
         <div className={slots.rules()}>
@@ -138,10 +160,7 @@ export function PasswordMeter({
               data-met={r.ok || undefined}
             >
               <span
-                className={
-                  slots.ruleCheck() +
-                  (r.ok ? ` ${RULE_MET}` : "")
-                }
+                className={slots.ruleCheck() + (r.ok ? ` ${RULE_MET}` : "")}
               >
                 {r.ok ? <CheckIcon size={8} /> : null}
               </span>

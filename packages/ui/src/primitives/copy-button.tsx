@@ -8,39 +8,65 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const copyButton = tv({
   base:
-    "inline-flex h-[30px] w-[30px] items-center justify-center rounded-xs border " +
+    "inline-flex items-center justify-center border " +
     "transition-colors duration-fast ease-out outline-none " +
     "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
     "data-[focus-visible=true]:outline-ember",
   variants: {
+    density: {
+      brand: "h-[30px] w-[30px] rounded-xs",
+      compact: "h-[24px] w-[24px] rounded-l",
+    },
     copied: {
       true: "border-event-green/40 bg-[rgba(74,222,128,0.08)] text-event-green",
-      false:
+      false: "",
+    },
+  },
+  compoundVariants: [
+    {
+      density: "brand",
+      copied: false,
+      class:
         "border-hairline-strong bg-surface-02 text-ink-dim " +
         "data-[hovered=true]:border-ink-dim data-[hovered=true]:text-ink-hi",
     },
-  },
-  defaultVariants: { copied: false },
+    {
+      density: "compact",
+      copied: false,
+      class:
+        "border-l-border bg-l-surface-raised text-l-ink-lo " +
+        "data-[hovered=true]:border-l-border-strong data-[hovered=true]:text-l-ink",
+    },
+  ],
+  defaultVariants: { density: "brand", copied: false },
 });
 
-export interface CopyButtonProps
-  extends Omit<RACButtonProps, "className" | "children" | "onPress"> {
+export interface CopyButtonProps extends Omit<
+  RACButtonProps,
+  "className" | "children" | "onPress"
+> {
   text: string;
   /** Milliseconds the "copied" confirmation stays visible. */
   confirmFor?: number;
+  /** Force a density flavor. Defaults to whichever the surrounding
+   * `ChromeStyleProvider` resolves to. */
+  density?: "compact" | "brand";
   className?: string;
 }
 
 export function CopyButton({
   text,
   confirmFor = 2000,
+  density: densityProp,
   className,
   ...props
 }: CopyButtonProps) {
   const [copied, setCopied] = React.useState(false);
+  const density = useResolvedChromeDensity(densityProp);
   const timeoutRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
@@ -56,7 +82,7 @@ export function CopyButton({
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(
         () => setCopied(false),
-        confirmFor,
+        confirmFor
       );
     } catch {
       // Clipboard API unavailable — silently noop. Caller can rely on the
@@ -69,10 +95,11 @@ export function CopyButton({
       {...props}
       onPress={handleCopy}
       aria-label={copied ? "Copied" : "Copy to clipboard"}
-      className={composeTwRenderProps(className, copyButton({ copied }))}
+      data-density={density}
+      className={composeTwRenderProps(className, copyButton({ density, copied }))}
     >
       {copied ? (
-        <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+        <svg viewBox="0 0 24 24" fill="none" className={density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"}>
           <path
             d="M4.5 12.75l6 6 9-13.5"
             stroke="currentColor"
@@ -82,7 +109,7 @@ export function CopyButton({
           />
         </svg>
       ) : (
-        <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+        <svg viewBox="0 0 24 24" fill="none" className={density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"}>
           <rect
             x="8"
             y="8"

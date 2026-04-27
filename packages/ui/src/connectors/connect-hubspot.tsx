@@ -6,10 +6,7 @@ import { Checkbox } from "../primitives/checkbox";
 import { SourceGlyph } from "../icons/source-glyph";
 import { StatusDot } from "../primitives/status-dot";
 import { ArrowLeftIcon, ArrowRightIcon } from "../icons/glyphs";
-import {
-  type Source,
-  type SourceId,
-} from "../onboarding/data";
+import { type Source, type SourceId } from "../onboarding/data";
 import { type BackfillRunConfig } from "../onboarding/step-connect";
 import { ConnectorModalShell } from "./connector-modal-shell";
 import { FieldRow, ScopeList, StepRail } from "./_internal";
@@ -61,13 +58,13 @@ export function ConnectHubSpot({
 }: ConnectHubSpotProps) {
   const [step, setStep] = React.useState<StepId>("scopes");
   const [selectedScopes, setSelectedScopes] = React.useState<Set<string>>(
-    () => new Set(scopes.filter((s) => s.defaultOn).map((s) => s.id)),
+    () => new Set(scopes.filter((s) => s.defaultOn).map((s) => s.id))
   );
   const [selectedObjects, setSelectedObjects] = React.useState<Set<string>>(
-    () => new Set(objects.map((o) => o.id)),
+    () => new Set(objects.map((o) => o.id))
   );
-  const [mapping, setMapping] = React.useState<HubSpotMappingRow[]>(
-    () => defaultMapping.map((m) => ({ ...m })),
+  const [mapping, setMapping] = React.useState<HubSpotMappingRow[]>(() =>
+    defaultMapping.map((m) => ({ ...m }))
   );
 
   const stepIndex = STEPS.findIndex((s) => s.id === step);
@@ -108,7 +105,7 @@ export function ConnectHubSpot({
 
   const setMappingMode = (idx: number, mode: HubSpotMappingRow["mode"]) => {
     setMapping((prev) =>
-      prev.map((row, i) => (i === idx ? { ...row, mode } : row)),
+      prev.map((row, i) => (i === idx ? { ...row, mode } : row))
     );
   };
 
@@ -147,7 +144,6 @@ export function ConnectHubSpot({
         actions: (
           <>
             <Button
-              density="brand"
               variant="ghost"
               onPress={goBack}
               leadingIcon={<ArrowLeftIcon />}
@@ -155,7 +151,6 @@ export function ConnectHubSpot({
               {step === "scopes" ? "Cancel" : "Back"}
             </Button>
             <Button
-              density="brand"
               variant="ember"
               onPress={goNext}
               trailingIcon={<ArrowRightIcon />}
@@ -249,7 +244,7 @@ export function ConnectHubSpot({
                           onChange={(e) =>
                             setMappingMode(
                               i,
-                              e.currentTarget.value as HubSpotMappingRow["mode"],
+                              e.currentTarget.value as HubSpotMappingRow["mode"]
                             )
                           }
                           aria-label={`Mapping mode for ${row.source}`}

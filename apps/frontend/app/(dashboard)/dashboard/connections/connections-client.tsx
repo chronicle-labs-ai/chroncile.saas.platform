@@ -1,7 +1,13 @@
 "use client";
 
 import Nango, { type ConnectUIEvent } from "@nangohq/frontend";
-import { startTransition, useEffect, useMemo, useState, type MouseEvent } from "react";
+import {
+  startTransition,
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import type {
   IntercomIntegrationResponse,
@@ -73,7 +79,9 @@ function formatConnectedAt(connectedAt?: string | null) {
 }
 
 function getConnectionMetadata(connection: ConnectionData | null | undefined) {
-  return (connection?.metadata as ConnectionMetadata | null | undefined) ?? null;
+  return (
+    (connection?.metadata as ConnectionMetadata | null | undefined) ?? null
+  );
 }
 
 function getConnectionId(connection: ConnectionData | null | undefined) {
@@ -84,18 +92,23 @@ function getConnectionId(connection: ConnectionData | null | undefined) {
 function getConnectionLabel(connection: ConnectionData | null | undefined) {
   const metadata = getConnectionMetadata(connection);
   return (
-    metadata?.account_name ||
-    metadata?.workspace_name ||
-    "Connected workspace"
+    metadata?.account_name || metadata?.workspace_name || "Connected workspace"
   );
 }
 
 function getTrellusStatus(trellus: TrellusIntegrationResponse | null) {
-  if (!trellus?.connection) return { label: "Not configured", badge: "badge--neutral" };
-  if (trellus.setupStatus === "active" || trellus.connection.status === "active") {
+  if (!trellus?.connection)
+    return { label: "Not configured", badge: "badge--neutral" };
+  if (
+    trellus.setupStatus === "active" ||
+    trellus.connection.status === "active"
+  ) {
     return { label: "Active", badge: "badge--nominal" };
   }
-  if (trellus.setupStatus === "error" || trellus.connection.status === "error") {
+  if (
+    trellus.setupStatus === "error" ||
+    trellus.connection.status === "error"
+  ) {
     return { label: "Error", badge: "badge--critical" };
   }
   return { label: "Awaiting test event", badge: "badge--caution" };
@@ -182,28 +195,41 @@ export function ConnectionsClient({
 
   const [providers, setProviders] = useState(initialProviders);
   const [connections, setConnections] = useState(initialConnections);
-  const [intercom, setIntercom] = useState<IntercomIntegrationResponse | null>(initialIntercom);
-  const [klaviyo, setKlaviyo] = useState<KlaviyoIntegrationResponse | null>(initialKlaviyo);
-  const [shopify, setShopify] = useState<ShopifyIntegrationResponse | null>(initialShopify);
-  const [trellus, setTrellus] = useState<TrellusIntegrationResponse | null>(initialTrellus);
-  const [trellusSecret, setTrellusSecret] = useState<string | null>(
-    initialTrellus?.headerValue ?? null,
+  const [intercom, setIntercom] = useState<IntercomIntegrationResponse | null>(
+    initialIntercom
   );
-  const [isIntercomDisconnectOpen, setIsIntercomDisconnectOpen] = useState(false);
+  const [klaviyo, setKlaviyo] = useState<KlaviyoIntegrationResponse | null>(
+    initialKlaviyo
+  );
+  const [shopify, setShopify] = useState<ShopifyIntegrationResponse | null>(
+    initialShopify
+  );
+  const [trellus, setTrellus] = useState<TrellusIntegrationResponse | null>(
+    initialTrellus
+  );
+  const [trellusSecret, setTrellusSecret] = useState<string | null>(
+    initialTrellus?.headerValue ?? null
+  );
+  const [isIntercomDisconnectOpen, setIsIntercomDisconnectOpen] =
+    useState(false);
   const [isIntercomBusy, setIsIntercomBusy] = useState(false);
   const [isKlaviyoDisconnectOpen, setIsKlaviyoDisconnectOpen] = useState(false);
   const [isKlaviyoBusy, setIsKlaviyoBusy] = useState(false);
   const [isShopifyDisconnectOpen, setIsShopifyDisconnectOpen] = useState(false);
   const [isShopifyBusy, setIsShopifyBusy] = useState(false);
   const [isShopifyModalOpen, setIsShopifyModalOpen] = useState(false);
-  const [shopifyShopDomain, setShopifyShopDomain] = useState(initialShopify?.shopDomain ?? "");
+  const [shopifyShopDomain, setShopifyShopDomain] = useState(
+    initialShopify?.shopDomain ?? ""
+  );
   const [isTrellusModalOpen, setIsTrellusModalOpen] = useState(false);
   const [isTrellusDisconnectOpen, setIsTrellusDisconnectOpen] = useState(false);
   const [isTrellusBusy, setIsTrellusBusy] = useState(false);
   const [busyProvider, setBusyProvider] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(initialSuccessMessage ?? null);
+  const [message, setMessage] = useState<string | null>(
+    initialSuccessMessage ?? null
+  );
   const [error, setError] = useState<string | null>(
-    initialErrorMessage ?? initialLoadError ?? null,
+    initialErrorMessage ?? initialLoadError ?? null
   );
   const [providerToDisconnect, setProviderToDisconnect] =
     useState<NangoProviderSummary | null>(null);
@@ -295,15 +321,14 @@ export function ConnectionsClient({
       klaviyoResult,
       shopifyResult,
       trellusResult,
-    ] =
-      await Promise.allSettled([
-        api.listNangoProviders(),
-        api.listNangoConnections(),
-        api.getIntercomIntegration(),
-        api.getKlaviyoIntegration(),
-        api.getShopifyIntegration(),
-        api.getTrellusIntegration(),
-      ]);
+    ] = await Promise.allSettled([
+      api.listNangoProviders(),
+      api.listNangoConnections(),
+      api.getIntercomIntegration(),
+      api.getKlaviyoIntegration(),
+      api.getShopifyIntegration(),
+      api.getTrellusIntegration(),
+    ]);
 
     if (providersResult.status === "fulfilled") {
       setProviders(providersResult.value.providers);
@@ -313,8 +338,9 @@ export function ConnectionsClient({
     if (connectionsResult.status === "fulfilled") {
       setConnections(connectionsResult.value.connections);
     } else if (providersResult.status === "fulfilled") {
-      const fallbackConnections = providersResult.value.providers
-        .flatMap((provider) => (provider.connection ? [provider.connection] : []));
+      const fallbackConnections = providersResult.value.providers.flatMap(
+        (provider) => (provider.connection ? [provider.connection] : [])
+      );
       setConnections(fallbackConnections);
     }
 
@@ -344,12 +370,15 @@ export function ConnectionsClient({
   const providerOrder = useMemo(
     () =>
       new Map(providers.map((provider, index) => [provider.provider, index])),
-    [providers],
+    [providers]
   );
 
   const connectionsByProvider = useMemo(
-    () => new Map(connections.map((connection) => [connection.provider, connection])),
-    [connections],
+    () =>
+      new Map(
+        connections.map((connection) => [connection.provider, connection])
+      ),
+    [connections]
   );
 
   const providersWithConnections = useMemo(
@@ -357,9 +386,11 @@ export function ConnectionsClient({
       providers.map((provider) => ({
         ...provider,
         connection:
-          connectionsByProvider.get(provider.provider) || provider.connection || null,
+          connectionsByProvider.get(provider.provider) ||
+          provider.connection ||
+          null,
       })),
-    [providers, connectionsByProvider],
+    [providers, connectionsByProvider]
   );
 
   const activeConnections = useMemo(
@@ -369,9 +400,9 @@ export function ConnectionsClient({
         .sort(
           (left, right) =>
             (providerOrder.get(left.provider) ?? Number.MAX_SAFE_INTEGER) -
-            (providerOrder.get(right.provider) ?? Number.MAX_SAFE_INTEGER),
+            (providerOrder.get(right.provider) ?? Number.MAX_SAFE_INTEGER)
         ),
-    [connections, providerOrder],
+    [connections, providerOrder]
   );
 
   const activeTrellusConnection =
@@ -428,7 +459,7 @@ export function ConnectionsClient({
               setError(
                 syncError instanceof Error
                   ? syncError.message
-                  : "Failed to save the connection locally.",
+                  : "Failed to save the connection locally."
               );
             } finally {
               setBusyProvider(null);
@@ -440,7 +471,9 @@ export function ConnectionsClient({
           }
 
           if (event?.type === "error") {
-            setError(event.payload?.errorMessage || "Failed to connect provider.");
+            setError(
+              event.payload?.errorMessage || "Failed to connect provider."
+            );
             setBusyProvider(null);
           }
         },
@@ -452,14 +485,16 @@ export function ConnectionsClient({
       setError(
         sessionError instanceof Error
           ? sessionError.message
-          : "Failed to start connect flow.",
+          : "Failed to start connect flow."
       );
     }
   };
 
   const handleAuthorizeIntercom = async () => {
     if (!intercom?.isAvailable) {
-      setError("Intercom direct integration is not configured in this environment.");
+      setError(
+        "Intercom direct integration is not configured in this environment."
+      );
       return;
     }
 
@@ -473,7 +508,7 @@ export function ConnectionsClient({
       setError(
         authorizeError instanceof Error
           ? authorizeError.message
-          : "Failed to start the Intercom connect flow.",
+          : "Failed to start the Intercom connect flow."
       );
       setIsIntercomBusy(false);
     }
@@ -492,7 +527,7 @@ export function ConnectionsClient({
       setError(
         disconnectError instanceof Error
           ? disconnectError.message
-          : "Failed to disconnect Intercom.",
+          : "Failed to disconnect Intercom."
       );
     } finally {
       setIsIntercomBusy(false);
@@ -501,7 +536,9 @@ export function ConnectionsClient({
 
   const handleAuthorizeKlaviyo = async () => {
     if (!klaviyo?.isAvailable) {
-      setError("Klaviyo direct integration is not configured in this environment.");
+      setError(
+        "Klaviyo direct integration is not configured in this environment."
+      );
       return;
     }
 
@@ -515,7 +552,7 @@ export function ConnectionsClient({
       setError(
         authorizeError instanceof Error
           ? authorizeError.message
-          : "Failed to start the Klaviyo connect flow.",
+          : "Failed to start the Klaviyo connect flow."
       );
       setIsKlaviyoBusy(false);
     }
@@ -534,7 +571,7 @@ export function ConnectionsClient({
       setError(
         disconnectError instanceof Error
           ? disconnectError.message
-          : "Failed to disconnect Klaviyo.",
+          : "Failed to disconnect Klaviyo."
       );
     } finally {
       setIsKlaviyoBusy(false);
@@ -543,7 +580,9 @@ export function ConnectionsClient({
 
   const openShopifyModal = () => {
     if (!shopify?.isAvailable) {
-      setError("Shopify direct integration is not configured in this environment.");
+      setError(
+        "Shopify direct integration is not configured in this environment."
+      );
       return;
     }
 
@@ -554,7 +593,9 @@ export function ConnectionsClient({
 
   const handleAuthorizeShopify = async () => {
     if (!shopify?.isAvailable) {
-      setError("Shopify direct integration is not configured in this environment.");
+      setError(
+        "Shopify direct integration is not configured in this environment."
+      );
       return;
     }
 
@@ -575,7 +616,7 @@ export function ConnectionsClient({
       setError(
         authorizeError instanceof Error
           ? authorizeError.message
-          : "Failed to start the Shopify connect flow.",
+          : "Failed to start the Shopify connect flow."
       );
       setIsShopifyBusy(false);
     }
@@ -594,7 +635,7 @@ export function ConnectionsClient({
       setError(
         disconnectError instanceof Error
           ? disconnectError.message
-          : "Failed to disconnect Shopify.",
+          : "Failed to disconnect Shopify."
       );
     } finally {
       setIsShopifyBusy(false);
@@ -614,7 +655,9 @@ export function ConnectionsClient({
       setMessage(response.message || `${provider.displayName} sync triggered.`);
     } catch (syncError) {
       setError(
-        syncError instanceof Error ? syncError.message : "Failed to trigger sync.",
+        syncError instanceof Error
+          ? syncError.message
+          : "Failed to trigger sync."
       );
     } finally {
       setBusyProvider(null);
@@ -633,13 +676,13 @@ export function ConnectionsClient({
       });
       await refreshData();
       setMessage(
-        response.message || `${provider.displayName} backfill sync triggered.`,
+        response.message || `${provider.displayName} backfill sync triggered.`
       );
     } catch (syncError) {
       setError(
         syncError instanceof Error
           ? syncError.message
-          : "Failed to trigger backfill sync.",
+          : "Failed to trigger backfill sync."
       );
     } finally {
       setBusyProvider(null);
@@ -659,14 +702,14 @@ export function ConnectionsClient({
       });
       await refreshData();
       setMessage(
-        response.message || `${providerToDisconnect.displayName} disconnected.`,
+        response.message || `${providerToDisconnect.displayName} disconnected.`
       );
       setProviderToDisconnect(null);
     } catch (disconnectError) {
       setError(
         disconnectError instanceof Error
           ? disconnectError.message
-          : "Failed to disconnect provider.",
+          : "Failed to disconnect provider."
       );
     } finally {
       setBusyProvider(null);
@@ -693,7 +736,7 @@ export function ConnectionsClient({
       setError(
         setupError instanceof Error
           ? setupError.message
-          : "Failed to configure Trellus.",
+          : "Failed to configure Trellus."
       );
     } finally {
       setIsTrellusBusy(false);
@@ -709,12 +752,14 @@ export function ConnectionsClient({
       setTrellus(response);
       setTrellusSecret(response.headerValue ?? null);
       setIsTrellusModalOpen(true);
-      setMessage("Trellus webhook secret rotated. Update the header in Trellus.");
+      setMessage(
+        "Trellus webhook secret rotated. Update the header in Trellus."
+      );
     } catch (rotateError) {
       setError(
         rotateError instanceof Error
           ? rotateError.message
-          : "Failed to rotate Trellus secret.",
+          : "Failed to rotate Trellus secret."
       );
     } finally {
       setIsTrellusBusy(false);
@@ -736,7 +781,7 @@ export function ConnectionsClient({
       setError(
         disconnectError instanceof Error
           ? disconnectError.message
-          : "Failed to disconnect Trellus.",
+          : "Failed to disconnect Trellus."
       );
     } finally {
       setIsTrellusBusy(false);
@@ -877,7 +922,8 @@ export function ConnectionsClient({
               <div className="label mb-1">Webhook URL</div>
               <div className="flex items-center gap-2">
                 <code className="flex-1 break-all border border-border-dim bg-base px-3 py-2 font-mono text-xs text-primary">
-                  {trellus?.webhookUrl || "Create the connection to generate a URL"}
+                  {trellus?.webhookUrl ||
+                    "Create the connection to generate a URL"}
                 </code>
                 <CopyButton text={trellus?.webhookUrl || ""} />
               </div>
@@ -889,7 +935,9 @@ export function ConnectionsClient({
                 <code className="flex-1 break-all border border-border-dim bg-base px-3 py-2 font-mono text-xs text-primary">
                   {trellus?.headerName || "x-chronicle-webhook-secret"}
                 </code>
-                <CopyButton text={trellus?.headerName || "x-chronicle-webhook-secret"} />
+                <CopyButton
+                  text={trellus?.headerName || "x-chronicle-webhook-secret"}
+                />
               </div>
             </div>
 
@@ -912,18 +960,24 @@ export function ConnectionsClient({
           </div>
 
           <div className="rounded-sm border border-border-dim bg-elevated p-3">
-            <div className="mb-2 text-sm font-medium text-primary">Trellus setup</div>
+            <div className="mb-2 text-sm font-medium text-primary">
+              Trellus setup
+            </div>
             <ol className="list-decimal space-y-1 pl-5 text-sm text-secondary">
               <li>Create or open a Trellus webhook named Chronicle.</li>
               <li>Set HTTP Method to POST and paste the webhook URL.</li>
               <li>Leave When to Fire as Always fire (no filter).</li>
               <li>Add the custom header name and value above.</li>
-              <li>Keep the default payload mapping, save, then use Test Webhook.</li>
+              <li>
+                Keep the default payload mapping, save, then use Test Webhook.
+              </li>
             </ol>
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-medium text-primary">Expected fields</div>
+            <div className="mb-2 text-sm font-medium text-primary">
+              Expected fields
+            </div>
             <div className="flex max-h-28 flex-wrap gap-2 overflow-auto rounded-sm border border-border-dim bg-base p-3">
               {TRELLUS_FIELDS.map((field) => (
                 <span key={field} className="badge badge--neutral font-mono">
@@ -966,8 +1020,9 @@ export function ConnectionsClient({
       >
         <div className="space-y-4">
           <div className="rounded-sm border border-data-dim bg-data-bg p-3 text-sm text-data">
-            Enter the store domain, for example <code>store.myshopify.com</code>.
-            Chronicle will handle OAuth and provision the webhook subscriptions automatically.
+            Enter the store domain, for example <code>store.myshopify.com</code>
+            . Chronicle will handle OAuth and provision the webhook
+            subscriptions automatically.
           </div>
           <div className="space-y-2">
             <label htmlFor="shopify-shop-domain" className="label">
@@ -1004,7 +1059,9 @@ export function ConnectionsClient({
             }`}
           />
           <span className="text-sm text-secondary">
-            <span className="font-mono tabular-nums">{activeConnectionsCount}</span>{" "}
+            <span className="font-mono tabular-nums">
+              {activeConnectionsCount}
+            </span>{" "}
             active
           </span>
         </div>
@@ -1057,7 +1114,9 @@ export function ConnectionsClient({
                       Direct
                     </span>
                   </div>
-                  <p className="text-sm text-secondary">{intercom.description}</p>
+                  <p className="text-sm text-secondary">
+                    {intercom.description}
+                  </p>
                 </div>
                 <span className={`badge ${intercomStatus.badge}`}>
                   {intercomStatus.label}
@@ -1070,10 +1129,12 @@ export function ConnectionsClient({
                     <div className="rounded-sm border border-border-dim bg-elevated p-3">
                       <div className="label">Workspace</div>
                       <div className="mt-1 text-sm text-primary">
-                        {intercom.workspaceName || getConnectionLabel(intercom.connection)}
+                        {intercom.workspaceName ||
+                          getConnectionLabel(intercom.connection)}
                       </div>
                       <div className="mt-1 text-xs text-tertiary">
-                        Chronicle manages the webhook delivery for this Intercom workspace.
+                        Chronicle manages the webhook delivery for this Intercom
+                        workspace.
                       </div>
                     </div>
 
@@ -1087,7 +1148,8 @@ export function ConnectionsClient({
                       <div className="rounded-sm border border-border-dim bg-background/60 p-3">
                         <div className="label">Last Webhook</div>
                         <div className="mt-1 text-sm text-primary">
-                          {formatConnectedAt(intercom.lastReceivedAt) || "No events received yet"}
+                          {formatConnectedAt(intercom.lastReceivedAt) ||
+                            "No events received yet"}
                         </div>
                       </div>
                     </div>
@@ -1123,7 +1185,9 @@ export function ConnectionsClient({
                   )}
                 </div>
                 {intercom.connection && intercom.workspaceRegion && (
-                  <span className="badge badge--neutral">{intercom.workspaceRegion}</span>
+                  <span className="badge badge--neutral">
+                    {intercom.workspaceRegion}
+                  </span>
                 )}
               </div>
             </section>
@@ -1141,7 +1205,9 @@ export function ConnectionsClient({
                       Direct
                     </span>
                   </div>
-                  <p className="text-sm text-secondary">{klaviyo.description}</p>
+                  <p className="text-sm text-secondary">
+                    {klaviyo.description}
+                  </p>
                 </div>
                 <span className={`badge ${klaviyoStatus.badge}`}>
                   {klaviyoStatus.label}
@@ -1154,10 +1220,13 @@ export function ConnectionsClient({
                     <div className="rounded-sm border border-border-dim bg-elevated p-3">
                       <div className="label">Account</div>
                       <div className="mt-1 text-sm text-primary">
-                        {klaviyo.accountName || klaviyo.accountId || "Connected account"}
+                        {klaviyo.accountName ||
+                          klaviyo.accountId ||
+                          "Connected account"}
                       </div>
                       <div className="mt-1 text-xs text-tertiary">
-                        Chronicle manages the Klaviyo system webhook automatically for this account.
+                        Chronicle manages the Klaviyo system webhook
+                        automatically for this account.
                       </div>
                     </div>
 
@@ -1219,7 +1288,9 @@ export function ConnectionsClient({
                   )}
                 </div>
                 {klaviyo.accountId && (
-                  <span className="badge badge--neutral font-mono">{klaviyo.accountId}</span>
+                  <span className="badge badge--neutral font-mono">
+                    {klaviyo.accountId}
+                  </span>
                 )}
               </div>
             </section>
@@ -1237,7 +1308,9 @@ export function ConnectionsClient({
                       Direct
                     </span>
                   </div>
-                  <p className="text-sm text-secondary">{shopify.description}</p>
+                  <p className="text-sm text-secondary">
+                    {shopify.description}
+                  </p>
                 </div>
                 <span className={`badge ${shopifyStatus.badge}`}>
                   {shopifyStatus.label}
@@ -1250,10 +1323,13 @@ export function ConnectionsClient({
                     <div className="rounded-sm border border-border-dim bg-elevated p-3">
                       <div className="label">Store</div>
                       <div className="mt-1 text-sm text-primary">
-                        {shopify.shopName || shopify.shopDomain || "Connected store"}
+                        {shopify.shopName ||
+                          shopify.shopDomain ||
+                          "Connected store"}
                       </div>
                       <div className="mt-1 text-xs text-tertiary">
-                        Chronicle manages the Shopify webhook subscriptions automatically for this store.
+                        Chronicle manages the Shopify webhook subscriptions
+                        automatically for this store.
                       </div>
                     </div>
 
@@ -1315,7 +1391,9 @@ export function ConnectionsClient({
                   )}
                 </div>
                 {shopify.shopDomain && (
-                  <span className="badge badge--neutral font-mono">{shopify.shopDomain}</span>
+                  <span className="badge badge--neutral font-mono">
+                    {shopify.shopDomain}
+                  </span>
                 )}
               </div>
             </section>
@@ -1333,7 +1411,9 @@ export function ConnectionsClient({
                       Direct
                     </span>
                   </div>
-                  <p className="text-sm text-secondary">{trellus.description}</p>
+                  <p className="text-sm text-secondary">
+                    {trellus.description}
+                  </p>
                 </div>
                 <span className={`badge ${trellusStatus.badge}`}>
                   {trellusStatus.label}
@@ -1445,7 +1525,9 @@ export function ConnectionsClient({
               const connection = provider.connection;
               const metadata = getConnectionMetadata(connection);
               const isBusy = busyProvider === provider.provider;
-              const supportsBackfill = BACKFILL_PROVIDERS.has(provider.provider);
+              const supportsBackfill = BACKFILL_PROVIDERS.has(
+                provider.provider
+              );
               const connectionLabel = connection
                 ? getConnectionLabel(connection)
                 : null;
@@ -1465,7 +1547,9 @@ export function ConnectionsClient({
                           Nango
                         </span>
                       </div>
-                      <p className="text-sm text-secondary">{provider.description}</p>
+                      <p className="text-sm text-secondary">
+                        {provider.description}
+                      </p>
                     </div>
                     <span
                       className={`badge ${connection ? "badge--nominal" : "badge--neutral"}`}
@@ -1491,7 +1575,8 @@ export function ConnectionsClient({
                           <div className="rounded-sm border border-border-dim bg-background/60 p-3">
                             <div className="label">Connected At</div>
                             <div className="mt-1 text-sm text-primary">
-                              {formatConnectedAt(metadata?.connected_at) || "Unknown"}
+                              {formatConnectedAt(metadata?.connected_at) ||
+                                "Unknown"}
                             </div>
                           </div>
                           <div className="rounded-sm border border-border-dim bg-background/60 p-3">
@@ -1597,10 +1682,11 @@ export function ConnectionsClient({
             {activeConnections.map((connection) => {
               const metadata = getConnectionMetadata(connection);
               const provider = providers.find(
-                (item) => item.provider === connection.provider,
+                (item) => item.provider === connection.provider
               );
               const displayName =
-                provider?.displayName || formatProviderName(connection.provider);
+                provider?.displayName ||
+                formatProviderName(connection.provider);
 
               return (
                 <div
@@ -1623,7 +1709,10 @@ export function ConnectionsClient({
                       <div className="mt-0.5 text-xs text-tertiary">
                         {getConnectionLabel(connection)}
                         <span className="ml-2">
-                          · <span className="font-mono">{getConnectionId(connection)}</span>
+                          ·{" "}
+                          <span className="font-mono">
+                            {getConnectionId(connection)}
+                          </span>
                         </span>
                         {metadata?.connected_at && (
                           <span className="ml-2">
@@ -1635,7 +1724,9 @@ export function ConnectionsClient({
                   </div>
                   <div className="flex items-center gap-2">
                     {metadata?.region && (
-                      <span className="badge badge--neutral">{metadata.region}</span>
+                      <span className="badge badge--neutral">
+                        {metadata.region}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1656,17 +1747,21 @@ export function ConnectionsClient({
                       <span className="badge badge--neutral">Direct</span>
                     </div>
                     <div className="mt-0.5 text-xs text-tertiary">
-                      {intercom?.workspaceName || getConnectionLabel(activeIntercomConnection)}
+                      {intercom?.workspaceName ||
+                        getConnectionLabel(activeIntercomConnection)}
                       <span className="ml-2">
                         ·{" "}
-                        {formatConnectedAt(intercom?.lastReceivedAt) || "Awaiting first webhook"}
+                        {formatConnectedAt(intercom?.lastReceivedAt) ||
+                          "Awaiting first webhook"}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {intercom?.workspaceRegion && (
-                    <span className="badge badge--neutral">{intercom.workspaceRegion}</span>
+                    <span className="badge badge--neutral">
+                      {intercom.workspaceRegion}
+                    </span>
                   )}
                   <span className="badge badge--neutral">
                     {intercom?.eventCount ?? 0} events
@@ -1682,9 +1777,13 @@ export function ConnectionsClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-medium text-primary">Klaviyo</div>
+                      <div className="text-sm font-medium text-primary">
+                        Klaviyo
+                      </div>
                       <div className="mt-1 text-xs text-tertiary">
-                        {klaviyo?.accountName || klaviyo?.accountId || getConnectionLabel(activeKlaviyoConnection)}
+                        {klaviyo?.accountName ||
+                          klaviyo?.accountId ||
+                          getConnectionLabel(activeKlaviyoConnection)}
                       </div>
                     </div>
                     <span className="badge badge--nominal">Live</span>
@@ -1694,7 +1793,11 @@ export function ConnectionsClient({
                     {klaviyo?.subscribedTopicCount ? (
                       <>
                         {" "}
-                        · <span className="font-mono">{klaviyo.subscribedTopicCount}</span> topics
+                        ·{" "}
+                        <span className="font-mono">
+                          {klaviyo.subscribedTopicCount}
+                        </span>{" "}
+                        topics
                       </>
                     ) : null}
                   </div>
@@ -1718,7 +1821,10 @@ export function ConnectionsClient({
                     <div className="mt-0.5 text-xs text-tertiary">
                       {getTrellusLastReceived(trellus)}
                       <span className="ml-2">
-                        · <span className="font-mono">{activeTrellusConnection.id}</span>
+                        ·{" "}
+                        <span className="font-mono">
+                          {activeTrellusConnection.id}
+                        </span>
                       </span>
                     </div>
                   </div>

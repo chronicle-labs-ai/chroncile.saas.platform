@@ -44,7 +44,9 @@ function JsonBlock({ data, title }: { data: unknown; title: string }) {
   const str = typeof data === "string" ? data : JSON.stringify(data, null, 2);
   return (
     <div className="space-y-2">
-      <div className="text-xs font-medium text-tertiary uppercase tracking-wide">{title}</div>
+      <div className="text-xs font-medium text-tertiary uppercase tracking-wide">
+        {title}
+      </div>
       <pre className="p-3 rounded border border-border-dim bg-elevated text-xs font-mono text-secondary overflow-x-auto max-h-48 overflow-y-auto">
         {str}
       </pre>
@@ -71,7 +73,8 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
 
   const [updating, setUpdating] = useState(false);
   const [reviewNote, setReviewNote] = useState("");
-  const isReviewable = run != null && run.agentResponse != null && run.humanDecision == null;
+  const isReviewable =
+    run != null && run.agentResponse != null && run.humanDecision == null;
 
   const submitReview = useCallback(
     async (decision: "approved" | "rejected") => {
@@ -97,7 +100,10 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/runs" className="text-tertiary hover:text-data transition-colors">
+          <Link
+            href="/dashboard/runs"
+            className="text-tertiary hover:text-data transition-colors"
+          >
             ← Runs
           </Link>
         </div>
@@ -114,7 +120,10 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
           <div className="panel">
             <div className="p-6 text-center">
               <p className="text-critical mb-2">Run not found</p>
-              <Link href="/dashboard/runs" className="text-data hover:underline">
+              <Link
+                href="/dashboard/runs"
+                className="text-data hover:underline"
+              >
                 Back to runs
               </Link>
             </div>
@@ -128,7 +137,10 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/runs" className="text-tertiary hover:text-data transition-colors text-sm">
+          <Link
+            href="/dashboard/runs"
+            className="text-tertiary hover:text-data transition-colors text-sm"
+          >
             ← Runs
           </Link>
           <span className="text-border-default">/</span>
@@ -136,7 +148,9 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
             {run.invocationId}
           </span>
         </div>
-        <span className={statusBadgeClass(run.status)}>{statusDisplayLabel(run.status)}</span>
+        <span className={statusBadgeClass(run.status)}>
+          {statusDisplayLabel(run.status)}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -149,22 +163,36 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
             <div className="panel__content space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-tertiary uppercase tracking-wide mb-1">Event ID</div>
-                  <div className="font-mono text-sm text-primary break-all">{run.eventId}</div>
+                  <div className="text-xs text-tertiary uppercase tracking-wide mb-1">
+                    Event ID
+                  </div>
+                  <div className="font-mono text-sm text-primary break-all">
+                    {run.eventId}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xs text-tertiary uppercase tracking-wide mb-1">Invocation ID</div>
-                  <div className="font-mono text-sm text-primary break-all">{run.invocationId}</div>
+                  <div className="text-xs text-tertiary uppercase tracking-wide mb-1">
+                    Invocation ID
+                  </div>
+                  <div className="font-mono text-sm text-primary break-all">
+                    {run.invocationId}
+                  </div>
                 </div>
                 {run.workflowId && (
                   <div>
-                    <div className="text-xs text-tertiary uppercase tracking-wide mb-1">Workflow</div>
+                    <div className="text-xs text-tertiary uppercase tracking-wide mb-1">
+                      Workflow
+                    </div>
                     <div className="text-sm text-primary">{run.workflowId}</div>
                   </div>
                 )}
                 <div>
-                  <div className="text-xs text-tertiary uppercase tracking-wide mb-1">Created</div>
-                  <div className="text-sm text-secondary">{formatDate(run.createdAt)}</div>
+                  <div className="text-xs text-tertiary uppercase tracking-wide mb-1">
+                    Created
+                  </div>
+                  <div className="text-sm text-secondary">
+                    {formatDate(run.createdAt)}
+                  </div>
                 </div>
               </div>
 
@@ -186,7 +214,8 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
               {isReviewable ? (
                 <>
                   <p className="text-xs text-tertiary mb-3">
-                    This run is waiting for human approval or rejection. Your decision is stored for audit and metrics.
+                    This run is waiting for human approval or rejection. Your
+                    decision is stored for audit and metrics.
                   </p>
                   <div className="space-y-3">
                     <div>
@@ -222,9 +251,14 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
                   </div>
                 </>
               ) : run?.humanDecision != null ? (
-                <p className="text-xs text-tertiary">This run has already been reviewed.</p>
+                <p className="text-xs text-tertiary">
+                  This run has already been reviewed.
+                </p>
               ) : run?.agentResponse == null ? (
-                <p className="text-xs text-tertiary">Waiting for agent response. Use &quot;Send pending to agent&quot; from the Runs list.</p>
+                <p className="text-xs text-tertiary">
+                  Waiting for agent response. Use &quot;Send pending to
+                  agent&quot; from the Runs list.
+                </p>
               ) : null}
             </div>
           </div>
@@ -245,19 +279,25 @@ export function RunDetailClient({ runId }: RunDetailClientProps) {
                       className="flex flex-col gap-1 py-2 border-b border-border-dim last:border-0"
                     >
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-primary">{entry.action}</span>
+                        <span className="text-sm font-medium text-primary">
+                          {entry.action}
+                        </span>
                         {entry.actor && (
-                          <span className="text-xs text-tertiary">{entry.actor}</span>
+                          <span className="text-xs text-tertiary">
+                            {entry.actor}
+                          </span>
                         )}
                         <span className="text-xs font-mono text-tertiary ml-auto">
                           {formatDate(entry.createdAt)}
                         </span>
                       </div>
-                      {entry.payload && Object.keys(entry.payload as Record<string, unknown>).length > 0 && (
-                        <pre className="text-[10px] font-mono text-tertiary overflow-x-auto">
-                          {JSON.stringify(entry.payload)}
-                        </pre>
-                      )}
+                      {entry.payload &&
+                        Object.keys(entry.payload as Record<string, unknown>)
+                          .length > 0 && (
+                          <pre className="text-[10px] font-mono text-tertiary overflow-x-auto">
+                            {JSON.stringify(entry.payload)}
+                          </pre>
+                        )}
                     </li>
                   ))}
                 </ul>

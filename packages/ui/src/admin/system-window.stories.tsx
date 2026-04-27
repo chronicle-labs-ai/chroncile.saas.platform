@@ -1,10 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import {
-  SystemWindow,
-  SysRow,
-  SysPre,
-  SysOk,
-} from "./system-window";
+import { SystemWindow, SysRow, SysPre, SysOk } from "./system-window";
 
 const meta: Meta<typeof SystemWindow> = {
   title: "Admin/SystemWindow",
@@ -20,18 +15,23 @@ export const ImporterLog: Story = {
   name: "E.1 · importer log",
   render: () => (
     <div className="w-[720px]">
-      <SystemWindow
-        title="backend/bin/workos-import — cutover"
-        note="/ live"
-      >
+      <SystemWindow title="backend/bin/workos-import — cutover" note="/ live">
         <div className="flex flex-col gap-s-1">
-          <span className="text-ink-dim">$ cargo run --bin workos-import --release</span>
-          <span className="text-ink-dim">  Compiling chronicle_auth v0.6.0</span>
-          <span className="text-ink-dim">  Finished release [optimized] target(s) in 8.31s</span>
-          <span className="text-ink-dim">  Running `target/release/workos-import`</span>
+          <span className="text-ink-dim">
+            $ cargo run --bin workos-import --release
+          </span>
+          <span className="text-ink-dim"> Compiling chronicle_auth v0.6.0</span>
+          <span className="text-ink-dim">
+            {" "}
+            Finished release [optimized] target(s) in 8.31s
+          </span>
+          <span className="text-ink-dim">
+            {" "}
+            Running `target/release/workos-import`
+          </span>
         </div>
         <SysPre label="LOG">
-{`importer: connected to WorkOS prod (workos_client_id_01H8…)
+          {`importer: connected to WorkOS prod (workos_client_id_01H8…)
 importer: scanning 4128 user rows…
 [01/04128] ada@stripe.com         → wos_01H8YV…  org_01H8…  ✓
 [02/04128] ben@anthropic.com      → wos_01H8YV…  org_01H8…  ✓
@@ -76,7 +76,7 @@ export const WebhookCreated: Story = {
         <SysRow label="Endpoint" value="POST /api/webhooks/workos" />
         <SysRow label="Source" value="WorkOS Directory Sync · Okta" />
         <SysPre label="BODY">
-{`{
+          {`{
   "id": "evt_01H8YV4Q3X2C9R3KJ8K3M3VG2D",
   "event": "directory.user.created",
   "data": {
@@ -113,14 +113,8 @@ export const AdminUserDetail: Story = {
       <SystemWindow title="admin · users · alex@acme.com">
         <SysRow label="Email" value="alex@acme.com" />
         <SysRow label="Tenant" value="Acme Industries (tenant_01H8…)" />
-        <SysRow
-          label="WorkOS user"
-          value="wos_01H8YV4Q3X2C9R3KJ8K3M3VG2D"
-        />
-        <SysRow
-          label="WorkOS org"
-          value="org_01H8YV4Q3X2C9R3KJ8K3M3VG2D"
-        />
+        <SysRow label="WorkOS user" value="wos_01H8YV4Q3X2C9R3KJ8K3M3VG2D" />
+        <SysRow label="WorkOS org" value="org_01H8YV4Q3X2C9R3KJ8K3M3VG2D" />
         <SysRow label="Role" value="Member" />
         <SysRow
           label="CreatedVia"
@@ -155,7 +149,7 @@ export const DeletionEvent: Story = {
         />
         <SysRow label="Subject" value="alex@acme.com (wos_01H8YV…)" />
         <SysPre label="BODY">
-{`{
+          {`{
   "event": "directory.user.deleted",
   "data": {
     "id": "directory_user_01H8YV…",
@@ -164,7 +158,7 @@ export const DeletionEvent: Story = {
 }`}
         </SysPre>
         <SysPre label="WRITEBACK">
-{`UPDATE "User"
+          {`UPDATE "User"
    SET "deleted_at" = NOW(),
        "role"       = NULL
  WHERE "workosUserId" = 'wos_01H8YV4Q3X2C9R3KJ8K3M3VG2D';`}

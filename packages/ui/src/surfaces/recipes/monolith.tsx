@@ -6,8 +6,10 @@ import { GlassScene } from "../glass-scene";
 import { GlassStack } from "../glass-stack";
 import { LightSource } from "../light-source";
 
-export interface MonolithProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "color"> {
+export interface MonolithProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "color"
+> {
   /** Number of diagonal slats. @default 10 */
   slats?: number;
 }

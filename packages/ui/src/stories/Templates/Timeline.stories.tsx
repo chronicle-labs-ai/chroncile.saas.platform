@@ -40,7 +40,7 @@ import {
  */
 function TimelineApp() {
   const [activeSources, setActiveSources] = React.useState<Set<string>>(
-    new Set(SOURCES.map((s) => s.id)),
+    new Set(SOURCES.map((s) => s.id))
   );
   const [outcomeFilter, setOutcomeFilter] = React.useState<
     "any" | "fail" | "pass" | "partial"
@@ -48,9 +48,7 @@ function TimelineApp() {
   const [priorityFilter, setPriorityFilter] = React.useState<
     "any" | "urgent" | "high"
   >("any");
-  const [selectedId, setSelectedId] = React.useState<string | null>(
-    "CHR-1284",
-  );
+  const [selectedId, setSelectedId] = React.useState<string | null>("CHR-1284");
   const [win, setWin] = React.useState<[number, number]>([0.32, 0.68]);
 
   const filtered = React.useMemo(() => {
@@ -65,14 +63,14 @@ function TimelineApp() {
   // Selected trace lookup.
   const selected = React.useMemo<DemoTrace | null>(
     () => TRACES.find((t) => t.id === selectedId) ?? null,
-    [selectedId],
+    [selectedId]
   );
 
   const groups = React.useMemo(() => groupByStatus(filtered), [filtered]);
 
   const ruler = React.useMemo(
     () => ["13:00", "13:10", "13:20", "13:30", "13:40", "13:50", "14:00"],
-    [],
+    []
   );
 
   const toggleSource = (id: string) => {
@@ -104,7 +102,7 @@ function TimelineApp() {
       color?: string;
       onClick?: () => void;
       key?: string;
-    } = {},
+    } = {}
   ) => (
     <div
       key={key}
@@ -131,7 +129,10 @@ function TimelineApp() {
     >
       <span
         className="h-[6px] w-[6px] rounded-pill"
-        style={{ background: color ?? "currentColor", opacity: color ? 1 : 0.5 }}
+        style={{
+          background: color ?? "currentColor",
+          opacity: color ? 1 : 0.5,
+        }}
       />
       <span className="flex-1">{label}</span>
       {count !== undefined ? (
@@ -163,7 +164,7 @@ function TimelineApp() {
           count: s.count,
           color: activeSources.has(s.id) ? s.color : "var(--l-ink-dim)",
           onClick: () => toggleSource(s.id),
-        }),
+        })
       )}
     </nav>
   );
@@ -207,9 +208,7 @@ function TimelineApp() {
       ) : null}
       <FilterBar.AddFilter
         label={
-          outcomeFilter === "any" && priorityFilter === "any"
-            ? "Filter"
-            : ""
+          outcomeFilter === "any" && priorityFilter === "any" ? "Filter" : ""
         }
       />
       {outcomeFilter !== "any" || priorityFilter !== "any" ? (

@@ -49,7 +49,9 @@ async function k6Fetch(
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`k6 Cloud API ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`);
+    throw new Error(
+      `k6 Cloud API ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`
+    );
   }
   return res;
 }
@@ -117,10 +119,7 @@ export function buildK6Script(
   });
 
   const httpCalls = endpoints
-    .map(
-      (url) =>
-        `  responses.push(http.get(${JSON.stringify(url)}));`
-    )
+    .map((url) => `  responses.push(http.get(${JSON.stringify(url)}));`)
     .join("\n");
 
   if (frontendUrl) {
@@ -251,9 +250,7 @@ async function uploadArchive(
   return res.json();
 }
 
-export async function getTestRun(
-  testRunId: number
-): Promise<K6TestRun> {
+export async function getTestRun(testRunId: number): Promise<K6TestRun> {
   const res = await k6Fetch(`/test_runs/${testRunId}`);
   return res.json();
 }

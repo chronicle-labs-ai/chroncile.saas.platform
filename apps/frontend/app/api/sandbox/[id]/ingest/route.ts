@@ -14,10 +14,7 @@ export async function POST(
     const sandbox = await store.getById(id);
 
     if (!sandbox) {
-      return NextResponse.json(
-        { error: "Sandbox not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Sandbox not found" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -38,7 +35,9 @@ export async function POST(
 
     // Default: ingest an event
     const event = {
-      event_id: body.event_id ?? `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      event_id:
+        body.event_id ??
+        `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       sandbox_id: id,
       source: body.source ?? "agent",
       source_event_id: body.source_event_id,

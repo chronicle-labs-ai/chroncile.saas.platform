@@ -37,11 +37,10 @@ export interface TraceRowEventSpan {
   weight?: number;
 }
 
-export interface TraceRowProps
-  extends Omit<
-    React.HTMLAttributes<HTMLDivElement>,
-    "onSelect" | "id" | "title"
-  > {
+export interface TraceRowProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onSelect" | "id" | "title"
+> {
   id: React.ReactNode;
   title: React.ReactNode;
   /** Priority glyph. */
@@ -128,7 +127,7 @@ export function TraceRow({
         selected
           ? "bg-l-surface-selected before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-ember"
           : null,
-        className,
+        className
       )}
       style={{
         gridTemplateColumns: selectable

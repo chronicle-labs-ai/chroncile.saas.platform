@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!name) {
       return NextResponse.json(
         { error: 'Missing required field: "name"' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

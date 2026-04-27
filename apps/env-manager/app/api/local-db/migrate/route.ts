@@ -18,12 +18,12 @@ export async function POST(request: Request) {
         statusAfter: result.after.overallStatus,
         results: result.results,
       },
-      { status: allSucceeded ? 200 : 207 },
+      { status: allSucceeded ? 200 : 207 }
     );
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

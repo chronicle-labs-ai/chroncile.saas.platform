@@ -22,21 +22,35 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const tooltipStyles = tv({
   slots: {
     tooltip:
-      "z-50 rounded-xs border border-hairline-strong bg-surface-02 " +
-      "px-s-2 py-s-1 font-mono text-mono-sm text-ink " +
-      "shadow-card outline-none " +
+      "z-50 border bg-surface-02 shadow-card outline-none " +
       "data-[entering=true]:animate-in data-[entering=true]:fade-in " +
       "data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
     arrow: "fill-surface-02 stroke-hairline-strong",
   },
+  variants: {
+    density: {
+      brand: {
+        tooltip:
+          "rounded-xs border-hairline-strong px-s-2 py-s-1 font-mono text-mono-sm text-ink",
+      },
+      compact: {
+        tooltip:
+          "rounded-l border-l-border px-[8px] py-[4px] font-sans text-[12px] font-medium text-l-ink",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
-export interface TooltipProps
-  extends Omit<TooltipTriggerComponentProps, "children"> {
+export interface TooltipProps extends Omit<
+  TooltipTriggerComponentProps,
+  "children"
+> {
   children: React.ReactElement;
   content: React.ReactNode;
   placement?: RACTooltipProps["placement"];
@@ -46,6 +60,7 @@ export interface TooltipProps
   /** Milliseconds before the tooltip appears. Defaults to RAC's 1500ms. */
   delay?: number;
   closeDelay?: number;
+  density?: "compact" | "brand";
 }
 
 export function Tooltip({
@@ -57,9 +72,11 @@ export function Tooltip({
   classNames,
   delay,
   closeDelay,
+  density: densityProp,
   ...rest
 }: TooltipProps) {
-  const slots = tooltipStyles({});
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = tooltipStyles({ density });
   return (
     <RACTooltipTrigger delay={delay} closeDelay={closeDelay} {...rest}>
       {children}
@@ -67,7 +84,7 @@ export function Tooltip({
         placement={placement}
         className={composeTwRenderProps(
           className ?? classNames?.tooltip,
-          slots.tooltip(),
+          slots.tooltip()
         )}
       >
         {showArrow ? (

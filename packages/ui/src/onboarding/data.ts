@@ -84,7 +84,7 @@ export interface Source {
 const bfFull = (
   entities: BackfillEntity[],
   estRate: number,
-  maxDays = 365,
+  maxDays = 365
 ): BackfillSpec => ({
   windowDays: 30,
   maxDays,
@@ -93,7 +93,7 @@ const bfFull = (
 });
 const bfRecent = (
   entities: BackfillEntity[],
-  estRate: number,
+  estRate: number
 ): BackfillSpec => ({
   windowDays: 7,
   maxDays: 30,
@@ -121,7 +121,7 @@ export const SOURCES: readonly Source[] = [
         { id: "contacts", label: "Contacts", est: 40 },
         { id: "tags", label: "Tags", est: 5 },
       ],
-      225,
+      225
     ),
   },
   {
@@ -138,7 +138,7 @@ export const SOURCES: readonly Source[] = [
         { id: "tickets", label: "Tickets", est: 140 },
         { id: "users", label: "Users", est: 30 },
       ],
-      170,
+      170
     ),
   },
   {
@@ -156,7 +156,7 @@ export const SOURCES: readonly Source[] = [
         { id: "customers", label: "Customers", est: 80 },
         { id: "products", label: "Products", est: 10 },
       ],
-      410,
+      410
     ),
   },
   {
@@ -175,7 +175,7 @@ export const SOURCES: readonly Source[] = [
         { id: "invoices", label: "Invoices", est: 60 },
         { id: "refunds", label: "Refunds", est: 12 },
       ],
-      390,
+      390
     ),
   },
   {
@@ -194,7 +194,7 @@ export const SOURCES: readonly Source[] = [
         { id: "contacts", label: "Contacts", est: 90 },
         { id: "cases", label: "Cases", est: 30 },
       ],
-      185,
+      185
     ),
   },
   {
@@ -212,7 +212,7 @@ export const SOURCES: readonly Source[] = [
         { id: "deals", label: "Deals", est: 40 },
         { id: "companies", label: "Companies", est: 25 },
       ],
-      185,
+      185
     ),
   },
   {
@@ -224,10 +224,7 @@ export const SOURCES: readonly Source[] = [
     blurb: "Channels, threads, reactions",
     glyph: "slack",
     sample: ["message.channel", "reaction.added"],
-    backfill: bfRecent(
-      [{ id: "messages", label: "Messages", est: 800 }],
-      800,
-    ),
+    backfill: bfRecent([{ id: "messages", label: "Messages", est: 800 }], 800),
   },
   {
     id: "segment",
@@ -252,7 +249,7 @@ export const SOURCES: readonly Source[] = [
     backfill: bfFull(
       [{ id: "tables", label: "Table snapshots", est: 12 }],
       12,
-      90,
+      90
     ),
   },
   {
@@ -267,7 +264,7 @@ export const SOURCES: readonly Source[] = [
     backfill: bfFull(
       [{ id: "tables", label: "Table snapshots", est: 8 }],
       8,
-      30,
+      30
     ),
   },
   {
@@ -312,10 +309,7 @@ export const SOURCES: readonly Source[] = [
     blurb: "Threads, labels, sent mail",
     glyph: "gmail",
     sample: ["thread.created", "message.received"],
-    backfill: bfRecent(
-      [{ id: "threads", label: "Threads", est: 120 }],
-      120,
-    ),
+    backfill: bfRecent([{ id: "threads", label: "Threads", est: 120 }], 120),
   },
   {
     id: "linear",
@@ -331,7 +325,7 @@ export const SOURCES: readonly Source[] = [
         { id: "issues", label: "Issues", est: 30 },
         { id: "projects", label: "Projects", est: 4 },
       ],
-      34,
+      34
     ),
   },
   {
@@ -343,10 +337,7 @@ export const SOURCES: readonly Source[] = [
     blurb: "Pages, databases, comments",
     glyph: "notion",
     sample: ["page.updated", "comment.created"],
-    backfill: bfRecent(
-      [{ id: "pages", label: "Pages", est: 45 }],
-      45,
-    ),
+    backfill: bfRecent([{ id: "pages", label: "Pages", est: 45 }], 45),
   },
 ];
 
@@ -373,7 +364,10 @@ export const PARSE_KEYWORDS: readonly ParseKeyword[] = [
   { rx: /gmail|email/i, ids: ["gmail"] },
   { rx: /linear|issue|bug|backlog/i, ids: ["linear"] },
   { rx: /notion|docs|runbook|knowledge base/i, ids: ["notion"] },
-  { rx: /support|cx|customer service|customer experience/i, ids: ["intercom", "zendesk"] },
+  {
+    rx: /support|cx|customer service|customer experience/i,
+    ids: ["intercom", "zendesk"],
+  },
   { rx: /ecommerce|e-commerce|dtc|merchandise/i, ids: ["shopify", "stripe"] },
   { rx: /sales|outbound|pipeline/i, ids: ["hubspot", "salesforce", "gmail"] },
   { rx: /ops|incident|on-call|oncall|alert/i, ids: ["slack", "linear"] },
@@ -445,15 +439,60 @@ interface DomainRule extends DomainHint {
 }
 
 const DOMAIN_HINTS: readonly DomainRule[] = [
-  { rx: /@stripe\./i, name: "Stripe", icon: "stripe", message: "we'll wire up your Stripe events workspace" },
-  { rx: /@shopify\./i, name: "Shopify", icon: "shopify", message: "we'll prep a Shopify-flavored stream" },
-  { rx: /@linear\./i, name: "Linear", icon: "linear", message: "Linear-style keyboard shortcuts will be on by default" },
-  { rx: /@vercel\./i, name: "Vercel", icon: "webhook", message: "we'll provision an edge-routed webhook" },
-  { rx: /@notion\./i, name: "Notion", icon: "notion", message: "we'll start your knowledge base in Notion" },
-  { rx: /@github\./i, name: "GitHub", icon: "linear", message: "expect inline GitHub commit refs" },
-  { rx: /@(intercom)\./i, name: "Intercom", icon: "intercom", message: "Intercom conversations will stream in by default" },
-  { rx: /@chronicle/i, name: "Chronicle", icon: "webhook", message: "welcome home, teammate" },
-  { rx: /@anthropic\./i, name: "Anthropic", icon: "webhook", message: "Claude is on by default" },
+  {
+    rx: /@stripe\./i,
+    name: "Stripe",
+    icon: "stripe",
+    message: "we'll wire up your Stripe events workspace",
+  },
+  {
+    rx: /@shopify\./i,
+    name: "Shopify",
+    icon: "shopify",
+    message: "we'll prep a Shopify-flavored stream",
+  },
+  {
+    rx: /@linear\./i,
+    name: "Linear",
+    icon: "linear",
+    message: "Linear-style keyboard shortcuts will be on by default",
+  },
+  {
+    rx: /@vercel\./i,
+    name: "Vercel",
+    icon: "webhook",
+    message: "we'll provision an edge-routed webhook",
+  },
+  {
+    rx: /@notion\./i,
+    name: "Notion",
+    icon: "notion",
+    message: "we'll start your knowledge base in Notion",
+  },
+  {
+    rx: /@github\./i,
+    name: "GitHub",
+    icon: "linear",
+    message: "expect inline GitHub commit refs",
+  },
+  {
+    rx: /@(intercom)\./i,
+    name: "Intercom",
+    icon: "intercom",
+    message: "Intercom conversations will stream in by default",
+  },
+  {
+    rx: /@chronicle/i,
+    name: "Chronicle",
+    icon: "webhook",
+    message: "welcome home, teammate",
+  },
+  {
+    rx: /@anthropic\./i,
+    name: "Anthropic",
+    icon: "webhook",
+    message: "Claude is on by default",
+  },
 ];
 
 /** First-match domain detection. Returns `null` if no hint matched. */
@@ -482,17 +521,72 @@ export interface DemoEvent {
 }
 
 export const DEMO_EVENTS: readonly DemoEvent[] = [
-  { src: "intercom", name: "support.conversation.created", meta: "c_48c1 · @max.weber", dir: "in" },
-  { src: "shopify", name: "shopify.order.lookup", meta: "#1024 · jack.reeves@…", dir: "in" },
-  { src: "shopify", name: "shopify.order.retrieved", meta: "#1024 · 2 items · $84.00", dir: "out" },
-  { src: "intercom", name: "support.conversation.message", meta: '"where is my package?"', dir: "in" },
-  { src: "stripe", name: "stripe.charge.lookup", meta: "ch_3PJz4Z2… · $84.00", dir: "in" },
-  { src: "stripe", name: "stripe.refund.created", meta: "re_7Hgk2a… · $84.00", dir: "out" },
-  { src: "slack", name: "slack.channel.post", meta: "#cx-alerts · refund issued", dir: "out" },
-  { src: "intercom", name: "support.conversation.resolved", meta: "c_48c1 · agent:sage", dir: "out" },
-  { src: "shopify", name: "shopify.order.fulfilled", meta: "#1031 · ups 1z999…", dir: "in" },
-  { src: "intercom", name: "support.conversation.created", meta: "c_49d2 · @lee.park", dir: "in" },
-  { src: "stripe", name: "stripe.charge.succeeded", meta: "ch_3PJz9q… · $149.00", dir: "in" },
+  {
+    src: "intercom",
+    name: "support.conversation.created",
+    meta: "c_48c1 · @max.weber",
+    dir: "in",
+  },
+  {
+    src: "shopify",
+    name: "shopify.order.lookup",
+    meta: "#1024 · jack.reeves@…",
+    dir: "in",
+  },
+  {
+    src: "shopify",
+    name: "shopify.order.retrieved",
+    meta: "#1024 · 2 items · $84.00",
+    dir: "out",
+  },
+  {
+    src: "intercom",
+    name: "support.conversation.message",
+    meta: '"where is my package?"',
+    dir: "in",
+  },
+  {
+    src: "stripe",
+    name: "stripe.charge.lookup",
+    meta: "ch_3PJz4Z2… · $84.00",
+    dir: "in",
+  },
+  {
+    src: "stripe",
+    name: "stripe.refund.created",
+    meta: "re_7Hgk2a… · $84.00",
+    dir: "out",
+  },
+  {
+    src: "slack",
+    name: "slack.channel.post",
+    meta: "#cx-alerts · refund issued",
+    dir: "out",
+  },
+  {
+    src: "intercom",
+    name: "support.conversation.resolved",
+    meta: "c_48c1 · agent:sage",
+    dir: "out",
+  },
+  {
+    src: "shopify",
+    name: "shopify.order.fulfilled",
+    meta: "#1031 · ups 1z999…",
+    dir: "in",
+  },
+  {
+    src: "intercom",
+    name: "support.conversation.created",
+    meta: "c_49d2 · @lee.park",
+    dir: "in",
+  },
+  {
+    src: "stripe",
+    name: "stripe.charge.succeeded",
+    meta: "ch_3PJz9q… · $149.00",
+    dir: "in",
+  },
 ];
 
 /** Lookup helper used across components. */

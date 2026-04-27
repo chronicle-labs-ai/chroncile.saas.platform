@@ -38,7 +38,5 @@ export const AllVariants: Story = {
 };
 
 export const PulsingLive: Story = {
-  render: () => (
-    <span className="chron-status-live">LIVE · 1,248 ev/s</span>
-  ),
+  render: () => <span className="chron-status-live">LIVE · 1,248 ev/s</span>,
 };

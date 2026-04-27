@@ -56,9 +56,7 @@ export function StateTesting({
         status: (
           <span className="cmodal-foot-meta">
             <StatusDot
-              variant={
-                allOk ? "green" : anyFail ? "red" : "amber"
-              }
+              variant={allOk ? "green" : anyFail ? "red" : "amber"}
               pulse={stillRunning}
             />
             <span className="cmodal-foot-meta-label">
@@ -71,7 +69,7 @@ export function StateTesting({
           </span>
         ),
         actions: (
-          <Button density="brand" variant="ember" onPress={onClose}>
+          <Button variant="ember" onPress={onClose}>
             {allOk ? "Done" : "Close"}
           </Button>
         ),
@@ -80,11 +78,7 @@ export function StateTesting({
       <div className="cmodal-section">
         <ul className="test-bar">
           {checks.map((c) => (
-            <li
-              key={c.id}
-              className="test-bar-row"
-              data-status={c.status}
-            >
+            <li key={c.id} className="test-bar-row" data-status={c.status}>
               <span className="test-bar-ico" aria-hidden>
                 {c.status === "ok" ? (
                   <CheckIcon size={12} />

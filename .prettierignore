@@ -1,0 +1,23 @@
+# Dependencies & tooling
+node_modules
+.yarn
+.pnp.*
+
+# Builds & caches
+.next
+.turbo
+dist
+build
+out
+coverage
+storybook-static
+
+# Lockfiles (avoid churn / merge noise)
+yarn.lock
+package-lock.json
+
+# Not formatted here (Rust workspace; own fmt + clippy)
+backend
+
+# Auto-generated — do not hand-format (ts-rs / codegen)
+packages/shared/src/generated

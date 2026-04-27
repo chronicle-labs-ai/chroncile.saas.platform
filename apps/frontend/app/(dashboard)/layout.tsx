@@ -26,9 +26,7 @@ export default async function DashboardLayout({
           <Sidebar />
           <div className="lg:pl-[240px]">
             <Header user={session.user} />
-            <main className="p-4 lg:p-6">
-              {children}
-            </main>
+            <main className="p-4 lg:p-6">{children}</main>
           </div>
         </div>
       </SidebarNavigationLoaderProvider>

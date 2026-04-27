@@ -41,22 +41,22 @@ export default async function ConnectionsPage({
     trellusResult,
   ] = await Promise.allSettled([
     fetchFromBackend<{ providers: NangoProviderSummary[] }>(
-      "/api/platform/integrations/providers",
+      "/api/platform/integrations/providers"
     ),
     fetchFromBackend<ConnectionListResponse>(
-      "/api/platform/integrations/connections",
+      "/api/platform/integrations/connections"
     ),
     fetchFromBackend<IntercomIntegrationResponse>(
-      "/api/platform/integrations/intercom",
+      "/api/platform/integrations/intercom"
     ),
     fetchFromBackend<KlaviyoIntegrationResponse>(
-      "/api/platform/integrations/klaviyo",
+      "/api/platform/integrations/klaviyo"
     ),
     fetchFromBackend<ShopifyIntegrationResponse>(
-      "/api/platform/integrations/shopify",
+      "/api/platform/integrations/shopify"
     ),
     fetchFromBackend<TrellusIntegrationResponse>(
-      "/api/platform/integrations/trellus",
+      "/api/platform/integrations/trellus"
     ),
   ]);
 
@@ -70,7 +70,7 @@ export default async function ConnectionsPage({
     connections = connectionsResult.value.connections;
   } else if (providers.length > 0) {
     connections = providers.flatMap((provider) =>
-      provider.connection ? [provider.connection] : [],
+      provider.connection ? [provider.connection] : []
     );
   }
 

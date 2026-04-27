@@ -3,7 +3,13 @@
 /*  Swap for Prisma / Events Manager later — same interface            */
 /* ------------------------------------------------------------------ */
 
-import type { Trace, TraceSummary, TraceFilters, TraceStats, HumanActionAudit } from "./types";
+import type {
+  Trace,
+  TraceSummary,
+  TraceFilters,
+  TraceStats,
+  HumanActionAudit,
+} from "./types";
 
 class InMemoryLabelingStore {
   private traces = new Map<string, Trace>();
@@ -33,7 +39,10 @@ class InMemoryLabelingStore {
 
   /* ---------- list (returns summaries — no events payload) ---------- */
 
-  async list(tenantId: string, filters: TraceFilters = {}): Promise<{ traces: TraceSummary[]; total: number }> {
+  async list(
+    tenantId: string,
+    filters: TraceFilters = {}
+  ): Promise<{ traces: TraceSummary[]; total: number }> {
     this.ensureTenant(tenantId);
 
     let arr = Array.from(this.traces.values()).filter(
@@ -101,7 +110,9 @@ class InMemoryLabelingStore {
     arr = arr.slice(offset, offset + limit);
 
     // Strip events from the summary
-    const summaries: TraceSummary[] = arr.map(({ events: _events, ...rest }) => rest);
+    const summaries: TraceSummary[] = arr.map(
+      ({ events: _events, ...rest }) => rest
+    );
 
     return { traces: summaries, total };
   }

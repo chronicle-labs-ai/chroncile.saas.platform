@@ -28,7 +28,12 @@ export async function POST(request: Request) {
     }
 
     // For now, simulate the notification
-    const result = simulateNotification({ memberId, traceId, channel, message });
+    const result = simulateNotification({
+      memberId,
+      traceId,
+      channel,
+      message,
+    });
 
     return NextResponse.json(result);
   } catch (err) {

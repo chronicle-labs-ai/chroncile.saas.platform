@@ -6,10 +6,7 @@ import { Input } from "../primitives/input";
 import { Spinner } from "../primitives/spinner";
 import { SourceGlyph } from "../icons/source-glyph";
 import { CheckIcon } from "../icons/glyphs";
-import {
-  type Source,
-  type SourceId,
-} from "../onboarding/data";
+import { type Source, type SourceId } from "../onboarding/data";
 import {
   BackfillConfig,
   type BackfillRunConfig,
@@ -54,7 +51,7 @@ export function ConnectShared({
   const [bfEnabled, setBfEnabled] = React.useState(!!bfCfg);
   const [bfWindow, setBfWindow] = React.useState(bfCfg?.windowDays ?? 30);
   const [bfEntities, setBfEntities] = React.useState<string[]>(
-    bfCfg ? bfCfg.entities.map((e) => e.id) : [],
+    bfCfg ? bfCfg.entities.map((e) => e.id) : []
   );
 
   const isOauth = source.auth === "oauth";
@@ -91,12 +88,11 @@ export function ConnectShared({
 
   const actions = (
     <>
-      <Button density="brand" variant="ghost" onPress={onClose}>
+      <Button variant="ghost" onPress={onClose}>
         Cancel
       </Button>
       {step === "input" ? (
         <Button
-          density="brand"
           variant="ember"
           onPress={begin}
           isDisabled={isApiKey && !apiKey.trim()}
@@ -109,19 +105,19 @@ export function ConnectShared({
         </Button>
       ) : null}
       {step === "auth" ? (
-        <Button density="brand" variant="ember" isDisabled>
+        <Button variant="ember" isDisabled>
           <Spinner size="sm" tone="inverse" /> Connecting…
         </Button>
       ) : null}
       {step === "backfill" ? (
-        <Button density="brand" variant="ember" onPress={finish}>
+        <Button variant="ember" onPress={finish}>
           {bfEnabled && bfEntities.length > 0
             ? `Start backfill · ${estEvents().toLocaleString()} events`
             : "Skip backfill"}
         </Button>
       ) : null}
       {step === "done" ? (
-        <Button density="brand" variant="ember" onPress={finish}>
+        <Button variant="ember" onPress={finish}>
           Done →
         </Button>
       ) : null}
@@ -134,7 +130,9 @@ export function ConnectShared({
       onClose={onClose}
       glyph={<SourceGlyph id={source.glyph} size={18} />}
       glyphTint={source.color}
-      title={step === "backfill" ? "Backfill history" : `Connect ${source.name}`}
+      title={
+        step === "backfill" ? "Backfill history" : `Connect ${source.name}`
+      }
       sub={subline}
       footer={{ actions }}
     >
@@ -160,7 +158,6 @@ export function ConnectShared({
               >
                 <Input
                   id="api-key"
-                  density="brand"
                   variant="auth"
                   type="password"
                   value={apiKey}

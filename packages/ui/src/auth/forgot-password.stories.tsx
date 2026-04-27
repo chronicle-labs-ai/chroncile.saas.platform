@@ -54,10 +54,7 @@ export const WithError: Story = {
   name: "error",
   render: () => (
     <Frame>
-      <ForgotPassword
-        defaultValue="ada@"
-        error="That email isn't on file."
-      />
+      <ForgotPassword defaultValue="ada@" error="That email isn't on file." />
     </Frame>
   ),
 };

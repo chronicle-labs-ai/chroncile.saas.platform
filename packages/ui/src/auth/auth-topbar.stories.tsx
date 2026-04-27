@@ -19,10 +19,7 @@ const SIGNUP_STEPS = [
 export const NoFlow: Story = {
   args: {
     cta: (
-      <a
-        href="#"
-        className="text-ink-lo hover:text-ink-hi transition-colors"
-      >
+      <a href="#" className="text-ink-lo hover:text-ink-hi transition-colors">
         Create account →
       </a>
     ),

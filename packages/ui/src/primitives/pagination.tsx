@@ -17,24 +17,43 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const paginationStyles = tv({
   slots: {
-    root: "inline-flex items-center gap-s-1",
+    root: "inline-flex items-center",
     button:
-      "inline-flex h-[32px] min-w-[32px] items-center justify-center rounded-xs " +
-      "border border-hairline-strong bg-surface-01 px-s-2 " +
-      "font-mono text-mono-sm text-ink-lo outline-none " +
+      "inline-flex items-center justify-center border outline-none " +
       "transition-colors duration-fast ease-out " +
-      "data-[hovered=true]:bg-surface-02 data-[hovered=true]:text-ink-hi " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember " +
       "data-[disabled=true]:opacity-40 data-[disabled=true]:cursor-not-allowed",
     current:
       "border-ember bg-[rgba(216,67,10,0.08)] text-ember " +
       "data-[hovered=true]:bg-[rgba(216,67,10,0.12)]",
-    ellipsis: "px-s-1 font-mono text-mono-sm text-ink-dim",
+    ellipsis: "",
   },
+  variants: {
+    density: {
+      brand: {
+        root: "gap-s-1",
+        button:
+          "h-[32px] min-w-[32px] rounded-xs border-hairline-strong bg-surface-01 px-s-2 " +
+          "font-mono text-mono-sm text-ink-lo " +
+          "data-[hovered=true]:bg-surface-02 data-[hovered=true]:text-ink-hi",
+        ellipsis: "px-s-1 font-mono text-mono-sm text-ink-dim",
+      },
+      compact: {
+        root: "gap-[2px]",
+        button:
+          "h-[26px] min-w-[26px] rounded-l border-l-border bg-l-surface-raised px-[8px] " +
+          "font-sans text-[12px] font-medium text-l-ink-lo " +
+          "data-[hovered=true]:bg-l-surface-hover data-[hovered=true]:text-l-ink",
+        ellipsis: "px-[6px] font-sans text-[12px] text-l-ink-dim",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
 export interface PaginationProps {
@@ -45,6 +64,7 @@ export interface PaginationProps {
   siblings?: number;
   onPageChange?: (page: number) => void;
   className?: string;
+  density?: "compact" | "brand";
   labels?: {
     previous?: string;
     next?: string;
@@ -59,7 +79,7 @@ function range(start: number, end: number): number[] {
 function buildItems(
   current: number,
   total: number,
-  siblings: number,
+  siblings: number
 ): (number | "…")[] {
   const first = 1;
   const last = total;
@@ -87,16 +107,17 @@ function buildItems(
 
 const PageButton = ({
   isCurrent,
+  density,
   className,
   ...rest
-}: RACButtonProps & { isCurrent?: boolean }) => {
-  const slots = paginationStyles({});
+}: RACButtonProps & { isCurrent?: boolean; density: "compact" | "brand" }) => {
+  const slots = paginationStyles({ density });
   return (
     <RACButton
       {...rest}
       className={composeTwRenderProps(
         typeof className === "string" ? className : undefined,
-        `${slots.button()}${isCurrent ? ` ${slots.current()}` : ""}`,
+        `${slots.button()}${isCurrent ? ` ${slots.current()}` : ""}`
       )}
     />
   );
@@ -109,9 +130,11 @@ export function Pagination({
   siblings = 1,
   onPageChange,
   className,
+  density: densityProp,
   labels,
 }: PaginationProps) {
-  const slots = paginationStyles({});
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = paginationStyles({ density });
   const [internal, setInternal] = React.useState(defaultPage);
   const current = page ?? internal;
   const set = (p: number) => {
@@ -128,6 +151,7 @@ export function Pagination({
       className={`${slots.root()}${className ? ` ${className}` : ""}`}
     >
       <PageButton
+        density={density}
         onPress={() => set(current - 1)}
         isDisabled={current === 1}
         aria-label={labels?.previous ?? "Previous page"}
@@ -141,19 +165,19 @@ export function Pagination({
           </span>
         ) : (
           <PageButton
+            density={density}
             key={it}
             onPress={() => set(it)}
             isCurrent={it === current}
             aria-current={it === current ? "page" : undefined}
-            aria-label={
-              labels?.page ? labels.page(it) : `Page ${it}`
-            }
+            aria-label={labels?.page ? labels.page(it) : `Page ${it}`}
           >
             {it}
           </PageButton>
-        ),
+        )
       )}
       <PageButton
+        density={density}
         onPress={() => set(current + 1)}
         isDisabled={current === totalPages}
         aria-label={labels?.next ?? "Next page"}

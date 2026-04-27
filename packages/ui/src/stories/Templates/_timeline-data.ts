@@ -29,12 +29,27 @@ export interface DemoSource {
 }
 
 export const SOURCES: DemoSource[] = [
-  { id: "intercom", label: "intercom", color: "var(--c-event-teal)", count: 412 },
-  { id: "shopify", label: "shopify", color: "var(--c-event-amber)", count: 308 },
+  {
+    id: "intercom",
+    label: "intercom",
+    color: "var(--c-event-teal)",
+    count: 412,
+  },
+  {
+    id: "shopify",
+    label: "shopify",
+    color: "var(--c-event-amber)",
+    count: 308,
+  },
   { id: "stripe", label: "stripe", color: "var(--c-event-green)", count: 221 },
   { id: "ops", label: "ops", color: "var(--c-event-orange)", count: 89 },
   { id: "slack", label: "slack", color: "var(--c-event-pink)", count: 140 },
-  { id: "posthog", label: "posthog", color: "var(--c-event-violet)", count: 18 },
+  {
+    id: "posthog",
+    label: "posthog",
+    color: "var(--c-event-violet)",
+    count: 18,
+  },
 ];
 
 export const TRACES: DemoTrace[] = [
@@ -69,11 +84,7 @@ export const TRACES: DemoTrace[] = [
     customerInitials: "GX",
     region: "US",
     durationMs: 198_000,
-    events: [
-      { lane: "teal" },
-      { lane: "violet" },
-      { lane: "red", weight: 2 },
-    ],
+    events: [{ lane: "teal" }, { lane: "violet" }, { lane: "red", weight: 2 }],
   },
   {
     id: "CHR-1278",
@@ -86,10 +97,7 @@ export const TRACES: DemoTrace[] = [
     customerInitials: "SYS",
     region: "global",
     durationMs: 228_000,
-    events: [
-      { lane: "orange", weight: 2 },
-      { lane: "orange" },
-    ],
+    events: [{ lane: "orange", weight: 2 }, { lane: "orange" }],
   },
   {
     id: "CHR-1279",

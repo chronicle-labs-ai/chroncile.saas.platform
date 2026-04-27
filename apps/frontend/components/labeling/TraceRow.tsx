@@ -41,7 +41,9 @@ export function TraceRow({ trace, onClick }: TraceRowProps) {
 
   const annotations = trace.autoAudit?.action_annotations ?? [];
   const totalActions = annotations.length;
-  const correctActions = annotations.filter((a) => a.verdict === "correct").length;
+  const correctActions = annotations.filter(
+    (a) => a.verdict === "correct"
+  ).length;
   const errorCount = trace.autoAudit?.critical_errors?.length ?? 0;
 
   const ood = trace.autoAudit?.ood_score;

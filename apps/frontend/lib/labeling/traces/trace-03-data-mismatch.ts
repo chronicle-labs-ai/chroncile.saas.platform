@@ -1,4 +1,9 @@
-import type { Trace, TraceEvent, AgentContextSnapshot, AutoActionAudit } from "../types";
+import type {
+  Trace,
+  TraceEvent,
+  AgentContextSnapshot,
+  AutoActionAudit,
+} from "../types";
 import { eid, offset, buildTrace } from "./_helpers";
 
 const base = new Date("2026-02-22T16:45:00Z");
@@ -9,7 +14,14 @@ const agentContext: AgentContextSnapshot = {
     customer_name: "Aisha Kone",
     customer_email: "aisha.kone@example.com",
     order_id: "ORD-4582",
-    order_items: [{ sku: "VASE-RED", description: "Red Ceramic Vase", quantity: 1, unit_price: 8999 }],
+    order_items: [
+      {
+        sku: "VASE-RED",
+        description: "Red Ceramic Vase",
+        quantity: 1,
+        unit_price: 8999,
+      },
+    ],
     shipping_status: "delivered",
     order_total: 8999,
     delivery_date: "2026-02-19",
@@ -44,23 +56,37 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.received",
     occurred_at: offset(base, 0),
-    actor: { actor_type: "customer", actor_id: "cus_Jf6nYrKd2w", name: "Aisha Kone" },
-    message: "Hello, I ordered a blue ceramic vase but I received a red one instead. My order number is ORD-4582. Can you help me sort this out?",
+    actor: {
+      actor_type: "customer",
+      actor_id: "cus_Jf6nYrKd2w",
+      name: "Aisha Kone",
+    },
+    message:
+      "Hello, I ordered a blue ceramic vase but I received a red one instead. My order number is ORD-4582. Can you help me sort this out?",
   },
   {
     event_id: e.agentGreeting,
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 1),
-    actor: { actor_type: "agent", actor_id: "agent_order", name: "Order Support Agent" },
-    message: "Hi Aisha! I'm sorry to hear there's an issue with your order. Let me pull up the details for ORD-4582 right now.",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_order",
+      name: "Order Support Agent",
+    },
+    message:
+      "Hi Aisha! I'm sorry to hear there's an issue with your order. Let me pull up the details for ORD-4582 right now.",
   },
   {
     event_id: e.orderRetrieve,
     source: "stripe",
     event_type: "order.retrieve",
     occurred_at: offset(base, 1.5),
-    actor: { actor_type: "agent", actor_id: "agent_order", name: "Order Support Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_order",
+      name: "Order Support Agent",
+    },
     payload: { order_id: "ORD-4582", customer_id: "cus_Jf6nYrKd2w" },
   },
   {
@@ -71,7 +97,14 @@ const events: TraceEvent[] = [
     actor: { actor_type: "system", actor_id: "stripe" },
     payload: {
       order_id: "ORD-4582",
-      items: [{ sku: "VASE-BLU", description: "Blue Ceramic Vase", quantity: 1, unit_price: 8999 }],
+      items: [
+        {
+          sku: "VASE-BLU",
+          description: "Blue Ceramic Vase",
+          quantity: 1,
+          unit_price: 8999,
+        },
+      ],
       shipping_status: "delivered",
       total: 8999,
       created: "2026-02-14T10:30:00Z",
@@ -82,31 +115,50 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 3),
-    actor: { actor_type: "agent", actor_id: "agent_order", name: "Order Support Agent" },
-    message: "I've checked your order and according to our records, order ORD-4582 contains a Red Ceramic Vase (SKU: VASE-RED), which matches what was delivered. It looks like the correct item was shipped to you.",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_order",
+      name: "Order Support Agent",
+    },
+    message:
+      "I've checked your order and according to our records, order ORD-4582 contains a Red Ceramic Vase (SKU: VASE-RED), which matches what was delivered. It looks like the correct item was shipped to you.",
   },
   {
     event_id: e.customerPushback,
     source: "intercom",
     event_type: "message.received",
     occurred_at: offset(base, 5),
-    actor: { actor_type: "customer", actor_id: "cus_Jf6nYrKd2w", name: "Aisha Kone" },
-    message: "That's not right. I specifically ordered a BLUE vase. I still have the confirmation email showing \"Blue Ceramic Vase\". Can you check again?",
+    actor: {
+      actor_type: "customer",
+      actor_id: "cus_Jf6nYrKd2w",
+      name: "Aisha Kone",
+    },
+    message:
+      'That\'s not right. I specifically ordered a BLUE vase. I still have the confirmation email showing "Blue Ceramic Vase". Can you check again?',
   },
   {
     event_id: e.agentSecondLook,
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 6),
-    actor: { actor_type: "agent", actor_id: "agent_order", name: "Order Support Agent" },
-    message: "I understand your frustration. I've double-checked and our system shows the Red Ceramic Vase for this order. However, I want to make sure we get this resolved properly for you. Let me escalate this to our fulfillment team so they can investigate further.",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_order",
+      name: "Order Support Agent",
+    },
+    message:
+      "I understand your frustration. I've double-checked and our system shows the Red Ceramic Vase for this order. However, I want to make sure we get this resolved properly for you. Let me escalate this to our fulfillment team so they can investigate further.",
   },
   {
     event_id: e.customerFrustration,
     source: "intercom",
     event_type: "message.received",
     occurred_at: offset(base, 7),
-    actor: { actor_type: "customer", actor_id: "cus_Jf6nYrKd2w", name: "Aisha Kone" },
+    actor: {
+      actor_type: "customer",
+      actor_id: "cus_Jf6nYrKd2w",
+      name: "Aisha Kone",
+    },
     message: "Yes, please do. This is clearly a mistake on your end.",
   },
   {
@@ -114,7 +166,11 @@ const events: TraceEvent[] = [
     source: "slack",
     event_type: "message.sent",
     occurred_at: offset(base, 8),
-    actor: { actor_type: "agent", actor_id: "agent_order", name: "Order Support Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_order",
+      name: "Order Support Agent",
+    },
     payload: {
       channel: "#fulfillment-escalations",
       text: "Escalation for ORD-4582: Customer Aisha Kone reports receiving Red Ceramic Vase but claims she ordered Blue. System shows Red Ceramic Vase (VASE-RED) for this order. Customer has confirmation email for Blue. Please investigate warehouse records.",
@@ -125,8 +181,13 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 9),
-    actor: { actor_type: "agent", actor_id: "agent_order", name: "Order Support Agent" },
-    message: "I've escalated this to our fulfillment team in a priority queue. They'll investigate the warehouse records and get back to you within 24 hours. I apologize for the inconvenience, Aisha.",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_order",
+      name: "Order Support Agent",
+    },
+    message:
+      "I've escalated this to our fulfillment team in a priority queue. They'll investigate the warehouse records and get back to you within 24 hours. I apologize for the inconvenience, Aisha.",
   },
 ];
 
@@ -135,7 +196,8 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.agentGreeting,
       verdict: "correct",
-      reasoning: "Appropriate greeting with empathy and clear intent to investigate.",
+      reasoning:
+        "Appropriate greeting with empathy and clear intent to investigate.",
     },
     {
       event_id: e.orderRetrieve,
@@ -145,21 +207,27 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.agentDenial,
       verdict: "incorrect",
-      reasoning: "Agent told the customer the order was for a Red Ceramic Vase, but the Stripe order.retrieved response clearly shows VASE-BLU (Blue Ceramic Vase). The agent used stale/incorrect context data instead of the live response.",
-      should_have_done: "Read the order.retrieved payload which shows VASE-BLU and acknowledge the customer's claim is correct — the wrong item was shipped.",
+      reasoning:
+        "Agent told the customer the order was for a Red Ceramic Vase, but the Stripe order.retrieved response clearly shows VASE-BLU (Blue Ceramic Vase). The agent used stale/incorrect context data instead of the live response.",
+      should_have_done:
+        "Read the order.retrieved payload which shows VASE-BLU and acknowledge the customer's claim is correct — the wrong item was shipped.",
       instruction_violations: [
         {
           instruction_id: "R2",
-          instruction_text: "Verify the customer's claim against the actual order records returned from the source system.",
-          violation_description: "Agent relied on its cached order_items (VASE-RED) instead of the Stripe response payload which contained VASE-BLU. The claim was valid but the agent denied it.",
-          context_evidence: "order.retrieved payload shows sku: VASE-BLU; agent context has sku: VASE-RED",
+          instruction_text:
+            "Verify the customer's claim against the actual order records returned from the source system.",
+          violation_description:
+            "Agent relied on its cached order_items (VASE-RED) instead of the Stripe response payload which contained VASE-BLU. The claim was valid but the agent denied it.",
+          context_evidence:
+            "order.retrieved payload shows sku: VASE-BLU; agent context has sku: VASE-RED",
         },
       ],
       context_violations: [
         {
           type: "data_mismatch",
           field: "order_items",
-          description: "Agent context has order_items with SKU VASE-RED, but the Stripe order record returned VASE-BLU.",
+          description:
+            "Agent context has order_items with SKU VASE-RED, but the Stripe order record returned VASE-BLU.",
           expected: [{ sku: "VASE-BLU", description: "Blue Ceramic Vase" }],
           actual: [{ sku: "VASE-RED", description: "Red Ceramic Vase" }],
           severity: "critical",
@@ -169,19 +237,24 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.agentSecondLook,
       verdict: "partial",
-      reasoning: "Agent escalated which was appropriate given the dispute, but continued to assert the Red Vase was correct. Should have recognized the data mismatch from the Stripe response.",
-      should_have_done: "Acknowledge the Stripe order record shows Blue Ceramic Vase, confirm the customer is correct, and initiate a return/replacement flow.",
+      reasoning:
+        "Agent escalated which was appropriate given the dispute, but continued to assert the Red Vase was correct. Should have recognized the data mismatch from the Stripe response.",
+      should_have_done:
+        "Acknowledge the Stripe order record shows Blue Ceramic Vase, confirm the customer is correct, and initiate a return/replacement flow.",
     },
     {
       event_id: e.slackEscalation,
       verdict: "partial",
-      reasoning: "Escalation was appropriate but the message frames the customer's claim as uncertain when the Stripe data supports it. The escalation note should have flagged the context mismatch.",
-      should_have_done: "Note in the escalation that the Stripe order record shows VASE-BLU but the agent context had VASE-RED, indicating a data integrity issue.",
+      reasoning:
+        "Escalation was appropriate but the message frames the customer's claim as uncertain when the Stripe data supports it. The escalation note should have flagged the context mismatch.",
+      should_have_done:
+        "Note in the escalation that the Stripe order record shows VASE-BLU but the agent context had VASE-RED, indicating a data integrity issue.",
     },
     {
       event_id: e.agentHandoff,
       verdict: "partial",
-      reasoning: "Handoff message is polite but doesn't resolve the customer's immediate concern. Agent could have offered a replacement or refund alongside the escalation.",
+      reasoning:
+        "Handoff message is polite but doesn't resolve the customer's immediate concern. Agent could have offered a replacement or refund alongside the escalation.",
     },
   ],
   overall_score: 1,
@@ -189,12 +262,14 @@ const autoAudit: AutoActionAudit = {
     "Agent denied a valid customer claim by using stale context data instead of the live Stripe order record.",
     "The Stripe response showed VASE-BLU but agent context contained VASE-RED — agent trusted its context over the source system.",
   ],
-  correction_summary: "The agent must use the order data returned by the source system (Stripe) rather than its cached context. When the order.retrieved payload shows VASE-BLU, the agent should acknowledge the customer ordered a blue vase and that a red one was shipped in error, then initiate the appropriate resolution.",
-  summary: "The agent's context contained incorrect order item data (VASE-RED) that didn't match the Stripe order record (VASE-BLU). The agent trusted its stale context over the live data, incorrectly denied the customer's valid claim, and escalated the issue framing the customer as potentially wrong. The customer was right all along.",
+  correction_summary:
+    "The agent must use the order data returned by the source system (Stripe) rather than its cached context. When the order.retrieved payload shows VASE-BLU, the agent should acknowledge the customer ordered a blue vase and that a red one was shipped in error, then initiate the appropriate resolution.",
+  summary:
+    "The agent's context contained incorrect order item data (VASE-RED) that didn't match the Stripe order record (VASE-BLU). The agent trusted its stale context over the live data, incorrectly denied the customer's valid claim, and escalated the issue framing the customer as potentially wrong. The customer was right all along.",
   confidence: 0.19,
   ood_score: {
     transition_deviation: 0.07,
-    tool_frequency_deviation: 0.10,
+    tool_frequency_deviation: 0.1,
     temporal_deviation: 0.14,
     embedding_distance: 0.11,
     composite_score: 0.12,
@@ -205,7 +280,8 @@ const autoAudit: AutoActionAudit = {
       {
         type: "data_mismatch",
         field: "order_items",
-        description: "Agent context has order_items=[{sku: VASE-RED}] but the Stripe order record returned [{sku: VASE-BLU, description: Blue Ceramic Vase}]. The context reflects what was shipped, not what was ordered.",
+        description:
+          "Agent context has order_items=[{sku: VASE-RED}] but the Stripe order record returned [{sku: VASE-BLU, description: Blue Ceramic Vase}]. The context reflects what was shipped, not what was ordered.",
         expected: [{ sku: "VASE-BLU", description: "Blue Ceramic Vase" }],
         actual: [{ sku: "VASE-RED", description: "Red Ceramic Vase" }],
         severity: "critical",
@@ -216,8 +292,10 @@ const autoAudit: AutoActionAudit = {
   instruction_violations_summary: [
     {
       instruction_id: "R2",
-      instruction_text: "Verify the customer's claim against the actual order records returned from the source system.",
-      violation_description: "Agent used cached order_items (VASE-RED) instead of the live Stripe response (VASE-BLU), denying a valid customer claim.",
+      instruction_text:
+        "Verify the customer's claim against the actual order records returned from the source system.",
+      violation_description:
+        "Agent used cached order_items (VASE-RED) instead of the live Stripe response (VASE-BLU), denying a valid customer claim.",
     },
   ],
 };

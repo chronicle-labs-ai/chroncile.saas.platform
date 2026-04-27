@@ -80,11 +80,13 @@ export function ForgotPassword({
     return (
       <div className="flex flex-col">
         <Eyebrow>RECOVERY</Eyebrow>
-        <AuthDisplay>Check your <em>inbox.</em></AuthDisplay>
+        <AuthDisplay>
+          Check your <em>inbox.</em>
+        </AuthDisplay>
         <AuthLede>
           We sent reset instructions to{" "}
-          <b className="text-ink-hi font-medium">{v || "your email"}</b>.
-          The link expires in 30 minutes.
+          <b className="text-ink-hi font-medium">{v || "your email"}</b>. The
+          link expires in 30 minutes.
         </AuthLede>
 
         <div className="cg-fade-up cg-fade-up-2 mt-s-8">
@@ -93,13 +95,16 @@ export function ForgotPassword({
 
         <StepFoot
           back={
-            <Button density="brand" variant="ghost" onPress={onBack} leadingIcon={<ArrowLeftIcon />}>
+            <Button
+              variant="ghost"
+              onPress={onBack}
+              leadingIcon={<ArrowLeftIcon />}
+            >
               Back to sign in
             </Button>
           }
           next={
             <Button
-              density="brand"
               variant="ember"
               onPress={onBack}
               trailingIcon={<ArrowRightIcon />}
@@ -115,8 +120,12 @@ export function ForgotPassword({
   return (
     <div className="flex flex-col">
       <Eyebrow>RECOVERY</Eyebrow>
-      <AuthDisplay>Forgot your <em>password?</em></AuthDisplay>
-      <AuthLede>Enter your work email and we&rsquo;ll send a reset link.</AuthLede>
+      <AuthDisplay>
+        Forgot your <em>password?</em>
+      </AuthDisplay>
+      <AuthLede>
+        Enter your work email and we&rsquo;ll send a reset link.
+      </AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
         {error ? <InlineAlert>{error}</InlineAlert> : null}
@@ -136,7 +145,6 @@ export function ForgotPassword({
             type="email"
             autoComplete="email"
             placeholder="you@company.com"
-            density="brand"
             variant="auth"
             invalid={!!emailErr}
             value={v}
@@ -149,13 +157,16 @@ export function ForgotPassword({
 
       <StepFoot
         back={
-          <Button density="brand" variant="ghost" onPress={onBack} leadingIcon={<ArrowLeftIcon />}>
+          <Button
+            variant="ghost"
+            onPress={onBack}
+            leadingIcon={<ArrowLeftIcon />}
+          >
             Back to sign in
           </Button>
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             isLoading={isSubmitting}
             isDisabled={!v}

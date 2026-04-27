@@ -29,7 +29,10 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const { store, sandbox } = await getScopedSandbox(id, session.user.tenantId);
+    const { store, sandbox } = await getScopedSandbox(
+      id,
+      session.user.tenantId
+    );
     if (!sandbox) {
       return NextResponse.json({ error: "Sandbox not found" }, { status: 404 });
     }
@@ -60,7 +63,10 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const { store, sandbox } = await getScopedSandbox(id, session.user.tenantId);
+    const { store, sandbox } = await getScopedSandbox(
+      id,
+      session.user.tenantId
+    );
     if (!sandbox) {
       return NextResponse.json({ error: "Sandbox not found" }, { status: 404 });
     }

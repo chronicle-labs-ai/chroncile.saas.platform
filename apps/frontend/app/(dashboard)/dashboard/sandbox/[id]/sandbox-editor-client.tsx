@@ -53,8 +53,18 @@ const PALETTE_ITEMS: {
     type: "event-source",
     label: "Source",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
+        />
       </svg>
     ),
   },
@@ -62,8 +72,18 @@ const PALETTE_ITEMS: {
     type: "filter",
     label: "Filter",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"
+        />
       </svg>
     ),
   },
@@ -71,8 +91,18 @@ const PALETTE_ITEMS: {
     type: "output",
     label: "Output",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+        />
       </svg>
     ),
   },
@@ -80,8 +110,18 @@ const PALETTE_ITEMS: {
     type: "generator",
     label: "Generator",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
+        />
       </svg>
     ),
   },
@@ -99,7 +139,11 @@ function makeNodeData(
     case "event-source":
       return { label, nodeType, config: { ...DEFAULT_EVENT_SOURCE_CONFIG } };
     case "filter":
-      return { label, nodeType, config: { ...DEFAULT_FILTER_CONFIG, rules: [] } };
+      return {
+        label,
+        nodeType,
+        config: { ...DEFAULT_FILTER_CONFIG, rules: [] },
+      };
     case "output":
       return { label, nodeType, config: { ...DEFAULT_OUTPUT_CONFIG } };
     case "generator":
@@ -221,9 +265,7 @@ function EditorInner({
     if (sandbox && !initializedRef.current) {
       setNodes(sandbox.nodes);
       // Ensure all edges use the animated edge type
-      setEdges(
-        sandbox.edges.map((e) => ({ ...e, type: "animated" }))
-      );
+      setEdges(sandbox.edges.map((e) => ({ ...e, type: "animated" })));
       initializedRef.current = true;
       queueMicrotask(() => setGraphReady(true));
     }
@@ -299,7 +341,9 @@ function EditorInner({
     return deduped;
   }, [events, execution.playback, execution.runtimeEvents, mapSandboxEvent]);
 
-  const [selectedTimelineEventId, setSelectedTimelineEventId] = useState<string | null>(null);
+  const [selectedTimelineEventId, setSelectedTimelineEventId] = useState<
+    string | null
+  >(null);
   const selectedTimelineEvent = useMemo(
     () => timelineEvents.find((e) => e.id === selectedTimelineEventId) ?? null,
     [timelineEvents, selectedTimelineEventId]
@@ -331,9 +375,7 @@ function EditorInner({
   /* ---- Connect handler ---- */
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds) =>
-        addEdge({ ...connection, type: "animated" }, eds)
-      );
+      setEdges((eds) => addEdge({ ...connection, type: "animated" }, eds));
     },
     [setEdges]
   );
@@ -508,10 +550,10 @@ function EditorInner({
               {execution.saveError
                 ? execution.saveError
                 : execution.phase === "applyingChanges"
-                ? "Runtime is pausing briefly so the latest graph can take effect."
-                : execution.phase === "waitingForEvents"
-                ? "Live mode is connected and waiting for the next matching event."
-                : "Historical replay finished. Press live to tail new events or play to start over."}
+                  ? "Runtime is pausing briefly so the latest graph can take effect."
+                  : execution.phase === "waitingForEvents"
+                    ? "Live mode is connected and waiting for the next matching event."
+                    : "Historical replay finished. Press live to tail new events or play to start over."}
             </span>
             {execution.phase === "saveError" && (
               <button
@@ -627,7 +669,9 @@ function EditorInner({
 
           {/* Simulation speed controls */}
           <div className="flex items-center gap-1 ml-4">
-            <span className="font-mono text-[9px] text-tertiary uppercase tracking-wider mr-1">Speed</span>
+            <span className="font-mono text-[9px] text-tertiary uppercase tracking-wider mr-1">
+              Speed
+            </span>
             {[1, 2, 5, 10].map((s) => (
               <button
                 key={s}
@@ -681,9 +725,13 @@ function EditorInner({
                   events={timelineEvents}
                   playback={execution.playback as PlaybackState}
                   selectedEventId={selectedTimelineEventId}
-                  onPlaybackChange={(state) => void execution.setPlayback(state)}
+                  onPlaybackChange={(state) =>
+                    void execution.setPlayback(state)
+                  }
                   onSelect={(e) => setSelectedTimelineEventId(e.eventId)}
-                  className={selectedTimelineEvent ? "flex-1 min-w-0" : "w-full"}
+                  className={
+                    selectedTimelineEvent ? "flex-1 min-w-0" : "w-full"
+                  }
                 />
                 {selectedTimelineEvent && (
                   <div className="w-80 border-l border-[rgb(30,35,50)] overflow-y-auto flex-shrink-0">

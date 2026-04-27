@@ -32,7 +32,12 @@ export async function GET(
     fetchVercelLogs(env.gitBranch, env.vercelDeploymentId, errors),
   ]);
 
-  return NextResponse.json({ provision, fly, vercel, errors } satisfies LogsResponse);
+  return NextResponse.json({
+    provision,
+    fly,
+    vercel,
+    errors,
+  } satisfies LogsResponse);
 }
 
 function fetchProvisionLogs(
@@ -44,12 +49,19 @@ function fetchProvisionLogs(
   if (provisionLog) {
     for (const raw of provisionLog.split("\n")) {
       if (!raw.trim()) continue;
-      const tsMatch = raw.match(/^\[(\d{4}-\d{2}-\d{2}T[\d:.Z]+)\]\s+(INFO|WARN|ERROR|FATAL):\s*(.+)$/);
+      const tsMatch = raw.match(
+        /^\[(\d{4}-\d{2}-\d{2}T[\d:.Z]+)\]\s+(INFO|WARN|ERROR|FATAL):\s*(.+)$/
+      );
       if (tsMatch) {
         const level = tsMatch[2].toLowerCase();
         lines.push({
           timestamp: tsMatch[1],
-          level: (level === "fatal" || level === "error") ? "error" : level === "warn" ? "warn" : "info",
+          level:
+            level === "fatal" || level === "error"
+              ? "error"
+              : level === "warn"
+                ? "warn"
+                : "info",
           message: tsMatch[3],
           source: "provision",
         });
@@ -109,13 +121,23 @@ async function fetchFlyLogs(
         state: string;
         region: string;
         updated_at: string;
-        events?: Array<{ type: string; status: string; timestamp: number; request?: { exit_event?: { exit_code: number } } }>;
-      }> = await machinesRes.json().catch(() => []) ?? [];
+        events?: Array<{
+          type: string;
+          status: string;
+          timestamp: number;
+          request?: { exit_event?: { exit_code: number } };
+        }>;
+      }> = (await machinesRes.json().catch(() => [])) ?? [];
 
       for (const m of machines) {
         logs.push({
           timestamp: m.updated_at,
-          level: m.state === "started" ? "info" : m.state === "stopped" ? "warn" : "error",
+          level:
+            m.state === "started"
+              ? "info"
+              : m.state === "stopped"
+                ? "warn"
+                : "error",
           message: `Machine ${m.name || m.id} [${m.region}] state: ${m.state}`,
           source: "fly-machine",
         });
@@ -129,9 +151,10 @@ async function fetchFlyLogs(
             logs.push({
               timestamp: ts,
               level: isError ? "error" : "info",
-              message: exitCode !== undefined
-                ? `${ev.type}: ${ev.status} (exit_code=${exitCode})`
-                : `${ev.type}: ${ev.status}`,
+              message:
+                exitCode !== undefined
+                  ? `${ev.type}: ${ev.status} (exit_code=${exitCode})`
+                  : `${ev.type}: ${ev.status}`,
               source: "fly-machine",
             });
           }
@@ -159,8 +182,13 @@ async function fetchFlyLogs(
 
     if (gqlRes.ok) {
       const gqlData = await gqlRes.json().catch(() => null);
-      const releases: Array<{ id: string; status: string; reason: string; createdAt: string; user?: { email: string } }> =
-        gqlData?.data?.app?.releases?.nodes ?? [];
+      const releases: Array<{
+        id: string;
+        status: string;
+        reason: string;
+        createdAt: string;
+        user?: { email: string };
+      }> = gqlData?.data?.app?.releases?.nodes ?? [];
       for (const rel of releases) {
         logs.push({
           timestamp: rel.createdAt,
@@ -174,7 +202,9 @@ async function fetchFlyLogs(
     errors.fly = err instanceof Error ? err.message : String(err);
   }
 
-  return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return logs.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 }
 
 async function fetchVercelLogs(
@@ -189,7 +219,9 @@ async function fetchVercelLogs(
     return [];
   }
 
-  const teamParam = process.env.VERCEL_TEAM_ID ? `&teamId=${process.env.VERCEL_TEAM_ID}` : "";
+  const teamParam = process.env.VERCEL_TEAM_ID
+    ? `&teamId=${process.env.VERCEL_TEAM_ID}`
+    : "";
   const logs: LogEntry[] = [];
 
   try {
@@ -198,7 +230,10 @@ async function fetchVercelLogs(
     if (!dplId && gitBranch) {
       const listRes = await fetch(
         `https://api.vercel.com/v6/deployments?projectId=${projectId}&limit=3&meta-githubCommitRef=${encodeURIComponent(gitBranch)}${teamParam}`,
-        { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(8_000) }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(8_000),
+        }
       );
       if (listRes.ok) {
         const listData = await listRes.json();
@@ -213,15 +248,23 @@ async function fetchVercelLogs(
     // Fetch deployment build events
     const eventsRes = await fetch(
       `https://api.vercel.com/v2/deployments/${dplId}/events?limit=100${teamParam}`,
-      { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10_000) }
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10_000),
+      }
     );
 
     if (eventsRes.ok) {
       const events: Array<{
         type: string;
         created: number;
-        payload?: { text?: string; name?: string; value?: string; info?: { type?: string; message?: string } };
-      }> = await eventsRes.json().catch(() => []) ?? [];
+        payload?: {
+          text?: string;
+          name?: string;
+          value?: string;
+          info?: { type?: string; message?: string };
+        };
+      }> = (await eventsRes.json().catch(() => [])) ?? [];
 
       for (const ev of events) {
         const ts = new Date(ev.created).toISOString();
@@ -245,7 +288,12 @@ async function fetchVercelLogs(
         }
 
         if (!message.trim()) continue;
-        logs.push({ timestamp: ts, level, message: message.trimEnd(), source: "vercel-build" });
+        logs.push({
+          timestamp: ts,
+          level,
+          message: message.trimEnd(),
+          source: "vercel-build",
+        });
       }
     } else {
       errors.vercel = `Vercel events API ${eventsRes.status}`;

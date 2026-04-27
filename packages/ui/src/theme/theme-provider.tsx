@@ -71,7 +71,7 @@ export function ThemeProvider({
     if (!attachToRoot || typeof document === "undefined") return;
     document.documentElement.setAttribute("data-theme", theme);
     window.dispatchEvent(
-      new CustomEvent("chron:themechange", { detail: { theme } }),
+      new CustomEvent("chron:themechange", { detail: { theme } })
     );
   }, [attachToRoot, theme]);
 
@@ -99,7 +99,12 @@ export function ThemeProvider({
         if (tag === "input" || tag === "textarea" || tag === "select") return;
         if (target.isContentEditable) return;
       }
-      if (e.key.toLowerCase() === key && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (
+        e.key.toLowerCase() === key &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
         setThemeState((t) => (t === "light" ? "dark" : "light"));
       }
     };
@@ -122,7 +127,7 @@ export function ThemeProvider({
 
   const value = React.useMemo(
     () => ({ theme, setTheme, toggle }),
-    [theme, setTheme, toggle],
+    [theme, setTheme, toggle]
   );
 
   return (

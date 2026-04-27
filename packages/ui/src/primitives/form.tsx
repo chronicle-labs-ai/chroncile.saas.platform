@@ -28,10 +28,7 @@ export interface FormProps extends RACFormProps {
 
 export function Form({ className, children, ...rest }: FormProps) {
   return (
-    <RACForm
-      {...rest}
-      className={cx("flex flex-col gap-s-4", className)}
-    >
+    <RACForm {...rest} className={cx("flex flex-col gap-s-4", className)}>
       {children}
     </RACForm>
   );

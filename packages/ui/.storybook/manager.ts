@@ -4,7 +4,8 @@ import { create } from "@storybook/theming";
 addons.setConfig({
   theme: create({
     base: "dark",
-    brandTitle: "Chronicle Design System",
+    brandTitle: "Chronicle Labs",
+    brandImage: "/logo-wordmark-dark.svg",
     brandUrl: "/",
     colorPrimary: "#d8430a",
     colorSecondary: "#709188",

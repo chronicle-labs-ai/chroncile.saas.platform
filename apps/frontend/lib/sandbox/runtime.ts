@@ -84,7 +84,8 @@ export function createGraphSignature(
 export function sortSandboxEvents(events: SandboxEvent[]): SandboxEvent[] {
   return [...events].sort(
     (left, right) =>
-      new Date(left.occurred_at).getTime() - new Date(right.occurred_at).getTime()
+      new Date(left.occurred_at).getTime() -
+      new Date(right.occurred_at).getTime()
   );
 }
 
@@ -197,7 +198,10 @@ export function deriveExecutionPhase(
     return "loading";
   }
 
-  if (sandbox.pendingConfigApply || sandbox.runtimePhase === "applyingChanges") {
+  if (
+    sandbox.pendingConfigApply ||
+    sandbox.runtimePhase === "applyingChanges"
+  ) {
     return "applyingChanges";
   }
 

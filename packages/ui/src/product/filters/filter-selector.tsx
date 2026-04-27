@@ -17,9 +17,7 @@ import { composeTwRenderProps } from "../../utils/compose";
 import { tv } from "../../utils/tv";
 
 import { FilterOperatorMenu } from "./filter-operator";
-import {
-  coerceValueForOperator,
-} from "./use-data-table-filters";
+import { coerceValueForOperator } from "./use-data-table-filters";
 import { defaultOperatorFor, defaultValueFor } from "./operators";
 import type {
   ColumnConfig,
@@ -45,8 +43,7 @@ const styles = tv({
       "inline-flex h-[20px] w-[20px] shrink-0 items-center justify-center " +
       "rounded-xs border border-hairline bg-surface-00 text-ink-dim",
     label: "flex-1 truncate",
-    type:
-      "shrink-0 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
+    type: "shrink-0 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
     empty: "px-s-3 py-s-4 font-mono text-mono-sm text-ink-dim",
   },
 });
@@ -54,8 +51,7 @@ const styles = tv({
 const draftStyles = tv({
   slots: {
     root: "flex flex-col min-w-[260px]",
-    header:
-      "flex items-center gap-s-2 border-b border-hairline px-s-2 py-s-2",
+    header: "flex items-center gap-s-2 border-b border-hairline px-s-2 py-s-2",
     back:
       "inline-flex h-[24px] w-[24px] items-center justify-center rounded-xs " +
       "text-ink-dim outline-none transition-colors duration-fast ease-out " +
@@ -117,7 +113,7 @@ export function FilterSelector<TRow>({
       setOpen(false);
       reset();
     },
-    [draft, onAdd, reset],
+    [draft, onAdd, reset]
   );
 
   return (
@@ -172,20 +168,18 @@ export function FilterSelector<TRow>({
                         d.column.type,
                         d.operator,
                         op,
-                        d.value,
+                        d.value
                       ),
                     }
-                  : d,
+                  : d
               )
             }
-            onChangeValue={(v) =>
-              setDraft((d) => (d ? { ...d, value: v } : d))
-            }
+            onChangeValue={(v) => setDraft((d) => (d ? { ...d, value: v } : d))}
             onCommit={(overrideValue) =>
               commit(
                 overrideValue !== undefined
                   ? { value: overrideValue }
-                  : undefined,
+                  : undefined
               )
             }
           />
@@ -209,9 +203,7 @@ function ColumnPicker<TRow>({
     const q = query.trim().toLowerCase();
     if (!q) return columns;
     return columns.filter(
-      (c) =>
-        c.label.toLowerCase().includes(q) ||
-        c.id.toLowerCase().includes(q),
+      (c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
     );
   }, [query, columns]);
 
@@ -239,9 +231,7 @@ function ColumnPicker<TRow>({
           const col = columns.find((c) => c.id === String(id));
           if (col) onPick(col);
         }}
-        renderEmptyState={() => (
-          <div className={slots.empty()}>No matches</div>
-        )}
+        renderEmptyState={() => <div className={slots.empty()}>No matches</div>}
       >
         {filtered.map((c) => (
           <RACListBoxItem
@@ -425,34 +415,20 @@ function ColumnGlyph({ type }: { type: ColumnType }) {
   switch (type) {
     case "option":
       return (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="h-3 w-3"
-          aria-hidden
-        >
+        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden>
           <circle cx="12" cy="12" r="4" fill="currentColor" />
         </svg>
       );
     case "multiOption":
       return (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="h-3 w-3"
-          aria-hidden
-        >
+        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden>
           <circle cx="8" cy="12" r="3" fill="currentColor" />
           <circle cx="16" cy="12" r="3" fill="currentColor" opacity="0.6" />
         </svg>
       );
     case "text":
-      return (
-        <span className="font-mono text-mono-sm leading-none">Aa</span>
-      );
+      return <span className="font-mono text-mono-sm leading-none">Aa</span>;
     case "number":
-      return (
-        <span className="font-mono text-mono-sm leading-none">#</span>
-      );
+      return <span className="font-mono text-mono-sm leading-none">#</span>;
   }
 }

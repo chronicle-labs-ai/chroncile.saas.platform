@@ -60,9 +60,7 @@ export async function syncLocalEnvironment(): Promise<void> {
   }
 
   const serviceSecret =
-    process.env.LOCAL_SERVICE_SECRET ??
-    process.env.SERVICE_SECRET ??
-    null;
+    process.env.LOCAL_SERVICE_SECRET ?? process.env.SERVICE_SECRET ?? null;
 
   await prisma.environment.upsert({
     where: { name: LOCAL_ENV_NAME },

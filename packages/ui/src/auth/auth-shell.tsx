@@ -2,6 +2,11 @@
 
 import * as React from "react";
 import { tv } from "../utils/tv";
+import {
+  ChromeStyleProvider,
+  useChromeStyleContext,
+  type ChromeStyle,
+} from "../theme/chrome-style-context";
 import { AuthTopbar, type AuthTopbarProps } from "./auth-topbar";
 
 /*
@@ -13,6 +18,15 @@ import { AuthTopbar, type AuthTopbarProps } from "./auth-topbar";
  *
  * Pass `topbar={false}` to hide the topbar entirely (e.g. embedded in a
  * tab). Pass a custom node to override the default `AuthTopbar`.
+ *
+ * `chromeStyle` is inherited from the nearest `ChromeStyleProvider`
+ * (e.g. the Storybook `data-chrome` toolbar) and falls back to
+ * `"brand"` when no parent context is set — auth pages rendered
+ * standalone in `apps/frontend` therefore stay editorial. Pass an
+ * explicit `chromeStyle` to force a flavor regardless of context;
+ * the shell wraps children in `ChromeStyleProvider` so `Button` /
+ * `Input` / composites pick up the right density without per-control
+ * `density` props.
  *
  * The shell paints the ambient backdrop, sets the page surface, and
  * caps the content column at ~520 px so long lede paragraphs stay
@@ -38,8 +52,10 @@ const shell = tv({
   defaultVariants: { align: "top" },
 });
 
-export interface AuthShellProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children"> {
+export interface AuthShellProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "children"
+> {
   /**
    * `<AuthTopbar />` props (rendered as the default topbar) — or a custom
    * React node that fully replaces the topbar — or `false` to hide it.
@@ -51,12 +67,17 @@ export interface AuthShellProps
   align?: "top" | "center";
   /** Hide the ambient backdrop blob (rare — only inside dense embeds). */
   bare?: boolean;
+  /**
+   * Drives default control density + auth composite surfaces under this shell.
+   * Inherits from the nearest `ChromeStyleProvider` (or the Storybook
+   * `data-chrome` toolbar); falls back to `"brand"` when neither is set.
+   * Pass explicitly to force a flavor regardless of context.
+   */
+  chromeStyle?: ChromeStyle;
   children: React.ReactNode;
 }
 
-function isTopbarProps(
-  v: unknown,
-): v is AuthTopbarProps {
+function isTopbarProps(v: unknown): v is AuthTopbarProps {
   return (
     !!v &&
     typeof v === "object" &&
@@ -76,11 +97,14 @@ export function AuthShell({
   maxWidth = 520,
   align = "top",
   bare = false,
+  chromeStyle,
   className,
   children,
   ...rest
 }: AuthShellProps) {
   const slots = shell({ align });
+  const inheritedChrome = useChromeStyleContext();
+  const resolvedChrome: ChromeStyle = chromeStyle ?? inheritedChrome ?? "brand";
 
   let topbarNode: React.ReactNode = null;
   if (topbar !== false) {
@@ -96,14 +120,21 @@ export function AuthShell({
   }
 
   return (
-    <div className={slots.root({ className })} data-slot="auth-shell" {...rest}>
-      {bare ? null : <div className="cg-auth-ambient" aria-hidden />}
-      {topbarNode}
-      <main className={slots.main()}>
-        <div className={slots.inner()} style={{ maxWidth }}>
-          {children}
-        </div>
-      </main>
-    </div>
+    <ChromeStyleProvider value={resolvedChrome}>
+      <div
+        className={slots.root({ className })}
+        data-slot="auth-shell"
+        data-chrome={resolvedChrome}
+        {...rest}
+      >
+        {bare ? null : <div className="cg-auth-ambient" aria-hidden />}
+        {topbarNode}
+        <main className={slots.main()}>
+          <div className={slots.inner()} style={{ maxWidth }}>
+            {children}
+          </div>
+        </main>
+      </div>
+    </ChromeStyleProvider>
   );
 }

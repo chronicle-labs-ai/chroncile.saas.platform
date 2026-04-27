@@ -23,43 +23,67 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
+
+export type BreadcrumbsDensity = "compact" | "brand";
+
+const BreadcrumbsDensityContext =
+  React.createContext<BreadcrumbsDensity | undefined>(undefined);
 
 const breadcrumbStyles = tv({
   slots: {
-    root:
-      "flex items-center gap-s-2 font-mono text-mono uppercase tracking-tactical text-ink-lo",
-    item:
-      "flex items-center gap-s-2 " +
-      "after:content-['/'] after:text-ink-dim after:mx-s-1 " +
-      "last:after:hidden " +
-      "data-[current=true]:text-ink-hi",
+    root: "flex items-center",
+    item: "flex items-center last:after:hidden",
     link:
-      "text-ink-dim outline-none transition-colors duration-fast ease-out " +
-      "data-[hovered=true]:text-ink-hi " +
+      "outline-none transition-colors duration-fast ease-out " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember",
   },
+  variants: {
+    density: {
+      brand: {
+        root: "gap-s-2 font-mono text-mono uppercase tracking-tactical text-ink-lo",
+        item:
+          "gap-s-2 after:content-['/'] after:text-ink-dim after:mx-s-1 " +
+          "data-[current=true]:text-ink-hi",
+        link: "text-ink-dim data-[hovered=true]:text-ink-hi",
+      },
+      compact: {
+        root: "gap-[6px] font-sans text-[12px] font-medium text-l-ink-lo",
+        item:
+          "gap-[6px] after:content-['/'] after:text-l-ink-dim after:mx-[2px] " +
+          "data-[current=true]:text-l-ink",
+        link: "text-l-ink-dim data-[hovered=true]:text-l-ink",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
 export interface BreadcrumbsProps<T extends object = object>
   extends Omit<RACBreadcrumbsProps<T>, "className" | "children"> {
   className?: string;
   children: React.ReactNode;
+  density?: BreadcrumbsDensity;
 }
 
 export function Breadcrumbs<T extends object = object>({
   className,
   children,
+  density: densityProp,
   ...rest
 }: BreadcrumbsProps<T>) {
-  const slots = breadcrumbStyles({});
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = breadcrumbStyles({ density });
   return (
-    <RACBreadcrumbs
-      {...(rest as RACBreadcrumbsProps<T>)}
-      className={`${slots.root()}${className ? ` ${className}` : ""}`}
-    >
-      {children as React.ReactNode}
-    </RACBreadcrumbs>
+    <BreadcrumbsDensityContext.Provider value={density}>
+      <RACBreadcrumbs
+        {...(rest as RACBreadcrumbsProps<T>)}
+        className={`${slots.root()}${className ? ` ${className}` : ""}`}
+      >
+        {children as React.ReactNode}
+      </RACBreadcrumbs>
+    </BreadcrumbsDensityContext.Provider>
   );
 }
 
@@ -76,7 +100,9 @@ export function Breadcrumb({
   href,
   ...rest
 }: BreadcrumbProps) {
-  const slots = breadcrumbStyles({});
+  const ctxDensity = React.useContext(BreadcrumbsDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = breadcrumbStyles({ density });
   return (
     <RACBreadcrumb
       {...rest}

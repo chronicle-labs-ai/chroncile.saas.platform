@@ -4,7 +4,7 @@ import { backendFetch } from "@/server/integrations/backend-client";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ envId: string; tenantId: string }> },
+  { params }: { params: Promise<{ envId: string; tenantId: string }> }
 ) {
   const { envId, tenantId } = await params;
   const env = await prisma.environment.findUnique({ where: { id: envId } });
@@ -17,20 +17,20 @@ export async function GET(
       env.flyAppUrl,
       `/api/platform/admin/tenants/${tenantId}/feature-access`,
       undefined,
-      env.serviceSecret,
+      env.serviceSecret
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return NextResponse.json(
         { error: data?.error ?? `Backend returned ${res.status}` },
-        { status: res.status },
+        { status: res.status }
       );
     }
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

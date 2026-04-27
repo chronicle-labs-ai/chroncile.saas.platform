@@ -1,4 +1,9 @@
-import type { Trace, TraceEvent, AgentContextSnapshot, AutoActionAudit } from "../types";
+import type {
+  Trace,
+  TraceEvent,
+  AgentContextSnapshot,
+  AutoActionAudit,
+} from "../types";
 import { eid, offset, buildTrace } from "./_helpers";
 
 const base = new Date("2026-02-22T09:30:00Z");
@@ -38,15 +43,24 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.received",
     occurred_at: offset(base, 0),
-    actor: { actor_type: "customer", actor_id: "cust_192", name: "Frank Müller" },
-    message: "Hey, when does my subscription renew? I want to make sure my card is charged on the right date.",
+    actor: {
+      actor_type: "customer",
+      actor_id: "cust_192",
+      name: "Frank Müller",
+    },
+    message:
+      "Hey, when does my subscription renew? I want to make sure my card is charged on the right date.",
   },
   {
     event_id: e.agentAck,
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 0.5),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     message: "Hi Frank! Let me look into your subscription details for you.",
   },
   {
@@ -54,7 +68,11 @@ const events: TraceEvent[] = [
     source: "stripe",
     event_type: "charge.list",
     occurred_at: offset(base, 1),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     payload: { customer_id: "cust_192", limit: 10 },
   },
   {
@@ -76,7 +94,11 @@ const events: TraceEvent[] = [
     source: "stripe",
     event_type: "charge.retrieve",
     occurred_at: offset(base, 1.8),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     payload: { charge_id: "ch_G7h8" },
   },
   {
@@ -85,14 +107,23 @@ const events: TraceEvent[] = [
     event_type: "charge.retrieved",
     occurred_at: offset(base, 2),
     actor: { actor_type: "system", actor_id: "stripe" },
-    payload: { id: "ch_G7h8", amount: 2999, status: "succeeded", invoice: "inv_P5q6" },
+    payload: {
+      id: "ch_G7h8",
+      amount: 2999,
+      status: "succeeded",
+      invoice: "inv_P5q6",
+    },
   },
   {
     event_id: e.chargeRetrieve2,
     source: "stripe",
     event_type: "charge.retrieve",
     occurred_at: offset(base, 2.5),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     payload: { charge_id: "ch_I9j0" },
   },
   {
@@ -101,14 +132,23 @@ const events: TraceEvent[] = [
     event_type: "charge.retrieved",
     occurred_at: offset(base, 2.7),
     actor: { actor_type: "system", actor_id: "stripe" },
-    payload: { id: "ch_I9j0", amount: 2999, status: "succeeded", invoice: "inv_R7s8" },
+    payload: {
+      id: "ch_I9j0",
+      amount: 2999,
+      status: "succeeded",
+      invoice: "inv_R7s8",
+    },
   },
   {
     event_id: e.chargeRetrieve3,
     source: "stripe",
     event_type: "charge.retrieve",
     occurred_at: offset(base, 3.2),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     payload: { charge_id: "ch_K1l2" },
   },
   {
@@ -117,14 +157,23 @@ const events: TraceEvent[] = [
     event_type: "charge.retrieved",
     occurred_at: offset(base, 3.4),
     actor: { actor_type: "system", actor_id: "stripe" },
-    payload: { id: "ch_K1l2", amount: 2999, status: "succeeded", invoice: "inv_T9u0" },
+    payload: {
+      id: "ch_K1l2",
+      amount: 2999,
+      status: "succeeded",
+      invoice: "inv_T9u0",
+    },
   },
   {
     event_id: e.subRetrieve,
     source: "stripe",
     event_type: "subscription.retrieve",
     occurred_at: offset(base, 4),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     payload: { subscription_id: "sub_M3n4" },
   },
   {
@@ -145,7 +194,11 @@ const events: TraceEvent[] = [
     source: "stripe",
     event_type: "invoice.list",
     occurred_at: offset(base, 4.8),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
     payload: { customer_id: "cust_192", subscription: "sub_M3n4", limit: 5 },
   },
   {
@@ -156,8 +209,18 @@ const events: TraceEvent[] = [
     actor: { actor_type: "system", actor_id: "stripe" },
     payload: {
       invoices: [
-        { id: "inv_P5q6", amount_due: 2999, status: "paid", period_end: "2026-03-01T00:00:00Z" },
-        { id: "inv_R7s8", amount_due: 2999, status: "paid", period_end: "2026-02-01T00:00:00Z" },
+        {
+          id: "inv_P5q6",
+          amount_due: 2999,
+          status: "paid",
+          period_end: "2026-03-01T00:00:00Z",
+        },
+        {
+          id: "inv_R7s8",
+          amount_due: 2999,
+          status: "paid",
+          period_end: "2026-02-01T00:00:00Z",
+        },
       ],
     },
   },
@@ -166,8 +229,13 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 5.5),
-    actor: { actor_type: "agent", actor_id: "agent_billing", name: "Billing Agent" },
-    message: "Your subscription renews on March 1, 2026. You're on the $29.99/month plan and your card will be charged on that date. Everything looks good with your billing history — all recent charges have been successful!",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_billing",
+      name: "Billing Agent",
+    },
+    message:
+      "Your subscription renews on March 1, 2026. You're on the $29.99/month plan and your card will be charged on that date. Everything looks good with your billing history — all recent charges have been successful!",
   },
 ];
 
@@ -181,38 +249,46 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.chargeList,
       verdict: "unnecessary",
-      reasoning: "Listing charges is not needed to answer a subscription renewal date question. A single subscription.retrieve call would suffice.",
-      should_have_done: "Skip charge listing entirely and call subscription.retrieve directly.",
+      reasoning:
+        "Listing charges is not needed to answer a subscription renewal date question. A single subscription.retrieve call would suffice.",
+      should_have_done:
+        "Skip charge listing entirely and call subscription.retrieve directly.",
     },
     {
       event_id: e.chargeRetrieve1,
       verdict: "unnecessary",
-      reasoning: "Individual charge retrieval is irrelevant to a renewal date inquiry.",
+      reasoning:
+        "Individual charge retrieval is irrelevant to a renewal date inquiry.",
     },
     {
       event_id: e.chargeRetrieve2,
       verdict: "unnecessary",
-      reasoning: "Second redundant charge retrieval with no bearing on the customer's question.",
+      reasoning:
+        "Second redundant charge retrieval with no bearing on the customer's question.",
     },
     {
       event_id: e.chargeRetrieve3,
       verdict: "unnecessary",
-      reasoning: "Third redundant charge retrieval. The agent appears to be iterating through all charges for no discernible reason.",
+      reasoning:
+        "Third redundant charge retrieval. The agent appears to be iterating through all charges for no discernible reason.",
     },
     {
       event_id: e.subRetrieve,
       verdict: "correct",
-      reasoning: "This is the only call actually needed to answer the question.",
+      reasoning:
+        "This is the only call actually needed to answer the question.",
     },
     {
       event_id: e.invoiceList,
       verdict: "unnecessary",
-      reasoning: "Invoice listing is not required for a renewal date question. The subscription object already contains the period end date.",
+      reasoning:
+        "Invoice listing is not required for a renewal date question. The subscription object already contains the period end date.",
     },
     {
       event_id: e.agentResponse,
       verdict: "correct",
-      reasoning: "The final answer is accurate and clearly communicates the renewal date.",
+      reasoning:
+        "The final answer is accurate and clearly communicates the renewal date.",
     },
   ],
   overall_score: 3,

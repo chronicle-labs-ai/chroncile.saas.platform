@@ -35,8 +35,7 @@ const topbar = tv({
   },
 });
 
-export interface AuthTopbarProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface AuthTopbarProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Steps for the active flow. Omit (or pass `[]`) when there's no flow. */
   steps?: AuthStep[];
   currentIndex?: number;
@@ -64,7 +63,10 @@ export function AuthTopbar({
 }: AuthTopbarProps) {
   const slots = topbar();
   const hasFlow = steps && steps.length > 0;
-  const safeIndex = Math.max(0, Math.min(currentIndex, (steps?.length ?? 1) - 1));
+  const safeIndex = Math.max(
+    0,
+    Math.min(currentIndex, (steps?.length ?? 1) - 1)
+  );
   const stepLabel = hasFlow ? steps![safeIndex] : null;
 
   return (

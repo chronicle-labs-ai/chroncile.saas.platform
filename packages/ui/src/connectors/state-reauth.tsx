@@ -50,15 +50,10 @@ export function StateReauth({
         ),
         actions: (
           <>
-            <Button density="brand" variant="ghost" onPress={onClose}>
+            <Button variant="ghost" onPress={onClose}>
               Later
             </Button>
-            <Button
-              density="brand"
-              variant="ember"
-              onPress={onReauth}
-              isDisabled={!onReauth}
-            >
+            <Button variant="ember" onPress={onReauth} isDisabled={!onReauth}>
               Re-authorize →
             </Button>
           </>

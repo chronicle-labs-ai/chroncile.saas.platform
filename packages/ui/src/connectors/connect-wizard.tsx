@@ -6,10 +6,7 @@ import { Input } from "../primitives/input";
 import { SourceGlyph } from "../icons/source-glyph";
 import { Spinner } from "../primitives/spinner";
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from "../icons/glyphs";
-import {
-  type Source,
-  type SourceId,
-} from "../onboarding/data";
+import { type Source, type SourceId } from "../onboarding/data";
 import { type BackfillRunConfig } from "../onboarding/step-connect";
 import { ConnectorModalShell } from "./connector-modal-shell";
 import {
@@ -77,7 +74,7 @@ export function ConnectWizard({
   const [clientId, setClientId] = React.useState("");
   const [clientSecret, setClientSecret] = React.useState("");
   const [oauthState, setOauthState] = React.useState<"idle" | "pending" | "ok">(
-    "idle",
+    "idle"
   );
 
   const stepIndex = STEPS.findIndex((s) => s.id === step);
@@ -106,8 +103,7 @@ export function ConnectWizard({
     onDone(source.id, null);
   };
 
-  const nextDisabled =
-    (step === "paste" && !canPaste) || step === "oauth";
+  const nextDisabled = (step === "paste" && !canPaste) || step === "oauth";
 
   return (
     <ConnectorModalShell
@@ -126,7 +122,6 @@ export function ConnectWizard({
         actions: (
           <>
             <Button
-              density="brand"
               variant="ghost"
               onPress={goBack}
               leadingIcon={<ArrowLeftIcon />}
@@ -134,13 +129,16 @@ export function ConnectWizard({
               {step === "create" ? "Cancel" : "Back"}
             </Button>
             <Button
-              density="brand"
               variant="ember"
               onPress={goNext}
               isDisabled={nextDisabled}
               trailingIcon={<ArrowRightIcon />}
             >
-              {step === "done" ? "Finish" : step === "oauth" ? "Authorizing…" : "Next"}
+              {step === "done"
+                ? "Finish"
+                : step === "oauth"
+                  ? "Authorizing…"
+                  : "Next"}
             </Button>
           </>
         ),
@@ -194,7 +192,6 @@ export function ConnectWizard({
               <FieldRow id="cid" label="Consumer key">
                 <Input
                   id="cid"
-                  density="brand"
                   variant="auth"
                   value={clientId}
                   onChange={(e) => setClientId(e.currentTarget.value)}
@@ -204,7 +201,6 @@ export function ConnectWizard({
               <FieldRow id="csec" label="Consumer secret">
                 <Input
                   id="csec"
-                  density="brand"
                   variant="auth"
                   type="password"
                   value={clientSecret}

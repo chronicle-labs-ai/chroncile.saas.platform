@@ -6,7 +6,11 @@ import type { FilterNodeData } from "../types";
 import { BaseNode } from "./BaseNode";
 import { SimulationContext } from "../SimulationContext";
 
-function FilterNodeInner({ id, data, selected }: NodeProps & { data: FilterNodeData }) {
+function FilterNodeInner({
+  id,
+  data,
+  selected,
+}: NodeProps & { data: FilterNodeData }) {
   const { nodeActivity } = useContext(SimulationContext);
   const activity = nodeActivity[id];
   const { config } = data;
@@ -52,7 +56,8 @@ function FilterNodeInner({ id, data, selected }: NodeProps & { data: FilterNodeD
                 key={rule.id}
                 className="font-mono text-[9px] text-tertiary truncate"
               >
-                {rule.field} {rule.operator.replace("_", " ")} &quot;{rule.value}&quot;
+                {rule.field} {rule.operator.replace("_", " ")} &quot;
+                {rule.value}&quot;
               </div>
             ))}
             {ruleCount > 2 && (

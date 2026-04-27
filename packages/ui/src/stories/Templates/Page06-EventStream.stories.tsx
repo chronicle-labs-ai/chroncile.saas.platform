@@ -13,10 +13,7 @@ import { FilterPill } from "../../primitives/filter-pill";
 import { Priority } from "../../primitives/priority";
 import { Status } from "../../primitives/status";
 import { StatusDot } from "../../primitives/status-dot";
-import {
-  EventStream,
-  type EventStreamItem,
-} from "../../product/event-stream";
+import { EventStream, type EventStreamItem } from "../../product/event-stream";
 import { Minimap, generateMinimapBars } from "../../product/minimap";
 import { TraceRow } from "../../product/trace-row";
 import { Display } from "../../typography/display";
@@ -59,7 +56,7 @@ const items: EventStreamItem[] = [
     lane: "teal",
     topic: "support.message",
     verb: "received",
-    preview: '"The address is wrong. Says \'Main St\' but I live on Maine St."',
+    preview: "\"The address is wrong. Says 'Main St' but I live on Maine St.\"",
     source: "intercom",
   },
   {
@@ -96,8 +93,7 @@ const items: EventStreamItem[] = [
     lane: "green",
     topic: "stripe.refund",
     verb: "created",
-    preview:
-      "re_3Nf8q2L · $84.00 · order_id=8821 · initiated_by=agent_maria",
+    preview: "re_3Nf8q2L · $84.00 · order_id=8821 · initiated_by=agent_maria",
     source: "stripe",
   },
 ];
@@ -138,7 +134,7 @@ function LinearNav() {
     label: string,
     count?: string | number,
     active?: boolean,
-    color?: string,
+    color?: string
   ) => (
     <div
       key={label}
@@ -314,10 +310,7 @@ function LinearTimeline() {
           priority="med"
           title="p95 latency spike · ticket-fetch"
           subMeta="14:48 · 3m 48s"
-          events={[
-            { lane: "orange", weight: 2 },
-            { lane: "orange" },
-          ]}
+          events={[{ lane: "orange", weight: 2 }, { lane: "orange" }]}
           meta="3m 48s"
           assignee="SYS"
         />
@@ -421,12 +414,24 @@ function OriginalNav() {
       </NavItem>
       <NavItem count="8">Scenarios</NavItem>
       <Eyebrow className="mt-s-5 px-s-3">Streams</Eyebrow>
-      <NavItem lane="teal" count="412">intercom</NavItem>
-      <NavItem lane="amber" count="308">shopify</NavItem>
-      <NavItem lane="green" count="221">stripe</NavItem>
-      <NavItem lane="orange" count="89">ops</NavItem>
-      <NavItem lane="pink" count="140">slack</NavItem>
-      <NavItem lane="violet" count="18">sandbox</NavItem>
+      <NavItem lane="teal" count="412">
+        intercom
+      </NavItem>
+      <NavItem lane="amber" count="308">
+        shopify
+      </NavItem>
+      <NavItem lane="green" count="221">
+        stripe
+      </NavItem>
+      <NavItem lane="orange" count="89">
+        ops
+      </NavItem>
+      <NavItem lane="pink" count="140">
+        slack
+      </NavItem>
+      <NavItem lane="violet" count="18">
+        sandbox
+      </NavItem>
     </div>
   );
 }
@@ -468,7 +473,7 @@ function OriginalDetail() {
       </nav>
       <div className="flex-1 overflow-auto p-s-5">
         <pre className="m-0 whitespace-pre-wrap rounded-xs border border-hairline bg-surface-00 p-s-4 font-mono text-[11.5px] leading-[1.7] text-ink-lo">
-{`// resolved context at call-site
+          {`// resolved context at call-site
 {
   "tool": "escalate",
   "args": {
@@ -512,7 +517,8 @@ function OriginalPage06() {
               playing={playing}
               readoutLeft={
                 <>
-                  Replay · <b className="text-ink-hi font-normal">turn 06 / 11</b>
+                  Replay ·{" "}
+                  <b className="text-ink-hi font-normal">turn 06 / 11</b>
                 </>
               }
               readoutRight={

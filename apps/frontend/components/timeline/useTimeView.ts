@@ -13,7 +13,10 @@ export interface TimeViewState {
 
 const now = () => Date.now();
 
-export function useTimeView(initialCenterMs?: number, initialHalfWidthMs?: number) {
+export function useTimeView(
+  initialCenterMs?: number,
+  initialHalfWidthMs?: number
+) {
   const [centerMs, setCenterMs] = useState(
     initialCenterMs ?? now() - 30 * 60 * 1000
   );
@@ -37,13 +40,23 @@ export function useTimeView(initialCenterMs?: number, initialHalfWidthMs?: numbe
     const end = c + h;
     const marginMs = h * marginRatio;
     if (timeMs < start) {
-      const delta = (start - timeMs) + marginMs;
+      const delta = start - timeMs + marginMs;
       setCenterMs((prev) => prev - delta / 2);
-      setHalfWidthMs((prev) => Math.min(MAX_HALF_WIDTH_MS, Math.max(MIN_HALF_WIDTH_MS, prev + delta / 2)));
+      setHalfWidthMs((prev) =>
+        Math.min(
+          MAX_HALF_WIDTH_MS,
+          Math.max(MIN_HALF_WIDTH_MS, prev + delta / 2)
+        )
+      );
     } else if (timeMs > end) {
-      const delta = (timeMs - end) + marginMs;
+      const delta = timeMs - end + marginMs;
       setCenterMs((prev) => prev + delta / 2);
-      setHalfWidthMs((prev) => Math.min(MAX_HALF_WIDTH_MS, Math.max(MIN_HALF_WIDTH_MS, prev + delta / 2)));
+      setHalfWidthMs((prev) =>
+        Math.min(
+          MAX_HALF_WIDTH_MS,
+          Math.max(MIN_HALF_WIDTH_MS, prev + delta / 2)
+        )
+      );
     }
   }, []);
 
@@ -68,22 +81,19 @@ export function useTimeView(initialCenterMs?: number, initialHalfWidthMs?: numbe
     [centerMs, halfWidthMs]
   );
 
-  const fitToTimes = useCallback(
-    (timesMs: number[], paddingRatio = 0.1) => {
-      if (timesMs.length === 0) return;
-      const minT = Math.min(...timesMs);
-      const maxT = Math.max(...timesMs);
-      const duration = Math.max(1000, maxT - minT);
-      const padding = duration * paddingRatio;
-      const newHalf = Math.min(
-        MAX_HALF_WIDTH_MS,
-        Math.max(MIN_HALF_WIDTH_MS, (duration + padding * 2) / 2)
-      );
-      setCenterMs((minT + maxT) / 2);
-      setHalfWidthMs(newHalf);
-    },
-    []
-  );
+  const fitToTimes = useCallback((timesMs: number[], paddingRatio = 0.1) => {
+    if (timesMs.length === 0) return;
+    const minT = Math.min(...timesMs);
+    const maxT = Math.max(...timesMs);
+    const duration = Math.max(1000, maxT - minT);
+    const padding = duration * paddingRatio;
+    const newHalf = Math.min(
+      MAX_HALF_WIDTH_MS,
+      Math.max(MIN_HALF_WIDTH_MS, (duration + padding * 2) / 2)
+    );
+    setCenterMs((minT + maxT) / 2);
+    setHalfWidthMs(newHalf);
+  }, []);
 
   const setRange = useCallback((startMs: number, endMs: number) => {
     if (endMs <= startMs) return;

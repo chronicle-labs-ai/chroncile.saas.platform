@@ -66,7 +66,7 @@ function Root({
         "shadow-l-pop",
         "transition-transform duration-[200ms] ease-out",
         open ? "translate-x-0" : "translate-x-full",
-        className,
+        className
       )}
       style={{ width }}
       {...props}
@@ -79,7 +79,7 @@ function Root({
           className={cx(
             "absolute right-s-2 top-s-2 z-10",
             "inline-flex h-[24px] w-[24px] items-center justify-center rounded-l text-l-ink-dim",
-            "hover:bg-l-wash-3 hover:text-l-ink transition-colors duration-fast",
+            "hover:bg-l-wash-3 hover:text-l-ink transition-colors duration-fast"
           )}
         >
           <CloseIcon />
@@ -94,17 +94,12 @@ interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   eyebrow?: React.ReactNode;
 }
 
-function Header({
-  eyebrow,
-  className,
-  children,
-  ...props
-}: HeaderProps) {
+function Header({ eyebrow, className, children, ...props }: HeaderProps) {
   return (
     <div
       className={cx(
         "border-b border-l-border-faint px-s-4 py-s-3 pr-s-8",
-        className,
+        className
       )}
       {...props}
     >
@@ -127,10 +122,7 @@ function Body({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cx(
-        "flex-1 overflow-auto px-s-4 py-s-3",
-        className,
-      )}
+      className={cx("flex-1 overflow-auto px-s-4 py-s-3", className)}
       {...props}
     >
       {children}
@@ -147,7 +139,7 @@ function Field({ label, className, children, ...props }: FieldProps) {
     <div
       className={cx(
         "grid grid-cols-[80px_1fr] items-center gap-s-3 py-[6px] text-[13px]",
-        className,
+        className
       )}
       {...props}
     >
@@ -166,7 +158,7 @@ function Footer({
     <div
       className={cx(
         "border-t border-l-border-faint px-s-4 py-s-3 flex items-center gap-s-2",
-        className,
+        className
       )}
       {...props}
     >

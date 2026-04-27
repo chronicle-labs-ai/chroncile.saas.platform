@@ -15,7 +15,11 @@ export async function GET() {
 }
 
 const CreateSchema = z.object({
-  key: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+  key: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/),
   name: z.string().min(1).max(200),
   description: z.string().optional(),
   variables: z.array(
@@ -26,7 +30,9 @@ const CreateSchema = z.object({
       sampleValue: z.string().optional(),
     })
   ),
-  category: z.enum(["transactional", "auth", "notification"]).default("transactional"),
+  category: z
+    .enum(["transactional", "auth", "notification"])
+    .default("transactional"),
 });
 
 export async function POST(request: Request) {

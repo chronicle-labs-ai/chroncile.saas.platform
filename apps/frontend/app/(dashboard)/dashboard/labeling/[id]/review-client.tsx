@@ -46,7 +46,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [actionAnnotations, setActionAnnotations] = useState<ActionAnnotation[]>([]);
+  const [actionAnnotations, setActionAnnotations] = useState<
+    ActionAnnotation[]
+  >([]);
   const [agentProfileExpanded, setAgentProfileExpanded] = useState(false);
   const [contextExpanded, setContextExpanded] = useState(false);
 
@@ -89,7 +91,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
 
   const handleAnnotationChange = useCallback((annotation: ActionAnnotation) => {
     setActionAnnotations((prev) => {
-      const existing = prev.findIndex((a) => a.event_id === annotation.event_id);
+      const existing = prev.findIndex(
+        (a) => a.event_id === annotation.event_id
+      );
       if (existing >= 0) {
         const updated = [...prev];
         updated[existing] = annotation;
@@ -191,7 +195,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
   const agentProfile = getAgentProfile(trace.agentId);
   const autoAnnotations = trace.autoAudit?.action_annotations ?? [];
   const totalAutoActions = autoAnnotations.length;
-  const correctAutoActions = autoAnnotations.filter((a) => a.verdict === "correct").length;
+  const correctAutoActions = autoAnnotations.filter(
+    (a) => a.verdict === "correct"
+  ).length;
   const ctx = trace.agentContext;
 
   return (
@@ -208,8 +214,18 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
         href="/dashboard/labeling"
         className="inline-flex items-center gap-1.5 text-xs text-tertiary hover:text-secondary transition-colors"
       >
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        <svg
+          className="w-3 h-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.75 19.5L8.25 12l7.5-7.5"
+          />
         </svg>
         Back to Audit Queue
       </Link>
@@ -244,7 +260,10 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             )}
             {(trace.autoAudit?.critical_errors?.length ?? 0) > 0 && (
               <span className="badge badge--critical text-[9px]">
-                {trace.autoAudit!.critical_errors.length} {trace.autoAudit!.critical_errors.length === 1 ? "error" : "errors"}
+                {trace.autoAudit!.critical_errors.length}{" "}
+                {trace.autoAudit!.critical_errors.length === 1
+                  ? "error"
+                  : "errors"}
               </span>
             )}
           </div>
@@ -277,9 +296,18 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
 
         {trace.humanAudit && (
           <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
-            <LabelBadge label="Score" value={`${trace.humanAudit.overall_score}/5`} variant="data" />
+            <LabelBadge
+              label="Score"
+              value={`${trace.humanAudit.overall_score}/5`}
+              variant="data"
+            />
             {trace.humanAudit.critical_errors.map((err, i) => (
-              <LabelBadge key={i} label="Error" value={err} variant="critical" />
+              <LabelBadge
+                key={i}
+                label="Error"
+                value={err}
+                variant="critical"
+              />
             ))}
           </div>
         )}
@@ -295,7 +323,8 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             <span className="panel__title">Agent Profile</span>
             <div className="flex items-center gap-2">
               <span className="font-mono text-[10px] text-tertiary">
-                {agentProfile.instructions.length} rules · {agentProfile.required_context_fields.length} required fields
+                {agentProfile.instructions.length} rules ·{" "}
+                {agentProfile.required_context_fields.length} required fields
               </span>
               <span className="text-tertiary text-[10px]">
                 {agentProfileExpanded ? "▼" : "▶"}
@@ -307,17 +336,24 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             <div className="p-4 space-y-4 border-t border-border-dim">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-primary">{agentProfile.name}</span>
+                  <span className="text-sm font-medium text-primary">
+                    {agentProfile.name}
+                  </span>
                   <span className="font-mono text-[10px] text-tertiary bg-elevated px-1.5 py-0.5 border border-border-dim">
                     {agentProfile.workflow_type}
                   </span>
                 </div>
-                <p className="text-xs text-tertiary">{agentProfile.description}</p>
+                <p className="text-xs text-tertiary">
+                  {agentProfile.description}
+                </p>
               </div>
 
-              <AgentInstructions profile={agentProfile} violatedIds={
-                (trace.autoAudit?.instruction_violations_summary ?? []).map((v) => v.instruction_id)
-              } />
+              <AgentInstructions
+                profile={agentProfile}
+                violatedIds={(
+                  trace.autoAudit?.instruction_violations_summary ?? []
+                ).map((v) => v.instruction_id)}
+              />
 
               <div>
                 <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider block mb-1.5">
@@ -337,7 +373,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
                       >
                         <span className="font-mono font-medium">{f.field}</span>
                         {isMissing && (
-                          <span className="badge badge--critical text-[8px] py-0 px-1">MISSING</span>
+                          <span className="badge badge--critical text-[8px] py-0 px-1">
+                            MISSING
+                          </span>
                         )}
                       </div>
                     );
@@ -367,11 +405,12 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
                 {ctx.stale_fields.length} stale
               </span>
             )}
-            {ctx.missing_fields.length === 0 && ctx.stale_fields.length === 0 && (
-              <span className="badge badge--nominal text-[9px] py-0.5 px-1.5">
-                Clean
-              </span>
-            )}
+            {ctx.missing_fields.length === 0 &&
+              ctx.stale_fields.length === 0 && (
+                <span className="badge badge--nominal text-[9px] py-0.5 px-1.5">
+                  Clean
+                </span>
+              )}
             <span className="text-tertiary text-[10px]">
               {contextExpanded ? "▼" : "▶"}
             </span>
@@ -382,7 +421,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
           <div className="p-4 border-t border-border-dim">
             <div className="space-y-1">
               {Object.entries(ctx.fields).map(([key, value]) => {
-                const staleEntry = ctx.stale_fields.find((s) => s.field === key);
+                const staleEntry = ctx.stale_fields.find(
+                  (s) => s.field === key
+                );
                 const isStale = !!staleEntry;
 
                 return (
@@ -394,15 +435,22 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
                         : "bg-surface border-border-dim"
                     }`}
                   >
-                    <span className="font-mono font-medium text-secondary w-32 shrink-0">{key}</span>
+                    <span className="font-mono font-medium text-secondary w-32 shrink-0">
+                      {key}
+                    </span>
                     <span className="font-mono text-tertiary flex-1 break-all">
-                      {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                      {typeof value === "object"
+                        ? JSON.stringify(value)
+                        : String(value)}
                     </span>
                     {isStale && (
                       <div className="shrink-0 text-right">
-                        <span className="badge badge--caution text-[8px] py-0 px-1">STALE</span>
+                        <span className="badge badge--caution text-[8px] py-0 px-1">
+                          STALE
+                        </span>
                         <p className="text-[9px] text-caution mt-0.5">
-                          Correct: {typeof staleEntry.correct_value === "object"
+                          Correct:{" "}
+                          {typeof staleEntry.correct_value === "object"
                             ? JSON.stringify(staleEntry.correct_value)
                             : String(staleEntry.correct_value)}
                         </p>
@@ -417,9 +465,15 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
                   key={field}
                   className="flex items-center gap-3 text-[11px] px-2.5 py-1.5 rounded-sm border bg-critical-bg border-border-dim"
                 >
-                  <span className="font-mono font-medium text-critical w-32 shrink-0">{field}</span>
-                  <span className="text-critical italic">Not present in agent context</span>
-                  <span className="badge badge--critical text-[8px] py-0 px-1 ml-auto">MISSING</span>
+                  <span className="font-mono font-medium text-critical w-32 shrink-0">
+                    {field}
+                  </span>
+                  <span className="text-critical italic">
+                    Not present in agent context
+                  </span>
+                  <span className="badge badge--critical text-[8px] py-0 px-1 ml-auto">
+                    MISSING
+                  </span>
                 </div>
               ))}
             </div>
@@ -457,7 +511,9 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             <ReviewerRecommendation
               trace={trace}
               onNotificationSent={(name, channel) =>
-                showToast(`${channel === "slack" ? "Slack" : "Email"} sent to ${name}`)
+                showToast(
+                  `${channel === "slack" ? "Slack" : "Email"} sent to ${name}`
+                )
               }
             />
           </div>
@@ -469,8 +525,16 @@ export function ReviewClient({ traceId }: ReviewClientProps) {
             actionAnnotations={actionAnnotations}
             onSave={handleSave}
             onSkip={handleSkip}
-            onPrev={prevId ? () => router.push(`/dashboard/labeling/${prevId}`) : undefined}
-            onNext={nextId ? () => router.push(`/dashboard/labeling/${nextId}`) : undefined}
+            onPrev={
+              prevId
+                ? () => router.push(`/dashboard/labeling/${prevId}`)
+                : undefined
+            }
+            onNext={
+              nextId
+                ? () => router.push(`/dashboard/labeling/${nextId}`)
+                : undefined
+            }
             hasPrev={!!prevId}
             hasNext={!!nextId}
             saving={saving}
@@ -505,9 +569,11 @@ function AgentInstructions({
                   : "bg-surface border-border-dim"
               }`}
             >
-              <span className={`font-mono font-medium shrink-0 ${
-                isViolated ? "text-critical" : "text-tertiary"
-              }`}>
+              <span
+                className={`font-mono font-medium shrink-0 ${
+                  isViolated ? "text-critical" : "text-tertiary"
+                }`}
+              >
                 {rule.id}
               </span>
               <span className={isViolated ? "text-critical" : "text-secondary"}>
@@ -517,7 +583,9 @@ function AgentInstructions({
                 {rule.category}
               </span>
               {isViolated && (
-                <span className="badge badge--critical text-[8px] py-0 px-1 shrink-0">VIOLATED</span>
+                <span className="badge badge--critical text-[8px] py-0 px-1 shrink-0">
+                  VIOLATED
+                </span>
               )}
             </div>
           );

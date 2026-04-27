@@ -31,8 +31,10 @@ export interface ModePillOption<TId extends string> {
   icon?: React.ReactNode;
 }
 
-export interface ModePillProps<TId extends string>
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
+export interface ModePillProps<TId extends string> extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onChange"
+> {
   options: readonly ModePillOption<TId>[];
   value: TId;
   onChange: (next: TId) => void;
@@ -102,7 +104,10 @@ export function FieldRow({
   className,
 }: FieldRowProps) {
   return (
-    <div className={cx("cfield", className)} data-invalid={error ? true : undefined}>
+    <div
+      className={cx("cfield", className)}
+      data-invalid={error ? true : undefined}
+    >
       <div className="cfield-head">
         <label htmlFor={id} className="cfield-label">
           {label}
@@ -144,7 +149,8 @@ export function ReadonlyInput({
   className,
   ariaLabel,
 }: ReadonlyInputProps) {
-  const display = secret && !reveal ? "•".repeat(Math.min(value.length, 24)) : value;
+  const display =
+    secret && !reveal ? "•".repeat(Math.min(value.length, 24)) : value;
   return (
     <div
       className={cx("cinput-readonly", className)}
@@ -278,8 +284,10 @@ export function StepRail({
 
 /* ── EventChip — toggleable event-type pill ────────────────── */
 
-export interface EventChipProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type" | "onChange"> {
+export interface EventChipProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "type" | "onChange"
+> {
   active?: boolean;
   /** `object.action` event id rendered as inline mono. */
   children: React.ReactNode;
@@ -313,8 +321,10 @@ export function EventChip({
 
 /* ── NumberedList — body copy with numbered markers ────────── */
 
-export interface NumberedListProps
-  extends Omit<React.OlHTMLAttributes<HTMLOListElement>, "children"> {
+export interface NumberedListProps extends Omit<
+  React.OlHTMLAttributes<HTMLOListElement>,
+  "children"
+> {
   children: React.ReactNode;
 }
 

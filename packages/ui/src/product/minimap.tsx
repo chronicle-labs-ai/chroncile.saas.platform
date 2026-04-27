@@ -93,7 +93,7 @@ export function Minimap({
     <div
       className={cx(
         "col-span-full flex h-[64px] items-center gap-s-3 border-t border-hairline bg-surface-01 px-s-6",
-        className,
+        className
       )}
       {...props}
     >
@@ -177,13 +177,14 @@ function CompactMinimap({
   ...props
 }: CompactMinimapProps) {
   const trackRef = React.useRef<HTMLDivElement | null>(null);
-  const dragRef = React.useRef<
-    | { mode: "move" | "left" | "right"; startPct: number; win: [number, number] }
-    | null
-  >(null);
+  const dragRef = React.useRef<{
+    mode: "move" | "left" | "right";
+    startPct: number;
+    win: [number, number];
+  } | null>(null);
 
-  const startDrag = (mode: "move" | "left" | "right") =>
-    (e: React.MouseEvent) => {
+  const startDrag =
+    (mode: "move" | "left" | "right") => (e: React.MouseEvent) => {
       if (!onWindowChange || !trackRef.current) return;
       const r = trackRef.current.getBoundingClientRect();
       const startPct = (e.clientX - r.left) / r.width;
@@ -200,15 +201,9 @@ function CompactMinimap({
           const ns = Math.max(0, Math.min(1 - width, w[0] + delta));
           onWindowChange([ns, ns + width]);
         } else if (dragRef.current.mode === "left") {
-          onWindowChange([
-            Math.min(w[1] - 0.02, Math.max(0, p)),
-            w[1],
-          ]);
+          onWindowChange([Math.min(w[1] - 0.02, Math.max(0, p)), w[1]]);
         } else {
-          onWindowChange([
-            w[0],
-            Math.max(w[0] + 0.02, Math.min(1, p)),
-          ]);
+          onWindowChange([w[0], Math.max(w[0] + 0.02, Math.min(1, p))]);
         }
       };
       const onUp = () => {
@@ -228,7 +223,7 @@ function CompactMinimap({
       data-density="compact"
       className={cx(
         "flex flex-col gap-[6px] border-b border-l-border bg-l-surface px-s-4 py-[10px]",
-        className,
+        className
       )}
       {...props}
     >
@@ -272,7 +267,7 @@ function CompactMinimap({
           onMouseDown={onWindowChange ? startDrag("move") : undefined}
           className={cx(
             "absolute top-0 bottom-0 border border-ember",
-            onWindowChange ? "cursor-move" : null,
+            onWindowChange ? "cursor-move" : null
           )}
           style={{ left: winLeftPct, width: winWidthPct }}
         >

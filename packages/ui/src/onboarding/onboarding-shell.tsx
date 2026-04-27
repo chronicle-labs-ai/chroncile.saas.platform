@@ -31,8 +31,10 @@ export const ONBOARDING_STEPS: readonly AuthStep[] = [
   { id: "done", label: "Launch" },
 ];
 
-export interface OnboardingShellProps
-  extends Omit<AuthShellProps, "topbar" | "children"> {
+export interface OnboardingShellProps extends Omit<
+  AuthShellProps,
+  "topbar" | "children"
+> {
   /** Current step id. Default `"describe"`. */
   currentStep?: OnboardingStepId;
   /** Handler for when the user clicks a stepper pip. */
@@ -54,7 +56,10 @@ export function OnboardingShell({
   children,
   ...rest
 }: OnboardingShellProps) {
-  const idx = Math.max(0, steps.findIndex((s) => s.id === currentStep));
+  const idx = Math.max(
+    0,
+    steps.findIndex((s) => s.id === currentStep)
+  );
   return (
     <AuthShell
       {...rest}

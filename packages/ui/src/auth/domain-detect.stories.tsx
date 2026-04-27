@@ -47,7 +47,8 @@ export const Live: Story = {
   render: () => {
     const [email, setEmail] = React.useState("");
     const [parsing, setParsing] = React.useState(false);
-    const [match, setMatch] = React.useState<ReturnType<typeof detectDomain>>(null);
+    const [match, setMatch] =
+      React.useState<ReturnType<typeof detectDomain>>(null);
     React.useEffect(() => {
       if (!email) {
         setMatch(null);
@@ -130,8 +131,9 @@ export const StripWarnPendingInvite: Story = {
         label={
           <>
             You have a pending invite from{" "}
-            <b className="text-ink-hi">Acme Industries</b> — check your email for
-            the link from <code className="font-mono">noreply@workos.com</code>.
+            <b className="text-ink-hi">Acme Industries</b> — check your email
+            for the link from{" "}
+            <code className="font-mono">noreply@workos.com</code>.
           </>
         }
       />
@@ -176,15 +178,28 @@ export const StripAllTones: Story = {
     <div className="flex w-[460px] flex-col gap-s-3">
       <DomainStrip
         tone="match"
-        label={<><b className="text-ink-hi">stripe.com</b> — no existing workspace.</>}
+        label={
+          <>
+            <b className="text-ink-hi">stripe.com</b> — no existing workspace.
+          </>
+        }
       />
       <DomainStrip
         tone="warn"
-        label={<><b className="text-ink-hi">Acme Industries</b> already uses Chronicle.</>}
+        label={
+          <>
+            <b className="text-ink-hi">Acme Industries</b> already uses
+            Chronicle.
+          </>
+        }
       />
       <DomainStrip
         tone="sso"
-        label={<><b className="text-ink-hi">Acme Industries</b> uses single sign-on.</>}
+        label={
+          <>
+            <b className="text-ink-hi">Acme Industries</b> uses single sign-on.
+          </>
+        }
       />
       <DomainStrip
         tone="neutral"

@@ -15,10 +15,5 @@ export default async function ReviewPage({
 
   const { id } = await params;
 
-  return (
-    <ReviewClient
-      traceId={id}
-      tenantId={session.user.tenantId}
-    />
-  );
+  return <ReviewClient traceId={id} tenantId={session.user.tenantId} />;
 }

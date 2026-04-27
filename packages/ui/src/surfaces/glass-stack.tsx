@@ -9,18 +9,13 @@
  * blend-mode` and `backdrop-filter` can reach the scene's LightSource.
  */
 
-import type {
-  CSSProperties,
-  ComponentPropsWithoutRef,
-  ReactNode,
-} from "react";
+import type { CSSProperties, ComponentPropsWithoutRef, ReactNode } from "react";
 import * as React from "react";
 
 import { type Blur, type Highlight, resolveBlur } from "./tokens";
 
 type Length = number | string;
-const toLength = (v: Length): string =>
-  typeof v === "number" ? `${v}px` : v;
+const toLength = (v: Length): string => (typeof v === "number" ? `${v}px` : v);
 
 export interface GlassStackProps extends ComponentPropsWithoutRef<"div"> {
   /** Number of panes to stamp. */
@@ -147,7 +142,7 @@ export const GlassStack = React.forwardRef<HTMLDivElement, GlassStackProps>(
       style,
       ...rest
     },
-    ref,
+    ref
   ) {
     const noiseEnabled = noise !== false;
     const noiseOpacity = typeof noise === "number" ? noise : undefined;
@@ -205,5 +200,5 @@ export const GlassStack = React.forwardRef<HTMLDivElement, GlassStackProps>(
         ))}
       </div>
     );
-  },
+  }
 );

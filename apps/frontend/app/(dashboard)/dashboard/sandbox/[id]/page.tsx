@@ -15,5 +15,7 @@ export default async function SandboxEditorPage({
 
   const { id } = await params;
 
-  return <SandboxEditorClient sandboxId={id} tenantId={session.user.tenantId} />;
+  return (
+    <SandboxEditorClient sandboxId={id} tenantId={session.user.tenantId} />
+  );
 }

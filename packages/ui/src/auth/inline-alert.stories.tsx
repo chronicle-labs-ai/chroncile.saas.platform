@@ -84,8 +84,8 @@ export const WarningWithTitleAndActions: Story = {
         }
       >
         Owner-initiated invites land in your inbox from{" "}
-        <code className="font-mono">noreply@workos.com</code>. Sign-ups can&rsquo;t
-        join an existing workspace directly.
+        <code className="font-mono">noreply@workos.com</code>. Sign-ups
+        can&rsquo;t join an existing workspace directly.
       </InlineAlert>
     </div>
   ),

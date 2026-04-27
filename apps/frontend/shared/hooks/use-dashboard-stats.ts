@@ -2,11 +2,13 @@ import type { DashboardStatsResponse } from "shared/generated";
 import { useApiSwr } from "@/shared/hooks/use-api-swr";
 
 export function useDashboardStats() {
-  const { data, error, isLoading, mutate } =
-    useApiSwr<DashboardStatsResponse>("/api/platform/dashboard/stats", {
+  const { data, error, isLoading, mutate } = useApiSwr<DashboardStatsResponse>(
+    "/api/platform/dashboard/stats",
+    {
       revalidateOnFocus: true,
       refreshInterval: 10000,
-    });
+    }
+  );
 
   return {
     eventsCount: data?.totalRuns ?? 0,

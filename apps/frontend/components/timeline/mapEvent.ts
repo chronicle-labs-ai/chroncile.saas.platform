@@ -1,7 +1,9 @@
 import type { EventEnvelopeDto } from "@/lib/events-manager-sse";
 import type { TimelineEvent } from "./types";
 
-export function eventEnvelopeToTimelineEvent(e: EventEnvelopeDto): TimelineEvent {
+export function eventEnvelopeToTimelineEvent(
+  e: EventEnvelopeDto
+): TimelineEvent {
   const payload = (e.event.payload ?? {}) as Record<string, unknown>;
   const platform =
     payload["_platform"] && typeof payload["_platform"] === "object"

@@ -46,7 +46,7 @@ export function Priority({
         "inline-flex items-end justify-center",
         // gap stays consistent regardless of size
         "gap-[1.5px]",
-        className,
+        className
       )}
       style={{ width: size, height: size }}
       {...props}
@@ -71,11 +71,7 @@ function barColorsFor(level: PriorityLevel): [string, string, string] {
   const lo = "var(--l-ink-lo)";
   switch (level) {
     case "urgent":
-      return [
-        "var(--l-p-urgent)",
-        "var(--l-p-urgent)",
-        "var(--l-p-urgent)",
-      ];
+      return ["var(--l-p-urgent)", "var(--l-p-urgent)", "var(--l-p-urgent)"];
     case "high":
       return ["var(--l-p-high)", "var(--l-p-high)", "var(--l-p-high)"];
     case "med":

@@ -69,7 +69,10 @@ export const SuiteResults: Story = {
           </RunsTableRow>
           <RunsTableRow>
             <RunsTableCell>
-              <RunName name="Chargeback dispute" sub="trace_cus_ent_22 · billing" />
+              <RunName
+                name="Chargeback dispute"
+                sub="trace_cus_ent_22 · billing"
+              />
             </RunsTableCell>
             <RunsTableCell>14</RunsTableCell>
             <RunsTableCell>

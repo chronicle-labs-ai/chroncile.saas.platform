@@ -24,9 +24,7 @@ export function ThemeToggle({
 
   const base =
     "inline-flex items-center gap-s-3 rounded-pill border border-hairline-strong bg-surface-01 px-s-3 py-s-2 font-mono text-mono-sm uppercase tracking-eyebrow text-ink-lo shadow-card transition-colors duration-fast hover:border-ink-dim hover:text-ink-hi";
-  const position = floating
-    ? "fixed bottom-s-5 right-s-5 z-50"
-    : "";
+  const position = floating ? "fixed bottom-s-5 right-s-5 z-50" : "";
 
   return (
     <button

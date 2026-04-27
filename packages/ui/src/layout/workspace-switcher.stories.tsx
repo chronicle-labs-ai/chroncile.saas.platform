@@ -37,9 +37,24 @@ const longList: WorkspaceSwitcherEntry[] = [
     group: "Customers",
   },
   { id: "umbrella", name: "Umbrella Corp", plan: "Free", group: "Customers" },
-  { id: "chronicle-eng", name: "Chronicle — Eng", plan: "Internal", group: "Chronicle" },
-  { id: "chronicle-ops", name: "Chronicle — Ops", plan: "Internal", group: "Chronicle" },
-  { id: "chronicle-design", name: "Chronicle — Design", plan: "Internal", group: "Chronicle" },
+  {
+    id: "chronicle-eng",
+    name: "Chronicle — Eng",
+    plan: "Internal",
+    group: "Chronicle",
+  },
+  {
+    id: "chronicle-ops",
+    name: "Chronicle — Ops",
+    plan: "Internal",
+    group: "Chronicle",
+  },
+  {
+    id: "chronicle-design",
+    name: "Chronicle — Design",
+    plan: "Internal",
+    group: "Chronicle",
+  },
 ];
 
 function Harness({
@@ -53,10 +68,9 @@ function Harness({
   onManage?: () => void;
 }) {
   const [selected, setSelected] = React.useState<string>(
-    initial ?? workspaces[0]!.id,
+    initial ?? workspaces[0]!.id
   );
-  const current =
-    workspaces.find((w) => w.id === selected) ?? workspaces[0]!;
+  const current = workspaces.find((w) => w.id === selected) ?? workspaces[0]!;
   return (
     <div className="w-[260px] rounded-md border border-hairline bg-surface-01">
       <WorkspaceSwitcher
@@ -112,10 +126,9 @@ function ComposedDemo({
   }) => React.ReactNode;
 }) {
   const [selected, setSelected] = React.useState<string>(
-    initial ?? workspaces[0]!.id,
+    initial ?? workspaces[0]!.id
   );
-  const current =
-    workspaces.find((w) => w.id === selected) ?? workspaces[0]!;
+  const current = workspaces.find((w) => w.id === selected) ?? workspaces[0]!;
   return (
     <div className="w-[300px] rounded-md border border-hairline bg-surface-01">
       {children({ current, setSelected })}

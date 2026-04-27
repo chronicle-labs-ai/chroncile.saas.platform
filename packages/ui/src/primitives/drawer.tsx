@@ -20,6 +20,7 @@ import {
 
 import { tv, type VariantProps } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const drawerStyles = tv({
   slots: {
@@ -28,23 +29,35 @@ const drawerStyles = tv({
       "data-[entering=true]:animate-in data-[entering=true]:fade-in " +
       "data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
     drawer:
-      "relative flex flex-col border-hairline-strong bg-surface-01 " +
-      "shadow-panel outline-none h-full",
+      "relative flex flex-col bg-surface-01 shadow-panel outline-none h-full",
     dialog: "flex h-full flex-col outline-none",
-    header:
-      "flex items-center justify-between border-b border-hairline " +
-      "bg-surface-02 px-s-5 py-s-3",
-    title: "font-display text-title-sm tracking-tight text-ink-hi",
+    header: "flex items-center justify-between border-b border-hairline bg-surface-02",
+    title: "text-ink-hi",
     close:
-      "inline-flex h-8 w-8 items-center justify-center rounded-sm " +
-      "text-ink-dim transition-colors duration-fast ease-out " +
+      "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out " +
       "data-[hovered=true]:bg-surface-03 data-[hovered=true]:text-ink-hi",
-    body: "flex-1 overflow-auto px-s-5 py-s-4 text-body-sm text-ink-lo",
-    actions:
-      "flex items-center justify-end gap-s-3 border-t border-hairline " +
-      "bg-surface-02 px-s-5 py-s-3",
+    body: "flex-1 overflow-auto text-ink-lo",
+    actions: "flex items-center justify-end border-t border-hairline bg-surface-02",
   },
   variants: {
+    density: {
+      brand: {
+        drawer: "border-hairline-strong",
+        header: "px-s-5 py-s-3",
+        title: "font-display text-title-sm tracking-tight",
+        close: "h-8 w-8 rounded-sm",
+        body: "px-s-5 py-s-4 text-body-sm",
+        actions: "gap-s-3 px-s-5 py-s-3",
+      },
+      compact: {
+        drawer: "border-l-border",
+        header: "px-[14px] py-[10px]",
+        title: "font-sans text-[14px] font-medium tracking-normal",
+        close: "h-7 w-7 rounded-l",
+        body: "px-[14px] py-[14px] font-sans text-[13px] leading-snug",
+        actions: "gap-[8px] px-[14px] py-[10px]",
+      },
+    },
     placement: {
       right: {
         overlay: "justify-end",
@@ -82,7 +95,7 @@ const drawerStyles = tv({
       xl: { drawer: "max-w-[960px]" },
     },
   },
-  defaultVariants: { placement: "right", size: "md" },
+  defaultVariants: { density: "brand", placement: "right", size: "md" },
 });
 
 type DrawerVariantProps = VariantProps<typeof drawerStyles>;
@@ -95,6 +108,7 @@ export interface DrawerProps extends DrawerVariantProps {
   actions?: React.ReactNode;
   placement?: "left" | "right" | "top" | "bottom";
   size?: "sm" | "md" | "lg" | "xl";
+  density?: "compact" | "brand";
   isDismissable?: boolean;
   className?: string;
   classNames?: {
@@ -117,11 +131,13 @@ export function Drawer({
   actions,
   placement = "right",
   size = "md",
+  density: densityProp,
   isDismissable = true,
   className,
   classNames,
 }: DrawerProps) {
-  const slots = drawerStyles({ placement, size });
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = drawerStyles({ density, placement, size });
 
   return (
     <RACModalOverlay
@@ -135,7 +151,7 @@ export function Drawer({
       <RACModal
         className={composeTwRenderProps(
           className ?? classNames?.drawer,
-          slots.drawer(),
+          slots.drawer()
         )}
       >
         <RACDialog className={slots.dialog({ className: classNames?.dialog })}>

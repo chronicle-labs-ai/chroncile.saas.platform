@@ -45,7 +45,7 @@ export interface UseDataTableFiltersResult<TRow> {
 }
 
 export function useDataTableFilters<TRow>(
-  options: UseDataTableFiltersOptions<TRow>,
+  options: UseDataTableFiltersOptions<TRow>
 ): UseDataTableFiltersResult<TRow> {
   const {
     columns,
@@ -55,7 +55,7 @@ export function useDataTableFilters<TRow>(
   } = options;
 
   const [internal, setInternal] = React.useState<FilterState[]>(
-    initialFilters ?? [],
+    initialFilters ?? []
   );
   const isControlled = controlled != null;
   const filters = isControlled ? controlled : internal;
@@ -73,7 +73,7 @@ export function useDataTableFilters<TRow>(
         setInternal(updater);
       }
     },
-    [],
+    []
   );
 
   const columnById = React.useMemo(() => {
@@ -100,13 +100,9 @@ export function useDataTableFilters<TRow>(
       },
       addConfiguredFilter: (filter) => {
         if (!columnById.has(filter.columnId)) return;
-        update((prev) => [
-          ...prev,
-          { id: makeFilterId(), ...filter },
-        ]);
+        update((prev) => [...prev, { id: makeFilterId(), ...filter }]);
       },
-      removeFilter: (id) =>
-        update((prev) => prev.filter((f) => f.id !== id)),
+      removeFilter: (id) => update((prev) => prev.filter((f) => f.id !== id)),
       updateOperator: (id, operator) =>
         update((prev) =>
           prev.map((f) => {
@@ -120,18 +116,16 @@ export function useDataTableFilters<TRow>(
                 col.type,
                 f.operator,
                 operator,
-                f.value,
+                f.value
               ),
             };
-          }),
+          })
         ),
       updateValue: (id, value) =>
-        update((prev) =>
-          prev.map((f) => (f.id === id ? { ...f, value } : f)),
-        ),
+        update((prev) => prev.map((f) => (f.id === id ? { ...f, value } : f))),
       clearAll: () => update(() => []),
     }),
-    [columnById, update],
+    [columnById, update]
   );
 
   const predicate = React.useCallback(
@@ -143,7 +137,7 @@ export function useDataTableFilters<TRow>(
       }
       return true;
     },
-    [filters, columnById],
+    [filters, columnById]
   );
 
   return { filters, actions, predicate, columnById };
@@ -155,7 +149,7 @@ export function coerceValueForOperator(
   type: ColumnType,
   prev: FilterOperator,
   next: FilterOperator,
-  value: unknown,
+  value: unknown
 ): unknown {
   if (type === "multiOption") return Array.isArray(value) ? value : [];
   if (type === "number") {
@@ -173,7 +167,7 @@ export function coerceValueForOperator(
 export function evaluateFilter<TRow>(
   col: ColumnConfig<TRow>,
   f: FilterState,
-  row: TRow,
+  row: TRow
 ): boolean {
   return evaluate(col, f, row);
 }
@@ -181,7 +175,7 @@ export function evaluateFilter<TRow>(
 function evaluate<TRow>(
   col: ColumnConfig<TRow>,
   f: FilterState,
-  row: TRow,
+  row: TRow
 ): boolean {
   const raw = col.accessor(row);
   switch (col.type) {
@@ -191,7 +185,7 @@ function evaluate<TRow>(
       return evalMultiOption(
         raw,
         f.operator,
-        Array.isArray(f.value) ? (f.value as string[]) : [],
+        Array.isArray(f.value) ? (f.value as string[]) : []
       );
     case "text":
       return evalText(raw, f.operator, f.value as string | undefined);
@@ -205,7 +199,7 @@ function evaluate<TRow>(
 function evalOption(
   raw: unknown,
   op: FilterOperator,
-  target: string | undefined,
+  target: string | undefined
 ): boolean {
   if (target == null || target === "") return true;
   const value = raw == null ? "" : String(raw);
@@ -216,7 +210,7 @@ function evalOption(
 function evalMultiOption(
   raw: unknown,
   op: FilterOperator,
-  targets: string[],
+  targets: string[]
 ): boolean {
   if (!targets.length) return true;
   const items = Array.isArray(raw) ? raw.map(String) : [String(raw ?? "")];
@@ -227,7 +221,7 @@ function evalMultiOption(
 function evalText(
   raw: unknown,
   op: FilterOperator,
-  target: string | undefined,
+  target: string | undefined
 ): boolean {
   const q = (target ?? "").trim().toLowerCase();
   if (!q) return true;
@@ -250,7 +244,7 @@ function evalText(
 function evalNumber(
   raw: unknown,
   op: FilterOperator,
-  target: unknown,
+  target: unknown
 ): boolean {
   const value = Number(raw);
   if (Number.isNaN(value)) return target == null;

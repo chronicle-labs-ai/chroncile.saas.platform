@@ -145,7 +145,13 @@ export function SignIn({
       <Eyebrow className="inline-flex items-center gap-s-2">
         <b>SIGN IN</b> · CHRONICLE
       </Eyebrow>
-      <AuthDisplay>{headline ?? <>Welcome <em>back.</em></>}</AuthDisplay>
+      <AuthDisplay>
+        {headline ?? (
+          <>
+            Welcome <em>back.</em>
+          </>
+        )}
+      </AuthDisplay>
       <AuthLede>{lede ?? "Pick up where the stream left off."}</AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
@@ -158,19 +164,25 @@ export function SignIn({
                 provider="google"
                 onPress={() => onSSO?.("google")}
                 isLoading={ssoLoading === "google"}
-                isDisabled={isSubmitting || (!!ssoLoading && ssoLoading !== "google")}
+                isDisabled={
+                  isSubmitting || (!!ssoLoading && ssoLoading !== "google")
+                }
               />
               <SSOButton
                 provider="github"
                 onPress={() => onSSO?.("github")}
                 isLoading={ssoLoading === "github"}
-                isDisabled={isSubmitting || (!!ssoLoading && ssoLoading !== "github")}
+                isDisabled={
+                  isSubmitting || (!!ssoLoading && ssoLoading !== "github")
+                }
               />
               <SSOButton
                 provider="passkey"
                 onPress={() => onSSO?.("passkey")}
                 isLoading={ssoLoading === "passkey"}
-                isDisabled={isSubmitting || (!!ssoLoading && ssoLoading !== "passkey")}
+                isDisabled={
+                  isSubmitting || (!!ssoLoading && ssoLoading !== "passkey")
+                }
               />
             </div>
             <OrDivider />
@@ -179,7 +191,11 @@ export function SignIn({
 
         <FormField
           tone="auth"
-          label={<span className="inline-flex items-center gap-[6px]"><MailIcon /> Email</span>}
+          label={
+            <span className="inline-flex items-center gap-[6px]">
+              <MailIcon /> Email
+            </span>
+          }
           htmlFor="auth-signin-email"
           error={emailErr ?? undefined}
         >
@@ -188,7 +204,6 @@ export function SignIn({
             type="email"
             autoComplete="email"
             placeholder="you@company.com"
-            density="brand"
             variant="auth"
             invalid={!!emailErr}
             value={v.email}
@@ -203,10 +218,7 @@ export function SignIn({
         {/* Discover-driven strip — surfaces the D.1 / D.2 sub-states. */}
         {v.email ? (
           isDiscovering ? (
-            <DomainStrip
-              tone="neutral"
-              label="Checking your workspace…"
-            />
+            <DomainStrip tone="neutral" label="Checking your workspace…" />
           ) : isSSORequired ? (
             <DomainStrip
               tone="sso"
@@ -263,7 +275,6 @@ export function SignIn({
                 type={showPw ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="••••••••••"
-                density="brand"
                 variant="auth"
                 invalid={!!pwErr}
                 value={v.password}
@@ -288,14 +299,13 @@ export function SignIn({
 
       <StepFoot
         back={
-          <Button density="brand" variant="ghost" onPress={onSignUp}>
+          <Button variant="ghost" onPress={onSignUp}>
             New here? Create an account
           </Button>
         }
         next={
           isSSORequired ? null : (
             <Button
-              density="brand"
               variant="ember"
               isLoading={isSubmitting}
               onPress={submit}

@@ -11,7 +11,12 @@ type Story = StoryObj;
 export const Single: Story = {
   render: () => (
     <div className="w-[360px]">
-      <Slider aria-label="Confidence" defaultValue={72} minValue={0} maxValue={100} />
+      <Slider
+        aria-label="Confidence"
+        defaultValue={72}
+        minValue={0}
+        maxValue={100}
+      />
     </div>
   ),
 };

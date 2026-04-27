@@ -29,12 +29,12 @@ function TypeScale() {
           authority, mono for time and topics, sans for reading.
         </Body>
         <Body size="md" tone="lo">
-          Heterogeneous events from every source land on one rail,
-          colored by stream, sortable as list or timeline.
+          Heterogeneous events from every source land on one rail, colored by
+          stream, sortable as list or timeline.
         </Body>
         <Body size="sm" tone="dim">
-          Drafted in one session · tokens in tokens.css · Kalice + TWK
-          Lausanne + Geist Mono.
+          Drafted in one session · tokens in tokens.css · Kalice + TWK Lausanne
+          + Geist Mono.
         </Body>
       </section>
 

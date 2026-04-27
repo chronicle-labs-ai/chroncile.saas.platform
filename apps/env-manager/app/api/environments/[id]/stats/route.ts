@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/data/db";
 
-const SERVICE_USER_ID = process.env.SERVICE_USER_ID ?? "env-manager-service-account";
+const SERVICE_USER_ID =
+  process.env.SERVICE_USER_ID ?? "env-manager-service-account";
 
 export async function GET(
   _request: Request,
@@ -30,10 +31,13 @@ export async function GET(
   try {
     // 1. Try the admin stats endpoint (new, requires latest backend deploy)
     if (secret) {
-      const adminRes = await fetch(`${env.flyAppUrl}/api/platform/admin/stats`, {
-        headers: { "x-service-secret": secret },
-        signal: AbortSignal.timeout(45_000),
-      });
+      const adminRes = await fetch(
+        `${env.flyAppUrl}/api/platform/admin/stats`,
+        {
+          headers: { "x-service-secret": secret },
+          signal: AbortSignal.timeout(45_000),
+        }
+      );
       if (adminRes.ok) {
         const data = await adminRes.json();
         stats.tenants = data.tenants ?? null;

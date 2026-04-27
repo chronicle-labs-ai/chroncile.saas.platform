@@ -68,7 +68,10 @@ export async function DELETE(
 
   if (existing.assignments.length > 0) {
     return NextResponse.json(
-      { error: "Cannot delete: template key has active assignments. Remove assignments first." },
+      {
+        error:
+          "Cannot delete: template key has active assignments. Remove assignments first.",
+      },
       { status: 409 }
     );
   }

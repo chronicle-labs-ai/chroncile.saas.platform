@@ -52,7 +52,11 @@ export interface MigrationStatus {
     status: string;
   };
   overallVersion: string;
-  overallStatus: "up-to-date" | "pending-migrations" | "no-migrations-table" | "error";
+  overallStatus:
+    | "up-to-date"
+    | "pending-migrations"
+    | "no-migrations-table"
+    | "error";
 }
 
 export interface DbInfo {
@@ -83,7 +87,7 @@ export interface MigrationResult {
 async function exec(
   cmd: string,
   args: string[],
-  opts?: { cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number },
+  opts?: { cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number }
 ): Promise<{ stdout: string; stderr: string }> {
   return execAsync(cmd, args, {
     env: { ...process.env, ...opts?.env },
@@ -106,22 +110,30 @@ function pgClient(): pg.Client {
 
 // ─── Docker Availability ───
 
-export async function checkDockerAvailable(): Promise<{ available: boolean; error: string | null }> {
+export async function checkDockerAvailable(): Promise<{
+  available: boolean;
+  error: string | null;
+}> {
   try {
     await exec("docker", ["info"], { timeout: 5_000 });
     return { available: true, error: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message.includes("Cannot connect to the Docker daemon") || message.includes("docker.sock")) {
+    if (
+      message.includes("Cannot connect to the Docker daemon") ||
+      message.includes("docker.sock")
+    ) {
       return {
         available: false,
-        error: "Docker daemon is not running. Start Docker Desktop and try again.",
+        error:
+          "Docker daemon is not running. Start Docker Desktop and try again.",
       };
     }
     if (message.includes("ENOENT") || message.includes("not found")) {
       return {
         available: false,
-        error: "Docker CLI not found. Install Docker Desktop from https://docker.com/products/docker-desktop",
+        error:
+          "Docker CLI not found. Install Docker Desktop from https://docker.com/products/docker-desktop",
       };
     }
     return { available: false, error: `Docker unavailable: ${message}` };
@@ -142,12 +154,11 @@ export async function getContainerStatus(): Promise<ContainerStatus> {
     const { stdout } = await exec("docker", [
       "inspect",
       "--format",
-      '{{.State.Status}}|{{.Id}}|{{.Config.Image}}|{{.State.StartedAt}}',
+      "{{.State.Status}}|{{.Id}}|{{.Config.Image}}|{{.State.StartedAt}}",
       CONTAINER_NAME,
     ]);
     const [status, id, image, startedAt] = stdout.trim().split("|");
-    const state: ContainerState =
-      status === "running" ? "running" : "stopped";
+    const state: ContainerState = status === "running" ? "running" : "stopped";
     const pgReady = state === "running" ? await checkPgReady() : false;
     return {
       state,
@@ -163,13 +174,7 @@ export async function getContainerStatus(): Promise<ContainerStatus> {
 
 async function checkPgReady(): Promise<boolean> {
   try {
-    await exec("docker", [
-      "exec",
-      CONTAINER_NAME,
-      "pg_isready",
-      "-U",
-      PG_USER,
-    ]);
+    await exec("docker", ["exec", CONTAINER_NAME, "pg_isready", "-U", PG_USER]);
     return true;
   } catch {
     return false;
@@ -178,7 +183,7 @@ async function checkPgReady(): Promise<boolean> {
 
 async function waitForPgReady(
   timeoutMs = 30_000,
-  intervalMs = 1_000,
+  intervalMs = 1_000
 ): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -228,14 +233,22 @@ export async function startPostgres(): Promise<ContainerStatus> {
 
   try {
     const { stdout } = await exec("docker", [
-      "exec", CONTAINER_NAME,
-      "psql", "-U", PG_USER, "-tc",
+      "exec",
+      CONTAINER_NAME,
+      "psql",
+      "-U",
+      PG_USER,
+      "-tc",
       "SELECT 1 FROM pg_database WHERE datname = 'env_manager'",
     ]);
     if (!stdout.trim()) {
       await exec("docker", [
-        "exec", CONTAINER_NAME,
-        "psql", "-U", PG_USER, "-c",
+        "exec",
+        CONTAINER_NAME,
+        "psql",
+        "-U",
+        PG_USER,
+        "-c",
         "CREATE DATABASE env_manager",
       ]);
     }
@@ -281,17 +294,17 @@ export async function getDbInfo(): Promise<DbInfo | null> {
 
     const dbRes = await client.query<{ datname: string; size: string }>(
       `SELECT datname, pg_size_pretty(pg_database_size(datname)) AS size
-       FROM pg_database WHERE datistemplate = false ORDER BY datname`,
+       FROM pg_database WHERE datistemplate = false ORDER BY datname`
     );
 
     const connRes = await client.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM pg_stat_activity
        WHERE datname = $1`,
-      [PG_DB],
+      [PG_DB]
     );
 
     const tableRes = await client.query<{ tablename: string }>(
-      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`,
+      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
     );
 
     return {
@@ -329,7 +342,7 @@ export async function getMigrationStatus(): Promise<MigrationStatus> {
         installed_on: Date;
       }>(
         `SELECT version::text, description, installed_on
-         FROM _sqlx_migrations ORDER BY version`,
+         FROM _sqlx_migrations ORDER BY version`
       );
       result.sqlx.applied = sqlxRes.rows.map((r) => ({
         version: r.version,
@@ -348,7 +361,7 @@ export async function getMigrationStatus(): Promise<MigrationStatus> {
           .filter((f) => f.endsWith(".sql"))
           .map((f) => f.replace(".sql", ""));
         const appliedVersions = new Set(
-          result.sqlx.applied.map((m) => m.version),
+          result.sqlx.applied.map((m) => m.version)
         );
         result.sqlx.pending = onDisk.filter((f) => {
           const ver = f.split("_")[0];
@@ -372,7 +385,7 @@ export async function getMigrationStatus(): Promise<MigrationStatus> {
         finished_at: Date | null;
       }>(
         `SELECT migration_name, finished_at
-         FROM _prisma_migrations ORDER BY started_at`,
+         FROM _prisma_migrations ORDER BY started_at`
       );
       result.prisma.applied = prismaRes.rows.map((r) => ({
         name: r.migration_name,
@@ -394,9 +407,11 @@ export async function getMigrationStatus(): Promise<MigrationStatus> {
 
 // ─── Run Migrations ───
 
-export async function runMigrations(
-  targets?: ("sqlx" | "prisma")[],
-): Promise<{ before: MigrationStatus; after: MigrationStatus; results: MigrationResult[] }> {
+export async function runMigrations(targets?: ("sqlx" | "prisma")[]): Promise<{
+  before: MigrationStatus;
+  after: MigrationStatus;
+  results: MigrationResult[];
+}> {
   const before = await getMigrationStatus();
   const results: MigrationResult[] = [];
   const runSqlx = !targets || targets.includes("sqlx");
@@ -404,15 +419,11 @@ export async function runMigrations(
 
   if (runSqlx) {
     try {
-      const { stdout, stderr } = await exec(
-        "sqlx",
-        ["migrate", "run"],
-        {
-          cwd: BACKEND_DIR,
-          env: { ...process.env, DATABASE_URL: LOCAL_DATABASE_URL },
-          timeout: 60_000,
-        },
-      );
+      const { stdout, stderr } = await exec("sqlx", ["migrate", "run"], {
+        cwd: BACKEND_DIR,
+        env: { ...process.env, DATABASE_URL: LOCAL_DATABASE_URL },
+        timeout: 60_000,
+      });
       results.push({ target: "sqlx", success: true, stdout, stderr });
     } catch (err) {
       const e = err as { stdout?: string; stderr?: string; message?: string };
@@ -434,7 +445,7 @@ export async function runMigrations(
           cwd: ENV_MANAGER_DIR,
           env: { ...process.env, DATABASE_URL: LOCAL_DATABASE_URL },
           timeout: 60_000,
-        },
+        }
       );
       results.push({ target: "prisma", success: true, stdout, stderr });
     } catch (err) {
@@ -454,7 +465,9 @@ export async function runMigrations(
 
 // ─── Seeds ───
 
-export async function runSeed(seedName: string): Promise<{ success: boolean; rowsAffected?: string; error?: string }> {
+export async function runSeed(
+  seedName: string
+): Promise<{ success: boolean; rowsAffected?: string; error?: string }> {
   const safeName = seedName.replace(/[^a-z0-9-]/g, "");
   const seedPath = join(ENV_MANAGER_DIR, "seeds", `${safeName}.sql`);
 
@@ -471,7 +484,10 @@ export async function runSeed(seedName: string): Promise<{ success: boolean; row
     await client.connect();
     const res = await client.query(sql);
     const rowsAffected = Array.isArray(res)
-      ? res.map((r) => r.rowCount ?? 0).reduce((a, b) => a + b, 0).toString()
+      ? res
+          .map((r) => r.rowCount ?? 0)
+          .reduce((a, b) => a + b, 0)
+          .toString()
       : (res.rowCount ?? 0).toString();
     return { success: true, rowsAffected };
   } catch (err) {
@@ -511,7 +527,9 @@ async function checkBackendHealthy(): Promise<boolean> {
   }
 }
 
-export async function getBackendLogs(tail = BACKEND_LOG_MAX_LINES): Promise<string> {
+export async function getBackendLogs(
+  tail = BACKEND_LOG_MAX_LINES
+): Promise<string> {
   try {
     const content = await readFile(BACKEND_LOG_FILE, "utf-8");
     const lines = content.split("\n");
@@ -545,7 +563,10 @@ export async function restartBackend(): Promise<{
     }
   }
 
-  await writeFile(BACKEND_LOG_FILE, `--- Backend restart at ${new Date().toISOString()} ---\n`);
+  await writeFile(
+    BACKEND_LOG_FILE,
+    `--- Backend restart at ${new Date().toISOString()} ---\n`
+  );
   const logStream = createWriteStream(BACKEND_LOG_FILE, { flags: "a" });
 
   const backendEnv = { ...process.env };
@@ -571,7 +592,9 @@ export async function restartBackend(): Promise<{
   child.unref();
 
   child.on("exit", (code) => {
-    logStream.write(`\n--- Process exited with code ${code} at ${new Date().toISOString()} ---\n`);
+    logStream.write(
+      `\n--- Process exited with code ${code} at ${new Date().toISOString()} ---\n`
+    );
     logStream.end();
   });
 
@@ -591,7 +614,8 @@ export async function restartBackend(): Promise<{
     success: false,
     pid: newPid,
     logs,
-    error: "Backend did not become healthy within 120s. Check the logs for details.",
+    error:
+      "Backend did not become healthy within 120s. Check the logs for details.",
   };
 }
 

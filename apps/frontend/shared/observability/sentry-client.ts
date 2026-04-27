@@ -25,7 +25,7 @@ export interface SentryDebugInfo {
 }
 
 function formatUserId(
-  userId: number | string | null | undefined,
+  userId: number | string | null | undefined
 ): string | null {
   if (userId === null || userId === undefined) {
     return null;

@@ -6,8 +6,7 @@ import { cx } from "../utils/cx";
  * inside the design-system index page and marketing pages. Two blurred
  * ember/sage glows at opposing corners.
  */
-export interface AmbientBackgroundProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export interface AmbientBackgroundProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function AmbientBackground({
   className,

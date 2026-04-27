@@ -17,21 +17,51 @@ function formatTime(dateStr: string) {
 function getActionIcon(action: string) {
   if (action.includes("run")) {
     return (
-      <svg className="w-4 h-4 shrink-0 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+      <svg
+        className="w-4 h-4 shrink-0 text-tertiary"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
+        />
       </svg>
     );
   }
   if (action.includes("connection")) {
     return (
-      <svg className="w-4 h-4 shrink-0 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+      <svg
+        className="w-4 h-4 shrink-0 text-tertiary"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
+        />
       </svg>
     );
   }
   return (
-    <svg className="w-4 h-4 shrink-0 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    <svg
+      className="w-4 h-4 shrink-0 text-tertiary"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+      />
     </svg>
   );
 }
@@ -39,7 +69,7 @@ function getActionIcon(action: string) {
 export function RecentActivity() {
   const { data, error, isLoading } = useApiSwr<DashboardActivityResponse>(
     "/api/platform/dashboard/activity",
-    { revalidateOnFocus: true, refreshInterval: 30000 },
+    { revalidateOnFocus: true, refreshInterval: 30000 }
   );
 
   const entries: AuditLog[] = data?.activity ?? [];
@@ -70,7 +100,9 @@ export function RecentActivity() {
         )}
         {error && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="text-sm text-critical mb-1">Failed to load activity</div>
+            <div className="text-sm text-critical mb-1">
+              Failed to load activity
+            </div>
             <div className="text-xs text-disabled">Try refreshing the page</div>
           </div>
         )}
@@ -89,7 +121,9 @@ export function RecentActivity() {
                 d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
               />
             </svg>
-            <div className="text-sm text-tertiary mb-1">No activity recorded</div>
+            <div className="text-sm text-tertiary mb-1">
+              No activity recorded
+            </div>
             <div className="text-xs text-disabled">
               Connect an integration to begin capturing events
             </div>

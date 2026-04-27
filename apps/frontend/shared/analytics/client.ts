@@ -1,8 +1,5 @@
 import { createPostHogAnalyticsClient } from "./posthog-client";
-import type {
-  AnalyticsClient,
-  AnalyticsDebugInfo,
-} from "./types";
+import type { AnalyticsClient, AnalyticsDebugInfo } from "./types";
 
 class NoopAnalyticsClient implements AnalyticsClient {
   identify(): void {}

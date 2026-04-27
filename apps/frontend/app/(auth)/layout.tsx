@@ -16,9 +16,7 @@ export default function AuthLayout({
 
       {/* Right Panel - 45% - Form */}
       <div className="w-full lg:w-[45%] relative z-10 flex items-center justify-center px-8 py-12 lg:px-12 lg:py-16 xl:px-20">
-        <div className="w-full max-w-[400px] flex-shrink-0">
-          {children}
-        </div>
+        <div className="w-full max-w-[400px] flex-shrink-0">{children}</div>
       </div>
     </div>
   );

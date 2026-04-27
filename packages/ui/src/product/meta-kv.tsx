@@ -20,7 +20,7 @@ export function MetaKV({ entries, className, ...props }: MetaKVProps) {
     <dl
       className={cx(
         "grid grid-cols-[auto_1fr] gap-y-s-2 gap-x-s-5 font-mono text-mono text-left",
-        className,
+        className
       )}
       {...props}
     >

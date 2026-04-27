@@ -34,8 +34,7 @@ const dot = tv({
 type DotVariantProps = VariantProps<typeof dot>;
 
 export interface StatusDotProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    DotVariantProps {
+  extends React.HTMLAttributes<HTMLSpanElement>, DotVariantProps {
   variant?: StatusDotVariant;
   pulse?: boolean;
   /** Renders the halo ring used on the event stream selected row. */

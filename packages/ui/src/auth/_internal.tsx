@@ -30,8 +30,10 @@ export const isValidEmail = (s: string): boolean =>
 
 /* ── InlineAlert ──────────────────────────────────────────── */
 
-export interface InlineAlertProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+export interface InlineAlertProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   tone?: "danger" | "warning" | "info";
   icon?: React.ReactNode;
   /**
@@ -71,7 +73,7 @@ export function InlineAlert({
         "flex items-start gap-s-2 rounded-sm border px-s-3 py-s-2",
         "font-sans text-[13px] leading-[1.45]",
         toneCls,
-        className,
+        className
       )}
       {...rest}
     >
@@ -95,8 +97,7 @@ export function InlineAlert({
 
 /* ── StepFoot ─────────────────────────────────────────────── */
 
-export interface StepFootProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface StepFootProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Left-side action (back / cancel / etc). */
   back?: React.ReactNode;
   /** Right-side primary action (continue / submit). */
@@ -137,9 +138,7 @@ export const AuthDisplay = ({
 }: {
   children: React.ReactNode;
   className?: string;
-}) => (
-  <h1 className={cx("cg-display-h1 cg-fade-up", className)}>{children}</h1>
-);
+}) => <h1 className={cx("cg-display-h1 cg-fade-up", className)}>{children}</h1>;
 
 export const AuthLede = ({
   children,
@@ -148,9 +147,7 @@ export const AuthLede = ({
   children: React.ReactNode;
   className?: string;
 }) => (
-  <p className={cx("cg-lede cg-fade-up cg-fade-up-1", className)}>
-    {children}
-  </p>
+  <p className={cx("cg-lede cg-fade-up cg-fade-up-1", className)}>{children}</p>
 );
 
 /* ── UnderlineTabs ────────────────────────────────────────── */
@@ -175,8 +172,10 @@ const underlineBtn = tv({
   },
 });
 
-export interface UnderlineTabsProps<TId extends string>
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
+export interface UnderlineTabsProps<TId extends string> extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onChange"
+> {
   items: ReadonlyArray<readonly [TId, React.ReactNode]>;
   value: TId;
   onChange: (next: TId) => void;
@@ -241,8 +240,10 @@ const selectableCard = tv({
   defaultVariants: { active: false, padding: "sm", layout: "stack-tight" },
 });
 
-export interface SelectableCardProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
+export interface SelectableCardProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "type"
+> {
   active?: boolean;
   padding?: "sm" | "md" | "lg";
   layout?: "stack-tight" | "stack" | "relaxed";
@@ -333,8 +334,7 @@ const statusStripStyles = tv({
   defaultVariants: { variant: "inline", tone: "dim" },
 });
 
-export interface StatusStripProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface StatusStripProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "inline" | "banner";
   tone?: StatusStripTone;
 }
@@ -382,8 +382,7 @@ export function StatusStrip({
 
 export type ParseStripState = "idle" | "parsing" | "match" | "nomatch";
 
-export interface ParseStripProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface ParseStripProps extends React.HTMLAttributes<HTMLDivElement> {
   state: ParseStripState;
   /** Empty / pre-input copy. */
   placeholder?: React.ReactNode;
@@ -440,8 +439,7 @@ export function ParseStrip({
  * confirmation card.
  */
 
-export interface SuccessSealProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface SuccessSealProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Pixel size of the inner check glyph. Defaults to 28. */
   size?: number;
   /** Skip the entrance animation. */
@@ -460,7 +458,7 @@ export function SuccessSeal({
         "inline-flex items-center justify-center rounded-pill",
         "bg-event-green/10 p-s-3 text-event-green",
         isStatic ? null : "cg-fade-up",
-        className,
+        className
       )}
       {...rest}
     >

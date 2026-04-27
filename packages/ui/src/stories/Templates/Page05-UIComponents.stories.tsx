@@ -33,7 +33,9 @@ function Page05() {
               <div className="flex h-[56px] w-[56px] items-center justify-center">
                 <Logo variant="icon" className="h-full w-full" />
               </div>
-              <Eyebrow>CHRONICLE / BRAND &amp; PRODUCT SYSTEM · v0.1 DRAFT</Eyebrow>
+              <Eyebrow>
+                CHRONICLE / BRAND &amp; PRODUCT SYSTEM · v0.1 DRAFT
+              </Eyebrow>
             </div>
             <Display size="xl">
               The <em className="italic font-normal text-bone">system</em>
@@ -41,11 +43,10 @@ function Page05() {
               behind the stream.
             </Display>
             <Body size="lg" tone="lo" className="mt-s-4 max-w-[54ch]">
-              A unified design language for Chronicle — the infrastructure
-              layer for agent behavior. Serif headlines for authority, mono
-              for time and topics, sans for reading. A restrained dark
-              surface with one signature: the ember-to-sage light-source
-              gradient.
+              A unified design language for Chronicle — the infrastructure layer
+              for agent behavior. Serif headlines for authority, mono for time
+              and topics, sans for reading. A restrained dark surface with one
+              signature: the ember-to-sage light-source gradient.
             </Body>
           </div>
           <aside className="flex flex-col items-end gap-s-4 self-end pb-s-2">
@@ -56,9 +57,33 @@ function Page05() {
             </div>
             <MetaKV
               entries={[
-                { label: "Cards", value: <><b className="text-ink-hi font-normal">7</b> · brand → product</> },
-                { label: "Tokens", value: <><b className="text-ink-hi font-normal">tokens.css</b> · 1 source of truth</> },
-                { label: "Canvas", value: <><b className="text-ink-hi font-normal">1440</b> design width · responsive</> },
+                {
+                  label: "Cards",
+                  value: (
+                    <>
+                      <b className="text-ink-hi font-normal">7</b> · brand →
+                      product
+                    </>
+                  ),
+                },
+                {
+                  label: "Tokens",
+                  value: (
+                    <>
+                      <b className="text-ink-hi font-normal">tokens.css</b> · 1
+                      source of truth
+                    </>
+                  ),
+                },
+                {
+                  label: "Canvas",
+                  value: (
+                    <>
+                      <b className="text-ink-hi font-normal">1440</b> design
+                      width · responsive
+                    </>
+                  ),
+                },
                 { label: "Ref", value: "Linear · Vercel · Anthropic" },
               ]}
             />
@@ -75,7 +100,10 @@ function Page05() {
             thumb={
               <div className="relative flex h-full flex-col items-center justify-center gap-s-8 bg-black p-s-8">
                 <Logo variant="icon" className="h-[96px] w-[96px]" />
-                <Logo variant="wordmark" className="h-auto w-[180px] opacity-85" />
+                <Logo
+                  variant="wordmark"
+                  className="h-auto w-[180px] opacity-85"
+                />
               </div>
             }
           />
@@ -131,7 +159,10 @@ function Page05() {
           />
         </div>
 
-        <SectionHeader title="Product system" note="05 — 07 · COMPONENTS → APP" />
+        <SectionHeader
+          title="Product system"
+          note="05 — 07 · COMPONENTS → APP"
+        />
         <div className="grid grid-cols-3 gap-s-5">
           <Card
             num="05"
@@ -178,14 +209,41 @@ function Page05() {
             thumb={
               <div className="flex h-full flex-col gap-[6px] bg-surface-00 p-s-5">
                 {[
-                  { time: "14:04", l: "support.conversation.created", lane: "teal" as const },
-                  { time: "14:06", l: "shopify.order.lookup", lane: "amber" as const },
-                  { time: "14:06", l: "agent.response.generated", lane: "green" as const },
-                  { time: "14:09", l: "ops.alert.triggered", lane: "orange" as const },
-                  { time: "14:10", l: "agent.tool.escalate()", lane: "ember" as const },
-                  { time: "14:10", l: "slack.channel.post", lane: "pink" as const },
+                  {
+                    time: "14:04",
+                    l: "support.conversation.created",
+                    lane: "teal" as const,
+                  },
+                  {
+                    time: "14:06",
+                    l: "shopify.order.lookup",
+                    lane: "amber" as const,
+                  },
+                  {
+                    time: "14:06",
+                    l: "agent.response.generated",
+                    lane: "green" as const,
+                  },
+                  {
+                    time: "14:09",
+                    l: "ops.alert.triggered",
+                    lane: "orange" as const,
+                  },
+                  {
+                    time: "14:10",
+                    l: "agent.tool.escalate()",
+                    lane: "ember" as const,
+                  },
+                  {
+                    time: "14:10",
+                    l: "slack.channel.post",
+                    lane: "pink" as const,
+                  },
                 ].map((r, i) => (
-                  <div key={i} className="flex items-center gap-s-2 font-mono text-mono text-ink-lo">
+                  <div
+                    key={i}
+                    className="flex items-center gap-s-2 font-mono text-mono text-ink-lo"
+                  >
                     <StatusDot variant={r.lane} halo={r.lane === "ember"} />
                     <span className={r.lane === "ember" ? "text-ink-hi" : ""}>
                       {r.time} &nbsp; {r.l}
@@ -203,25 +261,38 @@ function Page05() {
             thumb={
               <div className="flex h-full flex-col justify-center gap-s-2 bg-gradient-to-b from-surface-01 to-surface-00 p-s-5">
                 <div className="flex justify-between font-mono text-mono-sm uppercase tracking-eyebrow text-ink-dim">
-                  <span>BASELINE <b className="text-ink-lo font-normal">v2.8</b></span>
+                  <span>
+                    BASELINE <b className="text-ink-lo font-normal">v2.8</b>
+                  </span>
                   <span>98.4% match</span>
                 </div>
                 <div className="h-[6px] overflow-hidden rounded-[3px] bg-white/[0.06]">
-                  <span className="block h-full bg-event-green opacity-40" style={{ width: "98%" }} />
+                  <span
+                    className="block h-full bg-event-green opacity-40"
+                    style={{ width: "98%" }}
+                  />
                 </div>
                 <div className="flex justify-between font-mono text-mono-sm uppercase tracking-eyebrow text-ink-dim">
-                  <span>CANDIDATE <b className="text-ember font-normal">v3.0.4</b></span>
+                  <span>
+                    CANDIDATE <b className="text-ember font-normal">v3.0.4</b>
+                  </span>
                   <span className="text-event-red">62.1% — FAIL</span>
                 </div>
                 <div className="h-[6px] overflow-hidden rounded-[3px] bg-white/[0.06]">
-                  <span className="block h-full bg-ember" style={{ width: "62%" }} />
+                  <span
+                    className="block h-full bg-ember"
+                    style={{ width: "62%" }}
+                  />
                 </div>
               </div>
             }
           />
         </div>
 
-        <SectionHeader title="Three principles" note="HOW THIS SYSTEM DECIDES" />
+        <SectionHeader
+          title="Three principles"
+          note="HOW THIS SYSTEM DECIDES"
+        />
         <div className="grid grid-cols-3 gap-s-5 pt-s-8">
           <Principle
             index="01"

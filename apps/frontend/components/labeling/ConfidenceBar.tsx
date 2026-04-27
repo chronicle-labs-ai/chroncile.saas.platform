@@ -6,7 +6,11 @@ interface ConfidenceBarProps {
   size?: "sm" | "md";
 }
 
-export function ConfidenceBar({ value, showValue = true, size = "md" }: ConfidenceBarProps) {
+export function ConfidenceBar({
+  value,
+  showValue = true,
+  size = "md",
+}: ConfidenceBarProps) {
   const pct = value !== null ? Math.round(value * 100) : 0;
 
   // Semantic color based on confidence level
@@ -18,11 +22,7 @@ export function ConfidenceBar({ value, showValue = true, size = "md" }: Confiden
         : "progress-bar__fill--nominal";
 
   const textColor =
-    pct < 30
-      ? "text-critical"
-      : pct < 70
-        ? "text-caution"
-        : "text-nominal";
+    pct < 30 ? "text-critical" : pct < 70 ? "text-caution" : "text-nominal";
 
   const barHeight = size === "sm" ? "h-[3px]" : "h-[4px]";
 

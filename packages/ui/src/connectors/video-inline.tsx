@@ -59,12 +59,10 @@ export function VideoInline({
       footer={{
         actions: (
           <>
-            <Button density="brand" variant="ghost" onPress={onClose}>
+            <Button variant="ghost" onPress={onClose}>
               Cancel
             </Button>
-            <Button density="brand" variant="ember">
-              Authorize →
-            </Button>
+            <Button variant="ember">Authorize →</Button>
           </>
         ),
       }}

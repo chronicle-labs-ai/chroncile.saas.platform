@@ -25,29 +25,47 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const sliderStyles = tv({
   slots: {
     root: "flex flex-col gap-s-2 w-full",
     track:
-      "relative w-full h-[6px] rounded-pill bg-surface-03 " +
-      "data-[orientation=vertical]:w-[6px] data-[orientation=vertical]:h-full",
-    fill:
-      "absolute inset-y-0 left-0 rounded-pill bg-ember pointer-events-none",
+      "relative w-full rounded-pill " +
+      "data-[orientation=vertical]:h-full",
+    fill: "absolute inset-y-0 left-0 rounded-pill bg-ember pointer-events-none",
     thumb:
-      "h-[16px] w-[16px] rounded-full bg-white border border-ember " +
+      "rounded-full bg-white border border-ember " +
       "shadow-card cursor-grab " +
       "data-[dragging=true]:cursor-grabbing data-[dragging=true]:scale-110 " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-2 " +
       "data-[focus-visible=true]:outline-ember data-[focus-visible=true]:outline-offset-2 " +
       "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
-    output: "font-mono text-mono-sm text-ink-dim self-end",
+    output: "self-end",
   },
+  variants: {
+    density: {
+      brand: {
+        track: "h-[6px] bg-surface-03 data-[orientation=vertical]:w-[6px]",
+        thumb: "h-[16px] w-[16px]",
+        output: "font-mono text-mono-sm text-ink-dim",
+      },
+      compact: {
+        track: "h-[4px] bg-l-wash-3 data-[orientation=vertical]:w-[4px]",
+        thumb: "h-[12px] w-[12px]",
+        output: "font-sans text-[11px] font-medium text-l-ink-dim",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
-export interface SliderProps<T extends number | number[] = number>
-  extends Omit<RACSliderProps<T>, "className" | "children"> {
+export interface SliderProps<T extends number | number[] = number> extends Omit<
+  RACSliderProps<T>,
+  "className" | "children"
+> {
   className?: string;
+  density?: "compact" | "brand";
   /** Show the numeric value(s) above the track. */
   showOutput?: boolean;
   /** Show a filled track between min and the current value / between thumbs. */
@@ -56,14 +74,17 @@ export interface SliderProps<T extends number | number[] = number>
 
 export function Slider<T extends number | number[] = number>({
   className,
+  density: densityProp,
   showOutput = true,
   showFill = true,
   ...rest
 }: SliderProps<T>) {
-  const slots = sliderStyles({});
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = sliderStyles({ density });
   return (
     <RACSlider<T>
       {...(rest as RACSliderProps<T>)}
+      data-density={density}
       className={composeTwRenderProps(className, slots.root())}
     >
       {showOutput ? <RACSliderOutput className={slots.output()} /> : null}

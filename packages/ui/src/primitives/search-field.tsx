@@ -21,6 +21,7 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 export type SearchFieldDensity = "compact" | "brand";
 
@@ -44,8 +45,7 @@ const searchFieldStyles = tv({
           "data-[focus-within=true]:border-[rgba(216,67,10,0.5)] " +
           "data-[focus-within=true]:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] " +
           "data-[disabled=true]:opacity-50",
-        input:
-          "font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim",
+        input: "font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim",
         icon: "left-[10px] h-[14px] w-[14px] text-l-ink-dim",
         clear:
           "h-[20px] w-[20px] text-l-ink-dim data-[hovered=true]:text-l-ink data-[hovered=true]:bg-l-wash-3",
@@ -93,7 +93,7 @@ export interface SearchFieldProps {
 export function SearchField({
   className,
   placeholder,
-  density = "compact",
+  density: densityProp,
   value,
   onChange,
   defaultValue,
@@ -106,6 +106,7 @@ export function SearchField({
   autoFocus,
   id,
 }: SearchFieldProps) {
+  const density = useResolvedChromeDensity(densityProp);
   const slots = searchFieldStyles({ density });
   return (
     <RACSearchField

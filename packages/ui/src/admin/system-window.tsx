@@ -28,8 +28,10 @@ import { cx } from "../utils/cx";
  * webhook tail, etc.
  */
 
-export interface SystemWindowProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+export interface SystemWindowProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   /** Titlebar text — usually a route or shell command, mono. */
   title?: React.ReactNode;
   /** Body content. Pass `Sys*` sub-components for the typical row/log
@@ -56,7 +58,7 @@ export function SystemWindow({
         "flex w-full flex-col overflow-hidden rounded-md",
         "border border-hairline-strong bg-surface-00",
         "shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)]",
-        className,
+        className
       )}
       {...rest}
     >
@@ -64,7 +66,7 @@ export function SystemWindow({
       <div
         className={cx(
           "flex items-center gap-s-3 border-b border-hairline px-s-3 py-s-2",
-          "bg-surface-01",
+          "bg-surface-01"
         )}
       >
         {showDots ? (
@@ -81,20 +83,18 @@ export function SystemWindow({
           <span className="shrink-0 font-mono text-mono-sm text-ink-dim">
             {note}
           </span>
-        ) : (
-          // keep the title centered when there's no note + dots are
-          // shown by reserving symmetric space.
-          showDots ? (
-            <span aria-hidden className="inline-block w-[42px] shrink-0" />
-          ) : null
-        )}
+        ) : // keep the title centered when there's no note + dots are
+        // shown by reserving symmetric space.
+        showDots ? (
+          <span aria-hidden className="inline-block w-[42px] shrink-0" />
+        ) : null}
       </div>
 
       {/* Body */}
       <div
         className={cx(
           "flex flex-col gap-s-2 px-s-4 py-s-3",
-          "font-mono text-mono text-ink",
+          "font-mono text-mono text-ink"
         )}
       >
         {children}
@@ -123,7 +123,7 @@ export function SysRow({ label, value, tone = "default" }: SysRowProps) {
           "flex-1 break-all",
           tone === "highlight" && "text-ember",
           tone === "muted" && "text-ink-dim",
-          tone === "default" && "text-ink-hi",
+          tone === "default" && "text-ink-hi"
         )}
       >
         {value}
@@ -139,12 +139,7 @@ export interface SysPreProps extends React.HTMLAttributes<HTMLPreElement> {
   label?: React.ReactNode;
 }
 
-export function SysPre({
-  label,
-  className,
-  children,
-  ...rest
-}: SysPreProps) {
+export function SysPre({ label, className, children, ...rest }: SysPreProps) {
   return (
     <div className="flex flex-col gap-s-1">
       {label ? (
@@ -158,7 +153,7 @@ export function SysPre({
           "bg-surface-00 px-s-3 py-s-2",
           "font-mono text-[12px] leading-[1.55] text-ink",
           "whitespace-pre-wrap break-words",
-          className,
+          className
         )}
         {...rest}
       >
@@ -184,11 +179,14 @@ export function SysOk({
       className={cx(
         STATUS_CHIP,
         "border-event-green/40 bg-event-green/[0.10] text-event-green",
-        className,
+        className
       )}
       {...rest}
     >
-      <span aria-hidden className="inline-block h-[6px] w-[6px] rounded-pill bg-event-green" />
+      <span
+        aria-hidden
+        className="inline-block h-[6px] w-[6px] rounded-pill bg-event-green"
+      />
       {children}
     </span>
   );
@@ -204,11 +202,14 @@ export function SysWarn({
       className={cx(
         STATUS_CHIP,
         "border-event-amber/40 bg-event-amber/[0.10] text-event-amber",
-        className,
+        className
       )}
       {...rest}
     >
-      <span aria-hidden className="inline-block h-[6px] w-[6px] rounded-pill bg-event-amber" />
+      <span
+        aria-hidden
+        className="inline-block h-[6px] w-[6px] rounded-pill bg-event-amber"
+      />
       {children}
     </span>
   );
@@ -224,11 +225,14 @@ export function SysErr({
       className={cx(
         STATUS_CHIP,
         "border-event-red/40 bg-event-red/[0.10] text-event-red",
-        className,
+        className
       )}
       {...rest}
     >
-      <span aria-hidden className="inline-block h-[6px] w-[6px] rounded-pill bg-event-red" />
+      <span
+        aria-hidden
+        className="inline-block h-[6px] w-[6px] rounded-pill bg-event-red"
+      />
       {children}
     </span>
   );

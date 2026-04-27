@@ -7,7 +7,9 @@ import { getPlanById } from "plans";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-export async function createCheckoutSession(planId: string): Promise<{ url?: string; error?: string }> {
+export async function createCheckoutSession(
+  planId: string
+): Promise<{ url?: string; error?: string }> {
   const session = await auth();
   if (!session?.user?.tenantId) {
     return { error: "Unauthorized" };
@@ -26,7 +28,10 @@ export async function createCheckoutSession(planId: string): Promise<{ url?: str
   const priceIds = await getStripePriceIdsByLookupKeys();
   const priceId = priceIds[plan.lookupKey];
   if (!priceId) {
-    return { error: "Plan not found in Stripe. Run scripts/stripe-sync-plans.mjs first." };
+    return {
+      error:
+        "Plan not found in Stripe. Run scripts/stripe-sync-plans.mjs first.",
+    };
   }
 
   let tenantData: { tenant: { stripe_customer_id: string | null } };
@@ -69,7 +74,10 @@ export async function createCheckoutSession(planId: string): Promise<{ url?: str
   return url ? { url } : { error: "Failed to create checkout session" };
 }
 
-export async function createPortalSession(): Promise<{ url?: string; error?: string }> {
+export async function createPortalSession(): Promise<{
+  url?: string;
+  error?: string;
+}> {
   const session = await auth();
   if (!session?.user?.tenantId) return { error: "Unauthorized" };
 
@@ -83,7 +91,8 @@ export async function createPortalSession(): Promise<{ url?: string; error?: str
     return { error: "Failed to load account data" };
   }
 
-  if (!tenantData.tenant.stripe_customer_id) return { error: "No billing account found" };
+  if (!tenantData.tenant.stripe_customer_id)
+    return { error: "No billing account found" };
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: tenantData.tenant.stripe_customer_id,

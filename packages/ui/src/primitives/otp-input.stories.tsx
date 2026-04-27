@@ -33,17 +33,23 @@ export const Default: Story = {
 };
 
 export const Prefilled: Story = {
-  render: (args) => <OTPInput {...args} defaultValue="483921" autoFocus={false} />,
+  render: (args) => (
+    <OTPInput {...args} defaultValue="483921" autoFocus={false} />
+  ),
 };
 
 export const ErrorState: Story = {
   args: { error: true },
-  render: (args) => <OTPInput {...args} defaultValue="000000" autoFocus={false} />,
+  render: (args) => (
+    <OTPInput {...args} defaultValue="000000" autoFocus={false} />
+  ),
 };
 
 export const SuccessState: Story = {
   args: { success: true },
-  render: (args) => <OTPInput {...args} defaultValue="483921" autoFocus={false} />,
+  render: (args) => (
+    <OTPInput {...args} defaultValue="483921" autoFocus={false} />
+  ),
 };
 
 export const Disabled: Story = {
@@ -97,7 +103,5 @@ export const CodeGridSuccess: Story = {
 export const CodeGridDisabled: Story = {
   name: "CodeGrid · disabled",
   args: { codeGridStyle: true, disabled: true },
-  render: (args) => (
-    <OTPInput {...args} defaultValue="12" autoFocus={false} />
-  ),
+  render: (args) => <OTPInput {...args} defaultValue="12" autoFocus={false} />,
 };

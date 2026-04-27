@@ -49,7 +49,7 @@ export function Mono({
         tones[tone],
         uppercase && "uppercase",
         tactical && "tracking-tactical",
-        className,
+        className
       )}
       {...props}
     >

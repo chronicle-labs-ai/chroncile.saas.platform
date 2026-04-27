@@ -6,17 +6,15 @@
  * heart of the system and diverging would fork the visual truth.
  */
 
-import type {
-  CSSProperties,
-  ComponentPropsWithoutRef,
-  ReactNode,
-} from "react";
+import type { CSSProperties, ComponentPropsWithoutRef, ReactNode } from "react";
 import * as React from "react";
 
 import { type Background, resolveBackground } from "./tokens";
 
-export interface GlassSceneProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
+export interface GlassSceneProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "children"
+> {
   /**
    * Background color token or raw CSS color.
    * @default 'obsidian'
@@ -65,7 +63,7 @@ export const GlassScene = React.forwardRef<HTMLDivElement, GlassSceneProps>(
       children,
       ...rest
     },
-    ref,
+    ref
   ) {
     const outerRef = React.useRef<HTMLDivElement | null>(null);
     const [scale, setScale] = React.useState(1);
@@ -77,7 +75,7 @@ export const GlassScene = React.forwardRef<HTMLDivElement, GlassSceneProps>(
         else if (ref)
           (ref as { current: HTMLDivElement | null }).current = node;
       },
-      [ref],
+      [ref]
     );
 
     React.useEffect(() => {
@@ -119,5 +117,5 @@ export const GlassScene = React.forwardRef<HTMLDivElement, GlassSceneProps>(
         <div className="cg-scene__stage">{children}</div>
       </div>
     );
-  },
+  }
 );

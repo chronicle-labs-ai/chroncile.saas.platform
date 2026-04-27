@@ -8,6 +8,7 @@ import {
 
 import { tv, type VariantProps } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /**
  * Input is a direct swap for `<input>` — RAC's `<Input>` subcomponent
@@ -69,8 +70,7 @@ const input = tv({
 type InputVariantProps = VariantProps<typeof input>;
 
 export interface InputProps
-  extends Omit<RACInputProps, "className">,
-    InputVariantProps {
+  extends Omit<RACInputProps, "className">, InputVariantProps {
   className?: string;
   density?: InputDensity;
   /** Render a leading search glyph and adjust padding. */
@@ -84,13 +84,14 @@ export interface InputProps
 export function Input({
   search = false,
   invalid = false,
-  density = "compact",
+  density: densityProp,
   variant = "default",
   className,
   wrapperClassName,
   ref,
   ...props
 }: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
+  const density = useResolvedChromeDensity(densityProp);
   const field = (
     <RACInput
       {...props}
@@ -98,7 +99,7 @@ export function Input({
       data-density={density}
       className={composeTwRenderProps(
         undefined,
-        input({ density, variant, search, invalid, className }),
+        input({ density, variant, search, invalid, className })
       )}
     />
   );

@@ -7,7 +7,8 @@ export async function GET(
 ) {
   const { id } = await params;
   const template = await prisma.dbTemplate.findUnique({ where: { id } });
-  if (!template) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!template)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(template);
 }
 
@@ -17,7 +18,8 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const template = await prisma.dbTemplate.findUnique({ where: { id } });
-  if (!template) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!template)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await prisma.dbTemplate.delete({ where: { id } });
   return NextResponse.json({ status: "deleted" });

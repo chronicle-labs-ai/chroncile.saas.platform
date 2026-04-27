@@ -40,7 +40,7 @@ export function Body({
         "font-sans font-light leading-[1.5]",
         sizes[size],
         tones[tone],
-        className,
+        className
       )}
       {...props}
     >

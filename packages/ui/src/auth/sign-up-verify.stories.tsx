@@ -45,7 +45,7 @@ export const A3CodeGrid: Story = {
     /* expires-at — 14:32 from now to mirror the prototype's deadline. */
     const expiresAt = React.useMemo(
       () => new Date(Date.now() + (14 * 60 + 32) * 1000),
-      [],
+      []
     );
     return (
       <Frame>
@@ -105,7 +105,7 @@ export const ExpiryOnly: Story = {
   render: () => {
     const expiresAt = React.useMemo(
       () => new Date(Date.now() + (9 * 60 + 12) * 1000),
-      [],
+      []
     );
     return (
       <Frame>
@@ -118,10 +118,7 @@ export const ExpiryOnly: Story = {
 export const Expired: Story = {
   name: "expired (lede flips to 'Code expired')",
   render: () => {
-    const expiresAt = React.useMemo(
-      () => new Date(Date.now() - 10 * 1000),
-      [],
-    );
+    const expiresAt = React.useMemo(() => new Date(Date.now() - 10 * 1000), []);
     return (
       <Frame>
         <SignUpVerify email="ada@stripe.com" expiresAt={expiresAt} />

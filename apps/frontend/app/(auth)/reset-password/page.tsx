@@ -8,9 +8,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ApiError, createPlatformApi } from "platform-api";
 import { FormField, Input } from "ui";
 import { AydeaIcon } from "@/components/icons/AydeaIcon";
-import { resetPasswordSchema, type ResetPasswordInput } from "@/lib/validations";
+import {
+  resetPasswordSchema,
+  type ResetPasswordInput,
+} from "@/lib/validations";
 
-const INVALID_LINK_MESSAGE = "This password reset link is invalid or has expired.";
+const INVALID_LINK_MESSAGE =
+  "This password reset link is invalid or has expired.";
 
 function ResetPasswordForm() {
   const api = useMemo(() => createPlatformApi(() => null), []);
@@ -43,8 +47,7 @@ function ResetPasswordForm() {
       router.refresh();
     } catch (error) {
       form.setError("root", {
-        message:
-          error instanceof ApiError ? error.message : "Connection error",
+        message: error instanceof ApiError ? error.message : "Connection error",
       });
     }
   });
@@ -71,7 +74,9 @@ function ResetPasswordForm() {
         <p className="text-sm text-[#ff3b3b]">{INVALID_LINK_MESSAGE}</p>
       )}
       {form.formState.errors.root?.message && (
-        <p className="text-sm text-[#ff3b3b]">{form.formState.errors.root.message}</p>
+        <p className="text-sm text-[#ff3b3b]">
+          {form.formState.errors.root.message}
+        </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -142,7 +147,9 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="text-sm text-[hsl(0,0%,45%)]">Loading...</div>}>
+    <Suspense
+      fallback={<div className="text-sm text-[hsl(0,0%,45%)]">Loading...</div>}
+    >
       <ResetPasswordForm />
     </Suspense>
   );

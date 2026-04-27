@@ -48,7 +48,9 @@ function makeEvent(overrides: Partial<SandboxEvent> = {}): SandboxEvent {
 describe("sandbox runtime helpers", () => {
   it("derives the default active phase from playback mode", () => {
     expect(deriveDefaultRuntimePhase("active", "playing")).toBe("replaying");
-    expect(deriveDefaultRuntimePhase("active", "live")).toBe("waitingForEvents");
+    expect(deriveDefaultRuntimePhase("active", "live")).toBe(
+      "waitingForEvents"
+    );
     expect(deriveDefaultRuntimePhase("paused", "paused")).toBe("paused");
   });
 
@@ -119,13 +121,16 @@ describe("sandbox runtime helpers", () => {
   });
 
   it("trims runtime history to the configured cap", () => {
-    const runtimeEvents = Array.from({ length: MAX_RUNTIME_EVENTS + 10 }, (_, index) => ({
-      key: `evt_${index}:root_1`,
-      startNodeId: "root_1",
-      event: makeEvent({
-        event_id: `evt_${index}`,
-      }),
-    }));
+    const runtimeEvents = Array.from(
+      { length: MAX_RUNTIME_EVENTS + 10 },
+      (_, index) => ({
+        key: `evt_${index}:root_1`,
+        startNodeId: "root_1",
+        event: makeEvent({
+          event_id: `evt_${index}`,
+        }),
+      })
+    );
 
     const trimmed = appendRuntimeEvents([], runtimeEvents);
     expect(trimmed).toHaveLength(MAX_RUNTIME_EVENTS);

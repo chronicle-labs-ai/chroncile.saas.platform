@@ -8,7 +8,10 @@ export interface EventDetailPanelProps {
   className?: string;
 }
 
-export function EventDetailPanel({ event, className = "" }: EventDetailPanelProps) {
+export function EventDetailPanel({
+  event,
+  className = "",
+}: EventDetailPanelProps) {
   if (!event) {
     return (
       <div
@@ -49,29 +52,79 @@ export function EventDetailPanel({ event, className = "" }: EventDetailPanelProp
       }}
     >
       <div style={{ marginBottom: 8 }}>
-        <span style={{ color: TIMELINE_THEME.text_muted, textTransform: "uppercase", fontSize: 10 }}>Path</span>
-        <div style={{ fontFamily: "monospace", color: TIMELINE_THEME.accent }}>{path}</div>
+        <span
+          style={{
+            color: TIMELINE_THEME.text_muted,
+            textTransform: "uppercase",
+            fontSize: 10,
+          }}
+        >
+          Path
+        </span>
+        <div style={{ fontFamily: "monospace", color: TIMELINE_THEME.accent }}>
+          {path}
+        </div>
       </div>
       <div style={{ marginBottom: 8 }}>
-        <span style={{ color: TIMELINE_THEME.text_muted, textTransform: "uppercase", fontSize: 10 }}>Time</span>
-        <div style={{ fontFamily: "monospace" }}>{new Date(event.occurredAt).toLocaleString()}</div>
+        <span
+          style={{
+            color: TIMELINE_THEME.text_muted,
+            textTransform: "uppercase",
+            fontSize: 10,
+          }}
+        >
+          Time
+        </span>
+        <div style={{ fontFamily: "monospace" }}>
+          {new Date(event.occurredAt).toLocaleString()}
+        </div>
       </div>
       <div style={{ marginBottom: 8 }}>
-        <span style={{ color: TIMELINE_THEME.text_muted, textTransform: "uppercase", fontSize: 10 }}>Actor</span>
+        <span
+          style={{
+            color: TIMELINE_THEME.text_muted,
+            textTransform: "uppercase",
+            fontSize: 10,
+          }}
+        >
+          Actor
+        </span>
         <div>{event.actor ?? "—"}</div>
       </div>
       <div style={{ marginBottom: 8 }}>
-        <span style={{ color: TIMELINE_THEME.text_muted, textTransform: "uppercase", fontSize: 10 }}>Source</span>
+        <span
+          style={{
+            color: TIMELINE_THEME.text_muted,
+            textTransform: "uppercase",
+            fontSize: 10,
+          }}
+        >
+          Source
+        </span>
         <div>{event.source}</div>
       </div>
       {messagePreview ? (
         <div style={{ marginBottom: 8 }}>
-          <span style={{ color: TIMELINE_THEME.text_muted, textTransform: "uppercase", fontSize: 10 }}>Message</span>
-          <div style={{ color: TIMELINE_THEME.text_secondary }}>{messagePreview}</div>
+          <span
+            style={{
+              color: TIMELINE_THEME.text_muted,
+              textTransform: "uppercase",
+              fontSize: 10,
+            }}
+          >
+            Message
+          </span>
+          <div style={{ color: TIMELINE_THEME.text_secondary }}>
+            {messagePreview}
+          </div>
         </div>
       ) : null}
       <details style={{ marginTop: 8 }}>
-        <summary style={{ cursor: "pointer", color: TIMELINE_THEME.text_muted }}>Payload</summary>
+        <summary
+          style={{ cursor: "pointer", color: TIMELINE_THEME.text_muted }}
+        >
+          Payload
+        </summary>
         <pre
           style={{
             marginTop: 8,

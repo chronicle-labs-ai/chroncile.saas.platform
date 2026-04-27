@@ -30,7 +30,13 @@ function randomChoice<T>(arr: T[]): T {
 
 const REAL_ACTOR_TYPES = ["customer", "agent", "system"];
 const REAL_NAMES: Record<string, string[]> = {
-  customer: ["Alice Chen", "Bob Martinez", "Carlos Reyes", "Diana Park", "Eli Nnadi"],
+  customer: [
+    "Alice Chen",
+    "Bob Martinez",
+    "Carlos Reyes",
+    "Diana Park",
+    "Eli Nnadi",
+  ],
   agent: ["Agent-1", "Agent-2", "Support-Bot-v3"],
   system: ["System", "Webhook Relay", "Auto-Router"],
 };
@@ -39,13 +45,19 @@ const REAL_NAMES: Record<string, string[]> = {
 /*  Realistic payload generators per provider                          */
 /* ------------------------------------------------------------------ */
 
-function makePayload(source: string, eventType: string): Record<string, unknown> {
+function makePayload(
+  source: string,
+  eventType: string
+): Record<string, unknown> {
   switch (source) {
     case "intercom":
       return {
         conversation_id: `conv_${Math.floor(Math.random() * 5000)}`,
         message_type: eventType.includes("message") ? "comment" : "note",
-        admin_assignee_id: Math.random() > 0.5 ? `admin_${Math.floor(Math.random() * 20)}` : null,
+        admin_assignee_id:
+          Math.random() > 0.5
+            ? `admin_${Math.floor(Math.random() * 20)}`
+            : null,
         tags: randomChoice([["vip"], ["billing"], ["urgent", "billing"], []]),
       };
     case "stripe":
@@ -55,21 +67,31 @@ function makePayload(source: string, eventType: string): Record<string, unknown>
         currency: "usd",
         customer: `cus_${Math.random().toString(36).slice(2, 14)}`,
         status: eventType.includes("failed") ? "failed" : "succeeded",
-        invoice_id: eventType.includes("invoice") ? `in_${Math.random().toString(36).slice(2, 14)}` : null,
+        invoice_id: eventType.includes("invoice")
+          ? `in_${Math.random().toString(36).slice(2, 14)}`
+          : null,
       };
     case "slack":
       return {
         channel: `#${randomChoice(["support", "general", "engineering", "sales"])}`,
         user: `U${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
         ts: `${Date.now() / 1000}`,
-        thread_ts: Math.random() > 0.6 ? `${(Date.now() - 3600000) / 1000}` : null,
+        thread_ts:
+          Math.random() > 0.6 ? `${(Date.now() - 3600000) / 1000}` : null,
       };
     case "hubspot":
       return {
         object_id: Math.floor(Math.random() * 100000),
         portal_id: 12345678,
-        property_name: eventType.includes("stage") ? "dealstage" : "lifecyclestage",
-        property_value: randomChoice(["lead", "opportunity", "customer", "subscriber"]),
+        property_name: eventType.includes("stage")
+          ? "dealstage"
+          : "lifecyclestage",
+        property_value: randomChoice([
+          "lead",
+          "opportunity",
+          "customer",
+          "subscriber",
+        ]),
       };
     case "zendesk":
       return {
@@ -83,7 +105,10 @@ function makePayload(source: string, eventType: string): Record<string, unknown>
         repository: `org/${randomChoice(["api", "frontend", "infra", "docs"])}`,
         ref: eventType === "push" ? "refs/heads/main" : undefined,
         action: eventType.includes(".") ? eventType.split(".")[1] : eventType,
-        number: eventType.includes("pull_request") || eventType.includes("issue") ? Math.floor(Math.random() * 500) : undefined,
+        number:
+          eventType.includes("pull_request") || eventType.includes("issue")
+            ? Math.floor(Math.random() * 500)
+            : undefined,
       };
     case "notion":
       return {
@@ -111,7 +136,12 @@ const csReplayNodes: SandboxNode[] = [
       config: {
         dateRange: { start: daysAgo(7), end: daysAgo(0) },
         sourceFilter: ["intercom"],
-        eventTypeFilter: ["conversation.started", "message.received", "message.sent", "conversation.closed"],
+        eventTypeFilter: [
+          "conversation.started",
+          "message.received",
+          "message.sent",
+          "conversation.closed",
+        ],
       },
     },
   },
@@ -146,7 +176,15 @@ const csReplayNodes: SandboxNode[] = [
         webhookUrl: "",
         fileFormat: "jsonl",
         transformTemplate: "{{ payload }}",
-        includedFields: ["event_id", "source", "event_type", "occurred_at", "actor", "subject", "payload"],
+        includedFields: [
+          "event_id",
+          "source",
+          "event_type",
+          "occurred_at",
+          "actor",
+          "subject",
+          "payload",
+        ],
       },
     },
   },
@@ -221,7 +259,14 @@ const stripeNodes: SandboxNode[] = [
         webhookUrl: "",
         fileFormat: "jsonl",
         transformTemplate: "{{ payload }}",
-        includedFields: ["event_id", "source", "event_type", "occurred_at", "actor", "payload"],
+        includedFields: [
+          "event_id",
+          "source",
+          "event_type",
+          "occurred_at",
+          "actor",
+          "payload",
+        ],
       },
     },
   },
@@ -237,7 +282,15 @@ const stripeNodes: SandboxNode[] = [
         webhookUrl: "",
         fileFormat: "jsonl",
         transformTemplate: "{{ payload }}",
-        includedFields: ["event_id", "source", "event_type", "occurred_at", "actor", "subject", "payload"],
+        includedFields: [
+          "event_id",
+          "source",
+          "event_type",
+          "occurred_at",
+          "actor",
+          "subject",
+          "payload",
+        ],
       },
     },
   },
@@ -264,7 +317,12 @@ const loadTestNodes: SandboxNode[] = [
       nodeType: "generator",
       config: {
         sourceTypes: ["intercom", "zendesk"],
-        eventTypes: ["conversation.started", "ticket.created", "ticket.updated", "message.received"],
+        eventTypes: [
+          "conversation.started",
+          "ticket.created",
+          "ticket.updated",
+          "message.received",
+        ],
         count: 100,
         intervalMs: 500,
         variationLevel: 0.6,
@@ -280,7 +338,12 @@ const loadTestNodes: SandboxNode[] = [
       nodeType: "filter",
       config: {
         rules: [
-          { id: "r4", field: "actor_type", operator: "equals", value: "customer" },
+          {
+            id: "r4",
+            field: "actor_type",
+            operator: "equals",
+            value: "customer",
+          },
         ],
       },
     },
@@ -297,7 +360,15 @@ const loadTestNodes: SandboxNode[] = [
         webhookUrl: "",
         fileFormat: "jsonl",
         transformTemplate: "{{ payload }}",
-        includedFields: ["event_id", "source", "event_type", "occurred_at", "actor", "subject", "payload"],
+        includedFields: [
+          "event_id",
+          "source",
+          "event_type",
+          "occurred_at",
+          "actor",
+          "subject",
+          "payload",
+        ],
       },
     },
   },
@@ -367,10 +438,7 @@ export const DEMO_SANDBOXES: Sandbox[] = [
 /*  Sample events spanning last 7 days — using real catalog            */
 /* ------------------------------------------------------------------ */
 
-function generateEvents(
-  sandboxId: string,
-  count: number
-): SandboxEvent[] {
+function generateEvents(sandboxId: string, count: number): SandboxEvent[] {
   const events: SandboxEvent[] = [];
   for (let i = 0; i < count; i++) {
     const providerId = randomChoice(PROVIDER_IDS);
@@ -414,14 +482,7 @@ function generateActions(
   events: SandboxEvent[]
 ): AgentAction[] {
   const actions: AgentAction[] = [];
-  const actionTypes = [
-    "reply",
-    "escalate",
-    "close",
-    "tag",
-    "assign",
-    "refund",
-  ];
+  const actionTypes = ["reply", "escalate", "close", "tag", "assign", "refund"];
 
   for (let i = 0; i < Math.min(10, events.length); i++) {
     const evt = events[Math.floor(Math.random() * events.length)];
@@ -432,7 +493,10 @@ function generateActions(
       action_type: randomChoice(actionTypes),
       event_id: evt.event_id,
       timestamp: evt.occurred_at,
-      payload: { auto: true, confidence: Math.round(Math.random() * 100) / 100 },
+      payload: {
+        auto: true,
+        confidence: Math.round(Math.random() * 100) / 100,
+      },
     });
   }
   return actions;
@@ -442,15 +506,13 @@ function generateActions(
 /*  Seed function                                                      */
 /* ------------------------------------------------------------------ */
 
-export function seedStore(
-  store: {
-    seed: (
-      sandboxes: Sandbox[],
-      events: Record<string, SandboxEvent[]>,
-      actions: Record<string, AgentAction[]>
-    ) => void;
-  }
-) {
+export function seedStore(store: {
+  seed: (
+    sandboxes: Sandbox[],
+    events: Record<string, SandboxEvent[]>,
+    actions: Record<string, AgentAction[]>
+  ) => void;
+}) {
   const eventsMap: Record<string, SandboxEvent[]> = {};
   const actionsMap: Record<string, AgentAction[]> = {};
 

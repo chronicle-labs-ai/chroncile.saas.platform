@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { error: data.error || "Signup failed" },
-        { status: res.status },
+        { status: res.status }
       );
     }
 
@@ -34,12 +34,12 @@ export async function POST(request: NextRequest) {
         message: "Account created successfully",
         user: data.user,
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch {
     return NextResponse.json(
       { error: "An error occurred during signup. Please try again." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

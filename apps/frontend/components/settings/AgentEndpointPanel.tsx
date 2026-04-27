@@ -18,7 +18,10 @@ export function AgentEndpointPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const [endpointUrl, setEndpointUrl] = useState("");
   const [authType, setAuthType] = useState<string>("none");
@@ -27,7 +30,9 @@ export function AgentEndpointPanel() {
   const [bearerToken, setBearerToken] = useState("");
   const [basicUsername, setBasicUsername] = useState("");
   const [basicPassword, setBasicPassword] = useState("");
-  const [customHeaders, setCustomHeaders] = useState<Array<{ name: string; value: string }>>([]);
+  const [customHeaders, setCustomHeaders] = useState<
+    Array<{ name: string; value: string }>
+  >([]);
 
   const fetchConfig = useCallback(async () => {
     setLoading(true);
@@ -44,7 +49,10 @@ export function AgentEndpointPanel() {
       setBasicPassword("");
       setCustomHeaders([]);
     } catch (e) {
-      setMessage({ type: "error", text: e instanceof Error ? e.message : "Failed to load" });
+      setMessage({
+        type: "error",
+        text: e instanceof Error ? e.message : "Failed to load",
+      });
     } finally {
       setLoading(false);
     }
@@ -70,7 +78,10 @@ export function AgentEndpointPanel() {
       setBasicPassword("");
       await fetchConfig();
     } catch (e) {
-      setMessage({ type: "error", text: e instanceof Error ? e.message : "Failed to save" });
+      setMessage({
+        type: "error",
+        text: e instanceof Error ? e.message : "Failed to save",
+      });
     } finally {
       setSaving(false);
     }
@@ -80,7 +91,9 @@ export function AgentEndpointPanel() {
     setTesting(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/settings/agent-endpoint/test", { method: "POST" });
+      const res = await fetch("/api/settings/agent-endpoint/test", {
+        method: "POST",
+      });
       const data = await res.json().catch(() => ({}));
       if (data.ok) {
         setMessage({ type: "success", text: "Connection successful" });
@@ -88,16 +101,24 @@ export function AgentEndpointPanel() {
         setMessage({ type: "error", text: data.error ?? "Connection failed" });
       }
     } catch (e) {
-      setMessage({ type: "error", text: e instanceof Error ? e.message : "Test failed" });
+      setMessage({
+        type: "error",
+        text: e instanceof Error ? e.message : "Test failed",
+      });
     } finally {
       setTesting(false);
     }
   };
 
-  const addCustomHeader = () => setCustomHeaders((prev) => [...prev, { name: "", value: "" }]);
+  const addCustomHeader = () =>
+    setCustomHeaders((prev) => [...prev, { name: "", value: "" }]);
   const removeCustomHeader = (i: number) =>
     setCustomHeaders((prev) => prev.filter((_, idx) => idx !== i));
-  const updateCustomHeader = (i: number, field: "name" | "value", value: string) =>
+  const updateCustomHeader = (
+    i: number,
+    field: "name" | "value",
+    value: string
+  ) =>
     setCustomHeaders((prev) =>
       prev.map((h, idx) => (idx === i ? { ...h, [field]: value } : h))
     );
@@ -135,7 +156,11 @@ export function AgentEndpointPanel() {
     <div className="panel">
       <div className="panel__header">
         <span className="panel__title">Agent endpoint</span>
-        <span className={config?.config ? "badge badge--nominal" : "badge badge--neutral"}>
+        <span
+          className={
+            config?.config ? "badge badge--nominal" : "badge badge--neutral"
+          }
+        >
           {config?.config ? "Configured" : "Not set"}
         </span>
       </div>
@@ -261,14 +286,18 @@ export function AgentEndpointPanel() {
                 <input
                   type="text"
                   value={h.name}
-                  onChange={(e) => updateCustomHeader(i, "name", e.target.value)}
+                  onChange={(e) =>
+                    updateCustomHeader(i, "name", e.target.value)
+                  }
                   className="flex-1 px-3 py-2 bg-elevated border border-border-default text-sm text-secondary focus:outline-none focus:border-data"
                   placeholder="Header name"
                 />
                 <input
                   type="text"
                   value={h.value}
-                  onChange={(e) => updateCustomHeader(i, "value", e.target.value)}
+                  onChange={(e) =>
+                    updateCustomHeader(i, "value", e.target.value)
+                  }
                   className="flex-1 px-3 py-2 bg-elevated border border-border-default text-sm text-secondary focus:outline-none focus:border-data"
                   placeholder="Value"
                 />

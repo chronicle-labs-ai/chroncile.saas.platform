@@ -27,7 +27,11 @@ interface EmailLayoutProps {
   footerText?: string;
 }
 
-export function EmailLayout({ preview, children, footerText }: EmailLayoutProps) {
+export function EmailLayout({
+  preview,
+  children,
+  footerText,
+}: EmailLayoutProps) {
   return (
     <Html>
       <Head />
@@ -45,14 +49,10 @@ export function EmailLayout({ preview, children, footerText }: EmailLayoutProps)
             <Text style={logoText}>Chronicle Labs</Text>
           </Section>
 
-          <Section style={main}>
-            {children}
-          </Section>
+          <Section style={main}>{children}</Section>
 
           <Section style={footerSection}>
-            {footerText && (
-              <Text style={footerStyle}>{footerText}</Text>
-            )}
+            {footerText && <Text style={footerStyle}>{footerText}</Text>}
             <Text style={footerStyle}>
               <Link href="https://chronicle-labs.com" style={footerLink}>
                 chronicle-labs.com
@@ -128,7 +128,8 @@ export const styles = {
 
 const body: React.CSSProperties = {
   backgroundColor: "#0a0c0f",
-  fontFamily: "'Helvetica Neue', Helvetica, -apple-system, system-ui, sans-serif",
+  fontFamily:
+    "'Helvetica Neue', Helvetica, -apple-system, system-ui, sans-serif",
   margin: 0,
   padding: 0,
 };

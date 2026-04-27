@@ -59,14 +59,17 @@ export interface ConnectorModalShellProps {
 }
 
 const isFooterObj = (
-  v: ConnectorModalShellProps["footer"],
+  v: ConnectorModalShellProps["footer"]
 ): v is { status?: React.ReactNode; actions?: React.ReactNode } =>
   v != null &&
   typeof v === "object" &&
   !React.isValidElement(v) &&
   ("status" in v || "actions" in v);
 
-const SIZE_CLASS: Record<NonNullable<ConnectorModalShellProps["size"]>, string> = {
+const SIZE_CLASS: Record<
+  NonNullable<ConnectorModalShellProps["size"]>,
+  string
+> = {
   md: "max-w-[540px]",
   lg: "max-w-[640px]",
   xl: "max-w-[760px]",
@@ -109,16 +112,17 @@ export function ConnectorModalShell({
     </div>
   );
 
-  const footerNode = footer != null
-    ? isFooterObj(footer)
-      ? (
-          <>
-            <span className="cmodal-foot-status">{footer.status}</span>
-            <span className="cmodal-foot-actions">{footer.actions}</span>
-          </>
-        )
-      : footer
-    : null;
+  const footerNode =
+    footer != null ? (
+      isFooterObj(footer) ? (
+        <>
+          <span className="cmodal-foot-status">{footer.status}</span>
+          <span className="cmodal-foot-actions">{footer.actions}</span>
+        </>
+      ) : (
+        footer
+      )
+    ) : null;
 
   return (
     <Modal

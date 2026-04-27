@@ -29,11 +29,7 @@ export async function POST(
     }
 
     const store = await getLabelingStore();
-    const updated = await store.saveAudit(
-      id,
-      audit,
-      session.user.id
-    );
+    const updated = await store.saveAudit(id, audit, session.user.id);
 
     if (!updated) {
       return NextResponse.json({ error: "Trace not found" }, { status: 404 });

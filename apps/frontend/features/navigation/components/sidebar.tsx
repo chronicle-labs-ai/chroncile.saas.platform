@@ -7,9 +7,7 @@ import type { EntitlementKey, FeatureFlagKey } from "shared/generated";
 import { isEntitled, isFeatureFlagEnabled } from "shared";
 import { Logo } from "ui";
 import { useFeatureAccess } from "@/shared/feature-access/feature-access-provider";
-import {
-  useSidebarNavigationLoader,
-} from "@/features/navigation/components/sidebar-navigation-loader";
+import { useSidebarNavigationLoader } from "@/features/navigation/components/sidebar-navigation-loader";
 
 type NavItem = {
   name: string;

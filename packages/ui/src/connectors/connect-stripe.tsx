@@ -6,18 +6,10 @@ import { Input } from "../primitives/input";
 import { SourceGlyph } from "../icons/source-glyph";
 import { StatusDot } from "../primitives/status-dot";
 import { InlineAlert } from "../auth/_internal";
-import {
-  type Source,
-  type SourceId,
-} from "../onboarding/data";
+import { type Source, type SourceId } from "../onboarding/data";
 import { type BackfillRunConfig } from "../onboarding/step-connect";
 import { ConnectorModalShell } from "./connector-modal-shell";
-import {
-  EventChip,
-  FieldRow,
-  ModePill,
-  ReadonlyInput,
-} from "./_internal";
+import { EventChip, FieldRow, ModePill, ReadonlyInput } from "./_internal";
 import {
   STRIPE_EVENT_TYPES,
   type StripeEnvMode,
@@ -64,7 +56,7 @@ export function ConnectStripe({
   const [restrictedKey, setRestrictedKey] = React.useState("");
   const [signingSecret, setSigningSecret] = React.useState("");
   const [selected, setSelected] = React.useState<Set<string>>(
-    () => new Set(events.filter((e) => e.defaultOn).map((e) => e.id)),
+    () => new Set(events.filter((e) => e.defaultOn).map((e) => e.id))
   );
 
   const toggleEvent = (id: string, next: boolean) => {
@@ -121,15 +113,10 @@ export function ConnectStripe({
         ),
         actions: (
           <>
-            <Button density="brand" variant="ghost" onPress={onClose}>
+            <Button variant="ghost" onPress={onClose}>
               Cancel
             </Button>
-            <Button
-              density="brand"
-              variant="ember"
-              isDisabled={!canSubmit}
-              onPress={submit}
-            >
+            <Button variant="ember" isDisabled={!canSubmit} onPress={submit}>
               Connect →
             </Button>
           </>
@@ -147,8 +134,8 @@ export function ConnectStripe({
 
         {liveWarning ? (
           <InlineAlert tone="warning">
-            Live mode forwards real customer events. Use a restricted key
-            scoped to read-only access.
+            Live mode forwards real customer events. Use a restricted key scoped
+            to read-only access.
           </InlineAlert>
         ) : null}
 
@@ -160,7 +147,6 @@ export function ConnectStripe({
         >
           <Input
             id="rk"
-            density="brand"
             variant="auth"
             type="password"
             value={restrictedKey}
@@ -177,7 +163,6 @@ export function ConnectStripe({
         >
           <Input
             id="wh"
-            density="brand"
             variant="auth"
             type="password"
             value={signingSecret}

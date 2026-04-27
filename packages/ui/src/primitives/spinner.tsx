@@ -35,7 +35,8 @@ const spinner = tv({
 type SpinnerVariantProps = VariantProps<typeof spinner>;
 
 export interface SpinnerProps
-  extends Omit<React.HTMLAttributes<HTMLSpanElement>, "role">,
+  extends
+    Omit<React.HTMLAttributes<HTMLSpanElement>, "role">,
     SpinnerVariantProps {
   /** Accessible label — announced to screen readers via `aria-label`. */
   label?: string;

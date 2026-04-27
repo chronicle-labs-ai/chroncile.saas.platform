@@ -128,7 +128,12 @@ export const ORG_MEMBERS: OrgMember[] = [
     email: "tom.nakamura@company.com",
     slackHandle: "@tom.n",
     color: "nominal",
-    expertiseAreas: ["onboarding", "feature_request", "general_inquiry", "account_issue"],
+    expertiseAreas: [
+      "onboarding",
+      "feature_request",
+      "general_inquiry",
+      "account_issue",
+    ],
     expertiseSources: ["intercom"],
     canEscalate: false,
     managerId: "mgr_07",
@@ -208,9 +213,7 @@ export function recommendReviewers(
     );
     if (matchingSources.length > 0) {
       score += matchingSources.length * 20;
-      reasons.push(
-        `Knows ${matchingSources.join(", ")}`
-      );
+      reasons.push(`Knows ${matchingSources.join(", ")}`);
     }
 
     // Escalation capability for low-confidence or escalation traces
@@ -241,7 +244,11 @@ export function recommendReviewers(
     }
 
     if (score > 0 || reasons.length > 0) {
-      results.push({ member, matchScore: Math.min(score, 100), matchReasons: reasons });
+      results.push({
+        member,
+        matchScore: Math.min(score, 100),
+        matchReasons: reasons,
+      });
     }
   }
 

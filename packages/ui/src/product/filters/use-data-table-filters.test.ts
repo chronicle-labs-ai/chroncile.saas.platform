@@ -78,23 +78,23 @@ function f(partial: Partial<FilterState>): FilterState {
 describe("option operators", () => {
   it("is matches exact value", () => {
     expect(
-      evaluateFilter(statusCol, f({ operator: "is", value: "fail" }), row),
+      evaluateFilter(statusCol, f({ operator: "is", value: "fail" }), row)
     ).toBe(true);
     expect(
-      evaluateFilter(statusCol, f({ operator: "is", value: "pass" }), row),
+      evaluateFilter(statusCol, f({ operator: "is", value: "pass" }), row)
     ).toBe(false);
   });
   it("isNot negates", () => {
     expect(
-      evaluateFilter(statusCol, f({ operator: "isNot", value: "pass" }), row),
+      evaluateFilter(statusCol, f({ operator: "isNot", value: "pass" }), row)
     ).toBe(true);
     expect(
-      evaluateFilter(statusCol, f({ operator: "isNot", value: "fail" }), row),
+      evaluateFilter(statusCol, f({ operator: "isNot", value: "fail" }), row)
     ).toBe(false);
   });
   it("empty value is a no-op match", () => {
     expect(
-      evaluateFilter(statusCol, f({ operator: "is", value: undefined }), row),
+      evaluateFilter(statusCol, f({ operator: "is", value: undefined }), row)
     ).toBe(true);
   });
 });
@@ -105,40 +105,24 @@ describe("multiOption operators", () => {
       evaluateFilter(
         ownersCol,
         f({ operator: "isAnyOf", value: ["b", "c"] }),
-        row,
-      ),
+        row
+      )
     ).toBe(true);
     expect(
-      evaluateFilter(
-        ownersCol,
-        f({ operator: "isAnyOf", value: ["c"] }),
-        row,
-      ),
+      evaluateFilter(ownersCol, f({ operator: "isAnyOf", value: ["c"] }), row)
     ).toBe(false);
   });
   it("isNoneOf inverts the intersection test", () => {
     expect(
-      evaluateFilter(
-        ownersCol,
-        f({ operator: "isNoneOf", value: ["c"] }),
-        row,
-      ),
+      evaluateFilter(ownersCol, f({ operator: "isNoneOf", value: ["c"] }), row)
     ).toBe(true);
     expect(
-      evaluateFilter(
-        ownersCol,
-        f({ operator: "isNoneOf", value: ["a"] }),
-        row,
-      ),
+      evaluateFilter(ownersCol, f({ operator: "isNoneOf", value: ["a"] }), row)
     ).toBe(false);
   });
   it("empty target array is a no-op match", () => {
     expect(
-      evaluateFilter(
-        ownersCol,
-        f({ operator: "isAnyOf", value: [] }),
-        row,
-      ),
+      evaluateFilter(ownersCol, f({ operator: "isAnyOf", value: [] }), row)
     ).toBe(true);
   });
 });
@@ -149,8 +133,8 @@ describe("text operators", () => {
       evaluateFilter(
         titleCol,
         f({ operator: "contains", value: "  REFUND " }),
-        row,
-      ),
+        row
+      )
     ).toBe(true);
   });
   it("doesNotContain inverts", () => {
@@ -158,20 +142,16 @@ describe("text operators", () => {
       evaluateFilter(
         titleCol,
         f({ operator: "doesNotContain", value: "refund" }),
-        row,
-      ),
+        row
+      )
     ).toBe(false);
   });
   it("is / isNot compare full value (lowercased)", () => {
     expect(
-      evaluateFilter(titleCol, f({ operator: "is", value: row.title }), row),
+      evaluateFilter(titleCol, f({ operator: "is", value: row.title }), row)
     ).toBe(true);
     expect(
-      evaluateFilter(
-        titleCol,
-        f({ operator: "isNot", value: row.title }),
-        row,
-      ),
+      evaluateFilter(titleCol, f({ operator: "isNot", value: row.title }), row)
     ).toBe(false);
   });
 });
@@ -190,26 +170,18 @@ describe("number operators", () => {
   ];
   for (const [op, value, expected] of cases) {
     it(`${op}(${String(value)}) against 11`, () => {
-      expect(
-        evaluateFilter(turnsCol, f({ operator: op, value }), row),
-      ).toBe(expected);
+      expect(evaluateFilter(turnsCol, f({ operator: op, value }), row)).toBe(
+        expected
+      );
     });
   }
 
   it("between is inclusive on both ends", () => {
     expect(
-      evaluateFilter(
-        turnsCol,
-        f({ operator: "between", value: [10, 12] }),
-        row,
-      ),
+      evaluateFilter(turnsCol, f({ operator: "between", value: [10, 12] }), row)
     ).toBe(true);
     expect(
-      evaluateFilter(
-        turnsCol,
-        f({ operator: "between", value: [12, 20] }),
-        row,
-      ),
+      evaluateFilter(turnsCol, f({ operator: "between", value: [12, 20] }), row)
     ).toBe(false);
   });
 
@@ -218,46 +190,42 @@ describe("number operators", () => {
       evaluateFilter(
         turnsCol,
         f({ operator: "between", value: [undefined, 20] }),
-        row,
-      ),
+        row
+      )
     ).toBe(true);
     expect(
       evaluateFilter(
         turnsCol,
         f({ operator: "between", value: [20, undefined] }),
-        row,
-      ),
+        row
+      )
     ).toBe(false);
     expect(
       evaluateFilter(
         turnsCol,
         f({ operator: "between", value: [undefined, undefined] }),
-        row,
-      ),
+        row
+      )
     ).toBe(true);
   });
 
   it("undefined / empty-string values are no-op matches", () => {
     expect(
-      evaluateFilter(turnsCol, f({ operator: "eq", value: undefined }), row),
+      evaluateFilter(turnsCol, f({ operator: "eq", value: undefined }), row)
     ).toBe(true);
     expect(
-      evaluateFilter(turnsCol, f({ operator: "eq", value: "" }), row),
+      evaluateFilter(turnsCol, f({ operator: "eq", value: "" }), row)
     ).toBe(true);
   });
 });
 
 describe("coerceValueForOperator", () => {
   it("keeps multiOption values as arrays", () => {
-    expect(coerceValueForOperator("multiOption", "isAnyOf", "isNoneOf", undefined))
-      .toEqual([]);
     expect(
-      coerceValueForOperator(
-        "multiOption",
-        "isAnyOf",
-        "isNoneOf",
-        ["a", "b"],
-      ),
+      coerceValueForOperator("multiOption", "isAnyOf", "isNoneOf", undefined)
+    ).toEqual([]);
+    expect(
+      coerceValueForOperator("multiOption", "isAnyOf", "isNoneOf", ["a", "b"])
     ).toEqual(["a", "b"]);
   });
 
@@ -269,17 +237,15 @@ describe("coerceValueForOperator", () => {
   });
 
   it("drops the upper bound when leaving between", () => {
-    expect(
-      coerceValueForOperator("number", "between", "eq", [3, 7]),
-    ).toBe(3);
+    expect(coerceValueForOperator("number", "between", "eq", [3, 7])).toBe(3);
   });
 
   it("passes through unrelated values", () => {
     expect(coerceValueForOperator("text", "contains", "is", "hello")).toBe(
-      "hello",
+      "hello"
     );
     expect(coerceValueForOperator("option", "is", "isNot", "pass")).toBe(
-      "pass",
+      "pass"
     );
   });
 });

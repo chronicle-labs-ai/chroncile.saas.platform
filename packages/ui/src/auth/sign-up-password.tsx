@@ -5,10 +5,7 @@ import { Button } from "../primitives/button";
 import { Eyebrow } from "../primitives/eyebrow";
 import { FormField } from "../primitives/form-field";
 import { Input } from "../primitives/input";
-import {
-  PasswordMeter,
-  scorePassword,
-} from "../primitives/password-meter";
+import { PasswordMeter, scorePassword } from "../primitives/password-meter";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -19,12 +16,7 @@ import {
   MailIcon,
   UserIcon,
 } from "../icons/glyphs";
-import {
-  AuthDisplay,
-  AuthLede,
-  InlineAlert,
-  StepFoot,
-} from "./_internal";
+import { AuthDisplay, AuthLede, InlineAlert, StepFoot } from "./_internal";
 
 /**
  * SignUpPassword — second sign-up step.
@@ -91,7 +83,9 @@ export function SignUpPassword({
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 02 · Account</Eyebrow>
-      <AuthDisplay>Set a <em>strong password.</em></AuthDisplay>
+      <AuthDisplay>
+        Set a <em>strong password.</em>
+      </AuthDisplay>
       <AuthLede>It protects every event in your stream.</AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
@@ -112,7 +106,6 @@ export function SignUpPassword({
               type="email"
               value={value.email}
               readOnly
-              density="brand"
               variant="auth"
               className="pr-[40px]"
             />
@@ -140,7 +133,6 @@ export function SignUpPassword({
               type="text"
               autoComplete="given-name"
               placeholder="Ada"
-              density="brand"
               variant="auth"
               value={value.firstName ?? ""}
               onChange={(e) =>
@@ -167,7 +159,6 @@ export function SignUpPassword({
               type={showPw ? "text" : "password"}
               autoComplete="new-password"
               placeholder="At least 8 characters · One number or symbol"
-              density="brand"
               variant="auth"
               value={value.password}
               onChange={(e) =>
@@ -194,7 +185,6 @@ export function SignUpPassword({
       <StepFoot
         back={
           <Button
-            density="brand"
             variant="ghost"
             onPress={onBack}
             leadingIcon={<ArrowLeftIcon />}
@@ -204,7 +194,6 @@ export function SignUpPassword({
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             isLoading={isSubmitting}
             isDisabled={!canSubmit}

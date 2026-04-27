@@ -5,7 +5,9 @@ import { spacing } from "../../tokens/spacing";
 function ScaleRow({ name, value }: { name: string; value: string }) {
   return (
     <div className="flex items-center gap-s-4 border-b border-hairline py-s-3">
-      <span className="w-[60px] font-mono text-mono text-ink-dim">s-{name}</span>
+      <span className="w-[60px] font-mono text-mono text-ink-dim">
+        s-{name}
+      </span>
       <span className="w-[100px] font-mono text-mono-sm text-ink-lo">
         {value}
       </span>

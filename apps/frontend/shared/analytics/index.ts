@@ -1,4 +1,8 @@
-export { AnalyticsProvider, useAnalytics, useTrack } from "./analytics-provider";
+export {
+  AnalyticsProvider,
+  useAnalytics,
+  useTrack,
+} from "./analytics-provider";
 export type {
   AnalyticsClient,
   AnalyticsDebugInfo,

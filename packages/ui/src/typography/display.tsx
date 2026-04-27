@@ -3,8 +3,7 @@ import { cx } from "../utils/cx";
 
 export type DisplaySize = "sm" | "md" | "lg" | "xl" | "xxl";
 
-export interface DisplayProps
-  extends React.HTMLAttributes<HTMLHeadingElement> {
+export interface DisplayProps extends React.HTMLAttributes<HTMLHeadingElement> {
   as?: "h1" | "h2" | "h3" | "h4" | "p" | "div";
   size?: DisplaySize;
   /** Use the warm bone color for italic emphasis inside the headline. */
@@ -38,7 +37,7 @@ export function Display({
         "font-display font-medium tracking-display leading-[0.96]",
         muted ? "text-bone" : "text-ink-hi",
         sizes[size],
-        className,
+        className
       )}
       {...props}
     >

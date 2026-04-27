@@ -16,7 +16,10 @@ export function StatsBar({ stats, loading }: StatsBarProps) {
     },
     {
       label: "Pending Review",
-      value: (stats?.pending ?? 0) + (stats?.autoLabeled ?? 0) + (stats?.inReview ?? 0),
+      value:
+        (stats?.pending ?? 0) +
+        (stats?.autoLabeled ?? 0) +
+        (stats?.inReview ?? 0),
       color: "metric__value--caution",
     },
     {
@@ -60,7 +63,9 @@ export function StatsBar({ stats, loading }: StatsBarProps) {
         <div key={m.label} className="panel p-4">
           <div className="metric">
             <span className="metric__label">{m.label}</span>
-            <span className={`metric__value text-xl ${m.color}`}>{m.value}</span>
+            <span className={`metric__value text-xl ${m.color}`}>
+              {m.value}
+            </span>
           </div>
         </div>
       ))}

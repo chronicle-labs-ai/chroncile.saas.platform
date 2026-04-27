@@ -59,8 +59,7 @@ export function MultiOptionEditor({
     if (!q) return options;
     return options.filter(
       (o) =>
-        o.label.toLowerCase().includes(q) ||
-        o.value.toLowerCase().includes(q),
+        o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
     );
   }, [query, options]);
 
@@ -89,19 +88,14 @@ export function MultiOptionEditor({
           }
           onChange(Array.from(keys).map(String));
         }}
-        renderEmptyState={() => (
-          <div className={slots.empty()}>No matches</div>
-        )}
+        renderEmptyState={() => <div className={slots.empty()}>No matches</div>}
       >
         {filtered.map((o) => (
           <RACListBoxItem
             key={o.value}
             id={o.value}
             textValue={o.label}
-            className={composeTwRenderProps(
-              undefined,
-              `${slots.item()} group`,
-            )}
+            className={composeTwRenderProps(undefined, `${slots.item()} group`)}
           >
             <span className={slots.box()}>
               <svg

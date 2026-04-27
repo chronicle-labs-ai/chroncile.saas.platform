@@ -142,21 +142,9 @@ function ParticleDot({
         style={{ filter: "blur(4px)" }}
       />
       {/* Core dot */}
-      <circle
-        cx={point.x}
-        cy={point.y}
-        r={4}
-        fill={color}
-        opacity={0.9}
-      />
+      <circle cx={point.x} cy={point.y} r={4} fill={color} opacity={0.9} />
       {/* Bright center */}
-      <circle
-        cx={point.x}
-        cy={point.y}
-        r={1.5}
-        fill="#ffffff"
-        opacity={0.7}
-      />
+      <circle cx={point.x} cy={point.y} r={1.5} fill="#ffffff" opacity={0.7} />
     </>
   );
 }

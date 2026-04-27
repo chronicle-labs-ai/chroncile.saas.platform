@@ -6,12 +6,7 @@ import { Eyebrow } from "../primitives/eyebrow";
 import { OTPInput } from "../primitives/otp-input";
 import { Spinner } from "../primitives/spinner";
 import { ArrowLeftIcon } from "../icons/glyphs";
-import {
-  AuthDisplay,
-  AuthLede,
-  InlineAlert,
-  StepFoot,
-} from "./_internal";
+import { AuthDisplay, AuthLede, InlineAlert, StepFoot } from "./_internal";
 
 /*
  * SignUpVerify — third sign-up step. Six-digit OTP with auto-submit
@@ -103,9 +98,7 @@ export function SignUpVerify({
     const s = totalSec % 60;
     return {
       expired: false,
-      mmss: `${m.toString().padStart(2, "0")}:${s
-        .toString()
-        .padStart(2, "0")}`,
+      mmss: `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
     } as const;
   }, [expiresAt, now]);
 
@@ -124,22 +117,29 @@ export function SignUpVerify({
    *     "Code expired" when ms <= 0).
    *   - Without `expiresAt`: static fallback ("expires in 10 minutes")
    *     so existing callers without the prop keep their copy. */
-  const ledeExpiry = expiryMMSS
-    ? expiryMMSS.expired
-      ? <>Code expired — request a new one.</>
-      : <>It expires in <b className="text-ink-hi font-medium">{expiryMMSS.mmss}</b>.</>
-    : <>It expires in 10 minutes.</>;
+  const ledeExpiry = expiryMMSS ? (
+    expiryMMSS.expired ? (
+      <>Code expired — request a new one.</>
+    ) : (
+      <>
+        It expires in{" "}
+        <b className="text-ink-hi font-medium">{expiryMMSS.mmss}</b>.
+      </>
+    )
+  ) : (
+    <>It expires in 10 minutes.</>
+  );
 
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 03 · Verify</Eyebrow>
-      <AuthDisplay>Verify your <em>email.</em></AuthDisplay>
+      <AuthDisplay>
+        Verify your <em>email.</em>
+      </AuthDisplay>
       <AuthLede>
         We sent a 6-digit code to{" "}
-        <b className="text-ink-hi font-medium">
-          {email || "you@company.com"}
-        </b>
-        . {ledeExpiry}
+        <b className="text-ink-hi font-medium">{email || "you@company.com"}</b>.{" "}
+        {ledeExpiry}
       </AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
@@ -187,7 +187,11 @@ export function SignUpVerify({
 
       <StepFoot
         back={
-          <Button density="brand" variant="ghost" onPress={onBack} leadingIcon={<ArrowLeftIcon />}>
+          <Button
+            variant="ghost"
+            onPress={onBack}
+            leadingIcon={<ArrowLeftIcon />}
+          >
             Back
           </Button>
         }

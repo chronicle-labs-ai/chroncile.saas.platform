@@ -39,8 +39,7 @@ const detect = tv({
   },
 });
 
-export interface DomainDetectProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface DomainDetectProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Whether the email field is currently being parsed (placeholder while debouncing). */
   parsing?: boolean;
   /** Resolved match — usually `detectDomain(email)`. `null` when no match was found. */
@@ -135,8 +134,7 @@ const STRIP_DOT_COLOR: Record<DomainStripTone, string> = {
   neutral: "bg-ink-dim",
 };
 
-export interface DomainStripProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface DomainStripProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Drives the LED dot color + container tint. */
   tone: DomainStripTone;
   /** Main copy in the strip — usually the discover endpoint's narrative line. */
@@ -169,7 +167,7 @@ export function DomainStrip({
         aria-hidden
         className={cx(
           "inline-block h-[8px] w-[8px] shrink-0 rounded-pill",
-          STRIP_DOT_COLOR[tone],
+          STRIP_DOT_COLOR[tone]
         )}
       />
       <span className="flex-1">{label}</span>

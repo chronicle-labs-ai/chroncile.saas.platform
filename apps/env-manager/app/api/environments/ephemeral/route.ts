@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/server/data/db";
-import { buildEnvName, generateSuffix, provisionEphemeral } from "@/server/environments/lifecycle";
+import {
+  buildEnvName,
+  generateSuffix,
+  provisionEphemeral,
+} from "@/server/environments/lifecycle";
 
 const ProvisionSchema = z.object({
   branch: z.string().min(1),
@@ -36,12 +40,15 @@ export async function POST(request: Request) {
   while (await prisma.environment.findUnique({ where: { name: envName } })) {
     envName = buildEnvName(parsed.data.branch, generateSuffix());
     if (++attempts > 5) {
-      return NextResponse.json({ error: "Could not generate unique environment name" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Could not generate unique environment name" },
+        { status: 500 }
+      );
     }
   }
 
   const flyAppName = `chronicle-backend-${envName}`;
-  const flyDbName  = `chronicle-db-${envName}`;
+  const flyDbName = `chronicle-db-${envName}`;
 
   const defaultSecrets = getDefaultSecrets();
   const mergedSecrets = { ...defaultSecrets, ...parsed.data.secrets };
@@ -69,7 +76,10 @@ export async function POST(request: Request) {
     console.error(`Provision failed for ${envName}:`, err);
   });
 
-  return NextResponse.json({ id: env.id, name: envName, status: "provisioning" }, { status: 202 });
+  return NextResponse.json(
+    { id: env.id, name: envName, status: "provisioning" },
+    { status: 202 }
+  );
 }
 
 function getDefaultSecrets(): Record<string, string> {

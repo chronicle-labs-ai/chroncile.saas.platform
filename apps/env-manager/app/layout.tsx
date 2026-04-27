@@ -4,7 +4,8 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Chronicle Labs | Environment Manager",
-  description: "Manage production, staging, development, and ephemeral environments",
+  description:
+    "Manage production, staging, development, and ephemeral environments",
   icons: {
     icon: "/icon.svg",
   },
@@ -30,9 +31,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-base text-primary font-sans">
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

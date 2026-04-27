@@ -25,7 +25,9 @@ export default async function SettingsPage({
 
   let tenant: TenantData | null = null;
   try {
-    const data = await fetchFromBackend<{ tenant: TenantData }>("/api/platform/tenant");
+    const data = await fetchFromBackend<{ tenant: TenantData }>(
+      "/api/platform/tenant"
+    );
     tenant = data.tenant;
   } catch {
     // Backend unavailable
@@ -39,7 +41,9 @@ export default async function SettingsPage({
     const priceId = priceIdsByLookupKey[plan.lookupKey];
     if (priceId) priceIdToPlanId[priceId] = plan.id;
   }
-  const currentPlanId = tenant?.stripe_price_id ? priceIdToPlanId[tenant.stripe_price_id] ?? null : null;
+  const currentPlanId = tenant?.stripe_price_id
+    ? (priceIdToPlanId[tenant.stripe_price_id] ?? null)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -72,7 +76,7 @@ export default async function SettingsPage({
                 disabled
               />
             </div>
-            
+
             <div>
               <label className="block text-xs text-tertiary tracking-wide uppercase mb-2">
                 Email
@@ -107,7 +111,7 @@ export default async function SettingsPage({
                 disabled
               />
             </div>
-            
+
             <div>
               <label className="block text-xs text-tertiary tracking-wide uppercase mb-2">
                 Slug
@@ -143,7 +147,9 @@ export default async function SettingsPage({
         currentPlanId={currentPlanId}
         hasCustomer={!!tenant?.stripe_customer_id}
         successMessage={params.success === "billing"}
-        recommendedPlanId={getRecommendedPlanId(tenant?.slug ?? session.user.tenantSlug)}
+        recommendedPlanId={getRecommendedPlanId(
+          tenant?.slug ?? session.user.tenantSlug
+        )}
       />
 
       {/* API Configuration */}
@@ -196,7 +202,7 @@ export default async function SettingsPage({
             </div>
             <span className="font-mono text-xs text-nominal">Connected</span>
           </div>
-          
+
           <div className="flex items-center justify-between px-4 py-3 hover:bg-hover transition-colors">
             <div className="flex items-center gap-3">
               <div className="status-dot status-dot--nominal" />
@@ -204,7 +210,7 @@ export default async function SettingsPage({
             </div>
             <span className="font-mono text-xs text-nominal">Active</span>
           </div>
-          
+
           <div className="flex items-center justify-between px-4 py-3 hover:bg-hover transition-colors">
             <div className="flex items-center gap-3">
               <div className="status-dot status-dot--data" />
@@ -212,7 +218,7 @@ export default async function SettingsPage({
             </div>
             <span className="font-mono text-xs text-data">Standby</span>
           </div>
-          
+
           <div className="flex items-center justify-between px-4 py-3 hover:bg-hover transition-colors">
             <div className="flex items-center gap-3">
               <div className="status-dot status-dot--nominal" />
@@ -228,7 +234,9 @@ export default async function SettingsPage({
         <div className="flex items-center justify-between px-4 py-3 bg-critical-bg border-b border-critical-dim">
           <div className="flex items-center gap-3">
             <div className="status-dot status-dot--critical" />
-            <span className="text-sm font-medium text-critical">Danger Zone</span>
+            <span className="text-sm font-medium text-critical">
+              Danger Zone
+            </span>
           </div>
         </div>
         <div className="p-4">
@@ -238,10 +246,14 @@ export default async function SettingsPage({
                 Delete Organization
               </div>
               <p className="text-sm text-tertiary">
-                Permanently delete organization and all associated data. This action cannot be undone.
+                Permanently delete organization and all associated data. This
+                action cannot be undone.
               </p>
             </div>
-            <button className="btn btn--critical opacity-50 cursor-not-allowed" disabled>
+            <button
+              className="btn btn--critical opacity-50 cursor-not-allowed"
+              disabled
+            >
               Delete
             </button>
           </div>

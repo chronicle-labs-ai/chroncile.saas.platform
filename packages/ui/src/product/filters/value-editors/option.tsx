@@ -47,8 +47,7 @@ export function OptionEditor({
     if (!q) return options;
     return options.filter(
       (o) =>
-        o.label.toLowerCase().includes(q) ||
-        o.value.toLowerCase().includes(q),
+        o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
     );
   }, [query, options]);
 
@@ -75,9 +74,7 @@ export function OptionEditor({
           onChange(next == null ? undefined : String(next));
           onCommit?.();
         }}
-        renderEmptyState={() => (
-          <div className={slots.empty()}>No matches</div>
-        )}
+        renderEmptyState={() => <div className={slots.empty()}>No matches</div>}
       >
         {filtered.map((o) => (
           <RACListBoxItem

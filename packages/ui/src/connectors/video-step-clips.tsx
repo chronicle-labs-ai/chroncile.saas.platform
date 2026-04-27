@@ -36,9 +36,24 @@ export interface VideoStepClipsProps {
 }
 
 const DEFAULT_CLIPS: VideoStepClip[] = [
-  { id: "create", label: "Create app", duration: 22, caption: "Open Setup → App Manager" },
-  { id: "paste", label: "Paste creds", duration: 18, caption: "Find consumer key + secret" },
-  { id: "oauth", label: "Authorize", duration: 12, caption: "OAuth round-trip" },
+  {
+    id: "create",
+    label: "Create app",
+    duration: 22,
+    caption: "Open Setup → App Manager",
+  },
+  {
+    id: "paste",
+    label: "Paste creds",
+    duration: 18,
+    caption: "Find consumer key + secret",
+  },
+  {
+    id: "oauth",
+    label: "Authorize",
+    duration: 12,
+    caption: "OAuth round-trip",
+  },
   { id: "done", label: "Done", duration: 8, caption: "First event arrives" },
 ];
 
@@ -76,7 +91,6 @@ export function VideoStepClips({
         actions: (
           <>
             <Button
-              density="brand"
               variant="ghost"
               onPress={goBack}
               leadingIcon={<ArrowLeftIcon />}
@@ -84,7 +98,6 @@ export function VideoStepClips({
               {stepIdx === 0 ? "Cancel" : "Back"}
             </Button>
             <Button
-              density="brand"
               variant="ember"
               onPress={goNext}
               isDisabled={stepIdx === clips.length - 1}
@@ -109,10 +122,16 @@ export function VideoStepClips({
             current={0}
           />
           <FieldRow label="What you'll do">
-            <ReadonlyInput value={active.caption?.toString() ?? ""} noCopy mono={false} />
+            <ReadonlyInput
+              value={active.caption?.toString() ?? ""}
+              noCopy
+              mono={false}
+            />
           </FieldRow>
           <FieldRow label="Reference">
-            <CodeBlock code={`# step ${stepIdx + 1}\n# ${active.label.toLowerCase()}`} />
+            <CodeBlock
+              code={`# step ${stepIdx + 1}\n# ${active.label.toLowerCase()}`}
+            />
           </FieldRow>
           <ul className="step-clip-card-row">
             {clips.map((c, i) => (

@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import { getPermanentEnvSecrets } from "@/lib/doppler-client";
-import { getPermanentEnvs, type PermanentEnvConfig } from "@/lib/permanent-envs";
+import {
+  getPermanentEnvs,
+  type PermanentEnvConfig,
+} from "@/lib/permanent-envs";
 import * as fly from "@/lib/fly-client";
 import * as vercel from "@/lib/vercel-client";
 
@@ -67,8 +70,12 @@ async function syncOne(config: PermanentEnvConfig): Promise<void> {
   }
 
   const [backendSecrets, frontendSecrets] = await Promise.all([
-    getPermanentEnvSecrets(config, "backend", ["SERVICE_SECRET"]).catch(() => null),
-    getPermanentEnvSecrets(config, "frontend", [...FRONTEND_SYNC_KEYS]).catch(() => null),
+    getPermanentEnvSecrets(config, "backend", ["SERVICE_SECRET"]).catch(
+      () => null
+    ),
+    getPermanentEnvSecrets(config, "frontend", [...FRONTEND_SYNC_KEYS]).catch(
+      () => null
+    ),
   ]);
 
   if (backendSecrets?.SERVICE_SECRET) {

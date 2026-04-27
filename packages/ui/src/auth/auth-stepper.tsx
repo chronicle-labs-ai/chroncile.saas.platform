@@ -28,7 +28,9 @@ const stepper = tv({
   },
   variants: {
     state: {
-      idle: { pip: "border-hairline-strong bg-transparent hover:border-ink-dim" },
+      idle: {
+        pip: "border-hairline-strong bg-transparent hover:border-ink-dim",
+      },
       done: { pip: "border-ember bg-ember/40 hover:bg-ember/60" },
       active: { pip: "border-ember bg-ember w-[20px]" },
     },
@@ -36,8 +38,7 @@ const stepper = tv({
   defaultVariants: { state: "idle" },
 });
 
-export interface AuthStepperProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface AuthStepperProps extends React.HTMLAttributes<HTMLDivElement> {
   steps: AuthStep[];
   currentIndex: number;
   /** When provided, pips become buttons; clicks fire `onJump(index, id)`. */

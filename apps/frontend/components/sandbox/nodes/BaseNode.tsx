@@ -42,8 +42,8 @@ function BaseNodeInner({
         boxShadow: isActive
           ? `0 0 20px ${colors.accent}44, 0 0 6px ${colors.accent}33`
           : selected
-          ? `0 0 16px ${colors.accent}33, 0 0 4px ${colors.accent}22`
-          : "none",
+            ? `0 0 16px ${colors.accent}33, 0 0 4px ${colors.accent}22`
+            : "none",
       }}
     >
       {/* Header */}

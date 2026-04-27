@@ -7,7 +7,11 @@ import { BaseNode } from "./BaseNode";
 import { SimulationContext } from "../SimulationContext";
 import { PROVIDER_CATALOG, RATE_PRESETS } from "../constants";
 
-function GeneratorNodeInner({ id, data, selected }: NodeProps & { data: GeneratorNodeData }) {
+function GeneratorNodeInner({
+  id,
+  data,
+  selected,
+}: NodeProps & { data: GeneratorNodeData }) {
   const { nodeActivity } = useContext(SimulationContext);
   const activity = nodeActivity[id];
   const { config } = data;
@@ -17,8 +21,8 @@ function GeneratorNodeInner({ id, data, selected }: NodeProps & { data: Generato
   const rateDisplay = ratePreset
     ? ratePreset.label
     : config.intervalMs >= 1000
-    ? `${(config.intervalMs / 1000).toFixed(1)}s`
-    : `${config.intervalMs}ms`;
+      ? `${(config.intervalMs / 1000).toFixed(1)}s`
+      : `${config.intervalMs}ms`;
 
   return (
     <BaseNode

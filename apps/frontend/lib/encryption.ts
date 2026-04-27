@@ -13,7 +13,9 @@ function getKey(): Buffer {
   } else if (key.length === 44) {
     return Buffer.from(key, "base64");
   } else {
-    throw new Error("ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)");
+    throw new Error(
+      "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)"
+    );
   }
 }
 
@@ -40,7 +42,7 @@ export function encrypt(text: string): string {
 export function decrypt(encryptedText: string): string {
   const key = getKey();
   const parts = encryptedText.split(":");
-  
+
   if (parts.length !== 3) {
     throw new Error("Invalid encrypted text format");
   }

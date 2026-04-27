@@ -52,8 +52,8 @@ export function SignUpSuccess({
         {first}.
       </AuthDisplay>
       <AuthLede>
-        Your workspace is provisioned. Drop in an SDK key to start
-        ingesting events.
+        Your workspace is provisioned. Drop in an SDK key to start ingesting
+        events.
       </AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col items-start gap-s-4">
@@ -71,13 +71,12 @@ export function SignUpSuccess({
 
       <StepFoot
         back={
-          <Button density="brand" variant="ghost" onPress={onRestart}>
+          <Button variant="ghost" onPress={onRestart}>
             ↺ Restart
           </Button>
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onBegin}
             trailingIcon={<ArrowRightIcon />}

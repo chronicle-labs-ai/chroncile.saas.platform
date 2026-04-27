@@ -5,10 +5,7 @@ import { Button } from "../primitives/button";
 import { Checkbox } from "../primitives/checkbox";
 import { SourceGlyph } from "../icons/source-glyph";
 import { StatusDot } from "../primitives/status-dot";
-import {
-  type Source,
-  type SourceId,
-} from "../onboarding/data";
+import { type Source, type SourceId } from "../onboarding/data";
 import { type BackfillRunConfig } from "../onboarding/step-connect";
 import { ConnectorModalShell } from "./connector-modal-shell";
 import { FieldRow, ModePill, ScopeList } from "./_internal";
@@ -66,10 +63,16 @@ export function ConnectSlack({
 }: ConnectSlackProps) {
   const [direction, setDirection] = React.useState<SlackDirection>("both");
   const [selectedChannels, setSelectedChannels] = React.useState<Set<string>>(
-    () => new Set([channels[0]?.id, channels[2]?.id].filter(Boolean) as string[]),
+    () =>
+      new Set([channels[0]?.id, channels[2]?.id].filter(Boolean) as string[])
   );
   const [selectedScopes, setSelectedScopes] = React.useState<Set<string>>(
-    () => new Set(scopes.filter((s) => s.required || s.id === "chat:write").map((s) => s.id)),
+    () =>
+      new Set(
+        scopes
+          .filter((s) => s.required || s.id === "chat:write")
+          .map((s) => s.id)
+      )
   );
 
   const toggleChannel = (id: string) => {
@@ -123,15 +126,10 @@ export function ConnectSlack({
         ),
         actions: (
           <>
-            <Button density="brand" variant="ghost" onPress={onClose}>
+            <Button variant="ghost" onPress={onClose}>
               Cancel
             </Button>
-            <Button
-              density="brand"
-              variant="ember"
-              isDisabled={!canSubmit}
-              onPress={submit}
-            >
+            <Button variant="ember" isDisabled={!canSubmit} onPress={submit}>
               Authorize →
             </Button>
           </>
@@ -154,10 +152,7 @@ export function ConnectSlack({
           </div>
         </FieldRow>
 
-        <FieldRow
-          label="Direction"
-          hint="What we do with messages"
-        >
+        <FieldRow label="Direction" hint="What we do with messages">
           <ModePill
             options={DIRECTION_OPTIONS}
             value={direction}
@@ -174,10 +169,7 @@ export function ConnectSlack({
             {channels.map((c) => {
               const checked = selectedChannels.has(c.id);
               return (
-                <li
-                  key={c.id}
-                  className={cx("ch-row", checked && "ch-row-on")}
-                >
+                <li key={c.id} className={cx("ch-row", checked && "ch-row-on")}>
                   <Checkbox
                     checked={checked}
                     onChange={() => toggleChannel(c.id)}

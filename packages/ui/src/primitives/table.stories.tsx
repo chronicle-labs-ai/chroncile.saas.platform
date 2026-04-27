@@ -1,13 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  Column,
-  Row,
-  Cell,
-} from "./table";
+import { Table, TableHeader, TableBody, Column, Row, Cell } from "./table";
 
 const meta: Meta = {
   title: "Primitives/Table",
@@ -24,9 +17,24 @@ interface Run {
 }
 
 const initialRuns: Run[] = [
-  { id: "r1", name: "stripe_refund_divergence", status: "pass", duration: "38s" },
-  { id: "r2", name: "shopify_out_of_stock_recovery", status: "fail", duration: "1m 12s" },
-  { id: "r3", name: "intercom_rage_click_recovery", status: "pending", duration: "—" },
+  {
+    id: "r1",
+    name: "stripe_refund_divergence",
+    status: "pass",
+    duration: "38s",
+  },
+  {
+    id: "r2",
+    name: "shopify_out_of_stock_recovery",
+    status: "fail",
+    duration: "1m 12s",
+  },
+  {
+    id: "r3",
+    name: "intercom_rage_click_recovery",
+    status: "pending",
+    duration: "—",
+  },
   { id: "r4", name: "klaviyo_list_drift", status: "pass", duration: "22s" },
 ];
 
@@ -34,7 +42,9 @@ export const Simple: Story = {
   render: () => (
     <Table aria-label="Runs">
       <TableHeader>
-        <Column id="name" isRowHeader>Name</Column>
+        <Column id="name" isRowHeader>
+          Name
+        </Column>
         <Column id="status">Status</Column>
         <Column id="duration">Duration</Column>
       </TableHeader>

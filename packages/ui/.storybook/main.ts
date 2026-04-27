@@ -9,15 +9,18 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
+  staticDirs: [
+    {
+      from: "../src/assets",
+      to: "/",
+    },
+  ],
   stories: [
     "../src/stories/**/*.mdx",
     "../src/stories/**/*.stories.@(ts|tsx)",
     "../src/**/*.stories.@(ts|tsx)",
   ],
-  addons: [
-    "@storybook/addon-essentials",
-    "@storybook/addon-themes",
-  ],
+  addons: ["@storybook/addon-essentials", "@storybook/addon-themes"],
   docs: {
     autodocs: "tag",
   },

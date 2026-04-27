@@ -6,8 +6,18 @@ import type {
 
 // ── Environment ──────────────────────────────────────────────────────────────
 
-export type EnvironmentType = "PRODUCTION" | "STAGING" | "DEVELOPMENT" | "LOCAL" | "EPHEMERAL";
-export type EnvironmentStatus = "RUNNING" | "STOPPED" | "PROVISIONING" | "DESTROYING" | "ERROR";
+export type EnvironmentType =
+  | "PRODUCTION"
+  | "STAGING"
+  | "DEVELOPMENT"
+  | "LOCAL"
+  | "EPHEMERAL";
+export type EnvironmentStatus =
+  | "RUNNING"
+  | "STOPPED"
+  | "PROVISIONING"
+  | "DESTROYING"
+  | "ERROR";
 
 export interface EnvironmentRecord {
   id: string;
@@ -164,7 +174,12 @@ export interface MachineResource {
   updatedAt: string;
   createdAt: string;
   checks: Array<{ name: string; status: string; output: string }>;
-  events: Array<{ type: string; status: string; timestamp: string; exitCode: number | null }>;
+  events: Array<{
+    type: string;
+    status: string;
+    timestamp: string;
+    exitCode: number | null;
+  }>;
 }
 
 export interface VolumeResource {
@@ -185,7 +200,12 @@ export interface ResourcesData {
     name: string;
     url: string;
     storageGb: number;
-    volumes: Array<{ id: string; name: string; sizeGb: number | null; region: string }>;
+    volumes: Array<{
+      id: string;
+      name: string;
+      sizeGb: number | null;
+      region: string;
+    }>;
     machines: Array<{ id: string; state: string; region: string }>;
   } | null;
   metrics: {

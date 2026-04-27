@@ -8,6 +8,7 @@ import {
 
 import { tv, type VariantProps } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * RAC's Checkbox exposes `isSelected` / `onChange(isSelected: boolean)`.
@@ -68,11 +69,12 @@ const checkbox = tv({
 type CheckboxVariantProps = VariantProps<typeof checkbox>;
 
 type NativeChangeHandler = (
-  event: React.ChangeEvent<HTMLInputElement>,
+  event: React.ChangeEvent<HTMLInputElement>
 ) => void | Promise<boolean | void>;
 
 export interface CheckboxProps
-  extends Omit<RACCheckboxProps, "className" | "onChange" | "children">,
+  extends
+    Omit<RACCheckboxProps, "className" | "onChange" | "children">,
     CheckboxVariantProps {
   className?: string;
   classNames?: {
@@ -83,9 +85,12 @@ export interface CheckboxProps
   };
   /**
    * Visual size. `"sm"` (14 px, Linear-density product chrome) or
-   * `"md"` (16 px, brand surface, default).
+   * `"md"` (16 px, brand surface). Defaults to whichever the surrounding
+   * `ChromeStyleProvider` resolves to (`compact` → `sm`, `brand` → `md`).
    */
   size?: "sm" | "md";
+  /** Explicit density override (alias for choosing between `sm` and `md`). */
+  density?: "compact" | "brand";
   /** Native-style selection (alias for `isSelected`). */
   checked?: boolean;
   /** Native-style default selection (alias for `defaultSelected`). */
@@ -99,9 +104,7 @@ export interface CheckboxProps
    * synthetic event is constructed for native callers alongside the
    * boolean RAC payload. Handlers that ignore one or the other are safe.
    */
-  onChange?:
-    | ((isSelected: boolean) => void)
-    | NativeChangeHandler;
+  onChange?: ((isSelected: boolean) => void) | NativeChangeHandler;
   /** Forwarded to the underlying `<input>`. Also accepts a function-ref so react-hook-form's `register().ref` works. */
   ref?: React.Ref<HTMLInputElement>;
   variant?: "default" | "auth";
@@ -110,7 +113,7 @@ export interface CheckboxProps
 
 function synthesizeEvent(
   name: string | undefined,
-  isSelected: boolean,
+  isSelected: boolean
 ): React.ChangeEvent<HTMLInputElement> {
   const target = {
     name: name ?? "",
@@ -150,12 +153,15 @@ export function Checkbox({
   className,
   classNames,
   variant = "default",
-  size = "md",
+  size,
+  density: densityProp,
   ref,
   children,
   ...rest
 }: CheckboxProps) {
-  const slots = checkbox({ variant, size });
+  const density = useResolvedChromeDensity(densityProp);
+  const resolvedSize: "sm" | "md" = size ?? (density === "compact" ? "sm" : "md");
+  const slots = checkbox({ variant, size: resolvedSize });
 
   const resolvedIsSelected = isSelected ?? checked;
   const resolvedDefaultSelected = defaultSelected ?? defaultChecked;
@@ -172,7 +178,7 @@ export function Checkbox({
         (onChange as (s: boolean) => void)(nextSelected);
       }
     },
-    [onChange, name],
+    [onChange, name]
   );
 
   return (
@@ -184,9 +190,10 @@ export function Checkbox({
       defaultSelected={resolvedDefaultSelected}
       isDisabled={resolvedIsDisabled}
       onChange={handleChange}
+      data-density={density}
       className={composeTwRenderProps(
         className,
-        slots.base({ className: classNames?.base }),
+        slots.base({ className: classNames?.base })
       )}
     >
       <div className={slots.box({ className: classNames?.box })}>

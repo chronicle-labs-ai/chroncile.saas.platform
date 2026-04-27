@@ -13,22 +13,26 @@ const groups: Group[] = [
   {
     name: "Surfaces",
     tokens: surfaceTokens,
-    notes: "The canvas stack. 00 is app background, 01 default card, 02 elevated, 03 input/hover.",
+    notes:
+      "The canvas stack. 00 is app background, 01 default card, 02 elevated, 03 input/hover.",
   },
   {
     name: "Ink",
     tokens: inkTokens,
-    notes: "Text hierarchy. `hi` for titles, `base` for body, `lo` for secondary, `dim`/`faint` for labels.",
+    notes:
+      "Text hierarchy. `hi` for titles, `base` for body, `lo` for secondary, `dim`/`faint` for labels.",
   },
   {
     name: "Brand arc",
     tokens: brandTokens,
-    notes: "Ember → bronze → gold → sage → bone. Used in the light-source gradient.",
+    notes:
+      "Ember → bronze → gold → sage → bone. Used in the light-source gradient.",
   },
   {
     name: "Event palette",
     tokens: eventTokens,
-    notes: "Per-stream hues. teal=support, amber=commerce, green=billing, orange=ops, pink=notify, violet=sandbox, red=fail, white=raw.",
+    notes:
+      "Per-stream hues. teal=support, amber=commerce, green=billing, orange=ops, pink=notify, violet=sandbox, red=fail, white=raw.",
   },
 ];
 

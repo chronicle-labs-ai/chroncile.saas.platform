@@ -46,12 +46,16 @@ export function DataTableFilterBar<TRow>({
 }: DataTableFilterBarProps<TRow>) {
   const columnById = React.useMemo(
     () => new Map(columns.map((c) => [c.id, c] as const)),
-    [columns],
+    [columns]
   );
   const slots = styles({});
 
   return (
-    <div className={slots.root({ className })} role="toolbar" aria-label="Filters">
+    <div
+      className={slots.root({ className })}
+      role="toolbar"
+      aria-label="Filters"
+    >
       {filters.map((f) => {
         const col = columnById.get(f.columnId);
         if (!col) return null;

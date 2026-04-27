@@ -7,7 +7,11 @@ import type {
 } from "shared/generated";
 
 import type { SandboxNode, SandboxEdge } from "../types";
-import { graphFromPreview, toSandboxEdgeDto, toSandboxNodeDto } from "@/lib/sandbox/graph-dto";
+import {
+  graphFromPreview,
+  toSandboxEdgeDto,
+  toSandboxNodeDto,
+} from "@/lib/sandbox/graph-dto";
 import { usePlatformApi } from "@/shared/hooks/use-platform-api";
 
 /* ------------------------------------------------------------------ */
@@ -35,11 +39,16 @@ function readErrorMessage(error: unknown): string {
 
 function summarizeResponse(response: SandboxAiChatResponse): string | null {
   if (response.errors.length > 0) {
-    return response.errors[0]?.message ?? "The AI response could not be applied.";
+    return (
+      response.errors[0]?.message ?? "The AI response could not be applied."
+    );
   }
 
   if (!response.validation.ok && response.validation.issues.length > 0) {
-    return response.validation.issues[0]?.message ?? "The updated graph needs more configuration.";
+    return (
+      response.validation.issues[0]?.message ??
+      "The updated graph needs more configuration."
+    );
   }
 
   return response.assistantMessage || null;
@@ -56,7 +65,9 @@ export function GenerativePrompt({
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<SandboxAiChatMessage[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusTone, setStatusTone] = useState<"idle" | "success" | "warning" | "error">("idle");
+  const [statusTone, setStatusTone] = useState<
+    "idle" | "success" | "warning" | "error"
+  >("idle");
 
   const handleGenerate = useCallback(async () => {
     const nextPrompt = prompt.trim();
@@ -104,15 +115,7 @@ export function GenerativePrompt({
     } finally {
       setLoading(false);
     }
-  }, [
-    api,
-    edges,
-    messages,
-    nodes,
-    onApplyPreview,
-    prompt,
-    selectedNodeId,
-  ]);
+  }, [api, edges, messages, nodes, onApplyPreview, prompt, selectedNodeId]);
 
   return (
     <div className="px-4 py-2 space-y-2">

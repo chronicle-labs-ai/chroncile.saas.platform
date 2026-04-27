@@ -1,6 +1,7 @@
 import type { PermanentEnvConfig } from "@/lib/permanent-envs";
 
-const DOPPLER_API_BASE = process.env.DOPPLER_API_BASE ?? "https://api.doppler.com";
+const DOPPLER_API_BASE =
+  process.env.DOPPLER_API_BASE ?? "https://api.doppler.com";
 const DOPPLER_TIMEOUT_MS = 10_000;
 
 type ManagedService = "backend" | "frontend";
@@ -18,14 +19,19 @@ function readEnv(name: string): string | null {
   return value ? value : null;
 }
 
-function getAccess(config: PermanentEnvConfig, service: ManagedService): DopplerAccess | null {
+function getAccess(
+  config: PermanentEnvConfig,
+  service: ManagedService
+): DopplerAccess | null {
   const project = readEnv("DOPPLER_PROJECT") ?? "chronicle-platform";
-  const configEnvVar = service === "backend"
-    ? config.backendConfigEnvVar
-    : config.frontendConfigEnvVar;
-  const tokenEnvVar = service === "backend"
-    ? config.backendTokenEnvVar
-    : config.frontendTokenEnvVar;
+  const configEnvVar =
+    service === "backend"
+      ? config.backendConfigEnvVar
+      : config.frontendConfigEnvVar;
+  const tokenEnvVar =
+    service === "backend"
+      ? config.backendTokenEnvVar
+      : config.frontendTokenEnvVar;
   const configName = readEnv(configEnvVar) ?? `${config.dopplerEnv}_${service}`;
   const token = readEnv(tokenEnvVar);
 
@@ -34,13 +40,18 @@ function getAccess(config: PermanentEnvConfig, service: ManagedService): Doppler
   return { project, config: configName, token };
 }
 
-async function downloadSecrets(access: DopplerAccess): Promise<Record<string, string>> {
+async function downloadSecrets(
+  access: DopplerAccess
+): Promise<Record<string, string>> {
   const cacheKey = `${access.project}:${access.config}:${access.token.slice(0, 16)}`;
   const cached = secretCache.get(cacheKey);
   if (cached) return cached;
 
   const request = (async () => {
-    const url = new URL("/v3/configs/config/secrets/download", DOPPLER_API_BASE);
+    const url = new URL(
+      "/v3/configs/config/secrets/download",
+      DOPPLER_API_BASE
+    );
     url.searchParams.set("project", access.project);
     url.searchParams.set("config", access.config);
     url.searchParams.set("format", "json");
@@ -55,7 +66,9 @@ async function downloadSecrets(access: DopplerAccess): Promise<Record<string, st
 
     if (!response.ok) {
       const body = await response.text().catch(() => "");
-      throw new Error(`Doppler secrets download failed for ${access.config}: ${response.status} ${body}`);
+      throw new Error(
+        `Doppler secrets download failed for ${access.config}: ${response.status} ${body}`
+      );
     }
 
     return response.json() as Promise<Record<string, string>>;
@@ -85,6 +98,8 @@ export async function getPermanentEnvSecrets(
   return Object.fromEntries(
     keys
       .map((key) => [key, secrets[key]])
-      .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+      .filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string"
+      )
   );
 }

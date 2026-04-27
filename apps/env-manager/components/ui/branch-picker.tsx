@@ -17,21 +17,46 @@ interface BranchPickerProps {
 
 function GitBranchIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 3v12m0 0a3 3 0 103 3H15a3 3 0 100-3m-9 0h9m-9 0a3 3 0 01-3-3V6a3 3 0 013-3h0a3 3 0 013 3v6" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 3v12m0 0a3 3 0 103 3H15a3 3 0 100-3m-9 0h9m-9 0a3 3 0 01-3-3V6a3 3 0 013-3h0a3 3 0 013 3v6"
+      />
     </svg>
   );
 }
 
 function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      />
     </svg>
   );
 }
 
-export function BranchPicker({ branches, value, onChange, loading }: BranchPickerProps) {
+export function BranchPicker({
+  branches,
+  value,
+  onChange,
+  loading,
+}: BranchPickerProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,7 +79,10 @@ export function BranchPicker({ branches, value, onChange, loading }: BranchPicke
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setSearch("");
       }
@@ -67,7 +95,9 @@ export function BranchPicker({ branches, value, onChange, loading }: BranchPicke
     return (
       <div className="flex items-center gap-3 px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-default)] rounded-[var(--radius-sm)]">
         <div className="w-4 h-4 rounded-full border-2 border-[var(--border-bright)] border-t-[var(--data)] animate-spin" />
-        <span className="text-sm text-secondary font-mono">Loading branches...</span>
+        <span className="text-sm text-secondary font-mono">
+          Loading branches...
+        </span>
       </div>
     );
   }
@@ -88,7 +118,9 @@ export function BranchPicker({ branches, value, onChange, loading }: BranchPicke
         <GitBranchIcon className="w-4 h-4 text-tertiary shrink-0" />
         {selected ? (
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="text-sm font-mono text-primary truncate">{selected.name}</span>
+            <span className="text-sm font-mono text-primary truncate">
+              {selected.name}
+            </span>
             {selected.isDefault && (
               <span className="badge badge--data shrink-0">default</span>
             )}
@@ -97,13 +129,22 @@ export function BranchPicker({ branches, value, onChange, loading }: BranchPicke
             </span>
           </div>
         ) : (
-          <span className="text-sm text-disabled flex-1">Select a branch...</span>
+          <span className="text-sm text-disabled flex-1">
+            Select a branch...
+          </span>
         )}
         <svg
           className={`w-4 h-4 text-tertiary shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+          />
         </svg>
       </button>
 
@@ -127,8 +168,18 @@ export function BranchPicker({ branches, value, onChange, loading }: BranchPicke
                 onClick={() => setSearch("")}
                 className="text-tertiary hover:text-primary"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -166,7 +217,9 @@ export function BranchPicker({ branches, value, onChange, loading }: BranchPicke
               <>
                 <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-tertiary bg-[var(--bg-elevated)]">
                   Branches
-                  <span className="ml-1.5 text-disabled">{otherBranches.length}</span>
+                  <span className="ml-1.5 text-disabled">
+                    {otherBranches.length}
+                  </span>
                 </div>
                 {otherBranches.map((b) => (
                   <BranchRow
@@ -204,25 +257,42 @@ function BranchRow({
       onClick={onSelect}
       className={`
         w-full flex items-center gap-3 px-3 py-2 text-left transition-colors
-        ${selected
-          ? "bg-[var(--data-bg)] text-[var(--data)]"
-          : "hover:bg-[var(--bg-hover)] text-primary"
+        ${
+          selected
+            ? "bg-[var(--data-bg)] text-[var(--data)]"
+            : "hover:bg-[var(--bg-hover)] text-primary"
         }
       `}
     >
-      <GitBranchIcon className={`w-3.5 h-3.5 shrink-0 ${selected ? "text-[var(--data)]" : "text-tertiary"}`} />
+      <GitBranchIcon
+        className={`w-3.5 h-3.5 shrink-0 ${selected ? "text-[var(--data)]" : "text-tertiary"}`}
+      />
       <span className="text-sm font-mono truncate flex-1">{branch.name}</span>
       {branch.isDefault && (
-        <span className={`text-[10px] font-mono uppercase tracking-wider shrink-0 ${selected ? "text-[var(--data)]" : "text-tertiary"}`}>
+        <span
+          className={`text-[10px] font-mono uppercase tracking-wider shrink-0 ${selected ? "text-[var(--data)]" : "text-tertiary"}`}
+        >
           default
         </span>
       )}
-      <span className={`text-[10px] font-mono shrink-0 ${selected ? "text-[var(--data)]/60" : "text-disabled"}`}>
+      <span
+        className={`text-[10px] font-mono shrink-0 ${selected ? "text-[var(--data)]/60" : "text-disabled"}`}
+      >
         {branch.sha.slice(0, 7)}
       </span>
       {selected && (
-        <svg className="w-4 h-4 text-[var(--data)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        <svg
+          className="w-4 h-4 text-[var(--data)] shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 12.75l6 6 9-13.5"
+          />
         </svg>
       )}
     </button>

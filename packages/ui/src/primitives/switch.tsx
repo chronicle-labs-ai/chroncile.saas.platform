@@ -13,6 +13,7 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const switchStyles = tv({
   slots: {
@@ -49,32 +50,46 @@ const switchStyles = tv({
   defaultVariants: { size: "md" },
 });
 
-export interface SwitchProps
-  extends Omit<RACSwitchProps, "className" | "children"> {
+export interface SwitchProps extends Omit<
+  RACSwitchProps,
+  "className" | "children"
+> {
   className?: string;
-  classNames?: { base?: string; track?: string; thumb?: string; label?: string };
+  classNames?: {
+    base?: string;
+    track?: string;
+    thumb?: string;
+    label?: string;
+  };
   children?: React.ReactNode;
   /**
    * Visual size. `"sm"` is the Linear-density 26×14 mini-toggle, `"md"`
-   * (default) is the 36×20 brand-density iOS-style toggle.
+   * is the 36×20 brand-density iOS-style toggle. Defaults to whichever
+   * the surrounding `ChromeStyleProvider` resolves to.
    */
   size?: "sm" | "md";
+  /** Explicit density override (alias for choosing between `sm` and `md`). */
+  density?: "compact" | "brand";
 }
 
 export function Switch({
   className,
   classNames,
   children,
-  size = "md",
+  size,
+  density: densityProp,
   ...rest
 }: SwitchProps) {
-  const slots = switchStyles({ size });
+  const density = useResolvedChromeDensity(densityProp);
+  const resolvedSize: "sm" | "md" = size ?? (density === "compact" ? "sm" : "md");
+  const slots = switchStyles({ size: resolvedSize });
   return (
     <RACSwitch
       {...rest}
+      data-density={density}
       className={composeTwRenderProps(
         className,
-        slots.base({ className: classNames?.base }),
+        slots.base({ className: classNames?.base })
       )}
     >
       {(state) => (

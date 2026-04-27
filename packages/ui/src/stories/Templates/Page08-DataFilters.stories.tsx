@@ -305,8 +305,8 @@ function RunsView({ initial }: { initial?: FilterState[] }) {
                         r.environment === "prod"
                           ? "ember"
                           : r.environment === "staging"
-                          ? "teal"
-                          : "neutral"
+                            ? "teal"
+                            : "neutral"
                       }
                     >
                       {r.environment}
@@ -329,9 +329,7 @@ function RunsView({ initial }: { initial?: FilterState[] }) {
                     <SimBar value={r.similarity} tone={simTone} />{" "}
                     {r.similarity.toFixed(1)}%
                   </RunsTableCell>
-                  <RunsTableCell
-                    className={latencyToneClass(r.latencyTone)}
-                  >
+                  <RunsTableCell className={latencyToneClass(r.latencyTone)}>
                     {r.latencyDelta}
                   </RunsTableCell>
                   <RunsTableCell>

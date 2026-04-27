@@ -92,7 +92,9 @@ export const A1pPendingInvite: Story = {
         }}
         onResendInvite={(id) => alert("resend " + id)}
         onSignIn={() => alert("sign in (bottom bar)")}
-        onSignInInstead={() => alert("sign in instead (existing-workspace alert)")}
+        onSignInInstead={() =>
+          alert("sign in instead (existing-workspace alert)")
+        }
         onSignInPending={() =>
           alert("sign in instead (pending-invite alert) — distinct destination")
         }

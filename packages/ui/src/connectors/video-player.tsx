@@ -95,7 +95,11 @@ export function VideoPlayer({
           </button>
         ) : null}
       </div>
-      <div className="vp-track" role="progressbar" aria-valuenow={Math.round(pct * 100)}>
+      <div
+        className="vp-track"
+        role="progressbar"
+        aria-valuenow={Math.round(pct * 100)}
+      >
         <span className="vp-track-fill" style={{ width: `${pct * 100}%` }} />
         {chapters.map((c) => (
           <span

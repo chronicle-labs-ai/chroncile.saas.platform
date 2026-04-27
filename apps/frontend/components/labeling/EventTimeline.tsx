@@ -37,18 +37,15 @@ export function EventTimeline({
   }
 
   const sorted = [...events].sort(
-    (a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime()
+    (a, b) =>
+      new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime()
   );
 
   const baseMs = new Date(sorted[0].occurred_at).getTime();
 
   // Build lookup maps for O(1) access
-  const autoMap = new Map(
-    (autoAnnotations ?? []).map((a) => [a.event_id, a])
-  );
-  const humanMap = new Map(
-    (annotations ?? []).map((a) => [a.event_id, a])
-  );
+  const autoMap = new Map((autoAnnotations ?? []).map((a) => [a.event_id, a]));
+  const humanMap = new Map((annotations ?? []).map((a) => [a.event_id, a]));
 
   return (
     <div className="py-2">

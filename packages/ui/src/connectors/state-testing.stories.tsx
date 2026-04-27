@@ -12,20 +12,55 @@ export default meta;
 type Story = StoryObj<typeof StateTesting>;
 
 const RUNNING_CHECKS: ConnectorCheck[] = [
-  { id: "auth", label: "Auth handshake", status: "ok", detail: "200 OK · 142 ms" },
-  { id: "scopes", label: "Scope check", status: "ok", detail: "5 of 5 granted" },
-  { id: "first", label: "First event", status: "pending", detail: "Listening…" },
+  {
+    id: "auth",
+    label: "Auth handshake",
+    status: "ok",
+    detail: "200 OK · 142 ms",
+  },
+  {
+    id: "scopes",
+    label: "Scope check",
+    status: "ok",
+    detail: "5 of 5 granted",
+  },
+  {
+    id: "first",
+    label: "First event",
+    status: "pending",
+    detail: "Listening…",
+  },
 ];
 
 const ALL_OK_CHECKS: ConnectorCheck[] = [
-  { id: "auth", label: "Auth handshake", status: "ok", detail: "200 OK · 142 ms" },
-  { id: "scopes", label: "Scope check", status: "ok", detail: "5 of 5 granted" },
+  {
+    id: "auth",
+    label: "Auth handshake",
+    status: "ok",
+    detail: "200 OK · 142 ms",
+  },
+  {
+    id: "scopes",
+    label: "Scope check",
+    status: "ok",
+    detail: "5 of 5 granted",
+  },
   { id: "first", label: "First event", status: "ok", detail: "stream.opened" },
 ];
 
 const FAILED_CHECKS: ConnectorCheck[] = [
-  { id: "auth", label: "Auth handshake", status: "ok", detail: "200 OK · 142 ms" },
-  { id: "scopes", label: "Scope check", status: "fail", detail: "missing chat:write" },
+  {
+    id: "auth",
+    label: "Auth handshake",
+    status: "ok",
+    detail: "200 OK · 142 ms",
+  },
+  {
+    id: "scopes",
+    label: "Scope check",
+    status: "fail",
+    detail: "missing chat:write",
+  },
   { id: "first", label: "First event", status: "pending", detail: "Skipped" },
 ];
 

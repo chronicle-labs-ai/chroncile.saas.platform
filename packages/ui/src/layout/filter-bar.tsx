@@ -80,7 +80,7 @@ const AddFilter = React.forwardRef<HTMLButtonElement, AddFilterProps>(
           "font-sans text-[11.5px] text-l-ink-lo",
           "hover:bg-l-wash-3 hover:border-l-border-strong hover:text-l-ink",
           "transition-colors duration-fast",
-          className,
+          className
         )}
         {...props}
       >
@@ -88,7 +88,7 @@ const AddFilter = React.forwardRef<HTMLButtonElement, AddFilterProps>(
         {label ? <span>{label}</span> : null}
       </button>
     );
-  },
+  }
 );
 
 interface DisplayProps extends React.HTMLAttributes<HTMLButtonElement> {
@@ -128,7 +128,7 @@ const Display = React.forwardRef<HTMLButtonElement, DisplayProps>(
           "font-sans text-[12px] font-medium text-l-ink-lo",
           "hover:bg-l-wash-3 hover:text-l-ink hover:border-l-border-strong",
           "transition-colors duration-fast relative",
-          className,
+          className
         )}
         {...props}
       >
@@ -139,7 +139,7 @@ const Display = React.forwardRef<HTMLButtonElement, DisplayProps>(
         ) : null}
       </button>
     );
-  },
+  }
 );
 
 interface ClearProps extends React.HTMLAttributes<HTMLButtonElement> {
@@ -148,7 +148,7 @@ interface ClearProps extends React.HTMLAttributes<HTMLButtonElement> {
 
 const Clear = React.forwardRef<HTMLButtonElement, ClearProps>(function Clear(
   { label = "Clear", className, ...props },
-  ref,
+  ref
 ) {
   return (
     <button
@@ -158,7 +158,7 @@ const Clear = React.forwardRef<HTMLButtonElement, ClearProps>(function Clear(
       className={cx(
         "inline-flex h-[22px] items-center px-[8px] rounded-l text-[11.5px] text-l-ink-dim",
         "hover:bg-l-wash-3 hover:text-l-ink transition-colors duration-fast",
-        className,
+        className
       )}
       {...props}
     >
@@ -175,7 +175,7 @@ interface CountProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const Count = React.forwardRef<HTMLSpanElement, CountProps>(function Count(
   { shown, total, unit, className, ...props },
-  ref,
+  ref
 ) {
   return (
     <span
@@ -183,7 +183,7 @@ const Count = React.forwardRef<HTMLSpanElement, CountProps>(function Count(
       data-slot="filter-bar-count"
       className={cx(
         "font-mono text-[11.5px] text-l-ink-lo px-[4px]",
-        className,
+        className
       )}
       {...props}
     >
@@ -195,10 +195,9 @@ const Count = React.forwardRef<HTMLSpanElement, CountProps>(function Count(
   );
 });
 
-interface FilterBarNamespace
-  extends React.ForwardRefExoticComponent<
-    React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>
-  > {
+interface FilterBarNamespace extends React.ForwardRefExoticComponent<
+  React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>
+> {
   Spacer: typeof Spacer;
   Divider: typeof Divider;
   AddFilter: typeof AddFilter;

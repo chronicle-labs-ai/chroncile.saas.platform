@@ -113,7 +113,7 @@ export function StepConnect({
   const [openCats, setOpenCats] = React.useState<Set<string>>(new Set());
   const [connecting, setConnecting] = React.useState<SourceId | null>(null);
   const [backfillTarget, setBackfillTarget] = React.useState<SourceId | null>(
-    null,
+    null
   );
   const [expandedRow, setExpandedRow] = React.useState<SourceId | null>(null);
 
@@ -149,10 +149,9 @@ export function StepConnect({
 
   /* ── Tick running backfills ───────────────────────────── */
   React.useEffect(() => {
-    const running = (Object.entries(value.backfills) as [
-      SourceId,
-      BackfillRun,
-    ][]).filter(([, b]) => b?.status === "running");
+    const running = (
+      Object.entries(value.backfills) as [SourceId, BackfillRun][]
+    ).filter(([, b]) => b?.status === "running");
     if (!running.length) return;
     const id = setInterval(() => {
       const next = { ...value.backfills };
@@ -179,16 +178,16 @@ export function StepConnect({
   const detectedSources = sources.filter(
     (s) =>
       intended.has(s.id) ||
-      (value.sandbox &&
-        value.connected.includes(s.id) &&
-        intended.size === 0),
+      (value.sandbox && value.connected.includes(s.id) && intended.size === 0)
   );
   const inDetected = new Set(detectedSources.map((s) => s.id));
 
   const filteredAll = sources.filter(
     (s) =>
       !query ||
-      `${s.name} ${s.cat} ${s.blurb}`.toLowerCase().includes(query.toLowerCase()),
+      `${s.name} ${s.cat} ${s.blurb}`
+        .toLowerCase()
+        .includes(query.toLowerCase())
   );
   const libSources = filteredAll.filter((s) => !inDetected.has(s.id));
   const groups: Partial<Record<SourceCategory, Source[]>> = {};
@@ -198,7 +197,7 @@ export function StepConnect({
   const orderedCats = [
     ...CAT_ORDER.filter((c) => groups[c]),
     ...(Object.keys(groups) as SourceCategory[]).filter(
-      (c) => !CAT_ORDER.includes(c),
+      (c) => !CAT_ORDER.includes(c)
     ),
   ];
 
@@ -256,11 +255,11 @@ export function StepConnect({
 
   const numConnected = value.connected.length;
   const numRunning = Object.values(value.backfills).filter(
-    (b) => b?.status === "running",
+    (b) => b?.status === "running"
   ).length;
   const totalQueued = Object.values(value.backfills).reduce(
     (a, b) => a + (b?.estEvents ?? 0),
-    0,
+    0
   );
 
   const lede = value.sandbox
@@ -272,7 +271,9 @@ export function StepConnect({
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 02</Eyebrow>
-      <AuthDisplay>Connect your <em>data</em>.</AuthDisplay>
+      <AuthDisplay>
+        Connect your <em>data</em>.
+      </AuthDisplay>
       <AuthLede>{lede}</AuthLede>
 
       {/* Sandbox banner */}
@@ -285,7 +286,6 @@ export function StepConnect({
             Sample events from Intercom, Shopify and Stripe.
           </span>
           <Button
-            density="brand"
             variant="ghost"
             size="sm"
             onPress={() => {
@@ -341,7 +341,7 @@ export function StepConnect({
       <section
         className={cx(
           "cg-fade-up cg-fade-up-3",
-          detectedSources.length > 0 ? "mt-s-8" : "mt-s-6",
+          detectedSources.length > 0 ? "mt-s-8" : "mt-s-6"
         )}
       >
         <div className="mb-s-3 flex items-center justify-between gap-s-3">
@@ -374,10 +374,10 @@ export function StepConnect({
             const items = groups[cat] ?? [];
             const isOpen = openCats.has(cat) || !!query;
             const anyConnected = items.some((s) =>
-              value.connected.includes(s.id),
+              value.connected.includes(s.id)
             );
             const numCatConnected = items.filter((s) =>
-              value.connected.includes(s.id),
+              value.connected.includes(s.id)
             ).length;
             return (
               <div key={cat} className="border-t border-hairline py-s-2">
@@ -389,7 +389,7 @@ export function StepConnect({
                   <span
                     className={cx(
                       "inline-block w-[12px] font-mono text-mono-sm text-ink-dim transition-transform duration-fast",
-                      isOpen ? "rotate-90" : "rotate-0",
+                      isOpen ? "rotate-90" : "rotate-0"
                     )}
                     aria-hidden
                   >
@@ -473,7 +473,6 @@ export function StepConnect({
         ) : null}
         <div className="flex items-center justify-between">
           <Button
-            density="brand"
             variant="ghost"
             onPress={onBack}
             leadingIcon={<ArrowLeftIcon />}
@@ -481,7 +480,6 @@ export function StepConnect({
             Back
           </Button>
           <Button
-            density="brand"
             variant="ember"
             onPress={onNext}
             isDisabled={numConnected === 0}
@@ -511,7 +509,7 @@ function SectionHeader({
       <span
         className={cx(
           "font-mono text-mono uppercase tracking-eyebrow",
-          tone === "ember" ? "text-ember" : "text-ink-dim",
+          tone === "ember" ? "text-ember" : "text-ink-dim"
         )}
       >
         {label}
@@ -600,7 +598,6 @@ function SourceRow({
           <>
             {hasBf ? (
               <Button
-                density="brand"
                 variant="ghost"
                 size="sm"
                 onPress={onToggleExpand}
@@ -609,18 +606,12 @@ function SourceRow({
                 ⋯
               </Button>
             ) : null}
-            <Button
-              density="brand"
-              variant="ghost"
-              size="sm"
-              onPress={onDisconnect}
-            >
+            <Button variant="ghost" size="sm" onPress={onDisconnect}>
               Disconnect
             </Button>
           </>
         ) : (
           <Button
-            density="brand"
             variant={wasIntended ? "ember" : "secondary"}
             size="sm"
             onPress={onConnect}
@@ -653,12 +644,7 @@ function SourceRow({
                 Last {backfill!.windowDays}d imported ·{" "}
                 {(backfill!.estEvents ?? 0).toLocaleString()} events
               </span>
-              <Button
-                density="brand"
-                variant="ghost"
-                size="sm"
-                onPress={onStartBackfill}
-              >
+              <Button variant="ghost" size="sm" onPress={onStartBackfill}>
                 Extend window
               </Button>
             </>
@@ -668,12 +654,7 @@ function SourceRow({
               <span className="flex-1 font-mono text-mono-sm text-ink-dim">
                 History available — last {source.backfill?.maxDays}d
               </span>
-              <Button
-                density="brand"
-                variant="ember"
-                size="sm"
-                onPress={onStartBackfill}
-              >
+              <Button variant="ember" size="sm" onPress={onStartBackfill}>
                 Backfill →
               </Button>
             </>
@@ -682,7 +663,7 @@ function SourceRow({
             <span className="flex-1 font-mono text-mono-sm text-ink-dim">
               Importing…{" "}
               {Math.round(
-                (backfill!.progress ?? 0) * (backfill!.estEvents ?? 1000),
+                (backfill!.progress ?? 0) * (backfill!.estEvents ?? 1000)
               ).toLocaleString()}{" "}
               / {(backfill!.estEvents ?? 1000).toLocaleString()}
             </span>
@@ -715,7 +696,7 @@ function SourceTile({
         "flex min-w-0 items-center gap-s-2 rounded-sm border px-s-3 py-s-2",
         isConnected
           ? "border-event-green/30 bg-event-green/[0.03]"
-          : "border-hairline bg-surface-01",
+          : "border-hairline bg-surface-01"
       )}
     >
       <span
@@ -743,21 +724,11 @@ function SourceTile({
         </span>
       </div>
       {isConnected ? (
-        <Button
-          density="brand"
-          variant="ghost"
-          size="sm"
-          onPress={onDisconnect}
-        >
+        <Button variant="ghost" size="sm" onPress={onDisconnect}>
           Remove
         </Button>
       ) : (
-        <Button
-          density="brand"
-          variant="secondary"
-          size="sm"
-          onPress={onConnect}
-        >
+        <Button variant="secondary" size="sm" onPress={onConnect}>
           +
         </Button>
       )}
@@ -784,13 +755,19 @@ interface ConnectModalProps {
 function ConnectModal({ source, onClose, onDone }: ConnectModalProps) {
   switch (source.id) {
     case "stripe":
-      return <ConnectStripe source={source} onClose={onClose} onDone={onDone} />;
+      return (
+        <ConnectStripe source={source} onClose={onClose} onDone={onDone} />
+      );
     case "slack":
       return <ConnectSlack source={source} onClose={onClose} onDone={onDone} />;
     case "hubspot":
-      return <ConnectHubSpot source={source} onClose={onClose} onDone={onDone} />;
+      return (
+        <ConnectHubSpot source={source} onClose={onClose} onDone={onDone} />
+      );
     case "salesforce":
-      return <ConnectWizard source={source} onClose={onClose} onDone={onDone} />;
+      return (
+        <ConnectWizard source={source} onClose={onClose} onDone={onDone} />
+      );
     case "webhooks":
     case "http":
       return (
@@ -801,7 +778,9 @@ function ConnectModal({ source, onClose, onDone }: ConnectModalProps) {
         />
       );
     default:
-      return <ConnectShared source={source} onClose={onClose} onDone={onDone} />;
+      return (
+        <ConnectShared source={source} onClose={onClose} onDone={onDone} />
+      );
   }
 }
 
@@ -835,7 +814,7 @@ export function BackfillConfig({
     onEntitiesChange(
       entities.includes(id)
         ? entities.filter((e) => e !== id)
-        : [...entities, id],
+        : [...entities, id]
     );
   };
 
@@ -867,7 +846,6 @@ export function BackfillConfig({
               {PRESETS.filter((p) => p <= spec.maxDays).map((p) => (
                 <Button
                   key={p}
-                  density="brand"
                   variant={windowDays === p ? "ember" : "secondary"}
                   size="sm"
                   onPress={() => onWindowChange(p)}
@@ -926,10 +904,10 @@ function BackfillModal({
 }: BackfillModalProps) {
   const spec = source.backfill;
   const [bfWindow, setBfWindow] = React.useState(
-    existing?.windowDays ?? spec?.windowDays ?? 30,
+    existing?.windowDays ?? spec?.windowDays ?? 30
   );
   const [bfEntities, setBfEntities] = React.useState<string[]>(
-    existing?.entities ?? spec?.entities.map((e) => e.id) ?? [],
+    existing?.entities ?? spec?.entities.map((e) => e.id) ?? []
   );
   const [enabled, setEnabled] = React.useState(true);
 
@@ -946,13 +924,14 @@ function BackfillModal({
         onClose={onClose}
         title="Backfill not supported"
         actions={
-          <Button density="brand" variant="ember" onPress={onClose}>
+          <Button variant="ember" onPress={onClose}>
             Close
           </Button>
         }
       >
         <p className="font-sans text-[13.5px] text-ink-lo">
-          {source.name} is stream-only — there&rsquo;s no historical window to backfill.
+          {source.name} is stream-only — there&rsquo;s no historical window to
+          backfill.
         </p>
       </Modal>
     );
@@ -965,11 +944,10 @@ function BackfillModal({
       title={`Backfill ${source.name}`}
       actions={
         <>
-          <Button density="brand" variant="ghost" onPress={onClose}>
+          <Button variant="ghost" onPress={onClose}>
             Cancel
           </Button>
           <Button
-            density="brand"
             variant="ember"
             onPress={() =>
               onStart({

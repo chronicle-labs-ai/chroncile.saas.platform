@@ -17,7 +17,12 @@ import type {
   TenantFeatureAccessResponse,
 } from "@/shared/types";
 import { fetcher } from "@/shared/fetcher";
-import { ModalOverlay, ModalHeader, InviteResultBanner, LoginLinkDisplay } from "@/shared/components/modal-overlay";
+import {
+  ModalOverlay,
+  ModalHeader,
+  InviteResultBanner,
+  LoginLinkDisplay,
+} from "@/shared/components/modal-overlay";
 
 // ── Invite Modal ─────────────────────────────────────────────────────────────
 
@@ -30,7 +35,12 @@ function InviteModal({
   tenant: Tenant;
   onClose: () => void;
 }) {
-  const [result, setResult] = useState<{ loginUrl?: string; emailSent?: boolean; emailError?: string | null; error?: string } | null>(null);
+  const [result, setResult] = useState<{
+    loginUrl?: string;
+    emailSent?: boolean;
+    emailError?: string | null;
+    error?: string;
+  } | null>(null);
 
   const form = useForm<InviteUserInput>({
     resolver: zodResolver(inviteUserSchema),
@@ -44,21 +54,27 @@ function InviteModal({
   const handleSubmit = form.handleSubmit(async (values) => {
     setResult(null);
     try {
-      const res = await fetch(`/api/admin/${envId}/tenants/${tenant.id}/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: values.email,
-          name: values.name || undefined,
-          sendEmail: values.sendEmail,
-        }),
-      });
+      const res = await fetch(
+        `/api/admin/${envId}/tenants/${tenant.id}/invite`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: values.email,
+            name: values.name || undefined,
+            sendEmail: values.sendEmail,
+          }),
+        }
+      );
       const data = await res.json();
       if (!res.ok) {
         form.setError("root", { message: data.error ?? "Invite failed" });
-      }
-      else {
-        setResult({ loginUrl: data.loginUrl, emailSent: data.emailSent, emailError: data.emailError });
+      } else {
+        setResult({
+          loginUrl: data.loginUrl,
+          emailSent: data.emailSent,
+          emailError: data.emailError,
+        });
         globalMutate(`/api/admin/${envId}/tenants`);
       }
     } catch (err) {
@@ -99,16 +115,22 @@ function InviteModal({
             </FormField>
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox {...form.register("sendEmail")} />
-              <span className="text-xs text-secondary">Send invite email via Resend</span>
+              <span className="text-xs text-secondary">
+                Send invite email via Resend
+              </span>
             </label>
             {form.formState.errors.root?.message && (
               <div className="flex items-center gap-2">
                 <span className="status-dot status-dot--critical" />
-                <span className="text-xs text-critical">{form.formState.errors.root.message}</span>
+                <span className="text-xs text-critical">
+                  {form.formState.errors.root.message}
+                </span>
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
+              <Button type="button" size="sm" onClick={onClose}>
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 variant="primary"
@@ -121,10 +143,24 @@ function InviteModal({
           </form>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-2"><span className="status-dot status-dot--nominal" /><span className="text-sm text-nominal">Account created</span></div>
-            <InviteResultBanner email={form.getValues("email")} emailSent={result.emailSent} emailError={result.emailError} />
+            <div className="flex items-center gap-2">
+              <span className="status-dot status-dot--nominal" />
+              <span className="text-sm text-nominal">Account created</span>
+            </div>
+            <InviteResultBanner
+              email={form.getValues("email")}
+              emailSent={result.emailSent}
+              emailError={result.emailError}
+            />
             <LoginLinkDisplay loginUrl={result.loginUrl} />
-            <Button onClick={onClose} variant="primary" size="sm" className="w-full">Done</Button>
+            <Button
+              onClick={onClose}
+              variant="primary"
+              size="sm"
+              className="w-full"
+            >
+              Done
+            </Button>
           </div>
         )}
       </div>
@@ -150,7 +186,10 @@ function CreateOrgModal({
   } | null>(null);
 
   const deriveSlug = (value: string) =>
-    value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
 
   const form = useForm<CreateOrgInput>({
     resolver: zodResolver(createOrgSchema),
@@ -219,21 +258,37 @@ function CreateOrgModal({
   });
 
   const orgIcon = (
-    <svg className="w-4 h-4 text-data" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21" />
+    <svg
+      className="w-4 h-4 text-data"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21"
+      />
     </svg>
   );
 
   return (
     <ModalOverlay onClose={onClose} maxWidth="max-w-lg">
-      <ModalHeader title="Create Organization" icon={orgIcon} onClose={onClose} />
+      <ModalHeader
+        title="Create Organization"
+        icon={orgIcon}
+        onClose={onClose}
+      />
       <div className="panel__content">
         {!result?.loginUrl ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-5 h-5 rounded-full bg-data-bg border border-data-dim flex items-center justify-center shrink-0">
-                  <span className="font-mono text-[10px] text-data font-semibold">1</span>
+                  <span className="font-mono text-[10px] text-data font-semibold">
+                    1
+                  </span>
                 </span>
                 <span className="label">Organization Details</span>
               </div>
@@ -273,7 +328,9 @@ function CreateOrgModal({
             <div className="border-t border-border-dim pt-4 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-5 h-5 rounded-full bg-data-bg border border-data-dim flex items-center justify-center shrink-0">
-                  <span className="font-mono text-[10px] text-data font-semibold">2</span>
+                  <span className="font-mono text-[10px] text-data font-semibold">
+                    2
+                  </span>
                 </span>
                 <span className="label">Admin User</span>
               </div>
@@ -305,7 +362,9 @@ function CreateOrgModal({
             <div className="border-t border-border-dim pt-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox {...form.register("sendEmail")} />
-                <span className="text-xs text-secondary">Send invite email to admin user</span>
+                <span className="text-xs text-secondary">
+                  Send invite email to admin user
+                </span>
               </label>
               <p className="text-[10px] text-tertiary mt-1.5 ml-6">
                 Uses Resend to deliver a branded invitation with a login link.
@@ -315,19 +374,25 @@ function CreateOrgModal({
             {form.formState.errors.root?.message && (
               <div className="flex items-center gap-2 p-2 bg-critical-bg border border-critical-dim rounded-sm">
                 <span className="status-dot status-dot--critical shrink-0" />
-                <span className="text-xs text-critical">{form.formState.errors.root.message}</span>
+                <span className="text-xs text-critical">
+                  {form.formState.errors.root.message}
+                </span>
               </div>
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
+              <Button type="button" size="sm" onClick={onClose}>
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 variant="primary"
                 size="sm"
                 isLoading={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? "Creating..." : "Create & Invite"}
+                {form.formState.isSubmitting
+                  ? "Creating..."
+                  : "Create & Invite"}
               </Button>
             </div>
           </form>
@@ -339,9 +404,20 @@ function CreateOrgModal({
                 Organization <strong>{result.tenant?.name}</strong> created
               </span>
             </div>
-            <InviteResultBanner email={form.getValues("adminEmail")} emailSent={result.emailSent} emailError={result.emailError} />
+            <InviteResultBanner
+              email={form.getValues("adminEmail")}
+              emailSent={result.emailSent}
+              emailError={result.emailError}
+            />
             <LoginLinkDisplay loginUrl={result.loginUrl!} />
-            <Button onClick={onClose} variant="primary" size="sm" className="w-full">Done</Button>
+            <Button
+              onClick={onClose}
+              variant="primary"
+              size="sm"
+              className="w-full"
+            >
+              Done
+            </Button>
           </div>
         )}
       </div>
@@ -376,7 +452,7 @@ function FeatureFlagsModal({
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ enabled }),
-        },
+        }
       );
       const nextData = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -397,7 +473,7 @@ function FeatureFlagsModal({
     try {
       const res = await fetch(
         `/api/admin/${envId}/tenants/${tenant.id}/feature-flags/${flagKey}`,
-        { method: "DELETE" },
+        { method: "DELETE" }
       );
       const nextData = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -428,10 +504,14 @@ function FeatureFlagsModal({
         ) : data?.error ? (
           <div className="flex items-start gap-3 p-3 bg-critical-bg border border-critical-dim rounded-sm">
             <span className="status-dot status-dot--critical mt-0.5 shrink-0" />
-            <p className="text-xs text-critical leading-relaxed">{data.error}</p>
+            <p className="text-xs text-critical leading-relaxed">
+              {data.error}
+            </p>
           </div>
         ) : !data ? (
-          <div className="text-xs text-tertiary">No feature access data available.</div>
+          <div className="text-xs text-tertiary">
+            No feature access data available.
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -547,7 +627,9 @@ function FeatureFlagsModal({
                               {flag.enabled ? "enabled" : "disabled"}
                             </span>
                             {overridden && (
-                              <span className="badge badge--data">override</span>
+                              <span className="badge badge--data">
+                                override
+                              </span>
                             )}
                           </div>
                           <p className="text-xs text-secondary mt-1 leading-relaxed">
@@ -602,50 +684,110 @@ function FeatureFlagsModal({
 
 // ── Users Drawer ─────────────────────────────────────────────────────────────
 
-function UsersDrawer({ envId, tenant, onClose, onInvite }: { envId: string; tenant: Tenant; onClose: () => void; onInvite: () => void }) {
-  const { data } = useSWR<{ users: OrgUser[] }>(`/api/admin/${envId}/tenants/${tenant.id}/users`, fetcher);
+function UsersDrawer({
+  envId,
+  tenant,
+  onClose,
+  onInvite,
+}: {
+  envId: string;
+  tenant: Tenant;
+  onClose: () => void;
+  onInvite: () => void;
+}) {
+  const { data } = useSWR<{ users: OrgUser[] }>(
+    `/api/admin/${envId}/tenants/${tenant.id}/users`,
+    fetcher
+  );
   const users = data?.users ?? [];
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-end" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-end"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="absolute inset-0 bg-void/50 backdrop-blur-sm" />
       <div className="relative w-full max-w-sm h-full bg-surface border-l border-border-dim flex flex-col">
         <div className="panel__header">
           <div>
             <span className="panel__title">{tenant.name}</span>
-            <p className="font-mono text-[10px] text-tertiary mt-0.5">{tenant.slug}</p>
+            <p className="font-mono text-[10px] text-tertiary mt-0.5">
+              {tenant.slug}
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onInvite} className="btn btn--primary btn--sm">Invite</button>
-            <button onClick={onClose} className="text-tertiary hover:text-primary">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            <button onClick={onInvite} className="btn btn--primary btn--sm">
+              Invite
+            </button>
+            <button
+              onClick={onClose}
+              className="text-tertiary hover:text-primary"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
         </div>
         <div className="px-4 py-3 border-b border-border-dim bg-elevated">
           <div className="grid grid-cols-2 gap-4">
-            <div><span className="label block mb-0.5">Users</span><span className="font-mono text-lg text-primary">{users.length}</span></div>
-            <div><span className="label block mb-0.5">Subscription</span>
-              <span className={`font-mono text-sm ${tenant.stripeSubscriptionStatus === "active" ? "text-nominal" : "text-caution"}`}>{tenant.stripeSubscriptionStatus ?? "free"}</span>
+            <div>
+              <span className="label block mb-0.5">Users</span>
+              <span className="font-mono text-lg text-primary">
+                {users.length}
+              </span>
+            </div>
+            <div>
+              <span className="label block mb-0.5">Subscription</span>
+              <span
+                className={`font-mono text-sm ${tenant.stripeSubscriptionStatus === "active" ? "text-nominal" : "text-caution"}`}
+              >
+                {tenant.stripeSubscriptionStatus ?? "free"}
+              </span>
             </div>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <div className="px-4 py-2"><span className="label">Members</span></div>
+          <div className="px-4 py-2">
+            <span className="label">Members</span>
+          </div>
           {users.length === 0 ? (
-            <div className="px-4 py-6 text-center text-xs text-tertiary">No users yet</div>
+            <div className="px-4 py-6 text-center text-xs text-tertiary">
+              No users yet
+            </div>
           ) : (
             <div className="divide-y divide-border-dim">
               {users.map((u) => (
-                <div key={u.id} className="flex items-center gap-3 px-4 py-3 hover:bg-hover transition-colors">
+                <div
+                  key={u.id}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-hover transition-colors"
+                >
                   <div className="w-8 h-8 rounded-full bg-data-bg border border-data-dim flex items-center justify-center shrink-0">
-                    <span className="font-mono text-xs text-data">{(u.name ?? u.email)[0].toUpperCase()}</span>
+                    <span className="font-mono text-xs text-data">
+                      {(u.name ?? u.email)[0].toUpperCase()}
+                    </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    {u.name && <p className="text-sm text-primary truncate">{u.name}</p>}
-                    <p className="font-mono text-xs text-tertiary truncate">{u.email}</p>
+                    {u.name && (
+                      <p className="text-sm text-primary truncate">{u.name}</p>
+                    )}
+                    <p className="font-mono text-xs text-tertiary truncate">
+                      {u.email}
+                    </p>
                   </div>
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-disabled shrink-0">{u.authProvider}</span>
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-disabled shrink-0">
+                    {u.authProvider}
+                  </span>
                 </div>
               ))}
             </div>
@@ -665,24 +807,36 @@ export function TenantsPanel({ envId }: { envId: string }) {
   const [showCreateOrg, setShowCreateOrg] = useState(false);
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, mutate } = useSWR<{ tenants: Tenant[]; total: number; error?: string; pendingDeploy?: boolean }>(
-    `/api/admin/${envId}/tenants`,
-    fetcher,
-    { refreshInterval: 60_000 }
-  );
+  const { data, isLoading, mutate } = useSWR<{
+    tenants: Tenant[];
+    total: number;
+    error?: string;
+    pendingDeploy?: boolean;
+  }>(`/api/admin/${envId}/tenants`, fetcher, { refreshInterval: 60_000 });
 
   const filtered = (data?.tenants ?? []).filter(
-    (t) => t.name.toLowerCase().includes(search.toLowerCase()) || t.slug.toLowerCase().includes(search.toLowerCase())
+    (t) =>
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.slug.toLowerCase().includes(search.toLowerCase())
   );
   const totalUsers = (data?.tenants ?? []).reduce((s, t) => s + t.userCount, 0);
 
   return (
     <>
       {expandedTenant && !inviteTenant && (
-        <UsersDrawer envId={envId} tenant={expandedTenant} onClose={() => setExpandedTenant(null)} onInvite={() => setInviteTenant(expandedTenant)} />
+        <UsersDrawer
+          envId={envId}
+          tenant={expandedTenant}
+          onClose={() => setExpandedTenant(null)}
+          onInvite={() => setInviteTenant(expandedTenant)}
+        />
       )}
       {inviteTenant && (
-        <InviteModal envId={envId} tenant={inviteTenant} onClose={() => setInviteTenant(null)} />
+        <InviteModal
+          envId={envId}
+          tenant={inviteTenant}
+          onClose={() => setInviteTenant(null)}
+        />
       )}
       {featureTenant && (
         <FeatureFlagsModal
@@ -699,7 +853,9 @@ export function TenantsPanel({ envId }: { envId: string }) {
         <div className="panel__header">
           <div className="flex items-center gap-3">
             <span className="panel__title">Tenants & Organizations</span>
-            <span className="font-mono text-[10px] text-tertiary">{data?.total ?? 0} orgs · {totalUsers} users</span>
+            <span className="font-mono text-[10px] text-tertiary">
+              {data?.total ?? 0} orgs · {totalUsers} users
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <Input
@@ -710,8 +866,25 @@ export function TenantsPanel({ envId }: { envId: string }) {
               placeholder="Search..."
               className="font-mono text-xs py-1.5 w-40"
             />
-            <Button onClick={() => setShowCreateOrg(true)} variant="primary" size="sm" className="flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            <Button
+              onClick={() => setShowCreateOrg(true)}
+              variant="primary"
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
               Create Org
             </Button>
           </div>
@@ -719,7 +892,7 @@ export function TenantsPanel({ envId }: { envId: string }) {
 
         {isLoading ? (
           <div className="divide-y divide-border-dim">
-            {[1,2,3].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-3">
                 <div className="w-8 h-8 rounded-sm bg-elevated animate-pulse" />
                 <div className="flex-1 space-y-1.5">
@@ -733,12 +906,28 @@ export function TenantsPanel({ envId }: { envId: string }) {
         ) : data?.pendingDeploy ? (
           <div className="panel__content">
             <div className="flex items-start gap-3 p-3 bg-data-bg border border-data-dim rounded-sm">
-              <svg className="w-4 h-4 text-data shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+              <svg
+                className="w-4 h-4 text-data shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                />
               </svg>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-data leading-relaxed">Tenant management is available once the backend is redeployed with the latest code.</p>
-                <p className="text-[10px] text-data/70 mt-1">Push to the branch to trigger a redeploy, or redeploy manually in Fly.io.</p>
+                <p className="text-xs text-data leading-relaxed">
+                  Tenant management is available once the backend is redeployed
+                  with the latest code.
+                </p>
+                <p className="text-[10px] text-data/70 mt-1">
+                  Push to the branch to trigger a redeploy, or redeploy manually
+                  in Fly.io.
+                </p>
               </div>
             </div>
           </div>
@@ -747,15 +936,23 @@ export function TenantsPanel({ envId }: { envId: string }) {
             <div className="flex items-start gap-3 p-3 bg-caution-bg border border-caution-dim rounded-sm">
               <span className="status-dot status-dot--caution mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-caution leading-relaxed">{data.error}</p>
-                <p className="text-[10px] text-caution/70 mt-1">If the machine just started, it may take 30–45s to be ready.</p>
+                <p className="text-xs text-caution leading-relaxed">
+                  {data.error}
+                </p>
+                <p className="text-[10px] text-caution/70 mt-1">
+                  If the machine just started, it may take 30–45s to be ready.
+                </p>
               </div>
-              <Button onClick={() => mutate()} size="sm" className="shrink-0">Retry</Button>
+              <Button onClick={() => mutate()} size="sm" className="shrink-0">
+                Retry
+              </Button>
             </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="panel__content text-center py-8 text-xs text-tertiary">
-            {search ? `No orgs matching "${search}"` : "No organizations in this environment"}
+            {search
+              ? `No orgs matching "${search}"`
+              : "No organizations in this environment"}
           </div>
         ) : (
           <table className="data-table">
@@ -771,23 +968,43 @@ export function TenantsPanel({ envId }: { envId: string }) {
             </thead>
             <tbody>
               {filtered.map((tenant) => (
-                <tr key={tenant.id} className="cursor-pointer" onClick={() => setExpandedTenant(tenant)}>
+                <tr
+                  key={tenant.id}
+                  className="cursor-pointer"
+                  onClick={() => setExpandedTenant(tenant)}
+                >
                   <td>
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-sm bg-data-bg border border-data-dim flex items-center justify-center shrink-0">
-                        <span className="font-mono text-xs text-data font-semibold">{tenant.name[0].toUpperCase()}</span>
+                        <span className="font-mono text-xs text-data font-semibold">
+                          {tenant.name[0].toUpperCase()}
+                        </span>
                       </div>
-                      <span className="text-primary font-medium">{tenant.name}</span>
+                      <span className="text-primary font-medium">
+                        {tenant.name}
+                      </span>
                     </div>
                   </td>
-                  <td><span className="font-mono text-xs">{tenant.slug}</span></td>
-                  <td><span className="font-mono text-sm text-primary">{tenant.userCount}</span></td>
                   <td>
-                    <span className={`badge ${tenant.stripeSubscriptionStatus === "active" ? "badge--nominal" : "badge--neutral"}`}>
+                    <span className="font-mono text-xs">{tenant.slug}</span>
+                  </td>
+                  <td>
+                    <span className="font-mono text-sm text-primary">
+                      {tenant.userCount}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${tenant.stripeSubscriptionStatus === "active" ? "badge--nominal" : "badge--neutral"}`}
+                    >
                       {tenant.stripeSubscriptionStatus ?? "free"}
                     </span>
                   </td>
-                  <td><span className="font-mono text-xs">{new Date(tenant.createdAt).toLocaleDateString()}</span></td>
+                  <td>
+                    <span className="font-mono text-xs">
+                      {new Date(tenant.createdAt).toLocaleDateString()}
+                    </span>
+                  </td>
                   <td>
                     <div className="flex items-center justify-end gap-2">
                       <button

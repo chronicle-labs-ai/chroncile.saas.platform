@@ -21,9 +21,7 @@ export const Open: Story = {
       return (
         <div className="relative h-[560px] w-[1000px] overflow-hidden border border-l-border bg-l-surface">
           <div className="flex h-full items-center justify-center text-l-ink-lo">
-            <Button onClick={() => setOpen((o) => !o)}>
-              Toggle inspector
-            </Button>
+            <Button onClick={() => setOpen((o) => !o)}>Toggle inspector</Button>
           </div>
           <InspectorDrawer open={open} onClose={() => setOpen(false)}>
             <InspectorDrawer.Header eyebrow="CHR-1284 · TRACE">

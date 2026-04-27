@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { tv } from "../utils/tv";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * OTPInput — N-cell numeric one-time-passcode input. Paste-aware
@@ -21,20 +22,34 @@ import { tv } from "../utils/tv";
 
 const otp = tv({
   slots: {
-    row: "flex gap-s-2",
+    row: "flex",
     cell:
-      "h-[52px] w-[44px] rounded-sm border bg-surface-00 text-center " +
-      "font-mono text-[20px] text-ink-hi outline-none caret-ember " +
+      "text-center border outline-none " +
       "transition-[border-color,box-shadow,background-color] duration-fast ease-out " +
-      "border-hairline-strong " +
-      "hover:border-ink-dim " +
-      "focus:border-ember focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] " +
       "disabled:opacity-40 disabled:cursor-not-allowed",
   },
   variants: {
+    density: {
+      brand: {
+        row: "gap-s-2",
+        cell:
+          "h-[52px] w-[44px] rounded-sm bg-surface-00 caret-ember " +
+          "font-mono text-[20px] text-ink-hi border-hairline-strong " +
+          "hover:border-ink-dim " +
+          "focus:border-ember focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)]",
+      },
+      compact: {
+        row: "gap-[6px]",
+        cell:
+          "h-[36px] w-[32px] rounded-l bg-l-surface-input caret-ember " +
+          "font-sans font-medium text-[16px] text-l-ink border-l-border " +
+          "hover:border-l-border-strong " +
+          "focus:border-[rgba(216,67,10,0.5)] focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)]",
+      },
+    },
     state: {
       idle: {},
-      filled: { cell: "bg-surface-01" },
+      filled: {},
       error: {
         cell:
           "border-event-red focus:border-event-red " +
@@ -57,14 +72,25 @@ const otp = tv({
       false: {},
     },
   },
-  defaultVariants: { state: "idle", codeGrid: false },
+  compoundVariants: [
+    {
+      density: "brand",
+      state: "filled",
+      class: { cell: "bg-surface-01" },
+    },
+    {
+      density: "compact",
+      state: "filled",
+      class: { cell: "bg-l-surface-raised-2" },
+    },
+  ],
+  defaultVariants: { density: "brand", state: "idle", codeGrid: false },
 });
 
-export interface OTPInputProps
-  extends Omit<
-    React.HTMLAttributes<HTMLDivElement>,
-    "onChange" | "defaultValue"
-  > {
+export interface OTPInputProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onChange" | "defaultValue"
+> {
   /** Number of cells. Defaults to 6. */
   length?: number;
   /** Controlled string of digits (length ≤ `length`). */
@@ -89,6 +115,9 @@ export interface OTPInputProps
    * thicker ember caret. Behaviour is identical to the default style.
    */
   codeGridStyle?: boolean;
+  /** Force a density flavor. Defaults to whichever the surrounding
+   * `ChromeStyleProvider` resolves to. */
+  density?: "compact" | "brand";
   /** Aria label for the group. Defaults to "One-time passcode". */
   "aria-label"?: string;
 }
@@ -109,13 +138,15 @@ export function OTPInput({
   success = false,
   disabled = false,
   codeGridStyle = false,
+  density: densityProp,
   className,
   "aria-label": ariaLabel = "One-time passcode",
   ...rest
 }: OTPInputProps) {
+  const density = useResolvedChromeDensity(densityProp);
   const isControlled = valueProp !== undefined;
   const [internal, setInternal] = React.useState<string>(() =>
-    (defaultValue ?? "").replace(/\D/g, "").slice(0, length),
+    (defaultValue ?? "").replace(/\D/g, "").slice(0, length)
   );
   const value = isControlled
     ? (valueProp ?? "").replace(/\D/g, "").slice(0, length)
@@ -123,12 +154,13 @@ export function OTPInput({
 
   const cells = React.useMemo(
     () => Array.from({ length }, (_, i) => value[i] ?? ""),
-    [value, length],
+    [value, length]
   );
 
   const refs = React.useRef<(HTMLInputElement | null)[]>([]);
   const [focusedIdx, setFocusedIdx] = React.useState<number | null>(null);
   const slots = otp({
+    density,
     state: error ? "error" : success ? "success" : "idle",
     codeGrid: codeGridStyle,
   });
@@ -159,10 +191,7 @@ export function OTPInput({
     onChange?.(joined);
   };
 
-  const handleChange = (
-    i: number,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChange = (i: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     // Multi-char (paste/auto-fill into a single cell) — handled by paste,
     // but defensively accept the last digit only here.
@@ -174,7 +203,7 @@ export function OTPInput({
 
   const handleKeyDown = (
     i: number,
-    e: React.KeyboardEvent<HTMLInputElement>,
+    e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Backspace") {
       if (cells[i]) {
@@ -225,6 +254,7 @@ export function OTPInput({
       onPaste={handlePaste}
       data-state={error ? "error" : success ? "success" : "idle"}
       data-style={codeGridStyle ? "code-grid" : "default"}
+      data-density={density}
       {...rest}
     >
       {cells.map((digit, i) => {
@@ -249,6 +279,7 @@ export function OTPInput({
             onBlur={() => setFocusedIdx((cur) => (cur === i ? null : cur))}
             aria-label={`Digit ${i + 1} of ${length}`}
             className={otp({
+              density,
               state: error
                 ? "error"
                 : success

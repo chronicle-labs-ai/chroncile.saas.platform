@@ -25,10 +25,7 @@ export async function GET(
     }
 
     // Also get adjacent IDs for prev/next navigation
-    const adjacent = await store.getAdjacentIds(
-      session.user.tenantId,
-      id,
-    );
+    const adjacent = await store.getAdjacentIds(session.user.tenantId, id);
 
     return NextResponse.json({ trace, ...adjacent });
   } catch (err) {

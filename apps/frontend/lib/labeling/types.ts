@@ -24,15 +24,15 @@ export interface TraceEvent {
 /* ------------------------------------------------------------------ */
 
 export interface InstructionRule {
-  id: string;        // e.g., "R1", "R2"
+  id: string; // e.g., "R1", "R2"
   text: string;
-  category: string;  // "verification", "policy", "communication", etc.
+  category: string; // "verification", "policy", "communication", etc.
 }
 
 export interface RequiredContextField {
   field: string;
   description: string;
-  source: string;    // where this data should come from
+  source: string; // where this data should come from
 }
 
 export interface AgentProfile {
@@ -67,11 +67,11 @@ export interface AgentContextSnapshot {
 /* ------------------------------------------------------------------ */
 
 export interface OODScoreBreakdown {
-  transition_deviation: number;       // 0-1
-  tool_frequency_deviation: number;   // 0-1
-  temporal_deviation: number;         // 0-1
-  embedding_distance: number;         // 0-1
-  composite_score: number;            // weighted sum
+  transition_deviation: number; // 0-1
+  tool_frequency_deviation: number; // 0-1
+  temporal_deviation: number; // 0-1
+  embedding_distance: number; // 0-1
+  composite_score: number; // weighted sum
   flagged: boolean;
 }
 
@@ -99,7 +99,7 @@ export interface ContextIntegrityViolation {
 /* ------------------------------------------------------------------ */
 
 export interface InstructionViolation {
-  instruction_id: string;          // e.g., "R3"
+  instruction_id: string; // e.g., "R3"
   instruction_text: string;
   violation_description: string;
   context_evidence?: string;
@@ -133,11 +133,11 @@ export const ACTION_VERDICTS = [
 
 export interface AutoActionAudit {
   action_annotations: ActionAnnotation[];
-  overall_score: number;          // 1-5
+  overall_score: number; // 1-5
   critical_errors: string[];
   correction_summary: string;
   summary: string;
-  confidence: number;             // 0.0-1.0
+  confidence: number; // 0.0-1.0
 
   ood_score: OODScoreBreakdown;
   context_integrity: {

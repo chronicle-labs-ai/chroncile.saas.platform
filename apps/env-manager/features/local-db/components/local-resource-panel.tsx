@@ -36,7 +36,8 @@ function formatUptime(secs: number): string {
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
@@ -50,7 +51,7 @@ export function LocalResourcePanel() {
   const { data, isLoading } = useSWR<BackendMetrics>(
     "/api/local-db/metrics",
     fetcher,
-    { refreshInterval: 5_000 },
+    { refreshInterval: 5_000 }
   );
 
   if (isLoading) {
@@ -71,8 +72,13 @@ export function LocalResourcePanel() {
     return (
       <div className="panel">
         <div className="panel__content text-center py-8">
-          <p className="text-sm text-secondary">Backend not reachable or metrics endpoint not available</p>
-          <p className="text-xs text-tertiary mt-1">Restart the backend to pick up the new /api/platform/metrics endpoint</p>
+          <p className="text-sm text-secondary">
+            Backend not reachable or metrics endpoint not available
+          </p>
+          <p className="text-xs text-tertiary mt-1">
+            Restart the backend to pick up the new /api/platform/metrics
+            endpoint
+          </p>
         </div>
       </div>
     );
@@ -97,20 +103,26 @@ export function LocalResourcePanel() {
             <div>
               <div className="metric">
                 <span className="metric__label">PID</span>
-                <span className="metric__value metric__value--data text-xl">{data.process.pid}</span>
+                <span className="metric__value metric__value--data text-xl">
+                  {data.process.pid}
+                </span>
               </div>
             </div>
             <div>
               <div className="metric">
                 <span className="metric__label">Uptime</span>
-                <span className="metric__value metric__value--data text-xl">{formatUptime(data.process.uptimeSecs)}</span>
+                <span className="metric__value metric__value--data text-xl">
+                  {formatUptime(data.process.uptimeSecs)}
+                </span>
               </div>
             </div>
             <div>
               <div className="metric">
                 <span className="metric__label">Memory (RSS)</span>
                 <span className="metric__value metric__value--data text-xl">
-                  {data.process.memoryBytes ? formatBytes(data.process.memoryBytes) : "—"}
+                  {data.process.memoryBytes
+                    ? formatBytes(data.process.memoryBytes)
+                    : "—"}
                 </span>
               </div>
             </div>
@@ -133,10 +145,17 @@ export function LocalResourcePanel() {
         <div className="panel__content">
           <div className="divide-y divide-border-dim">
             {data.services.map((svc) => (
-              <div key={svc.name} className="flex items-center justify-between py-3">
+              <div
+                key={svc.name}
+                className="flex items-center justify-between py-3"
+              >
                 <div className="flex items-center gap-3">
-                  <span className={`status-dot ${serviceStatusDot(svc.status)}`} />
-                  <span className="font-mono text-sm text-primary">{svc.name}</span>
+                  <span
+                    className={`status-dot ${serviceStatusDot(svc.status)}`}
+                  />
+                  <span className="font-mono text-sm text-primary">
+                    {svc.name}
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
                   {svc.error && (
@@ -147,9 +166,15 @@ export function LocalResourcePanel() {
                   <span className="font-mono text-xs text-tertiary">
                     {svc.latencyMs}ms
                   </span>
-                  <span className={`font-mono text-xs ${
-                    svc.status === "up" ? "text-nominal" : svc.status === "unconfigured" ? "text-tertiary" : "text-critical"
-                  }`}>
+                  <span
+                    className={`font-mono text-xs ${
+                      svc.status === "up"
+                        ? "text-nominal"
+                        : svc.status === "unconfigured"
+                          ? "text-tertiary"
+                          : "text-critical"
+                    }`}
+                  >
                     {svc.status}
                   </span>
                 </div>

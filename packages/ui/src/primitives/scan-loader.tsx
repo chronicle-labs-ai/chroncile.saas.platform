@@ -15,8 +15,7 @@ import { cx } from "../utils/cx";
  * shift.
  */
 
-export interface ScanLoaderProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface ScanLoaderProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Aria label for screen readers. Default "Loading". */
   "aria-label"?: string;
 }

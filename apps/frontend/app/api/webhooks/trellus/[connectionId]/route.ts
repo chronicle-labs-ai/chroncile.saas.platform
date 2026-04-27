@@ -20,7 +20,7 @@ export async function OPTIONS() {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ connectionId: string }> },
+  { params }: { params: Promise<{ connectionId: string }> }
 ) {
   const { connectionId } = await params;
   const body = await request.text();
@@ -35,11 +35,14 @@ export async function POST(
     headers["content-type"] = "application/json";
   }
 
-  const response = await fetch(`${BACKEND_URL}/api/webhooks/trellus/${connectionId}`, {
-    method: "POST",
-    headers,
-    body,
-  });
+  const response = await fetch(
+    `${BACKEND_URL}/api/webhooks/trellus/${connectionId}`,
+    {
+      method: "POST",
+      headers,
+      body,
+    }
+  );
 
   const responseBody = await response.text();
   return new NextResponse(responseBody || null, {

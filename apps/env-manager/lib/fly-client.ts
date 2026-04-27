@@ -37,17 +37,16 @@ async function flyExec(
   });
 }
 
-async function flyFetch(
-  path: string,
-  init?: RequestInit
-): Promise<Response> {
+async function flyFetch(path: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(`${FLY_API_BASE}${path}`, {
     ...init,
     headers: { ...flyHeaders(), ...init?.headers },
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Fly API ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`);
+    throw new Error(
+      `Fly API ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`
+    );
   }
   return res;
 }
@@ -115,15 +114,23 @@ export async function createMachine(
   }
 
   const { stdout } = await flyExec([
-    "machine", "run",
+    "machine",
+    "run",
     config.image,
-    "-a", appName,
-    "-r", config.region,
-    "--vm-size", "shared-cpu-1x",
-    "--vm-memory", "256",
-    "-p", "443:8080/tcp:tls:http",
-    "-p", "80:8080/tcp:http",
-    "--restart", "always",
+    "-a",
+    appName,
+    "-r",
+    config.region,
+    "--vm-size",
+    "shared-cpu-1x",
+    "--vm-memory",
+    "256",
+    "-p",
+    "443:8080/tcp:tls:http",
+    "-p",
+    "80:8080/tcp:http",
+    "--restart",
+    "always",
     "--autostart",
     ...envArgs,
   ]);
@@ -145,10 +152,9 @@ export async function destroyMachine(
   machineId: string,
   force = true
 ): Promise<void> {
-  await flyFetch(
-    `/apps/${appName}/machines/${machineId}?force=${force}`,
-    { method: "DELETE" }
-  );
+  await flyFetch(`/apps/${appName}/machines/${machineId}?force=${force}`, {
+    method: "DELETE",
+  });
 }
 
 export async function setSecrets(
@@ -188,7 +194,9 @@ export async function setSecrets(
 
   const gqlData = await safeJson<{ errors?: Array<{ message: string }> }>(res);
   if (gqlData?.errors?.length) {
-    throw new Error(`Fly GraphQL setSecrets error: ${gqlData.errors[0].message}`);
+    throw new Error(
+      `Fly GraphQL setSecrets error: ${gqlData.errors[0].message}`
+    );
   }
 }
 
@@ -198,13 +206,20 @@ export async function createPostgresCluster(
 ): Promise<{ appName: string; connectionString: string }> {
   try {
     const { stdout, stderr } = await flyExec([
-      "postgres", "create",
-      "--name", name,
-      "--org", orgSlug(),
-      "--region", region,
-      "--vm-size", "shared-cpu-1x",
-      "--volume-size", "1",
-      "--initial-cluster-size", "1",
+      "postgres",
+      "create",
+      "--name",
+      name,
+      "--org",
+      orgSlug(),
+      "--region",
+      region,
+      "--vm-size",
+      "shared-cpu-1x",
+      "--volume-size",
+      "1",
+      "--initial-cluster-size",
+      "1",
     ]);
 
     const output = stdout + stderr;
@@ -223,10 +238,9 @@ export async function attachPostgres(
   dbName: string,
   appName: string
 ): Promise<{ stdout: string; stderr: string }> {
-  return flyExec(
-    ["postgres", "attach", dbName, "-a", appName],
-    { timeout: 60_000 }
-  );
+  return flyExec(["postgres", "attach", dbName, "-a", appName], {
+    timeout: 60_000,
+  });
 }
 
 export async function deletePostgresCluster(name: string): Promise<void> {
@@ -239,13 +253,21 @@ export async function forkPostgresCluster(
   region = "ams"
 ): Promise<{ appName: string; connectionString: string }> {
   try {
-    const { stdout, stderr } = await flyExec([
-      "postgres", "fork",
-      "--from", sourceName,
-      "--name", destName,
-      "--org", orgSlug(),
-      "--region", region,
-    ], { timeout: 180_000 });
+    const { stdout, stderr } = await flyExec(
+      [
+        "postgres",
+        "fork",
+        "--from",
+        sourceName,
+        "--name",
+        destName,
+        "--org",
+        orgSlug(),
+        "--region",
+        region,
+      ],
+      { timeout: 180_000 }
+    );
 
     const output = stdout + stderr;
     const passwordMatch = output.match(/Password:\s*(\S+)/);
@@ -265,20 +287,26 @@ export async function runSeedSql(
   const { spawn } = await import("child_process");
 
   const res = await fetch(seedSqlUrl, { signal: AbortSignal.timeout(30_000) });
-  if (!res.ok) throw new Error(`Failed to download seed SQL from ${seedSqlUrl}: ${res.status}`);
+  if (!res.ok)
+    throw new Error(
+      `Failed to download seed SQL from ${seedSqlUrl}: ${res.status}`
+    );
   const sql = await res.text();
 
-  const { stdout: pwOut } = await flyExec([
-    "ssh", "console", "-a", dbAppName,
-    "-C", "printenv OPERATOR_PASSWORD",
-  ], { timeout: 30_000 });
+  const { stdout: pwOut } = await flyExec(
+    ["ssh", "console", "-a", dbAppName, "-C", "printenv OPERATOR_PASSWORD"],
+    { timeout: 30_000 }
+  );
   const password = pwOut.trim();
-  if (!password) throw new Error("Could not retrieve OPERATOR_PASSWORD from DB machine");
+  if (!password)
+    throw new Error("Could not retrieve OPERATOR_PASSWORD from DB machine");
 
   const proxyPort = 10000 + Math.floor(Math.random() * 50000);
-  const proxy = spawn("flyctl", [
-    "proxy", `${proxyPort}:5433`, "-a", dbAppName,
-  ], { env: { ...process.env }, stdio: "pipe" });
+  const proxy = spawn(
+    "flyctl",
+    ["proxy", `${proxyPort}:5433`, "-a", dbAppName],
+    { env: { ...process.env }, stdio: "pipe" }
+  );
 
   // Wait for proxy to be ready
   await new Promise<void>((resolve, reject) => {
@@ -292,7 +320,12 @@ export async function runSeedSql(
     proxy.stdout?.on("data", onData);
     proxy.stderr?.on("data", onData);
     proxy.on("error", reject);
-    setTimeout(() => { if (!started) { started = true; resolve(); } }, 5_000);
+    setTimeout(() => {
+      if (!started) {
+        started = true;
+        resolve();
+      }
+    }, 5_000);
   });
 
   try {

@@ -5,10 +5,14 @@ export interface TopicPath {
   segments: string[];
 }
 
-export function topicPathFromEvent(source: string, eventType: string): TopicPath {
-  const typePart = eventType
-    .replace(new RegExp(`^${source}\\.`), "")
-    .replace(new RegExp(`^${source}_`), "") || eventType;
+export function topicPathFromEvent(
+  source: string,
+  eventType: string
+): TopicPath {
+  const typePart =
+    eventType
+      .replace(new RegExp(`^${source}\\.`), "")
+      .replace(new RegExp(`^${source}_`), "") || eventType;
   const segments = [source, ...typePart.split(".")];
   return { segments };
 }
@@ -46,7 +50,10 @@ export function buildTopicTree(events: TimelineEvent[]): TopicTreeNode[] {
     if (path.segments.length === 0) continue;
     const source = path.segments[0];
     const baseColor = sourceColor(source);
-    const color = path.segments.length === 1 ? baseColor : pathColor(topicPathDisplay(path), baseColor);
+    const color =
+      path.segments.length === 1
+        ? baseColor
+        : pathColor(topicPathDisplay(path), baseColor);
 
     const rootKey = source;
     let root = rootMap[rootKey];
@@ -57,7 +64,7 @@ export function buildTopicTree(events: TimelineEvent[]): TopicTreeNode[] {
         pathKey: source,
         expanded: true,
         children: [],
-        eventCount: path.segments.length === 1 ? leafCounts[source] ?? 0 : 0,
+        eventCount: path.segments.length === 1 ? (leafCounts[source] ?? 0) : 0,
         color: baseColor,
       };
       rootMap[rootKey] = root;
@@ -68,7 +75,9 @@ export function buildTopicTree(events: TimelineEvent[]): TopicTreeNode[] {
     }
   }
 
-  const roots = Object.values(rootMap).sort((a, b) => a.name.localeCompare(b.name));
+  const roots = Object.values(rootMap).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
   for (const r of roots) sortChildren(r);
   return roots;
 }
@@ -92,7 +101,10 @@ function insertPath(
       pathKey: key,
       expanded: true,
       children: [],
-      eventCount: segmentIdx === fullPath.segments.length - 1 ? leafCounts[key] ?? 0 : 0,
+      eventCount:
+        segmentIdx === fullPath.segments.length - 1
+          ? (leafCounts[key] ?? 0)
+          : 0,
       color,
     };
     node.children.push(child);

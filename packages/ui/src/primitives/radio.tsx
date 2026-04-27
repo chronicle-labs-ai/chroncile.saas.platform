@@ -20,6 +20,7 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const radioStyles = tv({
   slots: {
@@ -60,15 +61,21 @@ const radioStyles = tv({
 
 export type RadioSize = "sm" | "md";
 
-export interface RadioGroupProps
-  extends Omit<RACRadioGroupProps, "className" | "children"> {
+export interface RadioGroupProps extends Omit<
+  RACRadioGroupProps,
+  "className" | "children"
+> {
   className?: string;
   children: React.ReactNode;
   /**
    * Default size for Radios inside this group. Individual `<Radio size>`
    * still wins. Reach for `"sm"` on Linear-density product surfaces.
+   * When omitted, the surrounding `ChromeStyleProvider` decides
+   * (`compact` → `sm`, `brand` → `md`).
    */
   size?: RadioSize;
+  /** Explicit density override (alias for choosing between `sm` and `md`). */
+  density?: "compact" | "brand";
 }
 
 const RadioSizeContext = React.createContext<RadioSize>("md");
@@ -76,27 +83,37 @@ const RadioSizeContext = React.createContext<RadioSize>("md");
 export function RadioGroup({
   className,
   children,
-  size = "md",
+  size,
+  density: densityProp,
   ...rest
 }: RadioGroupProps) {
-  const slots = radioStyles({ size });
+  const density = useResolvedChromeDensity(densityProp);
+  const resolvedSize: RadioSize = size ?? (density === "compact" ? "sm" : "md");
+  const slots = radioStyles({ size: resolvedSize });
   return (
     <RACRadioGroup
       {...rest}
-      data-density={size === "sm" ? "compact" : "brand"}
+      data-density={density}
       className={composeTwRenderProps(className, slots.group())}
     >
-      <RadioSizeContext.Provider value={size}>
+      <RadioSizeContext.Provider value={resolvedSize}>
         {children as React.ReactNode}
       </RadioSizeContext.Provider>
     </RACRadioGroup>
   );
 }
 
-export interface RadioProps
-  extends Omit<RACRadioProps, "className" | "children"> {
+export interface RadioProps extends Omit<
+  RACRadioProps,
+  "className" | "children"
+> {
   className?: string;
-  classNames?: { base?: string; indicator?: string; dot?: string; label?: string };
+  classNames?: {
+    base?: string;
+    indicator?: string;
+    dot?: string;
+    label?: string;
+  };
   children?: React.ReactNode;
   size?: RadioSize;
 }
@@ -116,7 +133,7 @@ export function Radio({
       {...rest}
       className={composeTwRenderProps(
         className,
-        slots.radio({ className: classNames?.base }),
+        slots.radio({ className: classNames?.base })
       )}
     >
       <span className={slots.indicator({ className: classNames?.indicator })}>

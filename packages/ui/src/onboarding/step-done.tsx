@@ -80,13 +80,12 @@ export function StepDone({
 
       <StepFoot
         back={
-          <Button density="brand" variant="ghost" onPress={onRestart}>
+          <Button variant="ghost" onPress={onRestart}>
             ↺ Start over
           </Button>
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onOpen}
             trailingIcon={<ArrowRightIcon />}

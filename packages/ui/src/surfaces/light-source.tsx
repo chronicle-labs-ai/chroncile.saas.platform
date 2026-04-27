@@ -21,8 +21,7 @@ export type LightSourceShape = "pill" | "sheet" | "blob";
 export type LightSourceShadow = "default" | "soft" | "none" | string;
 
 type Length = number | string;
-const toLength = (v: Length): string =>
-  typeof v === "number" ? `${v}px` : v;
+const toLength = (v: Length): string => (typeof v === "number" ? `${v}px` : v);
 
 const resolveShadow = (shadow: LightSourceShadow): string => {
   if (shadow === "default") return "var(--cg-light-shadow)";
@@ -31,8 +30,10 @@ const resolveShadow = (shadow: LightSourceShadow): string => {
   return shadow;
 };
 
-export interface LightSourceProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "color"> {
+export interface LightSourceProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "color"
+> {
   /** Named palette or inline palette object. */
   palette: PaletteName | Palette;
   /**
@@ -100,7 +101,7 @@ export const LightSource = React.forwardRef<HTMLDivElement, LightSourceProps>(
       style,
       ...rest
     },
-    ref,
+    ref
   ) {
     const gradient = paletteToCss(palette);
     const transform = [
@@ -133,5 +134,5 @@ export const LightSource = React.forwardRef<HTMLDivElement, LightSourceProps>(
         {...rest}
       />
     );
-  },
+  }
 );

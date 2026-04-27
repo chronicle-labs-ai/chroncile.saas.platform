@@ -116,7 +116,13 @@ export function NodeConfigDrawer({
           <FilterForm data={data} onUpdate={onUpdate} />
         )}
         {data.nodeType === "output" && (
-          <OutputForm data={data} onUpdate={onUpdate} nodeId={node.id} sandboxId={sandboxId} tenantId={tenantId} />
+          <OutputForm
+            data={data}
+            onUpdate={onUpdate}
+            nodeId={node.id}
+            sandboxId={sandboxId}
+            tenantId={tenantId}
+          />
         )}
         {data.nodeType === "generator" && (
           <GeneratorForm data={data} onUpdate={onUpdate} />
@@ -227,7 +233,8 @@ function EventTypeSelector({
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  const providers = selectedProviders.length > 0 ? selectedProviders : PROVIDER_IDS;
+  const providers =
+    selectedProviders.length > 0 ? selectedProviders : PROVIDER_IDS;
 
   const toggleType = (t: string) => {
     onChange(
@@ -335,15 +342,15 @@ function EventTypeSelector({
                       allSelected
                         ? "border-transparent"
                         : someSelected
-                        ? "border-border-bright"
-                        : "border-border-default"
+                          ? "border-border-bright"
+                          : "border-border-default"
                     }`}
                     style={{
                       background: allSelected
                         ? p.color
                         : someSelected
-                        ? `${p.color}40`
-                        : "transparent",
+                          ? `${p.color}40`
+                          : "transparent",
                     }}
                   >
                     {(allSelected || someSelected) && (
@@ -382,7 +389,9 @@ function EventTypeSelector({
                             : "border-border-default group-hover:border-border-bright"
                         }`}
                         style={{
-                          background: active ? (accent ?? p.color) : "transparent",
+                          background: active
+                            ? (accent ?? p.color)
+                            : "transparent",
                         }}
                       >
                         {active && (
@@ -611,7 +620,10 @@ function ProviderPills({
                 border: `1.5px solid ${p.color}`,
               }}
             />
-            <span className="font-mono text-[10px]" style={{ color: active ? p.color : undefined }}>
+            <span
+              className="font-mono text-[10px]"
+              style={{ color: active ? p.color : undefined }}
+            >
               {p.label}
             </span>
           </button>
@@ -678,7 +690,9 @@ function EventSourceForm({
             </button>
           ))}
         </div>
-        {(datePreset === "Custom" || (!datePreset && (config.dateRange.start || config.dateRange.end))) && (
+        {(datePreset === "Custom" ||
+          (!datePreset &&
+            (config.dateRange.start || config.dateRange.end))) && (
           <div className="grid grid-cols-2 gap-2">
             <div>
               <span className="text-[9px] text-tertiary mb-1 block">From</span>
@@ -707,9 +721,7 @@ function EventSourceForm({
               <input
                 type="date"
                 value={
-                  config.dateRange.end
-                    ? config.dateRange.end.slice(0, 10)
-                    : ""
+                  config.dateRange.end ? config.dateRange.end.slice(0, 10) : ""
                 }
                 onChange={(e) =>
                   updateConfig({
@@ -982,31 +994,77 @@ function FilterRuleValueInput({
 /* ================================================================== */
 
 /** SVG icons for output types */
-function OutputTypeIcon({ type, className }: { type: string; className?: string }) {
+function OutputTypeIcon({
+  type,
+  className,
+}: {
+  type: string;
+  className?: string;
+}) {
   const cls = className ?? "w-4 h-4";
   switch (type) {
     case "sse":
       return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        <svg
+          className={cls}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+          />
         </svg>
       );
     case "webhook":
       return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+        <svg
+          className={cls}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+          />
         </svg>
       );
     case "file":
       return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        <svg
+          className={cls}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+          />
         </svg>
       );
     case "console":
       return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+        <svg
+          className={cls}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"
+          />
         </svg>
       );
     default:
@@ -1032,9 +1090,9 @@ function OutputForm({
     config.transformTemplate === "{{ payload }}"
       ? "full"
       : config.transformTemplate ===
-        '{ "event_id": "{{ event_id }}", "source": "{{ source }}", "event_type": "{{ event_type }}", "occurred_at": "{{ occurred_at }}" }'
-      ? "minimal"
-      : "custom"
+          '{ "event_id": "{{ event_id }}", "source": "{{ source }}", "event_type": "{{ event_type }}", "occurred_at": "{{ occurred_at }}" }'
+        ? "minimal"
+        : "custom"
   );
   const [testStatus, setTestStatus] = useState<
     "idle" | "testing" | "success" | "error"
@@ -1062,7 +1120,14 @@ function OutputForm({
       default:
         return "";
     }
-  }, [config.outputType, config.fileFormat, config.webhookUrl, tenantId, sandboxId, nodeId]);
+  }, [
+    config.outputType,
+    config.fileFormat,
+    config.webhookUrl,
+    tenantId,
+    sandboxId,
+    nodeId,
+  ]);
 
   const handleCopy = useCallback(() => {
     if (canonicalUrl) {
@@ -1091,7 +1156,9 @@ function OutputForm({
             return (
               <button
                 key={ot.value}
-                onClick={() => updateConfig({ outputType: ot.value as OutputType })}
+                onClick={() =>
+                  updateConfig({ outputType: ot.value as OutputType })
+                }
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded border text-left transition-all ${
                   active
                     ? "bg-critical-bg border-critical-dim"
@@ -1102,7 +1169,9 @@ function OutputForm({
                   <OutputTypeIcon type={ot.value} className="w-4 h-4" />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className={`font-mono text-[10px] font-medium uppercase tracking-wider ${active ? "text-critical" : "text-secondary"}`}>
+                  <div
+                    className={`font-mono text-[10px] font-medium uppercase tracking-wider ${active ? "text-critical" : "text-secondary"}`}
+                  >
                     {ot.label}
                   </div>
                   <div className="font-mono text-[9px] text-tertiary truncate">
@@ -1110,7 +1179,10 @@ function OutputForm({
                   </div>
                 </div>
                 {active && (
-                  <div className="w-2 h-2 rounded-full bg-critical shrink-0" style={{ boxShadow: "0 0 6px #ff3b3b" }} />
+                  <div
+                    className="w-2 h-2 rounded-full bg-critical shrink-0"
+                    style={{ boxShadow: "0 0 6px #ff3b3b" }}
+                  />
                 )}
               </button>
             );
@@ -1122,7 +1194,11 @@ function OutputForm({
       {config.outputType !== "webhook" && (
         <div className={sectionCls}>
           <label className={labelCls}>
-            {config.outputType === "sse" ? "Stream Endpoint" : config.outputType === "file" ? "Export URL" : "Log Endpoint"}
+            {config.outputType === "sse"
+              ? "Stream Endpoint"
+              : config.outputType === "file"
+                ? "Export URL"
+                : "Log Endpoint"}
           </label>
           <div className="flex items-center gap-1.5">
             <div className="flex-1 px-2.5 py-1.5 bg-base border border-border-default rounded font-mono text-[10px] text-data truncate select-all">
@@ -1153,9 +1229,7 @@ function OutputForm({
             <input
               type="url"
               value={config.webhookUrl}
-              onChange={(e) =>
-                updateConfig({ webhookUrl: e.target.value })
-              }
+              onChange={(e) => updateConfig({ webhookUrl: e.target.value })}
               placeholder="https://your-service.com/webhook"
               className={`${inputCls} flex-1`}
             />
@@ -1166,19 +1240,19 @@ function OutputForm({
                 testStatus === "success"
                   ? "bg-nominal-bg text-nominal border-nominal-dim"
                   : testStatus === "error"
-                  ? "bg-critical-bg text-critical border-critical-dim"
-                  : testStatus === "testing"
-                  ? "bg-caution-bg text-caution border-caution-dim animate-pulse"
-                  : "bg-base text-tertiary border-border-dim hover:border-border-default"
+                    ? "bg-critical-bg text-critical border-critical-dim"
+                    : testStatus === "testing"
+                      ? "bg-caution-bg text-caution border-caution-dim animate-pulse"
+                      : "bg-base text-tertiary border-border-dim hover:border-border-default"
               }`}
             >
               {testStatus === "testing"
                 ? "..."
                 : testStatus === "success"
-                ? "OK"
-                : testStatus === "error"
-                ? "FAIL"
-                : "Test"}
+                  ? "OK"
+                  : testStatus === "error"
+                    ? "FAIL"
+                    : "Test"}
             </button>
           </div>
         </div>
@@ -1216,7 +1290,8 @@ function OutputForm({
               <button
                 key={f.key}
                 onClick={() => {
-                  const current = config.includedFields ?? OUTPUT_FIELDS.map((x) => x.key);
+                  const current =
+                    config.includedFields ?? OUTPUT_FIELDS.map((x) => x.key);
                   const next = included
                     ? current.filter((k) => k !== f.key)
                     : [...current, f.key];
@@ -1350,9 +1425,7 @@ function GeneratorForm({
             min={1}
             max={1000}
             value={config.count}
-            onChange={(e) =>
-              updateConfig({ count: parseInt(e.target.value) })
-            }
+            onChange={(e) => updateConfig({ count: parseInt(e.target.value) })}
             className="flex-1 accent-caution"
           />
           <span className="font-mono text-xs text-caution tabular-nums w-12 text-right">

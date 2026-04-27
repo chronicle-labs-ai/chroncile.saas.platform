@@ -49,7 +49,11 @@ export function ActionButton({
   );
 }
 
-export function useAction(): [ActionState, (url: string, body?: object) => Promise<boolean>, () => void] {
+export function useAction(): [
+  ActionState,
+  (url: string, body?: object) => Promise<boolean>,
+  () => void,
+] {
   const [state, setState] = useState<ActionState>("idle");
   const run = async (url: string, body?: object): Promise<boolean> => {
     setState("loading");

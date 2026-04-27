@@ -129,7 +129,9 @@ export function StepBilling({
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 05</Eyebrow>
-      <AuthDisplay>Pick a <em>plan</em>.</AuthDisplay>
+      <AuthDisplay>
+        Pick a <em>plan</em>.
+      </AuthDisplay>
       <AuthLede>
         {value.sandbox
           ? "Sandbox is free forever. Upgrade later when you connect real data."
@@ -188,7 +190,8 @@ export function StepBilling({
       <div className="cg-fade-up cg-fade-up-3 mt-s-6">
         {value.plan === "free" ? (
           <div className="rounded-sm border border-dashed border-hairline-strong px-s-3 py-s-3 font-sans text-[13px] font-light leading-[1.5] text-ink-lo">
-            No card needed. We&rsquo;ll email you when you approach the 10K event limit.
+            No card needed. We&rsquo;ll email you when you approach the 10K
+            event limit.
           </div>
         ) : null}
 
@@ -248,8 +251,8 @@ export function StepBilling({
               Talk to us
             </div>
             <p className="font-sans text-[13.5px] font-light leading-[1.55] text-ink-lo">
-              Scale is configured per-workspace. We&rsquo;ll set up a 20-minute call
-              to size your throughput, retention, and compliance needs.
+              Scale is configured per-workspace. We&rsquo;ll set up a 20-minute
+              call to size your throughput, retention, and compliance needs.
             </p>
             <CardField
               label="Work email"
@@ -264,7 +267,6 @@ export function StepBilling({
       <StepFoot
         back={
           <Button
-            density="brand"
             variant="ghost"
             onPress={onBack}
             leadingIcon={<ArrowLeftIcon />}
@@ -274,7 +276,6 @@ export function StepBilling({
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onNext}
             isDisabled={!canContinue}
@@ -316,7 +317,7 @@ function CardField({
       <div
         className={cx(
           "flex items-center gap-s-2 rounded-sm border bg-surface-02 px-s-3 py-s-2 transition-colors duration-fast",
-          focused ? "border-hairline-strong" : "border-hairline",
+          focused ? "border-hairline-strong" : "border-hairline"
         )}
       >
         <input

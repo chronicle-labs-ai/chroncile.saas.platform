@@ -23,8 +23,15 @@ import { EventSourceNode } from "./nodes/EventSourceNode";
 import { FilterNode } from "./nodes/FilterNode";
 import { OutputNode } from "./nodes/OutputNode";
 import { GeneratorNode } from "./nodes/GeneratorNode";
-import { AnimatedDataEdge, EdgeSimulationContext, type EdgeSimulationData } from "./edges/AnimatedDataEdge";
-import { SimulationContext, type SimulationContextValue } from "./SimulationContext";
+import {
+  AnimatedDataEdge,
+  EdgeSimulationContext,
+  type EdgeSimulationData,
+} from "./edges/AnimatedDataEdge";
+import {
+  SimulationContext,
+  type SimulationContextValue,
+} from "./SimulationContext";
 
 /* ------------------------------------------------------------------ */
 /*  Register custom node & edge types                                  */
@@ -83,16 +90,16 @@ export function SandboxCanvas({
     [onNodeClick]
   );
 
-  const isValidConnection: IsValidConnection = useCallback(
-    (connection) => {
-      if (connection.source === connection.target) return false;
-      return true;
-    },
-    []
-  );
+  const isValidConnection: IsValidConnection = useCallback((connection) => {
+    if (connection.source === connection.target) return false;
+    return true;
+  }, []);
 
   return (
-    <div className="w-full h-full" style={{ background: CANVAS_THEME.background }}>
+    <div
+      className="w-full h-full"
+      style={{ background: CANVAS_THEME.background }}
+    >
       <SimulationContext.Provider value={simulationCtx}>
         <EdgeSimulationContext.Provider value={edgeSimCtx}>
           <ReactFlow<SandboxNode, SandboxEdge>

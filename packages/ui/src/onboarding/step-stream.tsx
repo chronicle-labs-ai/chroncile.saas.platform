@@ -6,12 +6,7 @@ import { Eyebrow } from "../primitives/eyebrow";
 import { SourceGlyph } from "../icons/source-glyph";
 import { ArrowLeftIcon, ArrowRightIcon } from "../icons/glyphs";
 import { AuthDisplay, AuthLede, StepFoot } from "../auth/_internal";
-import {
-  DEMO_EVENTS,
-  getSource,
-  type DemoEvent,
-  type SourceId,
-} from "./data";
+import { DEMO_EVENTS, getSource, type DemoEvent, type SourceId } from "./data";
 
 /*
  * StepStream — third onboarding step. Live event preview using
@@ -59,9 +54,9 @@ export function StepStream({
       value.connected
         .map((id) => getSource(id))
         .filter((s): s is NonNullable<ReturnType<typeof getSource>> =>
-          Boolean(s),
+          Boolean(s)
         ),
-    [value.connected],
+    [value.connected]
   );
 
   const [paused, setPaused] = React.useState(!livePreview);
@@ -75,7 +70,7 @@ export function StepStream({
   React.useEffect(() => {
     if (paused || connectedSources.length === 0) return;
     const usable = events.filter((e) =>
-      connectedSources.some((s) => s.id === e.src),
+      connectedSources.some((s) => s.id === e.src)
     );
     if (usable.length === 0) {
       // Fall back to all demo events if none match — keeps the preview alive.
@@ -98,10 +93,10 @@ export function StepStream({
               t: new Date(),
             },
             ...prev,
-          ].slice(0, 40),
+          ].slice(0, 40)
         );
       },
-      1100 + Math.random() * 700,
+      1100 + Math.random() * 700
     );
     return () => clearInterval(id);
   }, [paused, connectedSources, events]);
@@ -117,7 +112,6 @@ export function StepStream({
         <StepFoot
           back={
             <Button
-              density="brand"
               variant="ghost"
               onPress={onBack}
               leadingIcon={<ArrowLeftIcon />}
@@ -134,7 +128,9 @@ export function StepStream({
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 03</Eyebrow>
-      <AuthDisplay>Your <em>event stream</em>.</AuthDisplay>
+      <AuthDisplay>
+        Your <em>event stream</em>.
+      </AuthDisplay>
       <AuthLede>
         Everything your agent will see. Real events, flowing in from your
         connected sources.
@@ -142,7 +138,6 @@ export function StepStream({
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-6 flex items-center gap-s-3">
         <Button
-          density="brand"
           variant="secondary"
           size="sm"
           onPress={() => setPaused((p) => !p)}
@@ -185,7 +180,6 @@ export function StepStream({
       <StepFoot
         back={
           <Button
-            density="brand"
             variant="ghost"
             onPress={onBack}
             leadingIcon={<ArrowLeftIcon />}
@@ -195,7 +189,6 @@ export function StepStream({
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onNext}
             trailingIcon={<ArrowRightIcon />}

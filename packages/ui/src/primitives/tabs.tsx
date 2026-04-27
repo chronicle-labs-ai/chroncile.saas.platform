@@ -30,48 +30,80 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const tabsStyles = tv({
   slots: {
-    root: "flex flex-col gap-s-4 data-[orientation=vertical]:flex-row",
+    root: "flex flex-col data-[orientation=vertical]:flex-row",
     list:
-      "flex gap-s-2 border-b border-hairline " +
+      "flex border-b border-hairline " +
       "data-[orientation=vertical]:flex-col data-[orientation=vertical]:border-b-0 " +
-      "data-[orientation=vertical]:border-r data-[orientation=vertical]:gap-s-1",
+      "data-[orientation=vertical]:border-r",
     tab:
-      "relative cursor-pointer px-s-3 py-s-2 font-mono text-mono uppercase tracking-tactical " +
-      "text-ink-lo outline-none transition-colors duration-fast ease-out " +
-      "data-[hovered=true]:text-ink-hi " +
-      "data-[selected=true]:text-ink-hi " +
+      "relative cursor-pointer outline-none transition-colors duration-fast ease-out " +
       "data-[selected=true]:after:absolute data-[selected=true]:after:inset-x-0 " +
-      "data-[selected=true]:after:-bottom-px data-[selected=true]:after:h-[2px] " +
-      "data-[selected=true]:after:bg-ember " +
+      "data-[selected=true]:after:-bottom-px data-[selected=true]:after:bg-ember " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember " +
       "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
     panel: "outline-none",
   },
+  variants: {
+    density: {
+      brand: {
+        root: "gap-s-4",
+        list: "gap-s-2 data-[orientation=vertical]:gap-s-1",
+        tab:
+          "px-s-3 py-s-2 font-mono text-mono uppercase tracking-tactical " +
+          "text-ink-lo data-[hovered=true]:text-ink-hi " +
+          "data-[selected=true]:text-ink-hi data-[selected=true]:after:h-[2px]",
+      },
+      compact: {
+        root: "gap-[12px]",
+        list: "gap-[2px] data-[orientation=vertical]:gap-[2px]",
+        tab:
+          "px-[10px] py-[6px] font-sans text-[13px] font-medium tracking-normal leading-none " +
+          "text-l-ink-lo data-[hovered=true]:text-l-ink " +
+          "data-[selected=true]:text-l-ink data-[selected=true]:after:h-[2px]",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
-export interface TabsProps extends Omit<RACTabsProps, "className" | "children"> {
+const TabsDensityContext = React.createContext<"compact" | "brand" | undefined>(
+  undefined,
+);
+
+export interface TabsProps extends Omit<
+  RACTabsProps,
+  "className" | "children"
+> {
   className?: string;
+  density?: "compact" | "brand";
   children: React.ReactNode;
 }
 
-export function Tabs({ className, children, ...rest }: TabsProps) {
-  const slots = tabsStyles({});
+export function Tabs({ className, density: densityProp, children, ...rest }: TabsProps) {
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = tabsStyles({ density });
   return (
     <RACTabs
       {...rest}
+      data-density={density}
       className={composeTwRenderProps(className, slots.root())}
     >
-      {children}
+      <TabsDensityContext.Provider value={density}>
+        {children}
+      </TabsDensityContext.Provider>
     </RACTabs>
   );
 }
 
-export interface TabListProps<T extends object = object>
-  extends Omit<RACTabListProps<T>, "className" | "children"> {
+export interface TabListProps<T extends object = object> extends Omit<
+  RACTabListProps<T>,
+  "className" | "children"
+> {
   className?: string;
   children: React.ReactNode;
 }
@@ -81,7 +113,9 @@ export function TabList<T extends object = object>({
   children,
   ...rest
 }: TabListProps<T>) {
-  const slots = tabsStyles({});
+  const ctxDensity = React.useContext(TabsDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = tabsStyles({ density });
   return (
     <RACTabList
       {...(rest as RACTabListProps<T>)}
@@ -97,7 +131,9 @@ export interface TabProps extends Omit<RACTabProps, "className"> {
 }
 
 export function Tab({ className, ...rest }: TabProps) {
-  const slots = tabsStyles({});
+  const ctxDensity = React.useContext(TabsDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = tabsStyles({ density });
   return (
     <RACTab
       {...rest}
@@ -111,7 +147,9 @@ export interface TabPanelProps extends Omit<RACTabPanelProps, "className"> {
 }
 
 export function TabPanel({ className, ...rest }: TabPanelProps) {
-  const slots = tabsStyles({});
+  const ctxDensity = React.useContext(TabsDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = tabsStyles({ density });
   return (
     <RACTabPanel
       {...rest}

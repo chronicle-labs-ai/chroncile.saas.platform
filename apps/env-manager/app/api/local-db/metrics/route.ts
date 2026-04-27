@@ -10,7 +10,7 @@ export async function GET() {
     if (!res.ok) {
       return NextResponse.json(
         { error: `Backend returned ${res.status}` },
-        { status: 502 },
+        { status: 502 }
       );
     }
     const data = await res.json();
@@ -18,7 +18,7 @@ export async function GET() {
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Backend unreachable" },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }

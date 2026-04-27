@@ -26,8 +26,12 @@ export function MigrationsPanel({
       if (data.success) {
         setResult(`Migrated: ${data.versionBefore} → ${data.versionAfter}`);
       } else {
-        const failed = data.results?.filter((r: { success: boolean }) => !r.success);
-        setResult(`Failed: ${failed?.map((r: { target: string }) => r.target).join(", ")}`);
+        const failed = data.results?.filter(
+          (r: { success: boolean }) => !r.success
+        );
+        setResult(
+          `Failed: ${failed?.map((r: { target: string }) => r.target).join(", ")}`
+        );
       }
     } catch {
       setMigrateState("error");
@@ -44,7 +48,9 @@ export function MigrationsPanel({
           <span className="panel__title">Migrations</span>
         </div>
         <div className="panel__content text-center py-6">
-          <p className="text-sm text-secondary">Start Postgres to view migration status</p>
+          <p className="text-sm text-secondary">
+            Start Postgres to view migration status
+          </p>
         </div>
       </div>
     );
@@ -71,7 +77,9 @@ export function MigrationsPanel({
         </div>
         <div className="flex items-center gap-2">
           {result && (
-            <span className={`text-xs font-mono ${migrateState === "error" ? "text-critical" : "text-nominal"}`}>
+            <span
+              className={`text-xs font-mono ${migrateState === "error" ? "text-critical" : "text-nominal"}`}
+            >
               {result}
             </span>
           )}
@@ -97,9 +105,16 @@ export function MigrationsPanel({
               </thead>
               <tbody>
                 {applied.map((m: MigrationEntry) => (
-                  <tr key={m.version} className="border-b border-border-dim last:border-0">
-                    <td className="py-2 pr-4 font-mono text-data">{m.version}</td>
-                    <td className="py-2 pr-4 font-mono text-primary">{m.description}</td>
+                  <tr
+                    key={m.version}
+                    className="border-b border-border-dim last:border-0"
+                  >
+                    <td className="py-2 pr-4 font-mono text-data">
+                      {m.version}
+                    </td>
+                    <td className="py-2 pr-4 font-mono text-primary">
+                      {m.description}
+                    </td>
                     <td className="py-2 font-mono text-tertiary">
                       {new Date(m.appliedAt).toLocaleString()}
                     </td>
@@ -109,7 +124,9 @@ export function MigrationsPanel({
             </table>
           </div>
         ) : (
-          <p className="text-sm text-secondary py-2">No migrations applied yet</p>
+          <p className="text-sm text-secondary py-2">
+            No migrations applied yet
+          </p>
         )}
 
         {pending.length > 0 && (
@@ -117,7 +134,9 @@ export function MigrationsPanel({
             <span className="label block mb-2">Pending</span>
             <div className="space-y-1">
               {pending.map((name: string) => (
-                <div key={name} className="font-mono text-xs text-caution">{name}</div>
+                <div key={name} className="font-mono text-xs text-caution">
+                  {name}
+                </div>
               ))}
             </div>
           </div>

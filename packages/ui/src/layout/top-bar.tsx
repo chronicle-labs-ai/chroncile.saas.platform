@@ -24,20 +24,21 @@ import { cx } from "../utils/cx";
  * For brand-density product chrome reach for `<PageHeader>` instead.
  */
 
-const TopBarRoot = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  function TopBarRoot({ className, children, ...props }, ref) {
-    return (
-      <div
-        ref={ref}
-        className={cx("flex w-full items-center gap-s-2", className)}
-        data-slot="top-bar"
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  },
-);
+const TopBarRoot = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function TopBarRoot({ className, children, ...props }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={cx("flex w-full items-center gap-s-2", className)}
+      data-slot="top-bar"
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
 
 const Crumb = React.forwardRef<
   HTMLDivElement,
@@ -48,7 +49,7 @@ const Crumb = React.forwardRef<
       ref={ref}
       className={cx(
         "flex items-center gap-[6px] text-[13px] text-l-ink-lo",
-        className,
+        className
       )}
       data-slot="top-bar-crumb"
       {...props}
@@ -59,10 +60,7 @@ const Crumb = React.forwardRef<
 });
 
 const CrumbSep = ({ className }: { className?: string }) => (
-  <span
-    aria-hidden
-    className={cx("text-l-ink-dim mx-[2px]", className)}
-  >
+  <span aria-hidden className={cx("text-l-ink-dim mx-[2px]", className)}>
     /
   </span>
 );
@@ -73,9 +71,7 @@ const CrumbActive = ({
 }: {
   className?: string;
   children?: React.ReactNode;
-}) => (
-  <b className={cx("text-l-ink font-medium", className)}>{children}</b>
-);
+}) => <b className={cx("text-l-ink font-medium", className)}>{children}</b>;
 
 const Spacer = () => <div className="flex-1" data-slot="top-bar-spacer" />;
 
@@ -87,7 +83,7 @@ interface LiveProps extends React.HTMLAttributes<HTMLButtonElement> {
 
 const Live = React.forwardRef<HTMLButtonElement, LiveProps>(function Live(
   { on = false, onLabel = "Live", offLabel = "Paused", className, ...props },
-  ref,
+  ref
 ) {
   return (
     <button
@@ -101,7 +97,7 @@ const Live = React.forwardRef<HTMLButtonElement, LiveProps>(function Live(
         on
           ? "border-[rgba(74,222,128,0.35)] bg-[rgba(74,222,128,0.08)] text-event-green"
           : "border-l-border bg-l-wash-1 text-l-ink-lo hover:bg-l-wash-5 hover:text-l-ink",
-        className,
+        className
       )}
       {...props}
     >
@@ -111,7 +107,7 @@ const Live = React.forwardRef<HTMLButtonElement, LiveProps>(function Live(
           "h-[6px] w-[6px] rounded-pill",
           on
             ? "bg-event-green shadow-[0_0_6px_var(--c-event-green)] animate-chron-pulse"
-            : "bg-l-ink-dim",
+            : "bg-l-ink-dim"
         )}
       />
       <span>{on ? onLabel : offLabel}</span>
@@ -152,7 +148,7 @@ const TimeSelector = React.forwardRef<HTMLButtonElement, TimeSelectorProps>(
           "font-mono text-[11.5px] tracking-mono text-l-ink-lo",
           "hover:bg-l-wash-3 hover:border-l-border-strong hover:text-l-ink",
           "transition-colors duration-fast",
-          className,
+          className
         )}
         {...props}
       >
@@ -160,7 +156,7 @@ const TimeSelector = React.forwardRef<HTMLButtonElement, TimeSelectorProps>(
         {children}
       </button>
     );
-  },
+  }
 );
 
 interface SearchTriggerProps extends React.HTMLAttributes<HTMLButtonElement> {
@@ -189,7 +185,7 @@ const SearchIcon = () => (
 const SearchTrigger = React.forwardRef<HTMLButtonElement, SearchTriggerProps>(
   function SearchTrigger(
     { shortcut, label = "Search", className, children, ...props },
-    ref,
+    ref
   ) {
     return (
       <button
@@ -201,7 +197,7 @@ const SearchTrigger = React.forwardRef<HTMLButtonElement, SearchTriggerProps>(
           "font-sans text-[12.5px] font-medium text-l-ink",
           "hover:bg-l-wash-5 hover:border-l-border-strong",
           "transition-colors duration-fast",
-          className,
+          className
         )}
         {...props}
       >
@@ -223,13 +219,12 @@ const SearchTrigger = React.forwardRef<HTMLButtonElement, SearchTriggerProps>(
         ) : null}
       </button>
     );
-  },
+  }
 );
 
-interface TopBarNamespace
-  extends React.ForwardRefExoticComponent<
-    React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>
-  > {
+interface TopBarNamespace extends React.ForwardRefExoticComponent<
+  React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>
+> {
   Crumb: typeof Crumb;
   CrumbSep: typeof CrumbSep;
   CrumbActive: typeof CrumbActive;

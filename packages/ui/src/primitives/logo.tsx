@@ -19,7 +19,10 @@ export type LogoTheme = "dark" | "light" | "auto";
  */
 export type LogoVariantCompat = LogoVariant | "dark" | "light";
 
-export interface LogoProps extends Omit<React.SVGProps<SVGSVGElement>, "theme"> {
+export interface LogoProps extends Omit<
+  React.SVGProps<SVGSVGElement>,
+  "theme"
+> {
   /**
    * `icon` = square mark (default); `wordmark` = mark + "CHRONICLE LABS"
    * lockup. `"dark"`/`"light"` are legacy aliases for the theme prop and
@@ -39,7 +42,7 @@ const lightFill = "#1A140A";
 
 export const Logo = React.forwardRef<SVGSVGElement, LogoProps>(function Logo(
   { variant = "icon", theme = "auto", className, ...rest },
-  ref,
+  ref
 ) {
   // Back-compat: treat the legacy `variant="dark"|"light"` as a theme
   // override with an icon-variant render.
@@ -87,10 +90,7 @@ export const Logo = React.forwardRef<SVGSVGElement, LogoProps>(function Logo(
           <path d="M983.187 112.193C983.187 132.984 971.329 147.358 952.956 147.358C942.402 147.358 933.541 141.711 928.72 131.829V146.075H920.25V53.9251H929.371V92.6845C933.802 82.8021 942.532 77.1551 952.956 77.1551C971.329 77.1551 983.187 91.4011 983.187 112.193ZM973.935 112.193C973.935 94.9946 964.944 84.984 951.523 84.984C938.623 84.984 929.241 94.8663 929.241 111.936C929.241 128.877 938.362 139.529 951.523 139.529C964.944 139.529 973.935 129.39 973.935 112.193Z" />
           <path d="M1044 127.209C1044 139.658 1033.84 147.358 1016.9 147.358C999.827 147.358 989.403 138.888 988.1 124.898H996.83C997.482 134.524 1005.17 140.556 1016.9 140.556C1028.1 140.556 1034.88 136.321 1034.88 128.62C1034.88 121.947 1030.97 118.866 1020.55 116.813L1010.64 114.888C997.612 112.449 990.706 106.16 990.706 96.4064C990.706 85.1123 1000.87 77.1551 1015.85 77.1551C1031.62 77.1551 1042.05 85.4973 1043.09 98.9733H1034.49C1033.58 89.6043 1026.67 84.0856 1015.85 84.0856C1006.21 84.0856 999.566 88.5775 999.566 95.6364C999.566 102.31 1003.74 105.519 1013.9 107.444L1024.19 109.369C1037.88 111.936 1044 117.583 1044 127.209Z" />
         </g>
-        <g
-          fill={fill}
-          dangerouslySetInnerHTML={{ __html: ICON_PATHS }}
-        />
+        <g fill={fill} dangerouslySetInnerHTML={{ __html: ICON_PATHS }} />
       </svg>
     );
   }
@@ -106,10 +106,7 @@ export const Logo = React.forwardRef<SVGSVGElement, LogoProps>(function Logo(
       className={cx("block", className)}
       {...rest}
     >
-      <g
-        fill={fill}
-        dangerouslySetInnerHTML={{ __html: ICON_PATHS }}
-      />
+      <g fill={fill} dangerouslySetInnerHTML={{ __html: ICON_PATHS }} />
     </svg>
   );
 });

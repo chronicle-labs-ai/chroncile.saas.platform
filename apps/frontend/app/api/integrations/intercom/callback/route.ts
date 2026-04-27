@@ -7,7 +7,10 @@ function appOrigin(request: NextRequest) {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 }
 
-function redirectToConnections(request: NextRequest, params: Record<string, string>) {
+function redirectToConnections(
+  request: NextRequest,
+  params: Record<string, string>
+) {
   const url = new URL("/dashboard/connections", appOrigin(request));
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
@@ -15,7 +18,11 @@ function redirectToConnections(request: NextRequest, params: Record<string, stri
   return NextResponse.redirect(url);
 }
 
-async function handleCallback(request: NextRequest, code: string | null, state: string | null) {
+async function handleCallback(
+  request: NextRequest,
+  code: string | null,
+  state: string | null
+) {
   if (!code || !state) {
     return redirectToConnections(request, {
       error: "Intercom returned an incomplete authorization callback.",
@@ -26,7 +33,7 @@ async function handleCallback(request: NextRequest, code: string | null, state: 
 
   try {
     await fetchFromBackend(
-      `/api/platform/integrations/intercom/callback?${params.toString()}`,
+      `/api/platform/integrations/intercom/callback?${params.toString()}`
     );
 
     return redirectToConnections(request, {
@@ -46,7 +53,7 @@ export async function GET(request: NextRequest) {
   return handleCallback(
     request,
     request.nextUrl.searchParams.get("code"),
-    request.nextUrl.searchParams.get("state"),
+    request.nextUrl.searchParams.get("state")
   );
 }
 
@@ -58,6 +65,6 @@ export async function POST(request: NextRequest) {
   return handleCallback(
     request,
     typeof code === "string" ? code : null,
-    typeof state === "string" ? state : null,
+    typeof state === "string" ? state : null
   );
 }

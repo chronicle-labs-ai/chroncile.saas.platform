@@ -10,8 +10,7 @@ const sectionHeader = tv({
     root: "my-s-12 mb-s-5 flex items-baseline gap-s-5",
     title: "m-0 font-display font-medium tracking-tight text-ink-hi",
     rule: "h-px flex-1 bg-hairline",
-    note:
-      "font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
+    note: "font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
   },
   variants: {
     size: {
@@ -25,7 +24,8 @@ const sectionHeader = tv({
 type SectionHeaderVariantProps = VariantProps<typeof sectionHeader>;
 
 export interface SectionHeaderProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
     SectionHeaderVariantProps {
   title: React.ReactNode;
   note?: React.ReactNode;

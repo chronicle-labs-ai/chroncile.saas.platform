@@ -39,23 +39,37 @@ export function AuthLeftPanel() {
             Turn AI agents into production-ready systems
           </h1>
           <p className="text-base text-[hsl(0,0%,45%)] leading-relaxed mb-10 max-w-lg mx-auto">
-            Capture real events across systems, replay them for training and evaluation, and safely move your AI agents from sandbox to production.
+            Capture real events across systems, replay them for training and
+            evaluation, and safely move your AI agents from sandbox to
+            production.
           </p>
           {/* Metrics - compact row with visual separation */}
           <div className="flex items-center justify-center gap-8 xl:gap-12">
             <div className="flex flex-col">
-              <span className="font-mono text-lg xl:text-xl tabular-nums text-[hsl(0,0%,8%)]">99.9%</span>
-              <span className="text-xs text-[hsl(0,0%,45%)] mt-0.5">Uptime</span>
+              <span className="font-mono text-lg xl:text-xl tabular-nums text-[hsl(0,0%,8%)]">
+                99.9%
+              </span>
+              <span className="text-xs text-[hsl(0,0%,45%)] mt-0.5">
+                Uptime
+              </span>
             </div>
             <div className="w-px h-10 bg-[hsl(0,0%,90%)]" aria-hidden />
             <div className="flex flex-col">
-              <span className="font-mono text-lg xl:text-xl tabular-nums text-[hsl(0,0%,8%)]">&lt;50ms</span>
-              <span className="text-xs text-[hsl(0,0%,45%)] mt-0.5">Latency</span>
+              <span className="font-mono text-lg xl:text-xl tabular-nums text-[hsl(0,0%,8%)]">
+                &lt;50ms
+              </span>
+              <span className="text-xs text-[hsl(0,0%,45%)] mt-0.5">
+                Latency
+              </span>
             </div>
             <div className="w-px h-10 bg-[hsl(0,0%,90%)]" aria-hidden />
             <div className="flex flex-col">
-              <span className="font-mono text-lg xl:text-xl tabular-nums text-[hsl(0,0%,8%)]">24/7</span>
-              <span className="text-xs text-[hsl(0,0%,45%)] mt-0.5">Monitoring</span>
+              <span className="font-mono text-lg xl:text-xl tabular-nums text-[hsl(0,0%,8%)]">
+                24/7
+              </span>
+              <span className="text-xs text-[hsl(0,0%,45%)] mt-0.5">
+                Monitoring
+              </span>
             </div>
           </div>
         </div>

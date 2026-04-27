@@ -12,7 +12,12 @@ export interface OperatorMeta {
 
 export const OPERATORS: Record<FilterOperator, OperatorMeta> = {
   is: { key: "is", label: "is", pillLabel: "is", arity: "single" },
-  isNot: { key: "isNot", label: "is not", pillLabel: "is not", arity: "single" },
+  isNot: {
+    key: "isNot",
+    label: "is not",
+    pillLabel: "is not",
+    arity: "single",
+  },
   isAnyOf: {
     key: "isAnyOf",
     label: "is any of",
@@ -38,7 +43,12 @@ export const OPERATORS: Record<FilterOperator, OperatorMeta> = {
     arity: "text",
   },
   eq: { key: "eq", label: "equals", pillLabel: "=", arity: "single" },
-  neq: { key: "neq", label: "does not equal", pillLabel: "\u2260", arity: "single" },
+  neq: {
+    key: "neq",
+    label: "does not equal",
+    pillLabel: "\u2260",
+    arity: "single",
+  },
   gt: { key: "gt", label: "greater than", pillLabel: ">", arity: "single" },
   lt: { key: "lt", label: "less than", pillLabel: "<", arity: "single" },
   gte: {
@@ -74,7 +84,7 @@ export function defaultOperatorFor(type: ColumnType): FilterOperator {
 
 export function defaultValueFor(
   type: ColumnType,
-  operator: FilterOperator,
+  operator: FilterOperator
 ): unknown {
   if (type === "multiOption") return [] as string[];
   if (type === "number" && operator === "between") {

@@ -56,7 +56,13 @@ export interface SimulationState {
 
 const REAL_ACTOR_TYPES = ["customer", "agent", "system"];
 const REAL_NAMES: Record<string, string[]> = {
-  customer: ["Alice Chen", "Bob Martinez", "Carlos Reyes", "Diana Park", "Eli Nnadi"],
+  customer: [
+    "Alice Chen",
+    "Bob Martinez",
+    "Carlos Reyes",
+    "Diana Park",
+    "Eli Nnadi",
+  ],
   agent: ["Agent-1", "Agent-2", "Support-Bot-v3"],
   system: ["System", "Webhook Relay", "Auto-Router"],
 };
@@ -66,13 +72,19 @@ function randomChoice<T>(arr: T[]): T {
 }
 
 /** Generate a realistic payload for a given provider + event type */
-function makePayload(source: string, eventType: string): Record<string, unknown> {
+function makePayload(
+  source: string,
+  eventType: string
+): Record<string, unknown> {
   switch (source) {
     case "intercom":
       return {
         conversation_id: `conv_${Math.floor(Math.random() * 5000)}`,
         message_type: eventType.includes("message") ? "comment" : "note",
-        admin_assignee_id: Math.random() > 0.5 ? `admin_${Math.floor(Math.random() * 20)}` : null,
+        admin_assignee_id:
+          Math.random() > 0.5
+            ? `admin_${Math.floor(Math.random() * 20)}`
+            : null,
         tags: randomChoice([["vip"], ["billing"], ["urgent", "billing"], []]),
       };
     case "stripe":
@@ -93,7 +105,9 @@ function makePayload(source: string, eventType: string): Record<string, unknown>
       return {
         object_id: Math.floor(Math.random() * 100000),
         portal_id: 12345678,
-        property_name: eventType.includes("stage") ? "dealstage" : "lifecyclestage",
+        property_name: eventType.includes("stage")
+          ? "dealstage"
+          : "lifecyclestage",
         property_value: randomChoice(["lead", "opportunity", "customer"]),
       };
     case "zendesk":
@@ -106,7 +120,10 @@ function makePayload(source: string, eventType: string): Record<string, unknown>
       return {
         repository: `org/${randomChoice(["api", "frontend", "infra"])}`,
         action: eventType.includes(".") ? eventType.split(".")[1] : eventType,
-        number: eventType.includes("pull_request") || eventType.includes("issue") ? Math.floor(Math.random() * 500) : undefined,
+        number:
+          eventType.includes("pull_request") || eventType.includes("issue")
+            ? Math.floor(Math.random() * 500)
+            : undefined,
       };
     case "notion":
       return {
@@ -243,9 +260,7 @@ function buildGraph(
     edgeMap[`${e.source}->${e.target}`] = e.id;
   }
 
-  const roots = nodes
-    .filter((n) => !incoming.has(n.id))
-    .map((n) => n.id);
+  const roots = nodes.filter((n) => !incoming.has(n.id)).map((n) => n.id);
 
   return { roots, children, edgeMap };
 }
@@ -262,7 +277,9 @@ export function useSandboxSimulation(
 ) {
   const [mode, setMode] = useState<PlaybackMode>("paused");
   const [speed, setSpeed] = useState(1);
-  const [nodeActivity, setNodeActivity] = useState<Record<string, NodeActivity>>({});
+  const [nodeActivity, setNodeActivity] = useState<
+    Record<string, NodeActivity>
+  >({});
   const [edgeParticles, setEdgeParticles] = useState<EdgeParticle[]>([]);
   const [processedEvents, setProcessedEvents] = useState<SandboxEvent[]>([]);
 
@@ -283,30 +300,21 @@ export function useSandboxSimulation(
   }, [nodes]);
 
   /* Graph topology */
-  const graph = useMemo(
-    () => buildGraph(nodes, edges),
-    [nodes, edges]
-  );
+  const graph = useMemo(() => buildGraph(nodes, edges), [nodes, edges]);
 
   /* ---- Emit a particle along an edge ---- */
-  const emitParticle = useCallback(
-    (edgeId: string, color: string) => {
-      particleIdRef.current++;
-      const id = `p_${particleIdRef.current}`;
-      setEdgeParticles((prev) => [
-        ...prev,
-        { id, edgeId, progress: 0, sourceColor: color },
-      ]);
-    },
-    []
-  );
+  const emitParticle = useCallback((edgeId: string, color: string) => {
+    particleIdRef.current++;
+    const id = `p_${particleIdRef.current}`;
+    setEdgeParticles((prev) => [
+      ...prev,
+      { id, edgeId, progress: 0, sourceColor: color },
+    ]);
+  }, []);
 
   /* ---- Bump node activity ---- */
   const bumpNode = useCallback(
-    (
-      nodeId: string,
-      kind: "emit" | "pass" | "reject"
-    ) => {
+    (nodeId: string, kind: "emit" | "pass" | "reject") => {
       setNodeActivity((prev) => {
         const existing = prev[nodeId] ?? {
           total: 0,
@@ -321,12 +329,9 @@ export function useSandboxSimulation(
           [nodeId]: {
             ...existing,
             total: existing.total + 1,
-            passed:
-              kind === "pass" ? existing.passed + 1 : existing.passed,
+            passed: kind === "pass" ? existing.passed + 1 : existing.passed,
             rejected:
-              kind === "reject"
-                ? existing.rejected + 1
-                : existing.rejected,
+              kind === "reject" ? existing.rejected + 1 : existing.rejected,
             active: true,
             lastEventAt: Date.now(),
           },
@@ -371,10 +376,10 @@ export function useSandboxSimulation(
               nodeData.nodeType === "generator"
                 ? "#ffb800"
                 : nodeData.nodeType === "event-source"
-                ? "#00d4ff"
-                : nodeData.nodeType === "filter"
-                ? "#00ff88"
-                : "#ff3b3b";
+                  ? "#00d4ff"
+                  : nodeData.nodeType === "filter"
+                    ? "#00ff88"
+                    : "#ff3b3b";
             emitParticle(edgeId, color);
           }
           queue.push(childId);

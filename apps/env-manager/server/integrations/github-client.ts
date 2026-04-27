@@ -1,4 +1,1 @@
-export {
-  getBranchInfo,
-  listBranches,
-} from "@/lib/github-client";
+export { getBranchInfo, listBranches } from "@/lib/github-client";

@@ -41,7 +41,9 @@ export default function SignupPage() {
 
       if (!response.ok) {
         if (data.details) {
-          const details = data.details as Partial<Record<keyof SignupInput, string[]>>;
+          const details = data.details as Partial<
+            Record<keyof SignupInput, string[]>
+          >;
           const fields: Array<keyof SignupInput> = [
             "name",
             "email",
@@ -82,13 +84,13 @@ export default function SignupPage() {
         <h1 className="text-2xl font-bold text-[hsl(0,0%,8%)] mb-1 tracking-tight">
           Create account
         </h1>
-        <p className="text-sm text-[hsl(0,0%,45%)]">
-          Get started in minutes
-        </p>
+        <p className="text-sm text-[hsl(0,0%,45%)]">Get started in minutes</p>
       </div>
 
       {form.formState.errors.root?.message && (
-        <p className="text-sm text-[#ff3b3b]">{form.formState.errors.root.message}</p>
+        <p className="text-sm text-[#ff3b3b]">
+          {form.formState.errors.root.message}
+        </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">

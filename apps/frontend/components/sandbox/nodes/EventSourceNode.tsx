@@ -6,7 +6,11 @@ import type { EventSourceNodeData } from "../types";
 import { BaseNode } from "./BaseNode";
 import { SimulationContext } from "../SimulationContext";
 
-function EventSourceNodeInner({ id, data, selected }: NodeProps & { data: EventSourceNodeData }) {
+function EventSourceNodeInner({
+  id,
+  data,
+  selected,
+}: NodeProps & { data: EventSourceNodeData }) {
   const { nodeActivity } = useContext(SimulationContext);
   const activity = nodeActivity[id];
   const { config } = data;

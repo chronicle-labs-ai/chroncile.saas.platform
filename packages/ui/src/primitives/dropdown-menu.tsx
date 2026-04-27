@@ -36,27 +36,50 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const menuStyles = tv({
   slots: {
     popover:
-      "z-50 min-w-[180px] rounded-sm border border-hairline-strong " +
-      "bg-surface-02 p-s-1 shadow-panel outline-none " +
+      "z-50 min-w-[180px] border bg-surface-02 shadow-panel outline-none " +
       "data-[entering=true]:animate-in data-[entering=true]:fade-in " +
       "data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
     menu: "outline-none max-h-[360px] overflow-auto",
     item:
-      "relative cursor-pointer select-none rounded-xs px-s-2 py-s-2 " +
-      "font-mono text-mono-lg text-ink outline-none " +
+      "relative cursor-pointer select-none outline-none " +
       "data-[focused=true]:bg-surface-03 " +
       "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
     itemDanger: "text-event-red data-[focused=true]:bg-[rgba(239,68,68,0.08)]",
     section: "py-s-1",
-    sectionHeader:
-      "px-s-2 pt-s-2 pb-s-1 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
-    separator: "my-s-1 h-px bg-hairline",
+    sectionHeader: "",
+    separator: "h-px bg-hairline",
   },
+  variants: {
+    density: {
+      brand: {
+        popover: "rounded-sm border-hairline-strong p-s-1",
+        item: "rounded-xs px-s-2 py-s-2 font-mono text-mono-lg text-ink",
+        sectionHeader:
+          "px-s-2 pt-s-2 pb-s-1 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
+        separator: "my-s-1",
+      },
+      compact: {
+        popover: "rounded-l border-l-border p-[2px]",
+        item:
+          "rounded-l-sm px-[8px] py-[5px] font-sans text-[13px] leading-none text-l-ink " +
+          "data-[focused=true]:bg-l-surface-hover",
+        sectionHeader:
+          "px-[8px] pt-[6px] pb-[3px] font-sans text-[11px] font-medium tracking-normal text-l-ink-dim",
+        separator: "my-[3px] bg-l-border-faint",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
+
+const DropdownMenuDensityContext = React.createContext<
+  "compact" | "brand" | undefined
+>(undefined);
 
 export interface DropdownMenuProps extends MenuTriggerProps {}
 
@@ -72,12 +95,14 @@ export function DropdownMenuTrigger({
   return <>{children}</>;
 }
 
-export interface DropdownMenuContentProps<T extends object = object>
-  extends Omit<RACMenuProps<T>, "className" | "children"> {
+export interface DropdownMenuContentProps<
+  T extends object = object,
+> extends Omit<RACMenuProps<T>, "className" | "children"> {
   className?: string;
   classNames?: { popover?: string; menu?: string };
   placement?: RACPopoverProps["placement"];
   popoverProps?: Omit<RACPopoverProps, "children" | "className">;
+  density?: "compact" | "brand";
   children: React.ReactNode;
 }
 
@@ -86,34 +111,37 @@ export function DropdownMenuContent<T extends object = object>({
   classNames,
   placement = "bottom start",
   popoverProps,
+  density: densityProp,
   children,
   ...rest
 }: DropdownMenuContentProps<T>) {
-  const slots = menuStyles({});
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = menuStyles({ density });
   return (
     <RACPopover
       {...popoverProps}
       placement={placement}
-      className={composeTwRenderProps(
-        classNames?.popover,
-        slots.popover(),
-      )}
+      className={composeTwRenderProps(classNames?.popover, slots.popover())}
     >
-      <RACMenu
-        {...(rest as RACMenuProps<T>)}
-        className={composeTwRenderProps(
-          className ?? classNames?.menu,
-          slots.menu(),
-        )}
-      >
-        {children as React.ReactNode}
-      </RACMenu>
+      <DropdownMenuDensityContext.Provider value={density}>
+        <RACMenu
+          {...(rest as RACMenuProps<T>)}
+          className={composeTwRenderProps(
+            className ?? classNames?.menu,
+            slots.menu()
+          )}
+        >
+          {children as React.ReactNode}
+        </RACMenu>
+      </DropdownMenuDensityContext.Provider>
     </RACPopover>
   );
 }
 
-export interface DropdownMenuItemProps<T extends object = object>
-  extends Omit<RACMenuItemProps<T>, "className"> {
+export interface DropdownMenuItemProps<T extends object = object> extends Omit<
+  RACMenuItemProps<T>,
+  "className"
+> {
   className?: string;
   /** Apply destructive styling (red). */
   danger?: boolean;
@@ -124,20 +152,24 @@ export function DropdownMenuItem<T extends object = object>({
   danger = false,
   ...props
 }: DropdownMenuItemProps<T>) {
-  const slots = menuStyles({});
+  const ctxDensity = React.useContext(DropdownMenuDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = menuStyles({ density });
   return (
     <RACMenuItem
       {...(props as RACMenuItemProps<T>)}
       className={composeTwRenderProps(
         className,
-        `${slots.item()} ${danger ? slots.itemDanger() : ""}`,
+        `${slots.item()} ${danger ? slots.itemDanger() : ""}`
       )}
     />
   );
 }
 
-export interface DropdownMenuSectionProps<T extends object>
-  extends Omit<RACMenuSectionProps<T>, "className" | "children"> {
+export interface DropdownMenuSectionProps<T extends object> extends Omit<
+  RACMenuSectionProps<T>,
+  "className" | "children"
+> {
   className?: string;
   title?: React.ReactNode;
   children?: React.ReactNode;
@@ -149,7 +181,9 @@ export function DropdownMenuSection<T extends object>({
   children,
   ...rest
 }: DropdownMenuSectionProps<T>) {
-  const slots = menuStyles({});
+  const ctxDensity = React.useContext(DropdownMenuDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = menuStyles({ density });
   return (
     <RACMenuSection
       {...(rest as RACMenuSectionProps<T>)}
@@ -164,6 +198,8 @@ export function DropdownMenuSection<T extends object>({
 }
 
 export function DropdownMenuSeparator() {
-  const slots = menuStyles({});
+  const ctxDensity = React.useContext(DropdownMenuDensityContext);
+  const density = useResolvedChromeDensity(ctxDensity);
+  const slots = menuStyles({ density });
   return <RACSeparator className={slots.separator()} />;
 }

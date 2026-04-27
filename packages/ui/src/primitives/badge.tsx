@@ -1,5 +1,6 @@
 import * as React from "react";
 import { tv, type VariantProps } from "../utils/tv";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /**
  * Badges cover the full event palette plus brand + structural variants.
@@ -21,11 +22,17 @@ export type BadgeVariant =
   | "nominal"
   | "data";
 
+export type BadgeDensity = "compact" | "brand";
+
 const badge = tv({
-  base:
-    "inline-flex items-center gap-s-2 rounded-xs border px-s-2 py-[3px] " +
-    "font-mono text-mono-sm uppercase tracking-tactical",
+  base: "inline-flex items-center border",
   variants: {
+    density: {
+      brand:
+        "gap-s-2 rounded-xs px-s-2 py-[3px] font-mono text-mono-sm uppercase tracking-tactical",
+      compact:
+        "gap-[4px] rounded-l px-[6px] py-[1px] font-sans text-[11px] font-medium leading-[16px]",
+    },
     variant: {
       neutral: "border-hairline-strong bg-surface-02 text-ink-lo",
       ember: "border-ember/40 bg-[rgba(216,67,10,0.08)] text-ember",
@@ -46,7 +53,7 @@ const badge = tv({
       data: "border-event-teal/40 bg-[rgba(45,212,191,0.1)] text-event-teal",
     },
   },
-  defaultVariants: { variant: "neutral" },
+  defaultVariants: { variant: "neutral", density: "brand" },
 });
 
 type BadgeVariantProps = VariantProps<typeof badge>;
@@ -55,18 +62,22 @@ export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
     BadgeVariantProps {
   variant?: BadgeVariant;
+  density?: BadgeDensity;
 }
 
 export function Badge({
   variant = "neutral",
+  density: densityProp,
   className,
   children,
   ...props
 }: BadgeProps) {
+  const density = useResolvedChromeDensity(densityProp);
   return (
     <span
-      className={badge({ variant, className })}
+      className={badge({ variant, density, className })}
       data-variant={variant}
+      data-density={density}
       {...props}
     >
       {children}

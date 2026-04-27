@@ -15,7 +15,11 @@ export const BaselineVsCandidate: Story = {
       <ReplayBar
         variant="baseline"
         value={98}
-        label={<>BASELINE <b className="text-ink-hi font-normal">v2.8</b></>}
+        label={
+          <>
+            BASELINE <b className="text-ink-hi font-normal">v2.8</b>
+          </>
+        }
         readout="98.4% match"
         tone="green"
       />

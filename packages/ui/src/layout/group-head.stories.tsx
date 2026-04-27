@@ -19,7 +19,9 @@ export const Default: Story = {
         <span>In progress</span>
         <GroupHead.Count>4</GroupHead.Count>
       </GroupHead>
-      <div className="px-s-4 py-s-3 text-[13px] text-l-ink-lo">…rows go here…</div>
+      <div className="px-s-4 py-s-3 text-[13px] text-l-ink-lo">
+        …rows go here…
+      </div>
     </div>
   ),
 };
@@ -37,7 +39,9 @@ export const Toggleable: Story = {
             <GroupHead.Count>12</GroupHead.Count>
           </GroupHead>
           {openA ? (
-            <div className="px-s-4 py-s-3 text-[13px] text-l-ink-lo">…12 rows…</div>
+            <div className="px-s-4 py-s-3 text-[13px] text-l-ink-lo">
+              …12 rows…
+            </div>
           ) : null}
           <GroupHead expanded={openB} onToggle={setOpenB}>
             <Status kind="done" />
@@ -49,7 +53,9 @@ export const Toggleable: Story = {
             </span>
           </GroupHead>
           {openB ? (
-            <div className="px-s-4 py-s-3 text-[13px] text-l-ink-lo">…26 rows…</div>
+            <div className="px-s-4 py-s-3 text-[13px] text-l-ink-lo">
+              …26 rows…
+            </div>
           ) : null}
         </div>
       );

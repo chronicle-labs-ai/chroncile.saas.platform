@@ -1,5 +1,6 @@
 import * as React from "react";
 import { tv } from "../utils/tv";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * EmptyState — zero-results / no-data placeholder with optional icon,
@@ -9,48 +10,87 @@ import { tv } from "../utils/tv";
 
 const emptyState = tv({
   slots: {
-    root: "empty-state flex flex-col items-center justify-center rounded-md text-center",
+    root: "empty-state flex flex-col items-center justify-center text-center",
     header: "empty-state__header flex flex-col items-center gap-s-2",
-    media: "empty-state__media flex items-center justify-center text-ink-dim",
-    title: "empty-state__title font-display text-title-sm text-ink-hi",
-    description:
-      "empty-state__description max-w-[360px] font-sans text-sm text-ink-lo",
+    media: "empty-state__media flex items-center justify-center",
+    title: "empty-state__title",
+    description: "empty-state__description max-w-[360px]",
     content: "empty-state__content mt-s-2 flex items-center gap-s-2",
   },
   variants: {
+    density: {
+      brand: {
+        root: "rounded-md",
+        media: "text-ink-dim",
+        title: "font-display text-title-sm text-ink-hi",
+        description: "font-sans text-sm text-ink-lo",
+      },
+      compact: {
+        root: "rounded-l",
+        media: "text-l-ink-dim",
+        title: "font-sans text-[15px] font-medium text-l-ink",
+        description: "font-sans text-[13px] text-l-ink-lo",
+      },
+    },
     size: {
       sm: { root: "gap-s-2 px-s-4 py-s-8", media: "h-7 w-7" },
       md: { root: "gap-s-3 px-s-6 py-s-12", media: "h-8 w-8" },
       lg: { root: "gap-s-4 px-s-8 py-s-16", media: "h-10 w-10" },
     },
     chrome: {
-      default: {
-        root: "border border-hairline border-dashed bg-surface-01",
-      },
-      minimal: {
-        root: "border border-transparent bg-transparent",
-      },
-      outline: {
-        root: "border border-hairline bg-transparent",
-      },
+      default: { root: "" },
+      minimal: { root: "border border-transparent bg-transparent" },
+      outline: { root: "" },
     },
     mediaVariant: {
       default: "",
-      icon: {
-        media: "rounded-pill bg-surface-03 p-s-2",
-      },
+      icon: { media: "rounded-pill p-s-2" },
     },
   },
+  compoundVariants: [
+    {
+      density: "brand",
+      chrome: "default",
+      class: { root: "border border-hairline border-dashed bg-surface-01" },
+    },
+    {
+      density: "brand",
+      chrome: "outline",
+      class: { root: "border border-hairline bg-transparent" },
+    },
+    {
+      density: "compact",
+      chrome: "default",
+      class: { root: "border border-l-border border-dashed bg-l-surface-raised" },
+    },
+    {
+      density: "compact",
+      chrome: "outline",
+      class: { root: "border border-l-border bg-transparent" },
+    },
+    {
+      density: "brand",
+      mediaVariant: "icon",
+      class: { media: "bg-surface-03" },
+    },
+    {
+      density: "compact",
+      mediaVariant: "icon",
+      class: { media: "bg-l-wash-5" },
+    },
+  ],
   defaultVariants: {
     size: "md",
     chrome: "default",
     mediaVariant: "default",
+    density: "brand",
   },
 });
 
 export type EmptyStateSize = "sm" | "md" | "lg";
 export type EmptyStateChrome = "default" | "minimal" | "outline";
 export type EmptyStateMediaVariant = "default" | "icon";
+export type EmptyStateDensity = "compact" | "brand";
 
 export interface EmptyStateProps extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -63,6 +103,7 @@ export interface EmptyStateProps extends Omit<
   size?: EmptyStateSize;
   chrome?: EmptyStateChrome;
   mediaVariant?: EmptyStateMediaVariant;
+  density?: EmptyStateDensity;
 }
 
 function EmptyStateRoot({
@@ -73,11 +114,13 @@ function EmptyStateRoot({
   size = "md",
   chrome = "default",
   mediaVariant = "default",
+  density: densityProp,
   className,
   children,
   ...props
 }: EmptyStateProps) {
-  const slots = emptyState({ size, chrome, mediaVariant });
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = emptyState({ size, chrome, mediaVariant, density });
 
   if (children) {
     return (

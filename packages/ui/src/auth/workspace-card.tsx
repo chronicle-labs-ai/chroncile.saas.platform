@@ -20,8 +20,10 @@ import { ArrowRightIcon } from "../icons/glyphs";
 
 export type Role = "Owner" | "Admin" | "Member" | "Viewer";
 
-export interface WorkspaceCardProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
+export interface WorkspaceCardProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "type"
+> {
   name: string;
   role: Role;
   memberCount?: number;
@@ -56,7 +58,9 @@ function hash(str: string): number {
 }
 
 function gradientFor(seed: string): string {
-  return BRAND_GRADIENTS[hash(seed) % BRAND_GRADIENTS.length] ?? BRAND_GRADIENTS[0];
+  return (
+    BRAND_GRADIENTS[hash(seed) % BRAND_GRADIENTS.length] ?? BRAND_GRADIENTS[0]
+  );
 }
 
 /**
@@ -101,7 +105,7 @@ export function WorkspaceCard({
         "hover:border-ember hover:bg-surface-02",
         "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
         "disabled:opacity-40 disabled:cursor-not-allowed",
-        className,
+        className
       )}
       {...rest}
     >
@@ -110,7 +114,7 @@ export function WorkspaceCard({
         className={cx(
           "inline-flex h-[36px] w-[36px] shrink-0 items-center justify-center",
           "rounded-sm font-display text-[18px] font-medium leading-none",
-          "text-ink-inv-hi shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]",
+          "text-ink-inv-hi shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
         )}
         style={{ background: gradient }}
       >
@@ -129,7 +133,7 @@ export function WorkspaceCard({
         className={cx(
           "inline-flex shrink-0 items-center justify-center text-ink-dim",
           "transition-[color,transform] duration-fast ease-out",
-          "group-hover:text-ember group-hover:translate-x-[2px]",
+          "group-hover:text-ember group-hover:translate-x-[2px]"
         )}
       >
         <ArrowRightIcon size={14} />

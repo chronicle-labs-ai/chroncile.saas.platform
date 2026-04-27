@@ -1,7 +1,4 @@
-export {
-  OnboardingShell,
-  ONBOARDING_STEPS,
-} from "./onboarding-shell";
+export { OnboardingShell, ONBOARDING_STEPS } from "./onboarding-shell";
 export type {
   OnboardingShellProps,
   OnboardingStepId,

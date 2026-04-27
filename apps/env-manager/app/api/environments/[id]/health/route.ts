@@ -7,7 +7,10 @@ export async function GET(
 ) {
   const { id } = await params;
   const url = new URL(request.url);
-  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10), 200);
+  const limit = Math.min(
+    parseInt(url.searchParams.get("limit") ?? "50", 10),
+    200
+  );
 
   const env = await prisma.environment.findUnique({ where: { id } });
   if (!env) {

@@ -7,7 +7,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { PlaybackState, SelectionEvent, PlayheadEvent, TimeRangeEvent, TimelineEvent } from "./types";
+import type {
+  PlaybackState,
+  SelectionEvent,
+  PlayheadEvent,
+  TimeRangeEvent,
+  TimelineEvent,
+} from "./types";
 import {
   DEFAULT_ROW_HEIGHT,
   HEADER_HEIGHT,
@@ -66,7 +72,17 @@ export function TimelinePanel({
   }, []);
 
   const timeView = useTimeView();
-  const { startMs, endMs, durationMs, timeToX, xToTime, pan, zoomAt, fitToTimes, setRange } = timeView;
+  const {
+    startMs,
+    endMs,
+    durationMs,
+    timeToX,
+    xToTime,
+    pan,
+    zoomAt,
+    fitToTimes,
+    setRange,
+  } = timeView;
 
   /* Pre-compute event timestamps once */
   const eventsWithMs = useMemo(
@@ -107,10 +123,16 @@ export function TimelinePanel({
   const prevPlaybackRef = useRef<PlaybackState>("paused");
   // Keep a live ref to the current time view so the interval can read it
   // without re-creating the effect on every range change.
-  const timeViewRef = useRef({ centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs });
+  const timeViewRef = useRef({
+    centerMs: timeView.centerMs,
+    halfWidthMs: timeView.halfWidthMs,
+  });
 
   useEffect(() => {
-    timeViewRef.current = { centerMs: timeView.centerMs, halfWidthMs: timeView.halfWidthMs };
+    timeViewRef.current = {
+      centerMs: timeView.centerMs,
+      halfWidthMs: timeView.halfWidthMs,
+    };
   }, [timeView.centerMs, timeView.halfWidthMs]);
 
   useEffect(() => {
@@ -210,10 +232,24 @@ export function TimelinePanel({
   /* Native wheel handler — must be non-passive so preventDefault works.
      Attached to both the header time area and the rows container so zoom
      works anywhere on the timeline. */
-  const wheelDepsRef = useRef({ xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth });
+  const wheelDepsRef = useRef({
+    xToTime,
+    zoomAt,
+    pan,
+    durationMs,
+    timeAreaWidth,
+    labelWidth,
+  });
 
   useEffect(() => {
-    wheelDepsRef.current = { xToTime, zoomAt, pan, durationMs, timeAreaWidth, labelWidth };
+    wheelDepsRef.current = {
+      xToTime,
+      zoomAt,
+      pan,
+      durationMs,
+      timeAreaWidth,
+      labelWidth,
+    };
   }, [durationMs, labelWidth, pan, timeAreaWidth, xToTime, zoomAt]);
 
   useEffect(() => {
@@ -222,7 +258,14 @@ export function TimelinePanel({
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const { xToTime: x2t, zoomAt: za, pan: p, durationMs: dur, timeAreaWidth: tw, labelWidth: lw } = wheelDepsRef.current;
+      const {
+        xToTime: x2t,
+        zoomAt: za,
+        pan: p,
+        durationMs: dur,
+        timeAreaWidth: tw,
+        labelWidth: lw,
+      } = wheelDepsRef.current;
 
       // For the header area, use the element rect directly.
       // For rows, offset by the label column width.
@@ -250,7 +293,8 @@ export function TimelinePanel({
       }
     };
 
-    if (headerEl) headerEl.addEventListener("wheel", onWheel, { passive: false });
+    if (headerEl)
+      headerEl.addEventListener("wheel", onWheel, { passive: false });
     if (rowsEl) rowsEl.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       if (headerEl) headerEl.removeEventListener("wheel", onWheel);
@@ -267,7 +311,6 @@ export function TimelinePanel({
     for (let t = firstTickMs; t <= endMs; t += majorIntervalMs) out.push(t);
     return out;
   }, [startMs, endMs, majorIntervalMs]);
-
 
   const { eventsByPath, eventsBySource } = useMemo(() => {
     const byPath: Record<string, typeof eventsWithMs> = {};
@@ -341,7 +384,12 @@ export function TimelinePanel({
       const bucketWidthMs = Math.max(1, 4 / pxPerMs);
       const sorted = [...visible].sort((a, b) => a.ms - b.ms);
 
-      const marks: { key: string; x: number; count: number; ev: TimelineEvent }[] = [];
+      const marks: {
+        key: string;
+        x: number;
+        count: number;
+        ev: TimelineEvent;
+      }[] = [];
       let bucketStart = sorted[0].ms;
       let bucketEvents: typeof visible = [sorted[0]];
 
@@ -351,7 +399,8 @@ export function TimelinePanel({
         } else {
           // Flush bucket
           const avgMs =
-            bucketEvents.reduce((sum, e) => sum + e.ms, 0) / bucketEvents.length;
+            bucketEvents.reduce((sum, e) => sum + e.ms, 0) /
+            bucketEvents.length;
           marks.push({
             key: `b_${marks.length}_${bucketEvents[0].ev.id}`,
             x: timeToX(avgMs, timeAreaWidth),
@@ -403,9 +452,14 @@ export function TimelinePanel({
       >
         <button
           type="button"
-          onClick={() => onPlaybackChange?.(playback === "paused" ? "playing" : "paused")}
+          onClick={() =>
+            onPlaybackChange?.(playback === "paused" ? "playing" : "paused")
+          }
           style={{
-            background: playback === "playing" ? TIMELINE_THEME.button_active : TIMELINE_THEME.button_bg,
+            background:
+              playback === "playing"
+                ? TIMELINE_THEME.button_active
+                : TIMELINE_THEME.button_bg,
             color: TIMELINE_THEME.text_primary,
             border: "none",
             padding: "4px 10px",
@@ -420,7 +474,10 @@ export function TimelinePanel({
           type="button"
           onClick={() => onPlaybackChange?.("live")}
           style={{
-            background: playback === "live" ? TIMELINE_THEME.button_active : TIMELINE_THEME.button_bg,
+            background:
+              playback === "live"
+                ? TIMELINE_THEME.button_active
+                : TIMELINE_THEME.button_bg,
             color: TIMELINE_THEME.text_primary,
             border: "none",
             padding: "4px 10px",
@@ -446,7 +503,14 @@ export function TimelinePanel({
         >
           Fit
         </button>
-        <span style={{ marginLeft: "auto", fontFamily: "monospace", fontSize: 12, color: TIMELINE_THEME.text_muted }}>
+        <span
+          style={{
+            marginLeft: "auto",
+            fontFamily: "monospace",
+            fontSize: 12,
+            color: TIMELINE_THEME.text_muted,
+          }}
+        >
           {new Date(playheadMs).toLocaleTimeString(undefined, {
             hour: "2-digit",
             minute: "2-digit",
@@ -489,46 +553,49 @@ export function TimelinePanel({
           onMouseDown={handleTimeAreaMouseDown}
           role="presentation"
         >
-            {ticks.map((t) => {
-              const x = timeToX(t, timeAreaWidth);
-              return (
-                <div
-                  key={t}
-                  style={{
-                    position: "absolute",
-                    left: x,
-                    top: 0,
-                    bottom: 0,
-                    width: 1,
-                    background: TIMELINE_THEME.separator,
-                  }}
-                />
-              );
-            })}
-            {ticks.map((t) => {
-              const x = timeToX(t, timeAreaWidth);
-              const label = formatTickLabel(durationSecs, t);
-              return (
-                <span
-                  key={t}
-                  style={{
-                    position: "absolute",
-                    left: x + 4,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    fontSize: 10,
-                    fontFamily: "monospace",
-                    color: TIMELINE_THEME.text_muted,
-                  }}
-                >
-                  {label}
-                </span>
-              );
-            })}
+          {ticks.map((t) => {
+            const x = timeToX(t, timeAreaWidth);
+            return (
+              <div
+                key={t}
+                style={{
+                  position: "absolute",
+                  left: x,
+                  top: 0,
+                  bottom: 0,
+                  width: 1,
+                  background: TIMELINE_THEME.separator,
+                }}
+              />
+            );
+          })}
+          {ticks.map((t) => {
+            const x = timeToX(t, timeAreaWidth);
+            const label = formatTickLabel(durationSecs, t);
+            return (
+              <span
+                key={t}
+                style={{
+                  position: "absolute",
+                  left: x + 4,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 10,
+                  fontFamily: "monospace",
+                  color: TIMELINE_THEME.text_muted,
+                }}
+              >
+                {label}
+              </span>
+            );
+          })}
         </div>
       </div>
 
-      <div ref={rowsContainerRef} style={{ flex: 1, overflowY: "auto", minHeight: 200 }}>
+      <div
+        ref={rowsContainerRef}
+        style={{ flex: 1, overflowY: "auto", minHeight: 200 }}
+      >
         {visibleNodes.map((node, idx) => {
           const pathKey = node.pathKey;
           const hasChildren = node.children.length > 0;
@@ -541,7 +608,10 @@ export function TimelinePanel({
               style={{
                 display: "flex",
                 height: DEFAULT_ROW_HEIGHT,
-                background: idx % 2 === 0 ? TIMELINE_THEME.bg_primary : TIMELINE_THEME.bg_row_alt,
+                background:
+                  idx % 2 === 0
+                    ? TIMELINE_THEME.bg_primary
+                    : TIMELINE_THEME.bg_row_alt,
                 alignItems: "center",
                 borderBottom: `1px solid ${TIMELINE_THEME.separator}`,
                 cursor: "default",
@@ -582,7 +652,14 @@ export function TimelinePanel({
                     background: node.color,
                   }}
                 />
-                <span style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span
+                  style={{
+                    fontSize: 12,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {node.name}
                   {hasChildren ? " /" : ""}
                 </span>
@@ -616,11 +693,21 @@ export function TimelinePanel({
                       height: 14,
                       borderRadius: 2,
                       background: node.color,
-                      opacity: mark.count > 1 ? Math.min(1, 0.6 + mark.count * 0.05) : 1,
-                      border: selectedEventId === mark.ev.id ? `2px solid ${TIMELINE_THEME.accent}` : "none",
+                      opacity:
+                        mark.count > 1
+                          ? Math.min(1, 0.6 + mark.count * 0.05)
+                          : 1,
+                      border:
+                        selectedEventId === mark.ev.id
+                          ? `2px solid ${TIMELINE_THEME.accent}`
+                          : "none",
                       cursor: "pointer",
                     }}
-                    title={mark.count > 1 ? `${mark.count} events` : `${mark.ev.type} ${mark.ev.occurredAt}`}
+                    title={
+                      mark.count > 1
+                        ? `${mark.count} events`
+                        : `${mark.ev.type} ${mark.ev.occurredAt}`
+                    }
                   />
                 ))}
                 {(() => {
@@ -633,7 +720,10 @@ export function TimelinePanel({
                         top: 0,
                         bottom: 0,
                         width: 2,
-                        background: playback === "paused" ? TIMELINE_THEME.accent : TIMELINE_THEME.playhead,
+                        background:
+                          playback === "paused"
+                            ? TIMELINE_THEME.accent
+                            : TIMELINE_THEME.playhead,
                         pointerEvents: "none",
                       }}
                     />

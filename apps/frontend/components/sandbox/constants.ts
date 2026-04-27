@@ -333,7 +333,15 @@ export const DEFAULT_OUTPUT_CONFIG = {
   webhookUrl: "",
   fileFormat: "jsonl" as const,
   transformTemplate: "{{ payload }}",
-  includedFields: ["event_id", "source", "event_type", "occurred_at", "actor", "subject", "payload"] as string[],
+  includedFields: [
+    "event_id",
+    "source",
+    "event_type",
+    "occurred_at",
+    "actor",
+    "subject",
+    "payload",
+  ] as string[],
 };
 
 export const DEFAULT_GENERATOR_CONFIG = {

@@ -8,6 +8,7 @@
 @import "./fonts.css";
 @import "./tokens.css";
 @import "./linear.css";
+@import "./chrome.css";
 @import "./glass.css";
 @import "./auth.css";
 @import "./connectors.css";

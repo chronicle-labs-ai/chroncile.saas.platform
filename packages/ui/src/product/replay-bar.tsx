@@ -47,9 +47,7 @@ export function ReplayBar({
         <span
           className={cx(
             "absolute bottom-0 left-0 top-0",
-            variant === "baseline"
-              ? "bg-event-green opacity-40"
-              : "bg-ember",
+            variant === "baseline" ? "bg-event-green opacity-40" : "bg-ember"
           )}
           style={{ width: `${clamped}%` }}
         />

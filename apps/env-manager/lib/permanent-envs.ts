@@ -28,7 +28,10 @@ export function getPermanentEnvs(): PermanentEnvConfig[] {
       flyAppName: "chronicle-backend",
       flyAppUrl: "https://chronicle-backend.fly.dev",
       vercelAlias: process.env.VERCEL_PRODUCTION_URL ?? null,
-      serviceSecret: process.env.SERVICE_SECRET_PRODUCTION ?? process.env.SERVICE_SECRET ?? null,
+      serviceSecret:
+        process.env.SERVICE_SECRET_PRODUCTION ??
+        process.env.SERVICE_SECRET ??
+        null,
       dopplerEnv: "prd",
       backendConfigEnvVar: "DOPPLER_PRD_BACKEND_CONFIG",
       backendTokenEnvVar: "DOPPLER_PRD_BACKEND_TOKEN",

@@ -8,6 +8,7 @@ import {
 
 import { tv, type VariantProps } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /**
  * Button — two density flavors share one component:
@@ -73,10 +74,8 @@ const button = tv({
   },
   variants: {
     density: {
-      compact:
-        "rounded-l font-sans font-medium tracking-normal leading-none",
-      brand:
-        "rounded-xs font-mono uppercase tracking-tactical",
+      compact: "rounded-l font-sans font-medium tracking-normal leading-none",
+      brand: "rounded-xs font-mono uppercase tracking-tactical",
     },
     variant: {
       // Filled in per-density via compoundVariants below.
@@ -135,24 +134,21 @@ const button = tv({
       density: "compact",
       variant: "ghost",
       class: {
-        base:
-          "text-l-ink-lo data-[hovered=true]:bg-l-wash-3 data-[hovered=true]:text-l-ink",
+        base: "text-l-ink-lo data-[hovered=true]:bg-l-wash-3 data-[hovered=true]:text-l-ink",
       },
     },
     {
       density: "compact",
       variant: "icon",
       class: {
-        base:
-          "text-l-ink-lo data-[hovered=true]:bg-l-wash-3 data-[hovered=true]:text-l-ink p-0",
+        base: "text-l-ink-lo data-[hovered=true]:bg-l-wash-3 data-[hovered=true]:text-l-ink p-0",
       },
     },
     {
       density: "compact",
       variant: "critical",
       class: {
-        base:
-          "bg-event-red text-white data-[hovered=true]:brightness-110",
+        base: "bg-event-red text-white data-[hovered=true]:brightness-110",
       },
     },
     {
@@ -239,8 +235,7 @@ const button = tv({
       density: "brand",
       variant: "ember",
       class: {
-        base:
-          "border-transparent bg-ember text-white data-[hovered=true]:bg-ember-deep",
+        base: "border-transparent bg-ember text-white data-[hovered=true]:bg-ember-deep",
       },
     },
     {
@@ -267,24 +262,21 @@ const button = tv({
       density: "brand",
       variant: "critical",
       class: {
-        base:
-          "border-transparent bg-event-red text-white data-[hovered=true]:brightness-110",
+        base: "border-transparent bg-event-red text-white data-[hovered=true]:brightness-110",
       },
     },
     {
       density: "brand",
       variant: "data",
       class: {
-        base:
-          "border-transparent bg-event-teal text-black data-[hovered=true]:brightness-110",
+        base: "border-transparent bg-event-teal text-black data-[hovered=true]:brightness-110",
       },
     },
     {
       density: "brand",
       variant: "nominal",
       class: {
-        base:
-          "border-transparent bg-event-green text-black data-[hovered=true]:brightness-110",
+        base: "border-transparent bg-event-green text-black data-[hovered=true]:brightness-110",
       },
     },
     {
@@ -316,8 +308,7 @@ const button = tv({
 type ButtonVariantProps = VariantProps<typeof button>;
 
 export interface ButtonProps
-  extends Omit<RACButtonProps, "className" | "children">,
-    ButtonVariantProps {
+  extends Omit<RACButtonProps, "className" | "children">, ButtonVariantProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   /**
@@ -343,7 +334,7 @@ export interface ButtonProps
 export function Button({
   variant = "secondary",
   size = "md",
-  density = "compact",
+  density: densityProp,
   isLoading,
   isPending,
   disabled,
@@ -356,6 +347,7 @@ export function Button({
   children,
   ...rest
 }: ButtonProps) {
+  const density = useResolvedChromeDensity(densityProp);
   const slots = button({ variant, size, density });
   const pending = isLoading ?? isPending;
   const disabledResolved = disabled ?? isDisabled;
@@ -370,7 +362,7 @@ export function Button({
       data-density={density}
       className={composeTwRenderProps(
         classNames?.base,
-        slots.base({ className }),
+        slots.base({ className })
       )}
     >
       {pending ? (

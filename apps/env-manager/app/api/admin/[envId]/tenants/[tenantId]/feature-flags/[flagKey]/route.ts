@@ -5,7 +5,9 @@ import { auth } from "@/server/auth/auth";
 
 export async function PUT(
   req: Request,
-  { params }: { params: Promise<{ envId: string; tenantId: string; flagKey: string }> },
+  {
+    params,
+  }: { params: Promise<{ envId: string; tenantId: string; flagKey: string }> }
 ) {
   const { envId, tenantId, flagKey } = await params;
   const env = await prisma.environment.findUnique({ where: { id: envId } });
@@ -35,27 +37,29 @@ export async function PUT(
           reason: body.reason ?? null,
         }),
       },
-      env.serviceSecret,
+      env.serviceSecret
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return NextResponse.json(
         { error: data?.error ?? `Backend returned ${res.status}` },
-        { status: res.status },
+        { status: res.status }
       );
     }
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ envId: string; tenantId: string; flagKey: string }> },
+  {
+    params,
+  }: { params: Promise<{ envId: string; tenantId: string; flagKey: string }> }
 ) {
   const { envId, tenantId, flagKey } = await params;
   const env = await prisma.environment.findUnique({ where: { id: envId } });
@@ -74,20 +78,20 @@ export async function DELETE(
         method: "DELETE",
         headers: { "x-admin-actor": actor },
       },
-      env.serviceSecret,
+      env.serviceSecret
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       return NextResponse.json(
         { error: data?.error ?? `Backend returned ${res.status}` },
-        { status: res.status },
+        { status: res.status }
       );
     }
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -111,7 +111,7 @@ export function StepDescribe({
         onChange({ ...value, intendedSources: ids });
         setParsing(false);
       },
-      disableAnimation ? 50 : 380,
+      disableAnimation ? 50 : 380
     );
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,15 +151,14 @@ export function StepDescribe({
       sandbox: true,
       name: value.name?.trim() || "Demo agent",
       prompt:
-        value.prompt?.trim() ||
-        "Sandbox · explore Chronicle with sample data",
+        value.prompt?.trim() || "Sandbox · explore Chronicle with sample data",
       intendedSources: ["intercom", "shopify", "stripe"],
     });
     onNext?.();
   };
 
   const canContinue = Boolean(
-    (value.prompt && value.prompt.trim().length > 0) || value.templateId,
+    (value.prompt && value.prompt.trim().length > 0) || value.templateId
   );
 
   const parseState: ParseStripState = !value.prompt
@@ -173,7 +172,9 @@ export function StepDescribe({
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 01</Eyebrow>
-      <AuthDisplay>Describe your <em>agent</em>.</AuthDisplay>
+      <AuthDisplay>
+        Describe your <em>agent</em>.
+      </AuthDisplay>
       <AuthLede>
         Tell us what it does — in plain English. We&rsquo;ll spot the data it
         touches.
@@ -212,7 +213,11 @@ export function StepDescribe({
                       style={{ animationDelay: `${i * 50}ms` }}
                     >
                       <span style={{ color: s.color }}>
-                        <SourceGlyph id={s.glyph} color="currentColor" size={14} />
+                        <SourceGlyph
+                          id={s.glyph}
+                          color="currentColor"
+                          size={14}
+                        />
                       </span>
                       {s.name}
                     </span>
@@ -225,14 +230,9 @@ export function StepDescribe({
 
         {value.mode === "structured" ? (
           <div className="flex flex-col gap-s-4">
-            <FormField
-              tone="auth"
-              label="Agent name"
-              htmlFor="onb-name"
-            >
+            <FormField tone="auth" label="Agent name" htmlFor="onb-name">
               <Input
                 id="onb-name"
-                density="brand"
                 variant="auth"
                 placeholder="support-concierge"
                 value={value.name ?? ""}
@@ -244,7 +244,6 @@ export function StepDescribe({
             <FormField tone="auth" label="Primary goal" htmlFor="onb-goal">
               <Input
                 id="onb-goal"
-                density="brand"
                 variant="auth"
                 placeholder="Resolve refunds in under 3 turns."
                 value={value.goal ?? ""}
@@ -256,7 +255,6 @@ export function StepDescribe({
             <FormField tone="auth" label="Trigger" htmlFor="onb-trigger">
               <Input
                 id="onb-trigger"
-                density="brand"
                 variant="auth"
                 placeholder="New Intercom conversation"
                 value={value.trigger ?? ""}
@@ -284,7 +282,7 @@ export function StepDescribe({
                     <span
                       className={cx(
                         "font-display text-title-sm tracking-tight text-ink-hi",
-                        "font-medium",
+                        "font-medium"
                       )}
                     >
                       {t.name}
@@ -309,18 +307,21 @@ export function StepDescribe({
         back={
           <div className="flex items-center gap-s-2">
             {onBack ? (
-              <Button density="brand" variant="ghost" onPress={onBack} leadingIcon={<ArrowLeftIcon />}>
+              <Button
+                variant="ghost"
+                onPress={onBack}
+                leadingIcon={<ArrowLeftIcon />}
+              >
                 Back
               </Button>
             ) : null}
-            <Button density="brand" variant="ghost" onPress={onSandbox}>
+            <Button variant="ghost" onPress={onSandbox}>
               I don&rsquo;t have an agent yet — explore with sample data →
             </Button>
           </div>
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onContinue}
             isDisabled={!canContinue}

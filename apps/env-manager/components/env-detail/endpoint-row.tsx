@@ -13,14 +13,25 @@ interface EndpointRowProps {
   extraLabel?: string;
 }
 
-export function EndpointRow({ label, url, badge, badgeClass, pending, pendingHint, extra, extraLabel }: EndpointRowProps) {
+export function EndpointRow({
+  label,
+  url,
+  badge,
+  badgeClass,
+  pending,
+  pendingHint,
+  extra,
+  extraLabel,
+}: EndpointRowProps) {
   return (
     <div className="px-4 py-3 space-y-1.5">
       <div className="flex items-center gap-3">
         <span className="label shrink-0 w-20">{label}</span>
 
         {badge && (
-          <span className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm shrink-0 ${badgeClass}`}>
+          <span
+            className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm shrink-0 ${badgeClass}`}
+          >
             {badge}
           </span>
         )}
@@ -40,7 +51,9 @@ export function EndpointRow({ label, url, badge, badgeClass, pending, pendingHin
         ) : pending ? (
           <div className="flex items-center gap-2 flex-1">
             <div className="w-1.5 h-1.5 rounded-full bg-caution animate-pulse" />
-            <span className="font-mono text-xs text-caution">Pending deployment</span>
+            <span className="font-mono text-xs text-caution">
+              Pending deployment
+            </span>
           </div>
         ) : (
           <span className="font-mono text-sm text-tertiary">—</span>
@@ -63,13 +76,21 @@ export function EndpointRow({ label, url, badge, badgeClass, pending, pendingHin
       )}
 
       {pending && pendingHint && (
-        <p className="pl-[6.5rem] text-[10px] text-tertiary font-mono">{pendingHint}</p>
+        <p className="pl-[6.5rem] text-[10px] text-tertiary font-mono">
+          {pendingHint}
+        </p>
       )}
     </div>
   );
 }
 
-export function StatCard({ label, value }: { label: string; value: number | null }) {
+export function StatCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | null;
+}) {
   return (
     <div className="panel">
       <div className="panel__content">

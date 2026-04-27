@@ -14,10 +14,11 @@ interface Developer {
 }
 
 export function DevelopersPage() {
-  const { data: developers, isLoading, mutate } = useSWR<Developer[]>(
-    "/api/developers",
-    fetcher,
-  );
+  const {
+    data: developers,
+    isLoading,
+    mutate,
+  } = useSWR<Developer[]>("/api/developers", fetcher);
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -54,7 +55,12 @@ export function DevelopersPage() {
   };
 
   const handleDelete = async (id: string, devName: string) => {
-    if (!confirm(`Remove developer "${devName}"? This will delete their Doppler branch configs.`)) return;
+    if (
+      !confirm(
+        `Remove developer "${devName}"? This will delete their Doppler branch configs.`
+      )
+    )
+      return;
     setDeletingId(id);
     await fetch(`/api/developers/${id}`, { method: "DELETE" });
     mutate();
@@ -64,7 +70,11 @@ export function DevelopersPage() {
   const handleNameChange = (value: string) => {
     setName(value);
     const safe = value.toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (!tunnelDomain || tunnelDomain === `${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.chronicle-labs.com`) {
+    if (
+      !tunnelDomain ||
+      tunnelDomain ===
+        `${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.chronicle-labs.com`
+    ) {
       setTunnelDomain(`${safe}.chronicle-labs.com`);
     }
   };
@@ -103,7 +113,9 @@ export function DevelopersPage() {
                   required
                   className="w-full px-3 py-2 bg-elevated border border-border-dim rounded text-sm font-mono text-primary placeholder:text-disabled focus:outline-none focus:border-data"
                 />
-                <p className="text-[10px] text-tertiary mt-1">Used for Doppler configs and Makefile</p>
+                <p className="text-[10px] text-tertiary mt-1">
+                  Used for Doppler configs and Makefile
+                </p>
               </div>
               <div>
                 <label className="label block mb-1">Email</label>
@@ -141,7 +153,16 @@ export function DevelopersPage() {
                 {submitting ? "Creating..." : "Create Developer"}
               </button>
               <p className="text-[10px] text-tertiary">
-                Creates Doppler branch configs <span className="font-mono text-secondary">dev_frontend_{name.toLowerCase().replace(/[^a-z0-9]/g, "") || "name"}</span> and <span className="font-mono text-secondary">dev_backend_{name.toLowerCase().replace(/[^a-z0-9]/g, "") || "name"}</span>
+                Creates Doppler branch configs{" "}
+                <span className="font-mono text-secondary">
+                  dev_frontend_
+                  {name.toLowerCase().replace(/[^a-z0-9]/g, "") || "name"}
+                </span>{" "}
+                and{" "}
+                <span className="font-mono text-secondary">
+                  dev_backend_
+                  {name.toLowerCase().replace(/[^a-z0-9]/g, "") || "name"}
+                </span>
               </p>
             </div>
           </form>
@@ -152,16 +173,22 @@ export function DevelopersPage() {
         <div className="panel__header">
           <span className="panel__title">Registered Developers</span>
           <span className="font-mono text-[10px] text-tertiary">
-            {developers?.length ?? 0} developer{(developers?.length ?? 0) !== 1 ? "s" : ""}
+            {developers?.length ?? 0} developer
+            {(developers?.length ?? 0) !== 1 ? "s" : ""}
           </span>
         </div>
         <div className="panel__content">
           {isLoading ? (
-            <div className="py-8 text-center text-sm text-secondary font-mono">Loading...</div>
+            <div className="py-8 text-center text-sm text-secondary font-mono">
+              Loading...
+            </div>
           ) : !developers || developers.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-sm text-secondary">No developers registered</p>
-              <p className="text-xs text-tertiary mt-1">Add a developer to create their Doppler configs and tunnel domain</p>
+              <p className="text-xs text-tertiary mt-1">
+                Add a developer to create their Doppler configs and tunnel
+                domain
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -171,21 +198,36 @@ export function DevelopersPage() {
                     <th className="text-left py-2 pr-4 label">Name</th>
                     <th className="text-left py-2 pr-4 label">Email</th>
                     <th className="text-left py-2 pr-4 label">Tunnel Domain</th>
-                    <th className="text-left py-2 pr-4 label">Doppler Configs</th>
+                    <th className="text-left py-2 pr-4 label">
+                      Doppler Configs
+                    </th>
                     <th className="text-left py-2 pr-4 label">Command</th>
                     <th className="text-right py-2 label">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {developers.map((dev) => (
-                    <tr key={dev.id} className="border-b border-border-dim last:border-0">
-                      <td className="py-3 pr-4 font-mono text-data font-medium">{dev.name}</td>
-                      <td className="py-3 pr-4 font-mono text-secondary">{dev.email ?? "—"}</td>
-                      <td className="py-3 pr-4 font-mono text-primary">{dev.tunnelDomain}</td>
+                    <tr
+                      key={dev.id}
+                      className="border-b border-border-dim last:border-0"
+                    >
+                      <td className="py-3 pr-4 font-mono text-data font-medium">
+                        {dev.name}
+                      </td>
+                      <td className="py-3 pr-4 font-mono text-secondary">
+                        {dev.email ?? "—"}
+                      </td>
+                      <td className="py-3 pr-4 font-mono text-primary">
+                        {dev.tunnelDomain}
+                      </td>
                       <td className="py-3 pr-4">
                         <div className="space-y-0.5">
-                          <span className="badge badge--data font-mono text-[10px]">dev_frontend_{dev.dopplerSuffix}</span>
-                          <span className="badge badge--neutral font-mono text-[10px] ml-1">dev_backend_{dev.dopplerSuffix}</span>
+                          <span className="badge badge--data font-mono text-[10px]">
+                            dev_frontend_{dev.dopplerSuffix}
+                          </span>
+                          <span className="badge badge--neutral font-mono text-[10px] ml-1">
+                            dev_backend_{dev.dopplerSuffix}
+                          </span>
                         </div>
                       </td>
                       <td className="py-3 pr-4">
@@ -220,9 +262,29 @@ export function DevelopersPage() {
             <p className="font-medium text-primary">For each developer:</p>
             <ol className="list-decimal list-inside space-y-1.5">
               <li>Add them above with their ngrok tunnel domain</li>
-              <li>Reserve the domain in <a href="https://dashboard.ngrok.com/domains" className="text-data hover:underline" target="_blank" rel="noreferrer">ngrok dashboard</a></li>
-              <li>Add Google OAuth redirect URI: <code className="font-mono text-[10px] bg-elevated px-1 py-0.5 rounded">https://DOMAIN/api/auth/callback/google</code></li>
-              <li>Run: <code className="font-mono text-[10px] bg-elevated px-1 py-0.5 rounded">make dev-all DEV_USER=name</code></li>
+              <li>
+                Reserve the domain in{" "}
+                <a
+                  href="https://dashboard.ngrok.com/domains"
+                  className="text-data hover:underline"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  ngrok dashboard
+                </a>
+              </li>
+              <li>
+                Add Google OAuth redirect URI:{" "}
+                <code className="font-mono text-[10px] bg-elevated px-1 py-0.5 rounded">
+                  https://DOMAIN/api/auth/callback/google
+                </code>
+              </li>
+              <li>
+                Run:{" "}
+                <code className="font-mono text-[10px] bg-elevated px-1 py-0.5 rounded">
+                  make dev-all DEV_USER=name
+                </code>
+              </li>
             </ol>
           </div>
         </div>

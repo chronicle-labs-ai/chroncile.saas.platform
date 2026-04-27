@@ -20,7 +20,7 @@ declare module "nango" {
     batchSave<T = any>(records: T[], model: string): Promise<void>;
     setMergingStrategy(
       strategy: { strategy: string },
-      model: string,
+      model: string
     ): Promise<void>;
     getConnection(): Promise<any>;
     getCheckpoint<T = any>(): Promise<T | null>;

@@ -28,7 +28,11 @@ export interface AuthSuccessProps {
  * between sign-in success and the post-auth route.
  */
 export function AuthSuccess({
-  headline = <>You&rsquo;re <em>in.</em></>,
+  headline = (
+    <>
+      You&rsquo;re <em>in.</em>
+    </>
+  ),
   message = "Loading your workspace…",
   caption,
   hideSpinner = false,

@@ -80,12 +80,9 @@ export function DeveloperWidget() {
 
   const analyticsDebugInfo = useMemo(
     () => analytics.getDebugInfo(),
-    [analytics, refreshTick],
+    [analytics, refreshTick]
   );
-  const sentryDebugInfo = useMemo(
-    () => getSentryDebugInfo(),
-    [refreshTick],
-  );
+  const sentryDebugInfo = useMemo(() => getSentryDebugInfo(), [refreshTick]);
   const host = useMemo(() => {
     if (typeof window === "undefined") {
       return null;
@@ -116,7 +113,10 @@ export function DeveloperWidget() {
             { label: "Sentry host", value: sentryDebugInfo.dsnHost },
             { label: "Sentry org", value: sentryDebugInfo.org },
             { label: "Sentry project", value: sentryDebugInfo.project },
-            { label: "Sentry replay enabled", value: sentryDebugInfo.replayEnabled },
+            {
+              label: "Sentry replay enabled",
+              value: sentryDebugInfo.replayEnabled,
+            },
             { label: "Sentry replay ID", value: sentryDebugInfo.replayId },
             { label: "Sentry user ID", value: sentryDebugInfo.userId },
             { label: "Sentry last event", value: sentryDebugInfo.lastEventId },
@@ -137,10 +137,20 @@ export function DeveloperWidget() {
         },
       ] satisfies Array<{
         id: DebugTabId;
-        items: Array<{ label: string; value: boolean | string | null | undefined }>;
+        items: Array<{
+          label: string;
+          value: boolean | string | null | undefined;
+        }>;
         label: string;
       }>,
-    [analyticsDebugInfo, host, pathname, sentryDebugInfo, session?.user?.id, session?.user?.tenantId],
+    [
+      analyticsDebugInfo,
+      host,
+      pathname,
+      sentryDebugInfo,
+      session?.user?.id,
+      session?.user?.tenantId,
+    ]
   );
   const activeTabContent = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
@@ -241,7 +251,9 @@ export function DeveloperWidget() {
         >
           <div className="flex items-center justify-between border-b border-border-dim bg-elevated px-4 py-3">
             <div>
-              <div className="text-sm font-medium text-primary">Developer tools</div>
+              <div className="text-sm font-medium text-primary">
+                Developer tools
+              </div>
               <div className="mt-1 font-mono text-[10px] text-tertiary">
                 Local observability debug panel
               </div>

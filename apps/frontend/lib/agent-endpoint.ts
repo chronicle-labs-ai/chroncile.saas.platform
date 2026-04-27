@@ -34,8 +34,13 @@ export function resolveAgentConfig(
 
   let customHeaders: Array<{ name: string; value: string }> = [];
   if (row.customHeadersJson && Array.isArray(row.customHeadersJson)) {
-    customHeaders = (row.customHeadersJson as Array<{ name?: string; value?: string }>)
-      .filter((h): h is { name: string; value: string } => typeof h?.name === "string" && typeof h?.value === "string")
+    customHeaders = (
+      row.customHeadersJson as Array<{ name?: string; value?: string }>
+    )
+      .filter(
+        (h): h is { name: string; value: string } =>
+          typeof h?.name === "string" && typeof h?.value === "string"
+      )
       .map((h) => ({ name: h.name, value: h.value }));
   }
 
@@ -50,12 +55,20 @@ export function resolveAgentConfig(
 }
 
 /** Build headers for agent request: Content-Type, auth, custom. */
-export function buildAgentRequestHeaders(config: AgentConfigResolved): Record<string, string> {
+export function buildAgentRequestHeaders(
+  config: AgentConfigResolved
+): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
-  const { authType, authHeaderName, authSecretPlain, basicUsername, customHeaders } = config;
+  const {
+    authType,
+    authHeaderName,
+    authSecretPlain,
+    basicUsername,
+    customHeaders,
+  } = config;
 
   if (authSecretPlain) {
     if (authType === "api_key" && authHeaderName) {
@@ -63,7 +76,8 @@ export function buildAgentRequestHeaders(config: AgentConfigResolved): Record<st
     } else if (authType === "bearer") {
       headers["Authorization"] = `Bearer ${authSecretPlain}`;
     } else if (authType === "basic" && basicUsername) {
-      headers["Authorization"] = `Basic ${Buffer.from(`${basicUsername}:${authSecretPlain}`).toString("base64")}`;
+      headers["Authorization"] =
+        `Basic ${Buffer.from(`${basicUsername}:${authSecretPlain}`).toString("base64")}`;
     }
   }
 

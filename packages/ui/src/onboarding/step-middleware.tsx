@@ -5,11 +5,7 @@ import { Button } from "../primitives/button";
 import { Eyebrow } from "../primitives/eyebrow";
 import { Spinner } from "../primitives/spinner";
 import { CopyButton } from "../primitives/copy-button";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CheckIcon,
-} from "../icons/glyphs";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "../icons/glyphs";
 import {
   AuthDisplay,
   AuthLede,
@@ -127,7 +123,9 @@ export function StepMiddleware({
   return (
     <div className="flex flex-col">
       <Eyebrow>Step 04</Eyebrow>
-      <AuthDisplay>Wire up your <em>agent</em>.</AuthDisplay>
+      <AuthDisplay>
+        Wire up your <em>agent</em>.
+      </AuthDisplay>
       <AuthLede>Subscribe to events from your code. Pick a language.</AuthLede>
 
       <UnderlineTabs
@@ -161,7 +159,6 @@ export function StepMiddleware({
           )}
         </span>
         <Button
-          density="brand"
           variant="secondary"
           size="sm"
           isDisabled={waiting}
@@ -174,7 +171,6 @@ export function StepMiddleware({
       <StepFoot
         back={
           <Button
-            density="brand"
             variant="ghost"
             onPress={onBack}
             leadingIcon={<ArrowLeftIcon />}
@@ -184,7 +180,6 @@ export function StepMiddleware({
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onNext}
             trailingIcon={<ArrowRightIcon />}

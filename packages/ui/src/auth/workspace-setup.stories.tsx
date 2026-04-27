@@ -81,7 +81,7 @@ export const Live: Story = {
   name: "live (capture → running → success)",
   render: () => {
     const [sub, setSub] = React.useState<"capture" | "running" | "success">(
-      "capture",
+      "capture"
     );
     const [stepIdx, setStepIdx] = React.useState(0);
     const [name, setName] = React.useState("");

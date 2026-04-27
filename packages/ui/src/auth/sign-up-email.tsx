@@ -106,25 +106,41 @@ const PERSONA_COPY: Record<
 > = {
   signup: {
     eyebrow: "Step 01 · Email",
-    title: <>Start your <em>workspace.</em></>,
+    title: (
+      <>
+        Start your <em>workspace.</em>
+      </>
+    ),
     lede: "We'll detect your workspace and route you to the right place.",
     emailLabel: "Work email",
   },
   founder: {
     eyebrow: "Step 01 · Email",
-    title: <>Build your <em>company&rsquo;s stream.</em></>,
+    title: (
+      <>
+        Build your <em>company&rsquo;s stream.</em>
+      </>
+    ),
     lede: "Two minutes to set up. We'll wire your team's first events together.",
     emailLabel: "Work email",
   },
   sales: {
     eyebrow: "Step 01 · Email",
-    title: <>Start your <em>workspace.</em></>,
+    title: (
+      <>
+        Start your <em>workspace.</em>
+      </>
+    ),
     lede: "Two minutes, then your sales events stream live.",
     emailLabel: "Work email",
   },
   engineer: {
     eyebrow: "Step 01 · Email",
-    title: <>Provision a <em>workspace.</em></>,
+    title: (
+      <>
+        Provision a <em>workspace.</em>
+      </>
+    ),
     lede: "Three steps. Then drop in your SDK key and start emitting events.",
     emailLabel: "Work email",
   },
@@ -253,7 +269,6 @@ export function SignUpEmail({
             type="email"
             autoComplete="email"
             placeholder="ada@company.com"
-            density="brand"
             variant="auth"
             invalid={!!emailErr}
             value={v.email}
@@ -270,8 +285,8 @@ export function SignUpEmail({
               tone="neutral"
               label={
                 <span>
-                  Checking <b className="text-ink-hi">{deriveDomain(v.email)}</b>
-                  …
+                  Checking{" "}
+                  <b className="text-ink-hi">{deriveDomain(v.email)}</b>…
                 </span>
               }
             />
@@ -307,9 +322,9 @@ export function SignUpEmail({
             }
           >
             Owner-initiated invites land in your inbox from{" "}
-            <code className="font-mono">noreply@workos.com</code>. If you can&rsquo;t
-            find one, ask your admin to send you one — sign-ups can&rsquo;t join
-            an existing workspace directly.
+            <code className="font-mono">noreply@workos.com</code>. If you
+            can&rsquo;t find one, ask your admin to send you one — sign-ups
+            can&rsquo;t join an existing workspace directly.
           </InlineAlert>
         ) : null}
 
@@ -323,8 +338,7 @@ export function SignUpEmail({
                   type="button"
                   disabled={!discover?.inviteId || !onResendInvite}
                   onClick={() => {
-                    if (discover?.inviteId)
-                      onResendInvite?.(discover.inviteId);
+                    if (discover?.inviteId) onResendInvite?.(discover.inviteId);
                   }}
                   className="font-medium text-ink-hi underline-offset-2 hover:underline disabled:text-ink-faint"
                 >
@@ -349,14 +363,13 @@ export function SignUpEmail({
 
       <StepFoot
         back={
-          <Button density="brand" variant="ghost" onPress={onSignIn}>
+          <Button variant="ghost" onPress={onSignIn}>
             Already have an account? Sign in
           </Button>
         }
         next={
           isSSO ? (
             <Button
-              density="brand"
               variant="ember"
               isLoading={ssoLoading === "saml"}
               onPress={() => onSSO?.("saml")}
@@ -366,7 +379,6 @@ export function SignUpEmail({
             </Button>
           ) : (
             <Button
-              density="brand"
               variant="ember"
               isLoading={isSubmitting}
               isDisabled={!canSubmit}
@@ -423,8 +435,9 @@ function DiscoverStrip({
           orgName={discover.orgName}
           label={
             <>
-              <b className="text-ink-hi">{orgName}</b> already uses Chronicle. If
-              you were invited, check your inbox for an invite from your admin.
+              <b className="text-ink-hi">{orgName}</b> already uses Chronicle.
+              If you were invited, check your inbox for an invite from your
+              admin.
             </>
           }
         />
@@ -437,8 +450,9 @@ function DiscoverStrip({
           label={
             <>
               You have a pending invite from{" "}
-              <b className="text-ink-hi">{orgName}</b> — check your email for the
-              link from <code className="font-mono">noreply@workos.com</code>.
+              <b className="text-ink-hi">{orgName}</b> — check your email for
+              the link from{" "}
+              <code className="font-mono">noreply@workos.com</code>.
             </>
           }
         />

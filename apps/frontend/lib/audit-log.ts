@@ -8,6 +8,8 @@ export interface AppendAuditLogParams {
   payload?: Record<string, unknown>;
 }
 
-export async function appendAuditLog(_params: AppendAuditLogParams): Promise<void> {
+export async function appendAuditLog(
+  _params: AppendAuditLogParams
+): Promise<void> {
   // Audit logging is handled by Rust backend handlers
 }

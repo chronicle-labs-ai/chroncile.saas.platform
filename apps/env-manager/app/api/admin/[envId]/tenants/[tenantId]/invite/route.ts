@@ -14,7 +14,9 @@ export async function POST(
   }
 
   let body: { email: string; name?: string; sendEmail?: boolean };
-  try { body = await req.json(); } catch {
+  try {
+    body = await req.json();
+  } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
@@ -22,7 +24,10 @@ export async function POST(
     const res = await backendFetch(
       env.flyAppUrl,
       `/api/platform/admin/tenants/${tenantId}/invite`,
-      { method: "POST", body: JSON.stringify({ email: body.email, name: body.name }) },
+      {
+        method: "POST",
+        body: JSON.stringify({ email: body.email, name: body.name }),
+      },
       env.serviceSecret
     );
 
@@ -32,13 +37,20 @@ export async function POST(
       data = text ? JSON.parse(text) : {};
     } catch {
       return NextResponse.json(
-        { error: `Backend returned invalid JSON (HTTP ${res.status}): ${text.slice(0, 200)}` },
+        {
+          error: `Backend returned invalid JSON (HTTP ${res.status}): ${text.slice(0, 200)}`,
+        },
         { status: 502 }
       );
     }
 
     if (!res.ok) {
-      return NextResponse.json({ error: (data.error as string) ?? `Invite failed (HTTP ${res.status})` }, { status: res.status });
+      return NextResponse.json(
+        {
+          error: (data.error as string) ?? `Invite failed (HTTP ${res.status})`,
+        },
+        { status: res.status }
+      );
     }
 
     let emailSent = false;
@@ -52,10 +64,20 @@ export async function POST(
           undefined,
           env.serviceSecret
         );
-        let tenantsData: { tenants?: Array<{ id: string; name?: string }> } | null = null;
+        let tenantsData: {
+          tenants?: Array<{ id: string; name?: string }>;
+        } | null = null;
         if (tenantRes.ok) {
           const t = await tenantRes.text();
-          try { tenantsData = t ? (JSON.parse(t) as { tenants?: Array<{ id: string; name?: string }> }) : null; } catch { /* ignore */ }
+          try {
+            tenantsData = t
+              ? (JSON.parse(t) as {
+                  tenants?: Array<{ id: string; name?: string }>;
+                })
+              : null;
+          } catch {
+            /* ignore */
+          }
         }
         const tenant = tenantsData?.tenants?.find((t) => t.id === tenantId);
         const orgName = tenant?.name ?? "your organization";

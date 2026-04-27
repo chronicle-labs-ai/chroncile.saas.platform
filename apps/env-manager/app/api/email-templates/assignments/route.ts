@@ -41,19 +41,29 @@ export async function PUT(request: Request) {
     where: { id: templateKeyId },
   });
   if (!templateKey) {
-    return NextResponse.json({ error: "Template key not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Template key not found" },
+      { status: 404 }
+    );
   }
 
   if (environmentId) {
-    const env = await prisma.environment.findUnique({ where: { id: environmentId } });
+    const env = await prisma.environment.findUnique({
+      where: { id: environmentId },
+    });
     if (!env) {
-      return NextResponse.json({ error: "Environment not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Environment not found" },
+        { status: 404 }
+      );
     }
   }
 
   const existing = environmentId
     ? await prisma.emailTemplateAssignment.findUnique({
-        where: { templateKeyId_environmentId: { templateKeyId, environmentId } },
+        where: {
+          templateKeyId_environmentId: { templateKeyId, environmentId },
+        },
       })
     : await prisma.emailTemplateAssignment.findFirst({
         where: { templateKeyId, environmentId: null },

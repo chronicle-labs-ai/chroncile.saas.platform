@@ -32,10 +32,19 @@ interface EnvironmentRow {
 
 interface DeepHealthResponse {
   status: "healthy" | "degraded" | "unhealthy";
-  services: Record<string, { status: "up" | "down" | "unconfigured"; latencyMs?: number; error?: string }>;
+  services: Record<
+    string,
+    {
+      status: "up" | "down" | "unconfigured";
+      latencyMs?: number;
+      error?: string;
+    }
+  >;
 }
 
-async function fetchDeepHealth(flyAppUrl: string): Promise<DeepHealthResponse | null> {
+async function fetchDeepHealth(
+  flyAppUrl: string
+): Promise<DeepHealthResponse | null> {
   try {
     const res = await fetch(`${flyAppUrl}/health/ready`, {
       signal: AbortSignal.timeout(15_000),
@@ -90,8 +99,10 @@ async function pollEnvironment(env: EnvironmentRow): Promise<void> {
     }
   }
 
-  const backendHealthy = backendStatus !== null && backendStatus >= 200 && backendStatus < 300;
-  const frontendHealthy = frontendStatus !== null && frontendStatus >= 200 && frontendStatus < 300;
+  const backendHealthy =
+    backendStatus !== null && backendStatus >= 200 && backendStatus < 300;
+  const frontendHealthy =
+    frontendStatus !== null && frontendStatus >= 200 && frontendStatus < 300;
   const isHealthy = backendHealthy && frontendHealthy;
 
   const now = new Date();

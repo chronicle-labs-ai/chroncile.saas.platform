@@ -1388,3 +1388,415 @@ button.step-rail-marker:focus-visible {
 [data-theme="light"] .pip {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
+
+/* ── Product chrome overrides ──────────────────────────────
+   When `data-chrome="product"` is on an ancestor, swap the
+   editorial mono-uppercase typography for Linear-density
+   sans-medium. Surface / border colors already remap through
+   `chrome.css` so we only override fonts, casing, and a
+   handful of geometric tokens (radius, padding) here.
+   ───────────────────────────────────────────────────────── */
+
+[data-chrome="product"] .cmodal-header,
+[data-chrome="product"] .cmodal-foot {
+  padding: 14px 18px;
+}
+
+[data-chrome="product"] .cmodal-glyph {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--l-wash-3);
+}
+
+[data-chrome="product"] .cmodal-title {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.005em;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .cmodal-sub {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 12.5px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .cmodal-body {
+  padding: 18px;
+}
+
+[data-chrome="product"] .cmodal-eyebrow {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .cmodal-copy {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .cmodal-foot-meta,
+[data-chrome="product"] .cmodal-foot-meta-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .cmodal-foot-meta-label {
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .cfield {
+  gap: 6px;
+}
+
+[data-chrome="product"] .cfield-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .cfield-hint {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: normal;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .cfield-help {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .cfield-error {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--c-event-red);
+}
+
+[data-chrome="product"] .cinput-readonly,
+[data-chrome="product"] .cinput-select {
+  border-radius: 6px;
+  min-height: 32px;
+}
+
+[data-chrome="product"] .cinput-readonly[data-mono="true"] {
+  font-family: var(--font-mono);
+}
+
+[data-chrome="product"] .cinput-readonly-value {
+  font-size: 12.5px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .mode-pill {
+  padding: 2px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+[data-chrome="product"] .mode-pill-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+
+[data-chrome="product"] .mode-pill-btn[data-active] {
+  background: var(--l-surface-input);
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .ccode-cap {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11.5px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .ccode {
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .scope-list-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .scope-list-reason {
+  font-size: 12.5px;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .scope-list-tag {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+[data-chrome="product"] .step-rail {
+  padding-right: 14px;
+}
+
+[data-chrome="product"] .step-rail-marker {
+  width: 20px;
+  height: 20px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 10.5px;
+}
+
+[data-chrome="product"] .step-rail-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .step-rail-row[data-state="idle"] .step-rail-label {
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .step-rail-hint {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .evt-chip-group-h {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .evt-chip {
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .evt-chip[data-active] {
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .evt-recv {
+  border-radius: 6px;
+  font-size: 11.5px;
+}
+
+[data-chrome="product"] .ws-combo {
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .ch-list,
+[data-chrome="product"] .obj-row {
+  border-radius: 6px;
+}
+
+[data-chrome="product"] .ch-row {
+  font-size: 12.5px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .ch-name,
+[data-chrome="product"] .obj-name {
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .map-table {
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+[data-chrome="product"] .map-table th {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .map-table-src,
+[data-chrome="product"] .map-table-dst {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .map-table-mode select {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  border-radius: 4px;
+}
+
+[data-chrome="product"] .test-bar {
+  border-radius: 6px;
+}
+
+[data-chrome="product"] .test-bar-label {
+  font-size: 12.5px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .test-bar-detail {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .numlist > li {
+  font-size: 12.5px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .numlist > li::before {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 10.5px;
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .vp-frame {
+  border-radius: 6px;
+}
+
+[data-chrome="product"] .vp-cap,
+[data-chrome="product"] .vp-meta,
+[data-chrome="product"] .vp-time,
+[data-chrome="product"] .vp-time-sep,
+[data-chrome="product"] .vp-chapter {
+  font-family: var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+[data-chrome="product"] .vp-chapter {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .watch-pill {
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: normal;
+  color: var(--l-ink-lo);
+}
+
+[data-chrome="product"] .watch-pill[data-expanded] {
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .watch-pill-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12.5px;
+}
+
+[data-chrome="product"] .watch-pill-dur {
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .watch-expanded {
+  border-radius: 6px;
+}
+
+[data-chrome="product"] .vr-aside {
+  padding-left: 18px;
+}
+
+[data-chrome="product"] .vr-ch-btn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .vr-ch-time {
+  font-family: var(--font-mono);
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .vr-ch-row[data-active] .vr-ch-time {
+  color: var(--c-ember);
+}
+
+[data-chrome="product"] .vr-ch-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+[data-chrome="product"] .pip {
+  border-radius: 8px;
+}
+
+[data-chrome="product"] .pip-launch {
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: normal;
+}
+
+[data-chrome="product"] .step-clip-card {
+  border-radius: 6px;
+}
+
+[data-chrome="product"] .step-clip-card-num {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 10.5px;
+  color: var(--l-ink-dim);
+}
+
+[data-chrome="product"] .step-clip-card-label {
+  font-size: 12.5px;
+  color: var(--l-ink);
+}
+
+[data-chrome="product"] .step-clip-card-time {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--l-ink-dim);
+}

@@ -3,8 +3,7 @@ import { cx } from "../utils/cx";
 
 export type TurnState = "hit" | "miss" | "empty";
 
-export interface TurnDiffStripProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface TurnDiffStripProps extends React.HTMLAttributes<HTMLDivElement> {
   turns: TurnState[];
   height?: number;
   /** Gap between bars in px. */

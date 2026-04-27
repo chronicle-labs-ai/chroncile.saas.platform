@@ -7,6 +7,7 @@ import {
 } from "react-aria-components/Button";
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * SSOButton — branded "Continue with Google / GitHub / Passkey" button.
@@ -21,26 +22,46 @@ export type SSOProvider = "google" | "github" | "passkey" | "custom";
 const sso = tv({
   slots: {
     base:
-      "group inline-flex w-full h-[44px] items-center gap-s-3 px-s-3 " +
-      "rounded-sm border border-hairline-strong bg-surface-01 " +
-      "font-sans text-[13.5px] font-medium text-ink-hi " +
+      "group inline-flex w-full items-center border " +
       "transition-[background-color,border-color,color] duration-fast ease-out " +
-      "data-[hovered=true]:bg-surface-02 data-[hovered=true]:border-ink-dim " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember " +
       "data-[disabled=true]:opacity-40 data-[disabled=true]:cursor-not-allowed " +
       "data-[pending=true]:cursor-wait",
-    icon:
-      "inline-flex h-5 w-5 shrink-0 items-center justify-center text-ink",
+    icon: "inline-flex shrink-0 items-center justify-center",
     label: "flex-1 text-left",
-    kbd:
-      "inline-flex h-[18px] min-w-[18px] items-center justify-center " +
-      "rounded-l-sm bg-surface-03 px-[5px] font-mono text-mono-sm " +
-      "text-ink-dim",
+    kbd: "inline-flex items-center justify-center",
     spinner:
-      "h-4 w-4 shrink-0 animate-spin rounded-full border-2 " +
+      "shrink-0 animate-spin rounded-full border-2 " +
       "border-current border-t-transparent",
   },
+  variants: {
+    density: {
+      brand: {
+        base:
+          "h-[44px] gap-s-3 px-s-3 rounded-sm border-hairline-strong bg-surface-01 " +
+          "font-sans text-[13.5px] font-medium text-ink-hi " +
+          "data-[hovered=true]:bg-surface-02 data-[hovered=true]:border-ink-dim",
+        icon: "h-5 w-5 text-ink",
+        kbd:
+          "h-[18px] min-w-[18px] rounded-l-sm bg-surface-03 px-[5px] " +
+          "font-mono text-mono-sm text-ink-dim",
+        spinner: "h-4 w-4",
+      },
+      compact: {
+        base:
+          "h-[32px] gap-[8px] px-[10px] rounded-l border-l-border bg-l-surface-raised " +
+          "font-sans text-[13px] font-medium text-l-ink " +
+          "data-[hovered=true]:bg-l-surface-hover data-[hovered=true]:border-l-border-strong",
+        icon: "h-4 w-4 text-l-ink",
+        kbd:
+          "h-[16px] min-w-[16px] rounded-l-sm bg-l-wash-3 px-[4px] " +
+          "font-sans text-[10px] font-medium text-l-ink-dim",
+        spinner: "h-3.5 w-3.5",
+      },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
 const GoogleGlyph = () => (
@@ -77,20 +98,8 @@ const GithubGlyph = () => (
 );
 
 const PasskeyGlyph = () => (
-  <svg
-    viewBox="0 0 16 16"
-    width="18"
-    height="18"
-    fill="none"
-    aria-hidden
-  >
-    <circle
-      cx="5.5"
-      cy="5.5"
-      r="2.5"
-      stroke="currentColor"
-      strokeWidth="1.3"
-    />
+  <svg viewBox="0 0 16 16" width="18" height="18" fill="none" aria-hidden>
+    <circle cx="5.5" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
     <path
       d="M7.5 7.2l5.6 5.6M11.4 11.1l1.6-1M9.9 9.6L11.4 8.3"
       stroke="currentColor"
@@ -114,8 +123,10 @@ const PROVIDER_GLYPH: Record<SSOProvider, React.ReactNode> = {
   custom: null,
 };
 
-export interface SSOButtonProps
-  extends Omit<RACButtonProps, "className" | "children"> {
+export interface SSOButtonProps extends Omit<
+  RACButtonProps,
+  "className" | "children"
+> {
   /** SSO provider preset. Use `"custom"` and pass `icon` + `children`. */
   provider: SSOProvider;
   /** Override the default label for the provider. */
@@ -126,6 +137,9 @@ export interface SSOButtonProps
   kbd?: React.ReactNode;
   /** Loading state — disables and swaps the icon for a spinner. */
   isLoading?: boolean;
+  /** Force a density flavor. Defaults to whichever the surrounding
+   * `ChromeStyleProvider` resolves to. */
+  density?: "compact" | "brand";
   className?: string;
 }
 
@@ -141,11 +155,13 @@ export function SSOButton({
   kbd,
   isLoading,
   isPending,
+  density: densityProp,
   className,
   isDisabled,
   ...rest
 }: SSOButtonProps) {
-  const slots = sso();
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = sso({ density });
   const pending = isLoading ?? isPending;
   const label = children ?? PROVIDER_LABEL[provider];
   const glyph = icon ?? PROVIDER_GLYPH[provider];
@@ -154,6 +170,7 @@ export function SSOButton({
     <RACButton
       type="button"
       data-provider={provider}
+      data-density={density}
       isPending={pending}
       isDisabled={isDisabled || pending}
       className={composeTwRenderProps(undefined, slots.base({ className }))}

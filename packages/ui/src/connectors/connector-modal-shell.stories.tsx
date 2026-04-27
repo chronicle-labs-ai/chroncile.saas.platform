@@ -38,12 +38,10 @@ function BasicDemo() {
           ),
           actions: (
             <>
-              <Button density="brand" variant="ghost" onPress={() => setOpen(false)}>
+              <Button variant="ghost" onPress={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button density="brand" variant="ember">
-                Continue →
-              </Button>
+              <Button variant="ember">Continue →</Button>
             </>
           ),
         }}
@@ -72,12 +70,8 @@ function WithStepperDemo() {
       footer={{
         actions: (
           <>
-            <Button density="brand" variant="ghost">
-              Back
-            </Button>
-            <Button density="brand" variant="ember">
-              Next →
-            </Button>
+            <Button variant="ghost">Back</Button>
+            <Button variant="ember">Next →</Button>
           </>
         ),
       }}
@@ -101,7 +95,7 @@ function WideXLDemo() {
       sub="Walkthrough · paste credentials → authorize → done"
       size="xl"
       footer={
-        <Button density="brand" variant="ember" onPress={() => setOpen(false)}>
+        <Button variant="ember" onPress={() => setOpen(false)}>
           Close
         </Button>
       }

@@ -19,22 +19,20 @@
 
 /* eslint-disable no-console, react-refresh/only-export-components */
 
-import type {
-  AllHTMLAttributes,
-  ForwardedRef,
-  ReactElement,
-  JSX,
-} from "react";
+import type { AllHTMLAttributes, ForwardedRef, ReactElement, JSX } from "react";
 
 import { mergeRefs, useLayoutEffect } from "@react-aria/utils";
 import React, { createElement, forwardRef, useMemo, useRef } from "react";
 
-export type DOMRenderFunction<E extends keyof JSX.IntrinsicElements, T = unknown> = (
-  props: JSX.IntrinsicElements[E],
-  renderProps: T,
-) => ReactElement;
+export type DOMRenderFunction<
+  E extends keyof JSX.IntrinsicElements,
+  T = unknown,
+> = (props: JSX.IntrinsicElements[E], renderProps: T) => ReactElement;
 
-export interface DOMRenderProps<E extends keyof JSX.IntrinsicElements, T = unknown> {
+export interface DOMRenderProps<
+  E extends keyof JSX.IntrinsicElements,
+  T = unknown,
+> {
   /**
    * Overrides the default DOM element with a custom render function.
    * This allows rendering existing components with built-in styles and
@@ -55,13 +53,13 @@ export interface DOMRenderProps<E extends keyof JSX.IntrinsicElements, T = unkno
 function DOMElement<E extends keyof JSX.IntrinsicElements>(
   ElementType: E,
   props: DOMRenderProps<E> & AllHTMLAttributes<HTMLElement>,
-  forwardedRef: ForwardedRef<HTMLElement>,
+  forwardedRef: ForwardedRef<HTMLElement>
 ) {
   const { render, ...otherProps } = props;
   const elementRef = useRef<HTMLElement | null>(null);
   const ref = useMemo(
     () => mergeRefs(forwardedRef, elementRef),
-    [forwardedRef, elementRef],
+    [forwardedRef, elementRef]
   );
 
   useLayoutEffect(() => {
@@ -72,7 +70,7 @@ function DOMElement<E extends keyof JSX.IntrinsicElements>(
     ) {
       if (!elementRef.current) {
         console.warn(
-          "Ref was not connected to DOM element returned by custom `render` function. Did you forget to pass through or merge the `ref`?",
+          "Ref was not connected to DOM element returned by custom `render` function. Did you forget to pass through or merge the `ref`?"
         );
       }
     }
@@ -90,7 +88,7 @@ function DOMElement<E extends keyof JSX.IntrinsicElements>(
 
 type DOMComponents = {
   [E in keyof JSX.IntrinsicElements]: (
-    props: DOMRenderProps<E> & JSX.IntrinsicElements[E],
+    props: DOMRenderProps<E> & JSX.IntrinsicElements[E]
   ) => ReactElement;
 };
 
@@ -115,13 +113,13 @@ export const dom = new Proxy(
         res = forwardRef(
           DOMElement.bind(
             null,
-            elementType as keyof JSX.IntrinsicElements,
-          ) as never,
+            elementType as keyof JSX.IntrinsicElements
+          ) as never
         );
         domComponentCache[elementType] = res;
       }
 
       return res;
     },
-  },
+  }
 ) as DOMComponents;

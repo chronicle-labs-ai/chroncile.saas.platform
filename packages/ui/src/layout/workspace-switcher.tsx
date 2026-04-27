@@ -98,8 +98,7 @@ const switcherStyles = tv({
       "data-[pressed=true]:bg-surface-03",
     identity: "flex min-w-0 flex-col",
     name: "truncate font-sans text-sm text-ink-hi",
-    plan:
-      "truncate font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
+    plan: "truncate font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
     chevron:
       "ml-auto h-4 w-4 shrink-0 text-ink-dim transition-transform duration-fast " +
       "group-data-[open=true]/trigger:rotate-180",
@@ -128,16 +127,14 @@ const switcherStyles = tv({
     itemPlan:
       "truncate font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
     check: "ml-auto h-4 w-4 shrink-0 text-ember",
-    footer:
-      "border-t border-hairline p-s-1 flex flex-col gap-[2px]",
+    footer: "border-t border-hairline p-s-1 flex flex-col gap-[2px]",
     footerAction:
       "flex items-center gap-s-2 rounded-xs px-s-3 py-s-2 text-left " +
       "font-sans text-sm text-ink-lo outline-none " +
       "data-[hovered=true]:bg-surface-03 data-[hovered=true]:text-ink-hi " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember",
-    emptyState:
-      "px-s-3 py-s-4 text-center font-mono text-mono-sm text-ink-dim",
+    emptyState: "px-s-3 py-s-4 text-center font-mono text-mono-sm text-ink-dim",
   },
 });
 
@@ -171,7 +168,7 @@ function useSwitcherContext(from: string): WorkspaceSwitcherContextValue {
   const ctx = React.useContext(WorkspaceSwitcherContext);
   if (!ctx) {
     throw new Error(
-      `WorkspaceSwitcher.${from} must be rendered inside <WorkspaceSwitcher>.`,
+      `WorkspaceSwitcher.${from} must be rendered inside <WorkspaceSwitcher>.`
     );
   }
   return ctx;
@@ -224,7 +221,7 @@ export interface WorkspaceSwitcherRootProps {
 
 function groupBy<T>(
   items: T[],
-  keyOf: (item: T) => string | undefined,
+  keyOf: (item: T) => string | undefined
 ): Array<{ key: string | undefined; items: T[] }> {
   const seenOrder: Array<string | undefined> = [];
   const buckets = new Map<string | undefined, T[]>();
@@ -258,7 +255,7 @@ function WorkspaceSwitcherRoot({
   const slots = React.useMemo(() => switcherStyles(), []);
 
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
-    defaultOpen ?? false,
+    defaultOpen ?? false
   );
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : uncontrolledOpen;
@@ -267,7 +264,7 @@ function WorkspaceSwitcherRoot({
       if (!isControlled) setUncontrolledOpen(next);
       onOpenChange?.(next);
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   );
 
   const [query, setQuery] = React.useState("");
@@ -296,7 +293,7 @@ function WorkspaceSwitcherRoot({
     return workspaces.filter(
       (w) =>
         w.name.toLowerCase().includes(q) ||
-        (w.plan ?? "").toLowerCase().includes(q),
+        (w.plan ?? "").toLowerCase().includes(q)
     );
   }, [workspaces, query]);
 
@@ -330,7 +327,7 @@ function WorkspaceSwitcherRoot({
       isOpen,
       setOpen,
       triggerWidth,
-    ],
+    ]
   );
 
   return (
@@ -410,7 +407,7 @@ function WorkspaceSwitcherTrigger({
       data-slot="workspace-switcher-trigger"
       className={composeTwRenderProps(
         className,
-        `group/trigger ${slots.trigger()}`,
+        `group/trigger ${slots.trigger()}`
       )}
       aria-label="Switch workspace"
     >
@@ -497,7 +494,10 @@ function WorkspaceSwitcherSearch({
   if (!shouldRender) return null;
 
   return (
-    <div data-slot="workspace-switcher-search" className={slots.search({ className })}>
+    <div
+      data-slot="workspace-switcher-search"
+      className={slots.search({ className })}
+    >
       <RACSearchField
         aria-label={searchPlaceholder}
         value={query}
@@ -570,7 +570,8 @@ function WorkspaceSwitcherList({
           const rows = items.map((w) => (
             <WorkspaceSwitcherItem key={w.id} workspace={w} />
           ));
-          if (!key) return <React.Fragment key="__ungrouped">{rows}</React.Fragment>;
+          if (!key)
+            return <React.Fragment key="__ungrouped">{rows}</React.Fragment>;
           return (
             <WorkspaceSwitcherSection key={key} title={key}>
               {rows}

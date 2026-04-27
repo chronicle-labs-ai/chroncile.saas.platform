@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import type { ContainerStatus, DbInfo } from "@/lib/local-db";
-import { ActionButton, Spinner, containerDotClass, type ActionState } from "./shared";
+import {
+  ActionButton,
+  Spinner,
+  containerDotClass,
+  type ActionState,
+} from "./shared";
 
 export function ContainerPanel({
   container,
@@ -25,7 +30,7 @@ export function ContainerPanel({
   const doAction = async (
     url: string,
     setter: (s: ActionState) => void,
-    body?: object,
+    body?: object
   ) => {
     setter("loading");
     try {
@@ -46,7 +51,9 @@ export function ContainerPanel({
     <div className="panel">
       <div className="panel__header">
         <div className="flex items-center gap-2">
-          <span className={`status-dot ${containerDotClass(container.state)}`} />
+          <span
+            className={`status-dot ${containerDotClass(container.state)}`}
+          />
           <span className="panel__title">Docker Postgres</span>
         </div>
         <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider">
@@ -57,7 +64,9 @@ export function ContainerPanel({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <span className="label block mb-1">State</span>
-            <span className="font-mono text-sm text-primary">{container.state}</span>
+            <span className="font-mono text-sm text-primary">
+              {container.state}
+            </span>
           </div>
           <div>
             <span className="label block mb-1">Container ID</span>
@@ -83,15 +92,21 @@ export function ContainerPanel({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-border-dim">
             <div>
               <span className="label block mb-1">Tables</span>
-              <span className="font-mono text-sm text-primary">{dbInfo.tableCount}</span>
+              <span className="font-mono text-sm text-primary">
+                {dbInfo.tableCount}
+              </span>
             </div>
             <div>
               <span className="label block mb-1">Connections</span>
-              <span className="font-mono text-sm text-primary">{dbInfo.activeConnections}</span>
+              <span className="font-mono text-sm text-primary">
+                {dbInfo.activeConnections}
+              </span>
             </div>
             <div className="col-span-2">
               <span className="label block mb-1">Database URL</span>
-              <span className="font-mono text-[11px] text-secondary break-all">{databaseUrl}</span>
+              <span className="font-mono text-[11px] text-secondary break-all">
+                {databaseUrl}
+              </span>
             </div>
           </div>
         )}
@@ -119,14 +134,21 @@ export function ContainerPanel({
               <button
                 onClick={() => {
                   setConfirmReset(false);
-                  doAction("/api/local-db/reset", setResetState, { migrate: true });
+                  doAction("/api/local-db/reset", setResetState, {
+                    migrate: true,
+                  });
                 }}
                 className="btn btn--critical btn--sm"
                 disabled={resetState === "loading"}
               >
                 {resetState === "loading" ? (
-                  <span className="flex items-center gap-2"><Spinner />Resetting...</span>
-                ) : "Confirm Reset"}
+                  <span className="flex items-center gap-2">
+                    <Spinner />
+                    Resetting...
+                  </span>
+                ) : (
+                  "Confirm Reset"
+                )}
               </button>
               <button
                 onClick={() => setConfirmReset(false)}

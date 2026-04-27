@@ -2,12 +2,7 @@
 
 import React, { useCallback, useState, useEffect } from "react";
 import type { Stream, RecordingState, StreamId } from "./types";
-import {
-  REC_IDLE,
-  REC_SELECTING,
-  recRecording,
-  recPendingSave,
-} from "./types";
+import { REC_IDLE, REC_SELECTING, recRecording, recPendingSave } from "./types";
 import { TIMELINE_THEME } from "@/components/timeline/constants";
 
 const LIVE_API_STREAM_ID = "live-api";
@@ -43,7 +38,9 @@ function RecordingDuration({
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      setElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+      setElapsedSeconds(
+        Math.max(0, Math.round((Date.now() - startedAt) / 1000))
+      );
     }, 1000);
 
     return () => window.clearInterval(id);
@@ -75,7 +72,9 @@ export function StreamsPanel({
   );
 
   const startSelecting = useCallback(() => {
-    setStreamsToRecord(new Set(streams.filter((s) => s.enabled).map((s) => s.id)));
+    setStreamsToRecord(
+      new Set(streams.filter((s) => s.enabled).map((s) => s.id))
+    );
     onRecordingStateChange(REC_SELECTING);
   }, [streams, onRecordingStateChange]);
 
@@ -86,7 +85,9 @@ export function StreamsPanel({
 
   const stopRecording = useCallback(() => {
     if (recordingState.kind !== "Recording") return;
-    const durationSecs = Math.round((Date.now() - recordingState.startedAt) / 1000);
+    const durationSecs = Math.round(
+      (Date.now() - recordingState.startedAt) / 1000
+    );
     onRecordingStateChange(
       recPendingSave(
         recordingState.eventCount,
@@ -176,7 +177,9 @@ export function StreamsPanel({
                 >
                   ⏺ REC
                 </button>
-                <span style={{ fontSize: 11, color: TIMELINE_THEME.text_muted }}>
+                <span
+                  style={{ fontSize: 11, color: TIMELINE_THEME.text_muted }}
+                >
                   Record events to file
                 </span>
               </div>
@@ -184,10 +187,14 @@ export function StreamsPanel({
 
             {recordingState.kind === "SelectingStreams" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <span style={{ fontSize: 11, color: TIMELINE_THEME.text_muted }}>
+                <span
+                  style={{ fontSize: 11, color: TIMELINE_THEME.text_muted }}
+                >
                   📼 Select streams to record
                 </span>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                >
                   {streams.map((s) => (
                     <label
                       key={s.id}
@@ -244,7 +251,14 @@ export function StreamsPanel({
             )}
 
             {recordingState.kind === "Recording" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
                 <button
                   type="button"
                   onClick={stopRecording}
@@ -260,7 +274,10 @@ export function StreamsPanel({
                 >
                   ⏹ STOP
                 </button>
-                <span className="animate-pulse" style={{ fontSize: 11, color: TIMELINE_THEME.playhead }}>
+                <span
+                  className="animate-pulse"
+                  style={{ fontSize: 11, color: TIMELINE_THEME.playhead }}
+                >
                   RECORDING
                 </span>
                 <RecordingDuration
@@ -276,8 +293,11 @@ export function StreamsPanel({
                 <span style={{ fontSize: 12, color: TIMELINE_THEME.accent }}>
                   ✓ Recording Complete
                 </span>
-                <span style={{ fontSize: 11, color: TIMELINE_THEME.text_muted }}>
-                  {recordingState.eventCount} events · {recordingState.durationSecs}s
+                <span
+                  style={{ fontSize: 11, color: TIMELINE_THEME.text_muted }}
+                >
+                  {recordingState.eventCount} events ·{" "}
+                  {recordingState.durationSecs}s
                 </span>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -333,11 +353,19 @@ export function StreamsPanel({
                     width: 8,
                     height: 8,
                     borderRadius: 2,
-                    background: s.enabled ? TIMELINE_THEME.accent : TIMELINE_THEME.text_muted,
+                    background: s.enabled
+                      ? TIMELINE_THEME.accent
+                      : TIMELINE_THEME.text_muted,
                   }}
                 />
                 <span>{s.name}</span>
-                <span style={{ marginLeft: "auto", color: TIMELINE_THEME.text_muted, fontFamily: "monospace" }}>
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    color: TIMELINE_THEME.text_muted,
+                    fontFamily: "monospace",
+                  }}
+                >
                   {s.event_count}
                 </span>
               </div>

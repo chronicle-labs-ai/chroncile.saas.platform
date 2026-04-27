@@ -10,10 +10,7 @@ import {
   useMemo,
   useRef,
 } from "react";
-import {
-  getAnalyticsClient,
-  noopAnalyticsClient,
-} from "./client";
+import { getAnalyticsClient, noopAnalyticsClient } from "./client";
 import type { AnalyticsClient, AnalyticsProperties } from "./types";
 
 const AnalyticsContext = createContext<AnalyticsClient>(noopAnalyticsClient);
@@ -34,11 +31,7 @@ function getIdentity(user?: Session["user"]) {
   };
 }
 
-export function AnalyticsProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const analytics = useMemo(() => getAnalyticsClient(), []);
   const { data: session } = useSession();
   const lastIdentityRef = useRef<string | null>(null);
@@ -81,6 +74,6 @@ export function useTrack() {
     (event: string, properties?: AnalyticsProperties) => {
       analytics.track(event, properties);
     },
-    [analytics],
+    [analytics]
   );
 }

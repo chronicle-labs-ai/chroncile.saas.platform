@@ -17,9 +17,6 @@ export async function GET() {
     return NextResponse.json(stats);
   } catch (err) {
     console.error("Failed to get stats:", err);
-    return NextResponse.json(
-      { error: "Failed to get stats" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to get stats" }, { status: 500 });
   }
 }

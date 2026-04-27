@@ -89,9 +89,13 @@ function RelativeTimeValue({ date }: { date: string }) {
   return <span>{Math.floor(hours / 24)}d ago</span>;
 }
 
-function EnvironmentCard(
-  { env, onDestroyRequest }: { env: EnvironmentRecord; onDestroyRequest: (record: EnvironmentRecord) => void }
-) {
+function EnvironmentCard({
+  env,
+  onDestroyRequest,
+}: {
+  env: EnvironmentRecord;
+  onDestroyRequest: (record: EnvironmentRecord) => void;
+}) {
   return (
     <Link
       href={`/dashboard/${env.id}`}
@@ -115,8 +119,18 @@ function EnvironmentCard(
       <div className="panel__content flex flex-col gap-3">
         {env.gitBranch && (
           <div className="flex items-center gap-2 text-xs text-secondary">
-            <svg className="w-3.5 h-3.5 text-tertiary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+            <svg
+              className="w-3.5 h-3.5 text-tertiary shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
+              />
             </svg>
             <span className="font-mono">{env.gitBranch}</span>
             {env.gitSha && (
@@ -164,7 +178,11 @@ function EnvironmentCard(
             )}
             {env.type === "EPHEMERAL" && env.status === "RUNNING" && (
               <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDestroyRequest(env); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDestroyRequest(env);
+                }}
                 className="btn btn--critical btn--sm"
               >
                 Destroy
@@ -178,7 +196,9 @@ function EnvironmentCard(
 }
 
 export function DashboardPage() {
-  const [destroyTarget, setDestroyTarget] = useState<EnvironmentRecord | null>(null);
+  const [destroyTarget, setDestroyTarget] = useState<EnvironmentRecord | null>(
+    null
+  );
   const [destroying, setDestroying] = useState(false);
 
   const { data, isLoading, mutate } = useSWR<EnvironmentRecord[]>(
@@ -245,7 +265,11 @@ export function DashboardPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {permanentEnvs.map((env) => (
-                <EnvironmentCard key={env.id} env={env} onDestroyRequest={setDestroyTarget} />
+                <EnvironmentCard
+                  key={env.id}
+                  env={env}
+                  onDestroyRequest={setDestroyTarget}
+                />
               ))}
             </div>
           </section>
@@ -265,7 +289,10 @@ export function DashboardPage() {
                   <p className="text-secondary text-sm mb-3">
                     No ephemeral environments running
                   </p>
-                  <Link href="/dashboard/new" className="btn btn--secondary btn--sm">
+                  <Link
+                    href="/dashboard/new"
+                    className="btn btn--secondary btn--sm"
+                  >
                     Spin one up from a branch
                   </Link>
                 </div>
@@ -273,7 +300,11 @@ export function DashboardPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {ephemeralEnvs.map((env) => (
-                  <EnvironmentCard key={env.id} env={env} onDestroyRequest={setDestroyTarget} />
+                  <EnvironmentCard
+                    key={env.id}
+                    env={env}
+                    onDestroyRequest={setDestroyTarget}
+                  />
                 ))}
               </div>
             )}

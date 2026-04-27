@@ -17,23 +17,20 @@ async function refreshBackendToken(token: {
   tenantSlug: string;
 }): Promise<{ backendToken: string; backendTokenExpiresAt: number } | null> {
   try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/platform/auth/token-exchange`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          service_secret: SERVICE_SECRET,
-          user_id: token.id,
-          email: token.email,
-          name: token.name,
-          role: token.role,
-          tenant_id: token.tenantId,
-          tenant_name: token.tenantName,
-          tenant_slug: token.tenantSlug,
-        }),
-      },
-    );
+    const res = await fetch(`${BACKEND_URL}/api/platform/auth/token-exchange`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_secret: SERVICE_SECRET,
+        user_id: token.id,
+        email: token.email,
+        name: token.name,
+        role: token.role,
+        tenant_id: token.tenantId,
+        tenant_name: token.tenantName,
+        tenant_slug: token.tenantSlug,
+      }),
+    });
     if (!res.ok) return null;
     const data = await res.json();
     return {
@@ -69,7 +66,7 @@ export const authConfig: NextAuthConfig = {
                 provider: "google",
                 service_secret: SERVICE_SECRET,
               }),
-            },
+            }
           );
           if (!res.ok) return false;
 
@@ -147,7 +144,8 @@ export const authConfig: NextAuthConfig = {
         if (isLoggedIn) return true;
         return false;
       } else if (isOnAuth) {
-        if (isLoggedIn) return Response.redirect(new URL("/dashboard", nextUrl));
+        if (isLoggedIn)
+          return Response.redirect(new URL("/dashboard", nextUrl));
       }
       return true;
     },

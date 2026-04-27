@@ -11,14 +11,18 @@ import {
   type EventRowDensity,
 } from "./event-row";
 
-export interface EventStreamItem
-  extends Omit<EventRowProps, "selected" | "lane" | "density"> {
+export interface EventStreamItem extends Omit<
+  EventRowProps,
+  "selected" | "lane" | "density"
+> {
   id: string;
   lane: EventLane;
 }
 
-export interface EventStreamProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onSelect"> {
+export interface EventStreamProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onSelect"
+> {
   items: EventStreamItem[];
   /** Id of the highlighted row. Only one row highlights at a time. */
   selectedId?: string;

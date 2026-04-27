@@ -19,8 +19,8 @@ export const Default: Story = {
       <PopoverContent placement="bottom">
         <div className="p-s-4 w-[260px]">
           <p className="font-sans text-sm text-ink">
-            A popover renders above the page and closes on outside click
-            or escape. Focus is trapped while open.
+            A popover renders above the page and closes on outside click or
+            escape. Focus is trapped while open.
           </p>
         </div>
       </PopoverContent>

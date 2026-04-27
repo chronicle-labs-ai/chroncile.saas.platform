@@ -21,8 +21,10 @@ import * as React from "react";
  * — copy that pattern if your glyph reads thin at large sizes).
  */
 
-export interface IconProps
-  extends Omit<React.SVGProps<SVGSVGElement>, "width" | "height"> {
+export interface IconProps extends Omit<
+  React.SVGProps<SVGSVGElement>,
+  "width" | "height"
+> {
   /** Pixel size for both width + height. Defaults to 14. */
   size?: number;
 }
@@ -30,7 +32,7 @@ export interface IconProps
 const baseProps = (
   size: number,
   className: string | undefined,
-  rest: React.SVGProps<SVGSVGElement>,
+  rest: React.SVGProps<SVGSVGElement>
 ) => ({
   width: size,
   height: size,
@@ -42,11 +44,7 @@ const baseProps = (
 
 /* ── Form-field affordances ────────────────────────────────── */
 
-export const MailIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const MailIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
     <rect
       x="2"
@@ -67,11 +65,7 @@ export const MailIcon = ({
   </svg>
 );
 
-export const LockIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const LockIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
     <rect
       x="3"
@@ -91,11 +85,7 @@ export const LockIcon = ({
   </svg>
 );
 
-export const UserIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const UserIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
     <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.2" />
     <path
@@ -107,11 +97,7 @@ export const UserIcon = ({
   </svg>
 );
 
-export const EyeIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const EyeIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
     <path
       d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"
@@ -122,11 +108,7 @@ export const EyeIcon = ({
   </svg>
 );
 
-export const EyeOffIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const EyeOffIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
     <path
       d="M2 8s2.4-4.5 6.5-4.5c1.4 0 2.6.4 3.6.9M14.5 8s-1.5 2.8-4.4 4M3 3l10 10"
@@ -145,11 +127,7 @@ export const EyeOffIcon = ({
 
 /* ── Arrows ────────────────────────────────────────────────── */
 
-export const ArrowLeftIcon = ({
-  size = 12,
-  className,
-  ...rest
-}: IconProps) => (
+export const ArrowLeftIcon = ({ size = 12, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 12 12" {...baseProps(size, className, rest)}>
     <path
       d="M9.5 6h-7M5 2.5L1.5 6 5 9.5"
@@ -185,11 +163,7 @@ export const ArrowRightIcon = ({
  * Stroke auto-bumps to 2 above 24px so the seal-size variant stays
  * legible.
  */
-export const CheckIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const CheckIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
     <path
       d="M3 8.5L6.5 12L13 5"
@@ -201,11 +175,7 @@ export const CheckIcon = ({
   </svg>
 );
 
-export const SparkIcon = ({
-  size = 12,
-  className,
-  ...rest
-}: IconProps) => (
+export const SparkIcon = ({ size = 12, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 12 12" {...baseProps(size, className, rest)}>
     <path
       d="M6 1l1.3 3.7L11 6l-3.7 1.3L6 11l-1.3-3.7L1 6l3.7-1.3L6 1z"
@@ -214,11 +184,7 @@ export const SparkIcon = ({
   </svg>
 );
 
-export const AlertIcon = ({
-  size = 14,
-  className,
-  ...rest
-}: IconProps) => (
+export const AlertIcon = ({ size = 14, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 14 14" {...baseProps(size, className, rest)}>
     <path
       d="M7 1.5L13 12H1L7 1.5z"
@@ -237,11 +203,7 @@ export const AlertIcon = ({
 
 /* ── Copy state (clipboard) ────────────────────────────────── */
 
-export const CopyIcon = ({
-  size = 16,
-  className,
-  ...rest
-}: IconProps) => (
+export const CopyIcon = ({ size = 16, className, ...rest }: IconProps) => (
   <svg viewBox="0 0 24 24" {...baseProps(size, className, rest)}>
     <rect
       x="8"

@@ -6,8 +6,10 @@ import { GlassScene } from "../glass-scene";
 import { GlassStack } from "../glass-stack";
 import { LightSource } from "../light-source";
 
-export interface BlindsProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "color"> {
+export interface BlindsProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "color"
+> {
   /** Number of vertical slats. @default 11 */
   slats?: number;
 }

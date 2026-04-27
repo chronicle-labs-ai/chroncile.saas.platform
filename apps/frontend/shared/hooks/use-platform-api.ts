@@ -9,6 +9,6 @@ export function usePlatformApi(): PlatformApi {
 
   return useMemo(
     () => createPlatformApi(() => session?.backendToken ?? null),
-    [session?.backendToken],
+    [session?.backendToken]
   );
 }

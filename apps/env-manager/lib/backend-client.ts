@@ -6,11 +6,16 @@
 
 // Fallback global secret (used for ephemeral envs or if per-env secret not set)
 const GLOBAL_SERVICE_SECRET = process.env.SERVICE_SECRET ?? "";
-const SERVICE_USER_ID = process.env.SERVICE_USER_ID ?? "env-manager-service-account";
+const SERVICE_USER_ID =
+  process.env.SERVICE_USER_ID ?? "env-manager-service-account";
 
-const cachedTokens: Map<string, { token: string; expiresAt: number }> = new Map();
+const cachedTokens: Map<string, { token: string; expiresAt: number }> =
+  new Map();
 
-async function getServiceToken(backendUrl: string, secret: string): Promise<string | null> {
+async function getServiceToken(
+  backendUrl: string,
+  secret: string
+): Promise<string | null> {
   const cacheKey = `${backendUrl}:${secret.slice(0, 8)}`;
   const cached = cachedTokens.get(cacheKey);
   if (cached && cached.expiresAt > Date.now() + 60_000) {
@@ -72,19 +77,27 @@ export async function backendFetch(
     });
     if (adminRes.ok) return adminRes;
     // 404 = endpoint not deployed yet; 401/403 = wrong secret → fall through to JWT
-    if (adminRes.status !== 404 && adminRes.status !== 401 && adminRes.status !== 403) {
+    if (
+      adminRes.status !== 404 &&
+      adminRes.status !== 401 &&
+      adminRes.status !== 403
+    ) {
       return adminRes;
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`Backend unreachable at ${backendUrl} — ${msg}. The machine may be starting up; try again in a moment.`);
+    throw new Error(
+      `Backend unreachable at ${backendUrl} — ${msg}. The machine may be starting up; try again in a moment.`
+    );
   }
 
   // Fall back to JWT-based auth (works on all deployed backends)
   const token = await getServiceToken(backendUrl, secret);
   if (!token) {
     if (adminRes?.status === 404) {
-      throw new Error("Admin endpoint not available — backend may need to be redeployed with the latest code");
+      throw new Error(
+        "Admin endpoint not available — backend may need to be redeployed with the latest code"
+      );
     }
     throw new Error("Could not obtain service token — check SERVICE_SECRET");
   }

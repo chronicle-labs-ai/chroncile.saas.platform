@@ -16,7 +16,14 @@ interface ParsedLine {
 interface TimelineStep {
   id: string;
   label: string;
-  service: "github" | "fly" | "postgres" | "machine" | "vercel" | "health" | "rollback";
+  service:
+    | "github"
+    | "fly"
+    | "postgres"
+    | "machine"
+    | "vercel"
+    | "health"
+    | "rollback";
   status: StepStatus;
   startedAt: string | null;
   endedAt: string | null;
@@ -97,11 +104,18 @@ const STEP_DEFS: Array<{
 
 function parseLine(raw: string): ParsedLine | null {
   if (!raw.trim()) return null;
-  const m = raw.match(/^\[(\d{4}-\d{2}-\d{2}T[\d:.Z]+)\]\s+(INFO|WARN|ERROR|FATAL):\s*(.+)$/);
+  const m = raw.match(
+    /^\[(\d{4}-\d{2}-\d{2}T[\d:.Z]+)\]\s+(INFO|WARN|ERROR|FATAL):\s*(.+)$/
+  );
   if (!m) return { timestamp: "", level: "info", raw, message: raw };
   return {
     timestamp: m[1],
-    level: m[2] === "FATAL" || m[2] === "ERROR" ? "error" : m[2] === "WARN" ? "warn" : "info",
+    level:
+      m[2] === "FATAL" || m[2] === "ERROR"
+        ? "error"
+        : m[2] === "WARN"
+          ? "warn"
+          : "info",
     raw,
     message: m[3],
   };
@@ -111,7 +125,10 @@ export function parseProvisionLog(
   rawLog: string | null,
   envStatus: string
 ): TimelineStep[] {
-  const lines = (rawLog ?? "").split("\n").map(parseLine).filter(Boolean) as ParsedLine[];
+  const lines = (rawLog ?? "")
+    .split("\n")
+    .map(parseLine)
+    .filter(Boolean) as ParsedLine[];
 
   const hasRollback = lines.some((l) => /rollback/i.test(l.message));
   const isDone = envStatus === "RUNNING" || envStatus === "ERROR";
@@ -134,7 +151,10 @@ export function parseProvisionLog(
     // Detect rollback — mark all in-progress / pending steps as failed
     if (/rollback:/i.test(line.message)) {
       for (const s of steps) {
-        if (s.status === "running") { s.status = "failed"; s.endedAt = line.timestamp; }
+        if (s.status === "running") {
+          s.status = "failed";
+          s.endedAt = line.timestamp;
+        }
         if (s.status === "pending") s.status = "failed";
       }
       activeStepIdx = -1;
@@ -142,7 +162,9 @@ export function parseProvisionLog(
     }
 
     // Check if this line starts a new step
-    const startingIdx = STEP_DEFS.findIndex((d) => d.startPat.test(line.message));
+    const startingIdx = STEP_DEFS.findIndex((d) =>
+      d.startPat.test(line.message)
+    );
     if (startingIdx !== -1) {
       // Close previous step if it was running
       if (activeStepIdx !== -1 && steps[activeStepIdx].status === "running") {
@@ -161,7 +183,10 @@ export function parseProvisionLog(
 
       // Check for step completion
       const def = STEP_DEFS[activeStepIdx];
-      if (s_done(def.donePat, line.message) && steps[activeStepIdx].status === "running") {
+      if (
+        s_done(def.donePat, line.message) &&
+        steps[activeStepIdx].status === "running"
+      ) {
         steps[activeStepIdx].status = "done";
         steps[activeStepIdx].endedAt = line.timestamp;
       }
@@ -177,7 +202,8 @@ export function parseProvisionLog(
   // Calculate durations
   for (const s of steps) {
     if (s.startedAt && s.endedAt) {
-      s.durationMs = new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime();
+      s.durationMs =
+        new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime();
     }
   }
 
@@ -190,7 +216,9 @@ export function parseProvisionLog(
   return steps;
 }
 
-function s_done(pat: RegExp, msg: string) { return pat.test(msg); }
+function s_done(pat: RegExp, msg: string) {
+  return pat.test(msg);
+}
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -201,18 +229,48 @@ const SERVICE_ICONS: Record<TimelineStep["service"], React.ReactNode> = {
     </svg>
   ),
   fly: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+      />
     </svg>
   ),
   postgres: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
+      />
     </svg>
   ),
   machine: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z"
+      />
     </svg>
   ),
   vercel: (
@@ -221,13 +279,33 @@ const SERVICE_ICONS: Record<TimelineStep["service"], React.ReactNode> = {
     </svg>
   ),
   health: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   ),
   rollback: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+      />
     </svg>
   ),
 };
@@ -238,8 +316,18 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
   if (status === "done") {
     return (
       <div className="w-7 h-7 rounded-full bg-nominal-bg border border-nominal-dim flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-nominal" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        <svg
+          className="w-4 h-4 text-nominal"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 12.75l6 6 9-13.5"
+          />
         </svg>
       </div>
     );
@@ -247,8 +335,18 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
   if (status === "failed") {
     return (
       <div className="w-7 h-7 rounded-full bg-critical-bg border border-critical-dim flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-critical" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        <svg
+          className="w-4 h-4 text-critical"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </div>
     );
@@ -263,8 +361,18 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
   if (status === "skipped") {
     return (
       <div className="w-7 h-7 rounded-full bg-elevated border border-border-dim flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-disabled" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        <svg
+          className="w-4 h-4 text-disabled"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+          />
         </svg>
       </div>
     );
@@ -284,12 +392,12 @@ function formatDuration(ms: number): string {
 }
 
 const SERVICE_COLOR: Record<TimelineStep["service"], string> = {
-  github:   "text-[#58a6ff]",
-  fly:      "text-[#a78bfa]",
+  github: "text-[#58a6ff]",
+  fly: "text-[#a78bfa]",
   postgres: "text-[#60a5fa]",
-  machine:  "text-[#34d399]",
-  vercel:   "text-[#e5e5e5]",
-  health:   "text-nominal",
+  machine: "text-[#34d399]",
+  vercel: "text-[#e5e5e5]",
+  health: "text-nominal",
   rollback: "text-critical",
 };
 
@@ -309,9 +417,11 @@ function StepRow({ step, isLast }: { step: TimelineStep; isLast: boolean }) {
       {!isLast && (
         <div
           className={`absolute left-[13px] top-7 w-px h-full ${
-            step.status === "done" ? "bg-nominal-dim" :
-            step.status === "failed" ? "bg-critical-dim" :
-            "bg-border-default"
+            step.status === "done"
+              ? "bg-nominal-dim"
+              : step.status === "failed"
+                ? "bg-critical-dim"
+                : "bg-border-default"
           }`}
           style={{ top: "28px", height: "calc(100% - 4px)" }}
         />
@@ -332,13 +442,19 @@ function StepRow({ step, isLast }: { step: TimelineStep; isLast: boolean }) {
             </span>
 
             {/* Label */}
-            <span className={`text-sm font-medium flex-1 min-w-0 ${
-              step.status === "pending" ? "text-tertiary" :
-              step.status === "done" ? "text-primary" :
-              step.status === "running" ? "text-data" :
-              step.status === "failed" ? "text-critical" :
-              "text-disabled"
-            }`}>
+            <span
+              className={`text-sm font-medium flex-1 min-w-0 ${
+                step.status === "pending"
+                  ? "text-tertiary"
+                  : step.status === "done"
+                    ? "text-primary"
+                    : step.status === "running"
+                      ? "text-data"
+                      : step.status === "failed"
+                        ? "text-critical"
+                        : "text-disabled"
+              }`}
+            >
               {step.label}
             </span>
 
@@ -358,9 +474,16 @@ function StepRow({ step, isLast }: { step: TimelineStep; isLast: boolean }) {
             {canExpand && (
               <svg
                 className={`w-3.5 h-3.5 text-tertiary shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                />
               </svg>
             )}
           </button>
@@ -373,22 +496,32 @@ function StepRow({ step, isLast }: { step: TimelineStep; isLast: boolean }) {
                   <div
                     key={i}
                     className={`flex items-start gap-2 px-3 py-1 border-b border-border-dim last:border-b-0 ${
-                      line.level === "error" ? "bg-critical-bg" :
-                      line.level === "warn" ? "bg-caution-bg" : ""
+                      line.level === "error"
+                        ? "bg-critical-bg"
+                        : line.level === "warn"
+                          ? "bg-caution-bg"
+                          : ""
                     }`}
                   >
                     {line.timestamp && (
                       <span className="font-mono text-[10px] text-tertiary shrink-0 tabular-nums pt-px">
                         {new Date(line.timestamp).toLocaleTimeString("en-US", {
-                          hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit",
+                          hour12: false,
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
                         })}
                       </span>
                     )}
-                    <span className={`font-mono text-[11px] flex-1 break-all ${
-                      line.level === "error" ? "text-critical" :
-                      line.level === "warn" ? "text-caution" :
-                      "text-secondary"
-                    }`}>
+                    <span
+                      className={`font-mono text-[11px] flex-1 break-all ${
+                        line.level === "error"
+                          ? "text-critical"
+                          : line.level === "warn"
+                            ? "text-caution"
+                            : "text-secondary"
+                      }`}
+                    >
                       {line.message}
                     </span>
                   </div>
@@ -410,7 +543,11 @@ interface Props {
   isProvisioning: boolean;
 }
 
-export function ProvisioningTimeline({ provisionLog, envStatus, isProvisioning }: Props) {
+export function ProvisioningTimeline({
+  provisionLog,
+  envStatus,
+  isProvisioning,
+}: Props) {
   const steps = parseProvisionLog(provisionLog, envStatus);
 
   const doneCount = steps.filter((s) => s.status === "done").length;
@@ -426,7 +563,9 @@ export function ProvisioningTimeline({ provisionLog, envStatus, isProvisioning }
           {isProvisioning && (
             <div className="w-3 h-3 rounded-full border-2 border-border-bright border-t-data animate-spin" />
           )}
-          {!isProvisioning && hasFailed && <span className="status-dot status-dot--critical" />}
+          {!isProvisioning && hasFailed && (
+            <span className="status-dot status-dot--critical" />
+          )}
           {!isProvisioning && !hasFailed && envStatus === "RUNNING" && (
             <span className="status-dot status-dot--nominal" />
           )}
@@ -448,11 +587,7 @@ export function ProvisioningTimeline({ provisionLog, envStatus, isProvisioning }
 
       <div className="panel__content pb-2">
         {steps.map((step, i) => (
-          <StepRow
-            key={step.id}
-            step={step}
-            isLast={i === steps.length - 1}
-          />
+          <StepRow key={step.id} step={step} isLast={i === steps.length - 1} />
         ))}
       </div>
     </div>

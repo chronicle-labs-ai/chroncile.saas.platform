@@ -28,11 +28,13 @@ import { cx as tvCx } from "tailwind-variants";
  */
 export function composeTwRenderProps<T>(
   className: string | ((v: T) => string) | undefined,
-  tailwind?: string | ((v: T) => string | undefined),
+  tailwind?: string | ((v: T) => string | undefined)
 ): string | ((v: T) => string) {
   return composeRenderProps(className, (incoming, renderProps): string => {
     const tw =
-      typeof tailwind === "function" ? (tailwind(renderProps) ?? "") : (tailwind ?? "");
+      typeof tailwind === "function"
+        ? (tailwind(renderProps) ?? "")
+        : (tailwind ?? "");
     const cls = incoming ?? "";
 
     return tvCx(tw, cls) ?? "";
@@ -49,7 +51,7 @@ export function composeSlotClassName(
     | ((args?: { className?: string; [key: string]: unknown }) => string)
     | undefined,
   className?: string,
-  variants?: Record<string, unknown>,
+  variants?: Record<string, unknown>
 ): string | undefined {
   return typeof slotFn === "function"
     ? slotFn({ ...(variants ?? {}), className })

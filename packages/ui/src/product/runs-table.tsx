@@ -34,7 +34,7 @@ export function RunsTable({ className, children, ...props }: RunsTableProps) {
 }
 
 export function RunsTableHead(
-  props: React.HTMLAttributes<HTMLTableSectionElement>,
+  props: React.HTMLAttributes<HTMLTableSectionElement>
 ) {
   return <thead {...props} />;
 }

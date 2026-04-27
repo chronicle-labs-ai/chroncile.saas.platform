@@ -44,9 +44,7 @@ export const NoFlow: Story = {
 
 export const InFlow: Story = {
   render: () => (
-    <AuthShell
-      topbar={{ steps: SIGNUP_STEPS, currentIndex: 1 }}
-    >
+    <AuthShell topbar={{ steps: SIGNUP_STEPS, currentIndex: 1 }}>
       <div className="cg-eyebrow-m">Step 02</div>
       <h1 className="cg-display-h1 cg-fade-up mt-s-3">
         Set a <em>strong password.</em>
@@ -62,12 +60,10 @@ export const Bare: Story = {
   render: () => (
     <AuthShell topbar={false} bare maxWidth={420}>
       <div className="cg-eyebrow-m">EMBED</div>
-      <h1 className="cg-display-h1 cg-fade-up mt-s-3">
-        Bare embed.
-      </h1>
+      <h1 className="cg-display-h1 cg-fade-up mt-s-3">Bare embed.</h1>
       <p className="cg-lede cg-fade-up cg-fade-up-1">
-        No topbar, no ambient backdrop — for embedding the auth screens
-        inside an existing surface.
+        No topbar, no ambient backdrop — for embedding the auth screens inside
+        an existing surface.
       </p>
     </AuthShell>
   ),

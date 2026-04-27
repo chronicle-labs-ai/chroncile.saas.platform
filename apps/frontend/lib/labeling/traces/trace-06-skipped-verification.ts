@@ -1,4 +1,9 @@
-import type { Trace, TraceEvent, AgentContextSnapshot, AutoActionAudit } from "../types";
+import type {
+  Trace,
+  TraceEvent,
+  AgentContextSnapshot,
+  AutoActionAudit,
+} from "../types";
 import { eid, offset, buildTrace } from "./_helpers";
 
 const base = new Date("2026-02-20T10:05:00Z");
@@ -33,23 +38,37 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.received",
     occurred_at: offset(base, 0),
-    actor: { actor_type: "customer", actor_id: "cust_320", name: "Elena Rossi" },
-    message: "Hi, I need to request a refund for order #ORD-7201. The item arrived damaged and I'd like my $45.00 back.",
+    actor: {
+      actor_type: "customer",
+      actor_id: "cust_320",
+      name: "Elena Rossi",
+    },
+    message:
+      "Hi, I need to request a refund for order #ORD-7201. The item arrived damaged and I'd like my $45.00 back.",
   },
   {
     event_id: e.agentGreeting,
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 0.8),
-    actor: { actor_type: "agent", actor_id: "agent_refund", name: "Refund Processing Agent" },
-    message: "Hi Elena! I'm sorry about the damaged item. Let me pull up your order and take care of this.",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_refund",
+      name: "Refund Processing Agent",
+    },
+    message:
+      "Hi Elena! I'm sorry about the damaged item. Let me pull up your order and take care of this.",
   },
   {
     event_id: e.chargeRetrieve,
     source: "stripe",
     event_type: "charge.retrieve",
     occurred_at: offset(base, 1.2),
-    actor: { actor_type: "agent", actor_id: "agent_refund", name: "Refund Processing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_refund",
+      name: "Refund Processing Agent",
+    },
     payload: { charge_id: "ch_E5f6", customer_id: "cust_320" },
   },
   {
@@ -71,7 +90,11 @@ const events: TraceEvent[] = [
     source: "stripe",
     event_type: "refund.create",
     occurred_at: offset(base, 2),
-    actor: { actor_type: "agent", actor_id: "agent_refund", name: "Refund Processing Agent" },
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_refund",
+      name: "Refund Processing Agent",
+    },
     payload: {
       charge_id: "ch_E5f6",
       amount: 4500,
@@ -92,15 +115,24 @@ const events: TraceEvent[] = [
     source: "intercom",
     event_type: "message.sent",
     occurred_at: offset(base, 3),
-    actor: { actor_type: "agent", actor_id: "agent_refund", name: "Refund Processing Agent" },
-    message: "Your refund of $45.00 for order #ORD-7201 has been processed. It should appear in your account within 5-10 business days. Is there anything else I can help with?",
+    actor: {
+      actor_type: "agent",
+      actor_id: "agent_refund",
+      name: "Refund Processing Agent",
+    },
+    message:
+      "Your refund of $45.00 for order #ORD-7201 has been processed. It should appear in your account within 5-10 business days. Is there anything else I can help with?",
   },
   {
     event_id: e.customerThanks,
     source: "intercom",
     event_type: "message.received",
     occurred_at: offset(base, 4),
-    actor: { actor_type: "customer", actor_id: "cust_320", name: "Elena Rossi" },
+    actor: {
+      actor_type: "customer",
+      actor_id: "cust_320",
+      name: "Elena Rossi",
+    },
     message: "That was quick, thanks!",
   },
 ];
@@ -110,13 +142,17 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.agentGreeting,
       verdict: "partial",
-      reasoning: "Greeting is empathetic but the agent should have initiated identity verification before any order interaction.",
-      should_have_done: "Run identity verification via intercom action.identity_verification before retrieving the charge.",
+      reasoning:
+        "Greeting is empathetic but the agent should have initiated identity verification before any order interaction.",
+      should_have_done:
+        "Run identity verification via intercom action.identity_verification before retrieving the charge.",
       instruction_violations: [
         {
           instruction_id: "R1",
-          instruction_text: "Verify customer identity before processing any refund or accessing account details.",
-          violation_description: "Agent proceeded to retrieve charge data without first confirming the customer's identity.",
+          instruction_text:
+            "Verify customer identity before processing any refund or accessing account details.",
+          violation_description:
+            "Agent proceeded to retrieve charge data without first confirming the customer's identity.",
           context_evidence: "missing_fields includes identity_confirmed",
         },
       ],
@@ -124,27 +160,35 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.chargeRetrieve,
       verdict: "partial",
-      reasoning: "Charge retrieval is a valid step but happened before identity verification, violating the expected transition order.",
-      should_have_done: "Complete identity verification first, then retrieve the charge.",
+      reasoning:
+        "Charge retrieval is a valid step but happened before identity verification, violating the expected transition order.",
+      should_have_done:
+        "Complete identity verification first, then retrieve the charge.",
     },
     {
       event_id: e.refundCreate,
       verdict: "incorrect",
-      reasoning: "Refund issued without identity verification and without an explicit eligibility check step. The agent skipped two required workflow transitions: verify_identity and check_eligibility.",
-      should_have_done: "Verify identity, then check eligibility via the eligibility API, then create the refund only if both pass.",
+      reasoning:
+        "Refund issued without identity verification and without an explicit eligibility check step. The agent skipped two required workflow transitions: verify_identity and check_eligibility.",
+      should_have_done:
+        "Verify identity, then check eligibility via the eligibility API, then create the refund only if both pass.",
       instruction_violations: [
         {
           instruction_id: "R1",
-          instruction_text: "Verify customer identity before processing any refund or accessing account details.",
-          violation_description: "No identity verification event exists in the trace. The agent went directly from charge retrieval to refund creation.",
-          context_evidence: "identity_confirmed is absent from agent context fields",
+          instruction_text:
+            "Verify customer identity before processing any refund or accessing account details.",
+          violation_description:
+            "No identity verification event exists in the trace. The agent went directly from charge retrieval to refund creation.",
+          context_evidence:
+            "identity_confirmed is absent from agent context fields",
         },
       ],
       context_violations: [
         {
           type: "missing_field",
           field: "identity_confirmed",
-          description: "Identity verification was never performed; identity_confirmed is missing from the agent context.",
+          description:
+            "Identity verification was never performed; identity_confirmed is missing from the agent context.",
           severity: "warning",
         },
       ],
@@ -152,7 +196,8 @@ const autoAudit: AutoActionAudit = {
     {
       event_id: e.agentConfirmation,
       verdict: "partial",
-      reasoning: "The confirmation message is clear and professional but the refund it references should not have been issued yet.",
+      reasoning:
+        "The confirmation message is clear and professional but the refund it references should not have been issued yet.",
     },
   ],
   overall_score: 2,
@@ -178,7 +223,8 @@ const autoAudit: AutoActionAudit = {
       {
         type: "missing_field",
         field: "identity_confirmed",
-        description: "Identity verification was never performed; the field is absent from agent context.",
+        description:
+          "Identity verification was never performed; the field is absent from agent context.",
         severity: "warning",
       },
     ],
@@ -187,8 +233,10 @@ const autoAudit: AutoActionAudit = {
   instruction_violations_summary: [
     {
       instruction_id: "R1",
-      instruction_text: "Verify customer identity before processing any refund or accessing account details.",
-      violation_description: "No identity verification event exists anywhere in the trace. The agent skipped this mandatory step entirely.",
+      instruction_text:
+        "Verify customer identity before processing any refund or accessing account details.",
+      violation_description:
+        "No identity verification event exists anywhere in the trace. The agent skipped this mandatory step entirely.",
     },
   ],
 };

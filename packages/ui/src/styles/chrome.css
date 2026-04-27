@@ -1,0 +1,54 @@
+/* ─────────────────────────────────────────────────────────────
+   Chronicle × Linear — chrome remap
+   Loaded after `tokens.css` and `linear.css`.
+
+   Toggles brand vs product chrome at the DOM level via the
+   `data-chrome="product"` attribute. When active, brand `--c-*`
+   surface / ink / border tokens are remapped to their `--l-*`
+   Linear-density equivalents — every Tailwind utility that maps
+   to one of those tokens (e.g. `bg-surface-01`, `text-ink-hi`,
+   `border-hairline-strong`) automatically picks up the product
+   look without per-component class swaps.
+
+   Brand accents (ember, sage, gold, bone, event-*) are left
+   alone on purpose — those are the brand signature. Type
+   families, type scale, spacing, and radii are also left alone:
+   primitives that need a denser shape (Button, Input, …) flip
+   via the `density` variant fed by `<ChromeStyleProvider>`,
+   not via this CSS layer.
+
+   The remap survives the light-theme cascade because the
+   `--l-*` variables themselves flip under `[data-theme="light"]`
+   in `linear.css`. So `data-chrome="product"` × `data-theme="light"`
+   yields the cream-on-cream Linear surface stack automatically.
+   ───────────────────────────────────────────────────────────── */
+
+[data-chrome="product"] {
+  /* Surfaces — denser, slightly warmer */
+  --c-surface-00: var(--l-surface);
+  --c-surface-01: var(--l-surface-raised);
+  --c-surface-02: var(--l-surface-raised-2);
+  --c-surface-03: var(--l-surface-input);
+  --c-page: var(--l-surface);
+
+  /* Borders + dividers */
+  --c-hairline: var(--l-border-faint);
+  --c-hairline-strong: var(--l-border);
+  --c-divider: var(--l-border-faint);
+
+  /* Ink (text on dark/light) */
+  --c-ink-hi: var(--l-ink);
+  --c-ink: var(--l-ink);
+  --c-ink-lo: var(--l-ink-lo);
+  --c-ink-dim: var(--l-ink-dim);
+
+  /* Row chrome (hover, selected) */
+  --c-row-hover: var(--l-surface-hover);
+  --c-row-active: var(--l-surface-selected);
+  --c-track: var(--l-wash-3);
+
+  /* Inverse-ink button surface — tone down editorial contrast
+     so a "primary" brand button reads as a Linear ink button. */
+  --c-btn-invert-bg: var(--l-ink);
+  --c-btn-invert-fg: var(--l-surface);
+}

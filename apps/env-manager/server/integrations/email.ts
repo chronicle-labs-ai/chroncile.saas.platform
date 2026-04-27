@@ -1,4 +1,1 @@
-export {
-  getResend,
-  sendOrgInviteEmail,
-} from "@/lib/email";
+export { getResend, sendOrgInviteEmail } from "@/lib/email";

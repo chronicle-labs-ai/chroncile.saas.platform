@@ -83,21 +83,43 @@ function PreviewModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
       <div className="relative w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col panel">
         <div className="panel__header">
           <div>
             <span className="panel__title">{template.name}</span>
-            <span className="ml-2 font-mono text-[10px] text-tertiary">{template.alias ?? template.id}</span>
+            <span className="ml-2 font-mono text-[10px] text-tertiary">
+              {template.alias ?? template.id}
+            </span>
           </div>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            onClick={onClose}
+            className="text-tertiary hover:text-primary"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
         <div className="flex-1 overflow-auto">
           {isLoading ? (
-            <div className="p-8 text-center text-secondary text-sm">Loading preview...</div>
+            <div className="p-8 text-center text-secondary text-sm">
+              Loading preview...
+            </div>
           ) : data?.html ? (
             <iframe
               srcDoc={data.html}
@@ -109,20 +131,35 @@ function PreviewModal({
           ) : (
             <div className="p-8 text-center text-secondary text-sm">
               No HTML preview available.
-              {data?.subject && <p className="mt-2 font-mono text-xs text-tertiary">Subject: {data.subject}</p>}
+              {data?.subject && (
+                <p className="mt-2 font-mono text-xs text-tertiary">
+                  Subject: {data.subject}
+                </p>
+              )}
             </div>
           )}
         </div>
         {data?.variables && data.variables.length > 0 && (
           <div className="border-t border-border-dim px-4 py-3 bg-elevated">
-            <span className="text-[10px] font-medium tracking-wider text-tertiary uppercase mb-2 block">Variables</span>
+            <span className="text-[10px] font-medium tracking-wider text-tertiary uppercase mb-2 block">
+              Variables
+            </span>
             <div className="flex flex-wrap gap-1.5">
-              {data.variables.map((v: { key: string; type: string; fallback_value?: string }) => (
-                <span key={v.key} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-data-bg border border-data-dim text-[10px] font-mono text-data">
-                  {v.key}
-                  {v.fallback_value && <span className="text-tertiary">= {String(v.fallback_value)}</span>}
-                </span>
-              ))}
+              {data.variables.map(
+                (v: { key: string; type: string; fallback_value?: string }) => (
+                  <span
+                    key={v.key}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-data-bg border border-data-dim text-[10px] font-mono text-data"
+                  >
+                    {v.key}
+                    {v.fallback_value && (
+                      <span className="text-tertiary">
+                        = {String(v.fallback_value)}
+                      </span>
+                    )}
+                  </span>
+                )
+              )}
             </div>
           </div>
         )}
@@ -140,8 +177,12 @@ function SendTestModal({
   registryKeys: EmailTemplateKey[];
   onClose: () => void;
 }) {
-  const matchingKey = registryKeys.find(
-    (k) => k.assignments.some((a) => a.resendTemplateId === template.alias || a.resendTemplateId === template.id)
+  const matchingKey = registryKeys.find((k) =>
+    k.assignments.some(
+      (a) =>
+        a.resendTemplateId === template.alias ||
+        a.resendTemplateId === template.id
+    )
   );
 
   const initialVars: Record<string, string> = {};
@@ -151,8 +192,12 @@ function SendTestModal({
     }
   }
 
-  const [variables, setVariables] = useState<Record<string, string>>(initialVars);
-  const [result, setResult] = useState<{ sent?: boolean; error?: string } | null>(null);
+  const [variables, setVariables] =
+    useState<Record<string, string>>(initialVars);
+  const [result, setResult] = useState<{
+    sent?: boolean;
+    error?: string;
+  } | null>(null);
 
   const form = useForm<SendTestEmailInput>({
     resolver: zodResolver(sendTestEmailSchema),
@@ -164,15 +209,18 @@ function SendTestModal({
   const handleSend = form.handleSubmit(async ({ to }) => {
     setResult(null);
     try {
-      const res = await fetch(`/api/email-templates/resend/${template.id}/send-test`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to,
-          subject: `[TEST] ${template.name}`,
-          variables,
-        }),
-      });
+      const res = await fetch(
+        `/api/email-templates/resend/${template.id}/send-test`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to,
+            subject: `[TEST] ${template.name}`,
+            variables,
+          }),
+        }
+      );
       const data = await res.json();
       if (!res.ok) {
         setResult({ error: data.error ?? "Failed to send" });
@@ -185,21 +233,45 @@ function SendTestModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
       <div className="relative w-full max-w-lg mx-4 panel">
         <div className="panel__header">
           <span className="panel__title">Send Test Email</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            onClick={onClose}
+            className="text-tertiary hover:text-primary"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
         <form onSubmit={handleSend}>
           <div className="panel__content space-y-4">
             <div className="flex items-center gap-2 p-2 rounded bg-elevated border border-border-dim">
-              <span className={`badge ${STATUS_BADGE[template.status] ?? ""}`}>{template.status}</span>
-              <span className="text-sm text-primary font-medium">{template.name}</span>
-              <span className="font-mono text-[10px] text-tertiary">{template.alias ?? template.id}</span>
+              <span className={`badge ${STATUS_BADGE[template.status] ?? ""}`}>
+                {template.status}
+              </span>
+              <span className="text-sm text-primary font-medium">
+                {template.name}
+              </span>
+              <span className="font-mono text-[10px] text-tertiary">
+                {template.alias ?? template.id}
+              </span>
             </div>
 
             <FormField
@@ -223,11 +295,18 @@ function SendTestModal({
                 <div className="space-y-2">
                   {Object.entries(variables).map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] text-data w-32 shrink-0 text-right">{key}</span>
+                      <span className="font-mono text-[10px] text-data w-32 shrink-0 text-right">
+                        {key}
+                      </span>
                       <Input
                         type="text"
                         value={value}
-                        onChange={(e) => setVariables((prev) => ({ ...prev, [key]: e.target.value }))}
+                        onChange={(e) =>
+                          setVariables((prev) => ({
+                            ...prev,
+                            [key]: e.target.value,
+                          }))
+                        }
                         className="font-mono text-xs flex-1"
                       />
                     </div>
@@ -239,7 +318,9 @@ function SendTestModal({
             {result?.sent && (
               <div className="flex items-center gap-2 p-2 rounded bg-nominal/10 border border-nominal/30">
                 <span className="status-dot status-dot--nominal" />
-                <span className="text-xs text-nominal">Test email sent successfully</span>
+                <span className="text-xs text-nominal">
+                  Test email sent successfully
+                </span>
               </div>
             )}
             {result?.error && (
@@ -250,7 +331,9 @@ function SendTestModal({
             )}
           </div>
           <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Close</Button>
+            <Button type="button" size="sm" onClick={onClose}>
+              Close
+            </Button>
             <Button
               type="submit"
               variant="primary"
@@ -314,13 +397,31 @@ function RegisterKeyModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
       <div className="relative w-full max-w-lg mx-4 panel">
         <div className="panel__header">
           <span className="panel__title">Register Email Template Key</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            onClick={onClose}
+            className="text-tertiary hover:text-primary"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -378,19 +479,27 @@ function RegisterKeyModal({
             <FormField
               label="Variables (JSON)"
               htmlFor="template-variables"
-              error={form.formState.errors.variablesText?.message ?? form.formState.errors.root?.message}
+              error={
+                form.formState.errors.variablesText?.message ??
+                form.formState.errors.root?.message
+              }
             >
               <Textarea
                 id="template-variables"
                 className="font-mono text-xs h-32"
                 placeholder='[{ "key": "ORG_NAME", "type": "string", "description": "Org name", "sampleValue": "Acme Corp" }]'
-                invalid={!!form.formState.errors.variablesText || !!form.formState.errors.root}
+                invalid={
+                  !!form.formState.errors.variablesText ||
+                  !!form.formState.errors.root
+                }
                 {...form.register("variablesText")}
               />
             </FormField>
           </div>
           <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
+            <Button type="button" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
             <Button
               type="submit"
               variant="primary"
@@ -451,13 +560,31 @@ function AssignModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
       <div className="relative w-full max-w-lg mx-4 panel">
         <div className="panel__header">
           <span className="panel__title">Assign Template to Environment</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            onClick={onClose}
+            className="text-tertiary hover:text-primary"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -475,7 +602,9 @@ function AssignModal({
               >
                 <option value="">Select template key...</option>
                 {templateKeys.map((tk) => (
-                  <option key={tk.id} value={tk.id}>{tk.name} ({tk.key})</option>
+                  <option key={tk.id} value={tk.id}>
+                    {tk.name} ({tk.key})
+                  </option>
                 ))}
               </NativeSelect>
             </FormField>
@@ -487,26 +616,36 @@ function AssignModal({
               >
                 <option value="">Default (global fallback)</option>
                 {environments.map((env) => (
-                  <option key={env.id} value={env.id}>{env.name}</option>
+                  <option key={env.id} value={env.id}>
+                    {env.name}
+                  </option>
                 ))}
               </NativeSelect>
             </FormField>
             <FormField
               label="Resend Template ID"
               htmlFor="assign-resend-template-id"
-              error={form.formState.errors.resendTemplateId?.message ?? form.formState.errors.root?.message}
+              error={
+                form.formState.errors.resendTemplateId?.message ??
+                form.formState.errors.root?.message
+              }
             >
               <Input
                 id="assign-resend-template-id"
                 className="font-mono text-sm"
                 placeholder="tmpl_xxx or alias"
-                invalid={!!form.formState.errors.resendTemplateId || !!form.formState.errors.root}
+                invalid={
+                  !!form.formState.errors.resendTemplateId ||
+                  !!form.formState.errors.root
+                }
                 {...form.register("resendTemplateId")}
               />
             </FormField>
           </div>
           <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
+            <Button type="button" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
             <Button
               type="submit"
               variant="primary"
@@ -523,18 +662,39 @@ function AssignModal({
 }
 
 export function EmailTemplatesPage() {
-  const { data: templateKeys, isLoading: keysLoading, mutate: mutateKeys } = useSWR<EmailTemplateKey[]>("/api/email-templates/keys", fetcher);
-  const { data: assignments, isLoading: assignmentsLoading, mutate: mutateAssignments } = useSWR<Assignment[]>("/api/email-templates/assignments", fetcher);
-  const { data: resendData, isLoading: resendLoading } = useSWR<{ data: ResendTemplate[] }>("/api/email-templates/resend", fetcher);
+  const {
+    data: templateKeys,
+    isLoading: keysLoading,
+    mutate: mutateKeys,
+  } = useSWR<EmailTemplateKey[]>("/api/email-templates/keys", fetcher);
+  const {
+    data: assignments,
+    isLoading: assignmentsLoading,
+    mutate: mutateAssignments,
+  } = useSWR<Assignment[]>("/api/email-templates/assignments", fetcher);
+  const { data: resendData, isLoading: resendLoading } = useSWR<{
+    data: ResendTemplate[];
+  }>("/api/email-templates/resend", fetcher);
   const resendTemplates = resendData?.data ?? [];
-  const { data: envs } = useSWR<EnvironmentRecord[]>("/api/environments", fetcher);
+  const { data: envs } = useSWR<EnvironmentRecord[]>(
+    "/api/environments",
+    fetcher
+  );
   const [showRegister, setShowRegister] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState<ResendTemplate | null>(null);
-  const [sendTestTemplate, setSendTestTemplate] = useState<ResendTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<ResendTemplate | null>(
+    null
+  );
+  const [sendTestTemplate, setSendTestTemplate] =
+    useState<ResendTemplate | null>(null);
 
   const handleDeleteKey = async (id: string, name: string) => {
-    if (!confirm(`Delete template key "${name}"? This will fail if there are active assignments.`)) return;
+    if (
+      !confirm(
+        `Delete template key "${name}"? This will fail if there are active assignments.`
+      )
+    )
+      return;
     await fetch(`/api/email-templates/keys/${id}`, { method: "DELETE" });
     mutateKeys();
   };
@@ -554,7 +714,10 @@ export function EmailTemplatesPage() {
   return (
     <>
       {showRegister && (
-        <RegisterKeyModal onClose={() => setShowRegister(false)} onCreated={refreshAll} />
+        <RegisterKeyModal
+          onClose={() => setShowRegister(false)}
+          onCreated={refreshAll}
+        />
       )}
       {showAssign && (
         <AssignModal
@@ -565,7 +728,10 @@ export function EmailTemplatesPage() {
         />
       )}
       {previewTemplate && (
-        <PreviewModal template={previewTemplate} onClose={() => setPreviewTemplate(null)} />
+        <PreviewModal
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+        />
       )}
       {sendTestTemplate && (
         <SendTestModal
@@ -579,18 +745,24 @@ export function EmailTemplatesPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-sans font-semibold">Email Templates</h1>
-            <p className="text-xs text-tertiary mt-1">Manage Resend email templates and per-environment assignments</p>
+            <p className="text-xs text-tertiary mt-1">
+              Manage Resend email templates and per-environment assignments
+            </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setShowAssign(true)}>Assign</Button>
-            <Button variant="primary" onClick={() => setShowRegister(true)}>Register Key</Button>
+            <Button variant="primary" onClick={() => setShowRegister(true)}>
+              Register Key
+            </Button>
           </div>
         </div>
 
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Template Registry</span>
-            <span className="font-mono text-[10px] text-tertiary">{templateKeys?.length ?? 0}</span>
+            <span className="font-mono text-[10px] text-tertiary">
+              {templateKeys?.length ?? 0}
+            </span>
           </div>
           {keysLoading ? (
             <div className="divide-y divide-border-dim">
@@ -603,8 +775,12 @@ export function EmailTemplatesPage() {
             </div>
           ) : (templateKeys?.length ?? 0) === 0 ? (
             <div className="panel__content text-center py-8">
-              <p className="text-sm text-secondary mb-3">No template keys registered</p>
-              <Button size="sm" onClick={() => setShowRegister(true)}>Register your first key</Button>
+              <p className="text-sm text-secondary mb-3">
+                No template keys registered
+              </p>
+              <Button size="sm" onClick={() => setShowRegister(true)}>
+                Register your first key
+              </Button>
             </div>
           ) : (
             <table className="data-table">
@@ -621,28 +797,63 @@ export function EmailTemplatesPage() {
               <tbody>
                 {templateKeys!.map((tk) => (
                   <tr key={tk.id}>
-                    <td><span className="font-mono text-xs text-data">{tk.key}</span></td>
+                    <td>
+                      <span className="font-mono text-xs text-data">
+                        {tk.key}
+                      </span>
+                    </td>
                     <td>
                       <div>
-                        <span className="text-primary font-medium">{tk.name}</span>
-                        {tk.description && <p className="text-[10px] text-tertiary mt-0.5">{tk.description}</p>}
+                        <span className="text-primary font-medium">
+                          {tk.name}
+                        </span>
+                        {tk.description && (
+                          <p className="text-[10px] text-tertiary mt-0.5">
+                            {tk.description}
+                          </p>
+                        )}
                       </div>
                     </td>
-                    <td><span className={`badge ${CATEGORY_BADGE[tk.category] ?? ""}`}>{tk.category}</span></td>
-                    <td><span className="font-mono text-xs">{tk.variables.length}</span></td>
+                    <td>
+                      <span
+                        className={`badge ${CATEGORY_BADGE[tk.category] ?? ""}`}
+                      >
+                        {tk.category}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs">
+                        {tk.variables.length}
+                      </span>
+                    </td>
                     <td>
                       <div className="flex flex-wrap gap-1">
-                        {tk.assignments.length === 0 && <span className="text-[10px] text-tertiary">none</span>}
+                        {tk.assignments.length === 0 && (
+                          <span className="text-[10px] text-tertiary">
+                            none
+                          </span>
+                        )}
                         {tk.assignments.map((a) => (
-                          <span key={a.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-elevated text-[10px] font-mono">
-                            <span className="status-dot status-dot--nominal" style={{ width: 5, height: 5 }} />
+                          <span
+                            key={a.id}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-elevated text-[10px] font-mono"
+                          >
+                            <span
+                              className="status-dot status-dot--nominal"
+                              style={{ width: 5, height: 5 }}
+                            />
                             {a.environment?.name ?? "default"}
                           </span>
                         ))}
                       </div>
                     </td>
                     <td>
-                      <button onClick={() => handleDeleteKey(tk.id, tk.key)} className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider">Delete</button>
+                      <button
+                        onClick={() => handleDeleteKey(tk.id, tk.key)}
+                        className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -654,7 +865,9 @@ export function EmailTemplatesPage() {
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Resend Templates</span>
-            <span className="font-mono text-[10px] text-tertiary">{resendTemplates.length}</span>
+            <span className="font-mono text-[10px] text-tertiary">
+              {resendTemplates.length}
+            </span>
           </div>
           {resendLoading ? (
             <div className="divide-y divide-border-dim">
@@ -667,7 +880,9 @@ export function EmailTemplatesPage() {
             </div>
           ) : resendTemplates.length === 0 ? (
             <div className="panel__content text-center py-8">
-              <p className="text-sm text-secondary">No templates found in Resend</p>
+              <p className="text-sm text-secondary">
+                No templates found in Resend
+              </p>
             </div>
           ) : (
             <table className="data-table">
@@ -683,10 +898,24 @@ export function EmailTemplatesPage() {
               <tbody>
                 {resendTemplates.map((t) => (
                   <tr key={t.id}>
-                    <td><span className="text-primary font-medium">{t.name}</span></td>
-                    <td><span className="font-mono text-xs text-data">{t.alias ?? "—"}</span></td>
-                    <td><span className={`badge ${STATUS_BADGE[t.status] ?? ""}`}>{t.status}</span></td>
-                    <td><span className="font-mono text-xs text-tertiary">{new Date(t.updated_at).toLocaleDateString()}</span></td>
+                    <td>
+                      <span className="text-primary font-medium">{t.name}</span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-data">
+                        {t.alias ?? "—"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge ${STATUS_BADGE[t.status] ?? ""}`}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-tertiary">
+                        {new Date(t.updated_at).toLocaleDateString()}
+                      </span>
+                    </td>
                     <td>
                       <div className="flex items-center gap-2">
                         <button
@@ -699,7 +928,11 @@ export function EmailTemplatesPage() {
                           onClick={() => setSendTestTemplate(t)}
                           className="text-caution hover:text-primary text-xs font-mono uppercase tracking-wider"
                           disabled={t.status !== "published"}
-                          title={t.status !== "published" ? "Template must be published to send" : undefined}
+                          title={
+                            t.status !== "published"
+                              ? "Template must be published to send"
+                              : undefined
+                          }
                         >
                           Send Test
                         </button>
@@ -715,7 +948,9 @@ export function EmailTemplatesPage() {
         <div className="panel">
           <div className="panel__header">
             <span className="panel__title">Environment Assignments</span>
-            <span className="font-mono text-[10px] text-tertiary">{assignments?.length ?? 0}</span>
+            <span className="font-mono text-[10px] text-tertiary">
+              {assignments?.length ?? 0}
+            </span>
           </div>
           {assignmentsLoading ? (
             <div className="divide-y divide-border-dim">
@@ -729,7 +964,9 @@ export function EmailTemplatesPage() {
           ) : (assignments?.length ?? 0) === 0 ? (
             <div className="panel__content text-center py-8">
               <p className="text-sm text-secondary mb-3">No assignments yet</p>
-              <Button size="sm" onClick={() => setShowAssign(true)}>Create your first assignment</Button>
+              <Button size="sm" onClick={() => setShowAssign(true)}>
+                Create your first assignment
+              </Button>
             </div>
           ) : (
             <table className="data-table">
@@ -745,18 +982,39 @@ export function EmailTemplatesPage() {
               <tbody>
                 {assignments!.map((a) => (
                   <tr key={a.id}>
-                    <td><span className="font-mono text-xs text-data">{a.templateKey.key}</span></td>
+                    <td>
+                      <span className="font-mono text-xs text-data">
+                        {a.templateKey.key}
+                      </span>
+                    </td>
                     <td>
                       {a.environment ? (
-                        <span className="font-mono text-xs">{a.environment.name}</span>
+                        <span className="font-mono text-xs">
+                          {a.environment.name}
+                        </span>
                       ) : (
-                        <span className="text-xs text-caution font-medium">Default</span>
+                        <span className="text-xs text-caution font-medium">
+                          Default
+                        </span>
                       )}
                     </td>
-                    <td><span className="font-mono text-xs">{a.resendTemplateId}</span></td>
-                    <td><span className="font-mono text-xs text-tertiary">{new Date(a.createdAt).toLocaleDateString()}</span></td>
                     <td>
-                      <button onClick={() => handleDeleteAssignment(a.id)} className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider">Remove</button>
+                      <span className="font-mono text-xs">
+                        {a.resendTemplateId}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-tertiary">
+                        {new Date(a.createdAt).toLocaleDateString()}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => handleDeleteAssignment(a.id)}
+                        className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider"
+                      >
+                        Remove
+                      </button>
                     </td>
                   </tr>
                 ))}

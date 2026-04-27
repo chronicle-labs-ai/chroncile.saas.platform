@@ -6,10 +6,7 @@ import { Eyebrow } from "../primitives/eyebrow";
 import { FormField } from "../primitives/form-field";
 import { Input } from "../primitives/input";
 import { ScanLoader } from "../primitives/scan-loader";
-import {
-  WorkspaceUrlField,
-  slugify,
-} from "../primitives/workspace-url-field";
+import { WorkspaceUrlField, slugify } from "../primitives/workspace-url-field";
 import { ArrowRightIcon } from "../icons/glyphs";
 import {
   AuthDisplay,
@@ -122,10 +119,9 @@ function Capture({
 
         {email ? (
           <InlineAlert tone="info" title="Almost there.">
-            Signed in as{" "}
-            <code className="font-mono text-ink-hi">{email}</code>. We&rsquo;ll
-            provision the workspace and route this email&rsquo;s domain to it
-            automatically.
+            Signed in as <code className="font-mono text-ink-hi">{email}</code>.
+            We&rsquo;ll provision the workspace and route this email&rsquo;s
+            domain to it automatically.
           </InlineAlert>
         ) : null}
 
@@ -139,7 +135,6 @@ function Capture({
             type="text"
             autoComplete="organization"
             placeholder="Acme Industries"
-            density="brand"
             variant="auth"
             value={orgName}
             onChange={(e) => setOrgName(e.currentTarget.value)}
@@ -170,7 +165,6 @@ function Capture({
         back={null}
         next={
           <Button
-            density="brand"
             variant="ember"
             isLoading={isSubmitting}
             isDisabled={!canSubmit}
@@ -195,8 +189,8 @@ function Running({ steps = [] }: WorkspaceSetupProps) {
         Wiring your <em>workspace.</em>
       </AuthDisplay>
       <AuthLede>
-        Mirroring your tenant to WorkOS, attaching you as the owner, and
-        minting your session token.
+        Mirroring your tenant to WorkOS, attaching you as the owner, and minting
+        your session token.
       </AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-4">
@@ -223,8 +217,8 @@ function Success({
         You&rsquo;re in, <em>{greet}.</em>
       </AuthDisplay>
       <AuthLede>
-        <span className="text-ink-hi font-medium">{workspaceName}</span>{" "}
-        is provisioned and your session is signed. Pick how you want to land.
+        <span className="text-ink-hi font-medium">{workspaceName}</span> is
+        provisioned and your session is signed. Pick how you want to land.
       </AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col items-start gap-s-4">
@@ -233,17 +227,12 @@ function Success({
 
       <StepFoot
         back={
-          <Button
-            density="brand"
-            variant="secondary"
-            onPress={onSkipToDashboard}
-          >
+          <Button variant="secondary" onPress={onSkipToDashboard}>
             Skip · explore the dashboard
           </Button>
         }
         next={
           <Button
-            density="brand"
             variant="ember"
             onPress={onContinueOnboarding}
             trailingIcon={<ArrowRightIcon />}

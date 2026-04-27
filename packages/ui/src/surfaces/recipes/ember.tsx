@@ -6,8 +6,10 @@ import { GlassScene } from "../glass-scene";
 import { GlassStack } from "../glass-stack";
 import { LightSource } from "../light-source";
 
-export interface EmberProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "color"> {
+export interface EmberProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "color"
+> {
   /** Number of slats. @default 10 */
   slats?: number;
 }

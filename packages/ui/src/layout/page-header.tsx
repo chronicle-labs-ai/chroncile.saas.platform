@@ -9,14 +9,15 @@ const pageHeader = tv({
     eyebrow: "mb-s-3 block",
     title:
       "m-0 mb-[6px] font-display text-[36px] font-medium tracking-tight text-ink-hi",
-    lede:
-      "m-0 max-w-[70ch] font-sans text-[15px] font-light leading-[1.45] text-ink-lo",
+    lede: "m-0 max-w-[70ch] font-sans text-[15px] font-light leading-[1.45] text-ink-lo",
     actions: "shrink-0",
   },
 });
 
-export interface PageHeaderProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+export interface PageHeaderProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   lede?: React.ReactNode;

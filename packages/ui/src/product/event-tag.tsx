@@ -11,8 +11,7 @@ import { Tag, type TagVariant } from "../primitives/tag";
  */
 export type EventRole = "customer" | "agent" | "system" | "divergence";
 
-export interface EventTagProps
-  extends React.HTMLAttributes<HTMLSpanElement> {
+export interface EventTagProps extends React.HTMLAttributes<HTMLSpanElement> {
   role: EventRole;
   /** Override the label text. Defaults to the uppercase role name. */
   label?: React.ReactNode;

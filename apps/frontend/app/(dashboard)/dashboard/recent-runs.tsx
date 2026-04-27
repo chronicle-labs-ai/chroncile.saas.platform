@@ -36,23 +36,28 @@ function statusDisplayLabel(status: string): string {
 }
 
 export function RecentRuns() {
-  const { data } = useApiSwr<ListRunsResponse>(
-    "/api/platform/runs?limit=5",
-    { revalidateOnFocus: true, refreshInterval: 15000 },
-  );
+  const { data } = useApiSwr<ListRunsResponse>("/api/platform/runs?limit=5", {
+    revalidateOnFocus: true,
+    refreshInterval: 15000,
+  });
   const runs = data?.runs ?? [];
 
   return (
     <div className="panel">
       <div className="panel__header">
         <span className="panel__title">Recent runs</span>
-        <Link href="/dashboard/runs" className="text-xs text-data hover:underline">
+        <Link
+          href="/dashboard/runs"
+          className="text-xs text-data hover:underline"
+        >
           View all
         </Link>
       </div>
       <div className="panel__content">
         {runs.length === 0 ? (
-          <p className="text-xs text-tertiary">No runs yet. Create a test run from the Runs page.</p>
+          <p className="text-xs text-tertiary">
+            No runs yet. Create a test run from the Runs page.
+          </p>
         ) : (
           <ul className="space-y-1">
             {runs.map((run) => (
@@ -69,11 +74,23 @@ export function RecentRuns() {
                       {formatDate(run.createdAt)}
                     </div>
                   </div>
-                  <span className={`text-xs shrink-0 ${statusClass(run.status)}`}>
+                  <span
+                    className={`text-xs shrink-0 ${statusClass(run.status)}`}
+                  >
                     {statusDisplayLabel(run.status)}
                   </span>
-                  <svg className="w-3.5 h-3.5 shrink-0 text-tertiary group-hover:text-data transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <svg
+                    className="w-3.5 h-3.5 shrink-0 text-tertiary group-hover:text-data transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
                   </svg>
                 </Link>
               </li>

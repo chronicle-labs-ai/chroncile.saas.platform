@@ -31,12 +31,12 @@ import {
 
 import { tv } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 const popoverStyles = tv({
   slots: {
     popover:
-      "z-50 rounded-md border border-hairline-strong bg-surface-02 " +
-      "shadow-panel outline-none " +
+      "z-50 border bg-surface-02 shadow-panel outline-none " +
       "data-[entering=true]:animate-in data-[entering=true]:fade-in " +
       "data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
     dialog: "outline-none",
@@ -46,6 +46,13 @@ const popoverStyles = tv({
       "data-[placement=left]:-rotate-90 " +
       "data-[placement=right]:rotate-90",
   },
+  variants: {
+    density: {
+      brand: { popover: "rounded-md border-hairline-strong" },
+      compact: { popover: "rounded-l border-l-border" },
+    },
+  },
+  defaultVariants: { density: "brand" },
 });
 
 export interface PopoverProps extends DialogTriggerProps {}
@@ -64,12 +71,15 @@ export function PopoverTrigger({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export interface PopoverContentProps
-  extends Omit<RACPopoverProps, "className"> {
+export interface PopoverContentProps extends Omit<
+  RACPopoverProps,
+  "className"
+> {
   className?: string;
   classNames?: { popover?: string; dialog?: string; arrow?: string };
   /** Render a directional arrow pointing at the trigger. Off by default. */
   showArrow?: boolean;
+  density?: "compact" | "brand";
   children: React.ReactNode;
 }
 
@@ -77,16 +87,18 @@ export function PopoverContent({
   className,
   classNames,
   showArrow = false,
+  density: densityProp,
   children,
   ...rest
 }: PopoverContentProps) {
-  const slots = popoverStyles({});
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = popoverStyles({ density });
   return (
     <RACPopover
       {...rest}
       className={composeTwRenderProps(
         className ?? classNames?.popover,
-        slots.popover(),
+        slots.popover()
       )}
     >
       {showArrow ? (

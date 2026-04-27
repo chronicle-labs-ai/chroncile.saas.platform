@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Input } from "./input";
 import { cx } from "../utils/cx";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * WorkspaceUrlField — composite input rendering `chronicle.io/<slug>`.
@@ -19,11 +20,10 @@ import { cx } from "../utils/cx";
  * normalisation.
  */
 
-export interface WorkspaceUrlFieldProps
-  extends Omit<
-    React.InputHTMLAttributes<HTMLInputElement>,
-    "value" | "onChange" | "prefix"
-  > {
+export interface WorkspaceUrlFieldProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "prefix"
+> {
   /** Prefix shown in the non-editable mono span. Default `"chronicle.io/"`. */
   prefix?: string;
   /** Current slug value (without the prefix). */
@@ -34,6 +34,9 @@ export interface WorkspaceUrlFieldProps
   invalid?: boolean;
   /** Wrapper className passthrough. */
   className?: string;
+  /** Force a density flavor. Defaults to whichever the surrounding
+   * `ChromeStyleProvider` resolves to. */
+  density?: "compact" | "brand";
 }
 
 /** Slugify in the same shape WorkOS / our slug column expects. */
@@ -56,28 +59,34 @@ export function WorkspaceUrlField({
   id,
   placeholder = "your-workspace",
   className,
+  density: densityProp,
   ...rest
 }: WorkspaceUrlFieldProps) {
+  const density = useResolvedChromeDensity(densityProp);
+  const isCompact = density === "compact";
   return (
     <div
       data-disabled={disabled || undefined}
       data-invalid={invalid || undefined}
+      data-density={density}
       className={cx(
-        "flex w-full items-stretch overflow-hidden rounded-sm",
-        "border border-hairline-strong bg-surface-00",
+        "flex w-full items-stretch overflow-hidden border",
         "transition-[border-color,box-shadow,background-color] duration-fast ease-out",
-        "focus-within:border-ember",
         "data-[invalid=true]:border-event-red",
         "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
-        className,
+        isCompact
+          ? "rounded-l border-l-border bg-l-surface-input focus-within:border-[rgba(216,67,10,0.5)] focus-within:shadow-[0_0_0_3px_rgba(216,67,10,0.12)]"
+          : "rounded-sm border-hairline-strong bg-surface-00 focus-within:border-ember",
+        className
       )}
     >
       <span
         aria-hidden
         className={cx(
-          "inline-flex shrink-0 select-none items-center px-s-3",
-          "border-r border-hairline-strong bg-surface-01",
-          "font-mono text-mono-lg text-ink-dim",
+          "inline-flex shrink-0 select-none items-center",
+          isCompact
+            ? "px-[10px] border-r border-l-border bg-l-surface-raised font-sans text-[13px] text-l-ink-dim"
+            : "px-s-3 border-r border-hairline-strong bg-surface-01 font-mono text-mono-lg text-ink-dim"
         )}
       >
         {prefix}
@@ -88,14 +97,14 @@ export function WorkspaceUrlField({
         autoComplete="off"
         spellCheck={false}
         autoCapitalize="none"
-        density="brand"
         variant="auth"
+        density={density}
         invalid={invalid}
         disabled={disabled}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(slugify(e.currentTarget.value))}
-        className="flex-1 border-0 rounded-none bg-transparent focus:shadow-none data-[focused=true]:border-0"
+        className="flex-1 border-0 rounded-none bg-transparent focus:shadow-none data-[focused=true]:border-0 data-[focused=true]:shadow-none"
         {...rest}
       />
     </div>

@@ -8,6 +8,7 @@ import {
 } from "react-aria-components";
 
 import { tv } from "../utils/tv";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * FormField is a layout shell that pairs a label, description, and error
@@ -25,18 +26,44 @@ import { tv } from "../utils/tv";
 
 const formField = tv({
   slots: {
-    root: "flex flex-col gap-s-2",
-    label: "font-mono text-mono-sm uppercase tracking-tactical",
-    description: "font-mono text-mono-sm text-ink-dim leading-[1.5]",
-    error: "font-mono text-mono-sm text-event-red leading-[1.5]",
+    root: "flex flex-col",
+    label: "",
+    description: "leading-[1.5]",
+    error: "leading-[1.5] text-event-red",
   },
   variants: {
+    density: {
+      brand: {
+        root: "gap-s-2",
+        label: "font-mono text-mono-sm uppercase tracking-tactical",
+        description: "font-mono text-mono-sm text-ink-dim",
+        error: "font-mono text-mono-sm",
+      },
+      compact: {
+        root: "gap-[6px]",
+        label: "font-sans text-[12px] font-medium tracking-normal text-l-ink-lo",
+        description: "font-sans text-[12px] text-l-ink-dim",
+        error: "font-sans text-[12px]",
+      },
+    },
     tone: {
       default: { label: "text-ink-dim" },
       auth: { label: "text-ink-hi" },
     },
   },
-  defaultVariants: { tone: "default" },
+  compoundVariants: [
+    {
+      density: "compact",
+      tone: "default",
+      class: { label: "text-l-ink-lo" },
+    },
+    {
+      density: "compact",
+      tone: "auth",
+      class: { label: "text-l-ink" },
+    },
+  ],
+  defaultVariants: { density: "brand", tone: "default" },
 });
 
 export interface FormFieldProps {
@@ -51,6 +78,9 @@ export interface FormFieldProps {
   error?: React.ReactNode;
   required?: boolean;
   tone?: "default" | "auth";
+  /** Force a density flavor. Defaults to whichever the surrounding
+   * `ChromeStyleProvider` resolves to. */
+  density?: "compact" | "brand";
   className?: string;
   labelClassName?: string;
   descriptionClassName?: string;
@@ -65,15 +95,17 @@ export function FormField({
   error,
   required = false,
   tone = "default",
+  density: densityProp,
   className,
   labelClassName,
   descriptionClassName,
   errorClassName,
 }: FormFieldProps) {
-  const slots = formField({ tone });
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = formField({ density, tone });
 
   return (
-    <div className={slots.root({ className })}>
+    <div className={slots.root({ className })} data-density={density}>
       {label ? (
         htmlFor ? (
           // Plain-input mode: render a raw <label htmlFor>.

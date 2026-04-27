@@ -10,6 +10,7 @@ import {
 
 import { tv, type VariantProps } from "../utils/tv";
 import { composeTwRenderProps } from "../utils/compose";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 import { Button } from "./button";
 
 /*
@@ -27,34 +28,46 @@ const modalStyles = tv({
       "data-[entering=true]:animate-in data-[entering=true]:fade-in " +
       "data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
     modal:
-      "w-full max-w-[520px] rounded-md border border-hairline-strong bg-surface-01 " +
-      "shadow-panel outline-none " +
+      "w-full max-w-[520px] border bg-surface-01 shadow-panel outline-none " +
       "data-[entering=true]:animate-in data-[entering=true]:zoom-in-95 " +
       "data-[exiting=true]:animate-out data-[exiting=true]:zoom-out-95",
     dialog: "outline-none",
-    header:
-      "flex items-center justify-between border-b border-hairline " +
-      "bg-surface-02 px-s-4 py-s-3",
-    title: "font-display text-title-sm tracking-tight",
+    header: "flex items-center justify-between border-b border-hairline bg-surface-02",
+    title: "",
     close:
-      "inline-flex h-8 w-8 items-center justify-center rounded-sm " +
-      "text-ink-dim transition-colors duration-fast ease-out " +
+      "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out " +
       "data-[hovered=true]:bg-surface-03 data-[hovered=true]:text-ink-hi " +
       "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
       "data-[focus-visible=true]:outline-ember",
-    body: "px-s-4 py-s-4 text-body-sm text-ink-lo",
-    actions:
-      "flex items-center justify-end gap-s-3 border-t border-hairline " +
-      "bg-surface-02 px-s-4 py-s-3",
+    body: "text-ink-lo",
+    actions: "flex items-center justify-end border-t border-hairline bg-surface-02",
   },
   variants: {
+    density: {
+      brand: {
+        modal: "rounded-md border-hairline-strong",
+        header: "px-s-4 py-s-3",
+        title: "font-display text-title-sm tracking-tight",
+        close: "h-8 w-8 rounded-sm",
+        body: "px-s-4 py-s-4 text-body-sm",
+        actions: "gap-s-3 px-s-4 py-s-3",
+      },
+      compact: {
+        modal: "rounded-l border-l-border",
+        header: "px-[14px] py-[10px]",
+        title: "font-sans text-[14px] font-medium tracking-normal",
+        close: "h-7 w-7 rounded-l",
+        body: "px-[14px] py-[14px] font-sans text-[13px] leading-snug",
+        actions: "gap-[8px] px-[14px] py-[10px]",
+      },
+    },
     variant: {
       default: { title: "text-ink-hi" },
       danger: { title: "text-event-red" },
       dark: { title: "text-ink-hi" },
     },
   },
-  defaultVariants: { variant: "default" },
+  defaultVariants: { density: "brand", variant: "default" },
 });
 
 type ModalVariantProps = VariantProps<typeof modalStyles>;
@@ -71,6 +84,7 @@ export interface ModalProps extends ModalVariantProps {
    * `dark`    — alias for `default`, kept for API compatibility
    */
   variant?: "default" | "danger" | "dark";
+  density?: "compact" | "brand";
   className?: string;
   /** Per-slot overrides. */
   classNames?: {
@@ -94,11 +108,13 @@ export function Modal({
   children,
   actions,
   variant = "default",
+  density: densityProp,
   className,
   classNames,
   isDismissable = true,
 }: ModalProps) {
-  const slots = modalStyles({ variant });
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = modalStyles({ density, variant });
 
   return (
     <RACModalOverlay
@@ -107,15 +123,12 @@ export function Modal({
         if (!open) onClose();
       }}
       isDismissable={isDismissable}
-      className={composeTwRenderProps(
-        classNames?.overlay,
-        slots.overlay(),
-      )}
+      className={composeTwRenderProps(classNames?.overlay, slots.overlay())}
     >
       <RACModal
         className={composeTwRenderProps(
           className ?? classNames?.modal,
-          slots.modal(),
+          slots.modal()
         )}
       >
         <RACDialog className={slots.dialog({ className: classNames?.dialog })}>
@@ -150,7 +163,9 @@ export function Modal({
               </div>
 
               {actions ? (
-                <div className={slots.actions({ className: classNames?.actions })}>
+                <div
+                  className={slots.actions({ className: classNames?.actions })}
+                >
                   {actions}
                 </div>
               ) : null}
@@ -193,11 +208,7 @@ export function ConfirmModal({
       variant={variant}
       actions={
         <>
-          <Button
-            variant="secondary"
-            onPress={onClose}
-            isDisabled={isLoading}
-          >
+          <Button variant="secondary" onPress={onClose} isDisabled={isLoading}>
             {cancelText}
           </Button>
           <Button

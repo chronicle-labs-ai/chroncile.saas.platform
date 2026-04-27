@@ -1,4 +1,1 @@
-export {
-  getAgentProfile,
-  getAllAgentProfiles,
-} from "@/lib/labeling/agents";
+export { getAgentProfile, getAllAgentProfiles } from "@/lib/labeling/agents";

@@ -11,8 +11,10 @@ import { cx } from "../utils/cx";
  * pill itself is just the trigger.
  */
 
-export interface WatchPillProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type" | "onChange"> {
+export interface WatchPillProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "type" | "onChange"
+> {
   /** Whether the player is currently expanded. Drives the chevron. */
   expanded: boolean;
   /** Toggle handler. */
@@ -46,9 +48,7 @@ export function WatchPill({
         </svg>
       </span>
       <span className="watch-pill-label">{label}</span>
-      {duration ? (
-        <span className="watch-pill-dur">{duration}</span>
-      ) : null}
+      {duration ? <span className="watch-pill-dur">{duration}</span> : null}
       <span className="watch-pill-chev" aria-hidden>
         {expanded ? "▾" : "▸"}
       </span>

@@ -13,7 +13,7 @@ async function doppler(args: string[]): Promise<string> {
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const developer = await prisma.developer.findUnique({ where: { id } });
@@ -26,17 +26,29 @@ export async function DELETE(
 
   try {
     await doppler([
-      "configs", "delete", frontendConfig,
-      "--project", DOPPLER_PROJECT, "--yes",
+      "configs",
+      "delete",
+      frontendConfig,
+      "--project",
+      DOPPLER_PROJECT,
+      "--yes",
     ]);
-  } catch { /* config may not exist */ }
+  } catch {
+    /* config may not exist */
+  }
 
   try {
     await doppler([
-      "configs", "delete", backendConfig,
-      "--project", DOPPLER_PROJECT, "--yes",
+      "configs",
+      "delete",
+      backendConfig,
+      "--project",
+      DOPPLER_PROJECT,
+      "--yes",
     ]);
-  } catch { /* config may not exist */ }
+  } catch {
+    /* config may not exist */
+  }
 
   await prisma.developer.delete({ where: { id } });
 

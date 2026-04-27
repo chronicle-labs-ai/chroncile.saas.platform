@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { Trace, HumanActionAudit, ActionAnnotation } from "@/lib/labeling/types";
+import type {
+  Trace,
+  HumanActionAudit,
+  ActionAnnotation,
+} from "@/lib/labeling/types";
 import { ConfidenceBar } from "./ConfidenceBar";
 import { StarRating } from "./StarRating";
 
@@ -24,7 +28,8 @@ function getInitialAuditValues(trace: Trace) {
   return {
     correctionSummary:
       existingAudit?.correction_summary ?? auto?.correction_summary ?? "",
-    criticalErrors: existingAudit?.critical_errors ?? auto?.critical_errors ?? [],
+    criticalErrors:
+      existingAudit?.critical_errors ?? auto?.critical_errors ?? [],
     notes: existingAudit?.notes ?? "",
     overallScore: existingAudit?.overall_score ?? auto?.overall_score ?? 3,
   };
@@ -107,7 +112,11 @@ function LabelingPanelForm({
               </span>
               <StarRating value={auto.overall_score} onChange={() => {}} />
               <div className="w-16 shrink-0">
-                <ConfidenceBar value={auto.confidence} size="sm" showValue={false} />
+                <ConfidenceBar
+                  value={auto.confidence}
+                  size="sm"
+                  showValue={false}
+                />
               </div>
             </div>
 
@@ -129,7 +138,10 @@ function LabelingPanelForm({
                 </span>
                 <div className="grid grid-cols-2 gap-1.5">
                   <OODBar label="Transition" value={ood.transition_deviation} />
-                  <OODBar label="Tool Freq" value={ood.tool_frequency_deviation} />
+                  <OODBar
+                    label="Tool Freq"
+                    value={ood.tool_frequency_deviation}
+                  />
                   <OODBar label="Temporal" value={ood.temporal_deviation} />
                   <OODBar label="Embedding" value={ood.embedding_distance} />
                 </div>
@@ -153,9 +165,11 @@ function LabelingPanelForm({
                   <span className="font-mono text-[10px] text-tertiary uppercase tracking-wider">
                     Context Integrity
                   </span>
-                  <span className={`badge text-[9px] py-0.5 px-1.5 ${
-                    ctxIntegrity.passed ? "badge--nominal" : "badge--critical"
-                  }`}>
+                  <span
+                    className={`badge text-[9px] py-0.5 px-1.5 ${
+                      ctxIntegrity.passed ? "badge--nominal" : "badge--critical"
+                    }`}
+                  >
                     {ctxIntegrity.passed ? "PASSED" : "FAILED"}
                   </span>
                 </div>
@@ -165,10 +179,14 @@ function LabelingPanelForm({
                       <div
                         key={i}
                         className={`text-[11px] border border-border-dim rounded-sm px-2 py-1 ${
-                          v.severity === "critical" ? "text-critical bg-critical-bg" : "text-caution bg-caution-bg"
+                          v.severity === "critical"
+                            ? "text-critical bg-critical-bg"
+                            : "text-caution bg-caution-bg"
                         }`}
                       >
-                        <span className="font-mono text-[10px] font-medium">{v.type}</span>
+                        <span className="font-mono text-[10px] font-medium">
+                          {v.type}
+                        </span>
                         <span className="text-tertiary mx-1">·</span>
                         <span className="font-mono text-[10px]">{v.field}</span>
                         <span className="text-tertiary mx-1">—</span>
@@ -193,12 +211,18 @@ function LabelingPanelForm({
                       className="text-[11px] text-critical bg-critical-bg border border-border-dim rounded-sm px-2 py-1"
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] font-medium">{iv.instruction_id}</span>
-                        <span className="text-tertiary italic truncate text-[10px]">{iv.instruction_text}</span>
+                        <span className="font-mono text-[10px] font-medium">
+                          {iv.instruction_id}
+                        </span>
+                        <span className="text-tertiary italic truncate text-[10px]">
+                          {iv.instruction_text}
+                        </span>
                       </div>
                       <p className="mt-0.5">{iv.violation_description}</p>
                       {iv.context_evidence && (
-                        <p className="text-tertiary mt-0.5 text-[10px]">Evidence: {iv.context_evidence}</p>
+                        <p className="text-tertiary mt-0.5 text-[10px]">
+                          Evidence: {iv.context_evidence}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -267,8 +291,18 @@ function LabelingPanelForm({
                     onClick={() => removeError(i)}
                     className="text-critical/50 hover:text-critical shrink-0 mt-0.5"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -330,11 +364,7 @@ function LabelingPanelForm({
           >
             {saving ? "Saving..." : "Save Audit"}
           </button>
-          <button
-            className="btn btn--ghost"
-            onClick={onSkip}
-            disabled={saving}
-          >
+          <button className="btn btn--ghost" onClick={onSkip} disabled={saving}>
             Skip
           </button>
         </div>
@@ -345,8 +375,18 @@ function LabelingPanelForm({
             onClick={onPrev}
             disabled={!hasPrev || saving}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5L8.25 12l7.5-7.5"
+              />
             </svg>
             Prev
           </button>
@@ -359,8 +399,18 @@ function LabelingPanelForm({
             disabled={!hasNext || saving}
           >
             Next
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 4.5l7.5 7.5-7.5 7.5"
+              />
             </svg>
           </button>
         </div>
@@ -369,7 +419,13 @@ function LabelingPanelForm({
   );
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="label block mb-1.5">{label}</label>
@@ -380,15 +436,23 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 
 function OODBar({ label, value }: { label: string; value: number }) {
   const pct = Math.round(value * 100);
-  const color = value >= 0.7 ? "bg-critical" : value >= 0.4 ? "bg-caution" : "bg-nominal";
+  const color =
+    value >= 0.7 ? "bg-critical" : value >= 0.4 ? "bg-caution" : "bg-nominal";
 
   return (
     <div className="flex items-center gap-2">
-      <span className="font-mono text-[9px] text-tertiary w-14 shrink-0 text-right">{label}</span>
+      <span className="font-mono text-[9px] text-tertiary w-14 shrink-0 text-right">
+        {label}
+      </span>
       <div className="flex-1 h-1.5 bg-elevated rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full ${color} rounded-full transition-all`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
-      <span className="font-mono text-[9px] text-tertiary w-7 tabular-nums">{pct}%</span>
+      <span className="font-mono text-[9px] text-tertiary w-7 tabular-nums">
+        {pct}%
+      </span>
     </div>
   );
 }

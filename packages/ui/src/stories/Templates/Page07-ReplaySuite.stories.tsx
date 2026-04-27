@@ -52,12 +52,31 @@ function ScenarioRunner() {
         </div>
         <div className="flex flex-col divide-y divide-hairline">
           {[
-            { role: "CUSTOMER", who: "Sarah Chen", msg: "My last order never arrived." },
-            { role: "SYSTEM", who: "OrderLookup", msg: '{ order_id: "8821", status: "delivered" }' },
-            { role: "AGENT", who: "support-ai", msg: "Your order was delivered last Thursday." },
-            { role: "CUSTOMER", who: "Sarah Chen", msg: "The address is wrong — third time." },
+            {
+              role: "CUSTOMER",
+              who: "Sarah Chen",
+              msg: "My last order never arrived.",
+            },
+            {
+              role: "SYSTEM",
+              who: "OrderLookup",
+              msg: '{ order_id: "8821", status: "delivered" }',
+            },
+            {
+              role: "AGENT",
+              who: "support-ai",
+              msg: "Your order was delivered last Thursday.",
+            },
+            {
+              role: "CUSTOMER",
+              who: "Sarah Chen",
+              msg: "The address is wrong — third time.",
+            },
           ].map((t) => (
-            <div key={t.msg} className="grid grid-cols-[16px_112px_1fr_auto] items-center gap-s-4 py-s-3">
+            <div
+              key={t.msg}
+              className="grid grid-cols-[16px_112px_1fr_auto] items-center gap-s-4 py-s-3"
+            >
               <span className="h-[14px] w-[14px] rounded-xs border border-event-green bg-event-green" />
               <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
                 {t.role}
@@ -84,7 +103,9 @@ function ScenarioRunner() {
             <span className="rounded-xs border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.08)] px-s-3 py-s-2 font-mono text-mono text-ink">
               I apologize — unfortunately I'm unable to process a refund myself…
             </span>
-            <Mono size="sm" tone="dim">sandbox</Mono>
+            <Mono size="sm" tone="dim">
+              sandbox
+            </Mono>
           </div>
         </div>
       </div>
@@ -120,10 +141,30 @@ function Page07() {
             </div>
             <div className="flex flex-col gap-s-3">
               {[
-                { name: "Refund escalation", status: "RUNNING", tone: "text-event-red", meta: "11 turns · 3 tools · 1 divergence" },
-                { name: "Chargeback dispute", status: "✓ PASSING", tone: "text-event-green", meta: "14 turns · 6 tools · 3 handoffs" },
-                { name: "Out-of-stock replacement", status: "◐ PARTIAL", tone: "text-event-amber", meta: "9 turns · 2 tools · sentiment drop" },
-                { name: "Multi-tenant permission confusion", status: "", tone: "", meta: "22 turns · 4 tools · 2 SSO redirects" },
+                {
+                  name: "Refund escalation",
+                  status: "RUNNING",
+                  tone: "text-event-red",
+                  meta: "11 turns · 3 tools · 1 divergence",
+                },
+                {
+                  name: "Chargeback dispute",
+                  status: "✓ PASSING",
+                  tone: "text-event-green",
+                  meta: "14 turns · 6 tools · 3 handoffs",
+                },
+                {
+                  name: "Out-of-stock replacement",
+                  status: "◐ PARTIAL",
+                  tone: "text-event-amber",
+                  meta: "9 turns · 2 tools · sentiment drop",
+                },
+                {
+                  name: "Multi-tenant permission confusion",
+                  status: "",
+                  tone: "",
+                  meta: "22 turns · 4 tools · 2 SSO redirects",
+                },
               ].map((s) => (
                 <div
                   key={s.name}
@@ -133,12 +174,16 @@ function Page07() {
                     <div className="font-mono text-mono-lg text-ink-hi mb-[4px]">
                       {s.name}
                       {s.status ? (
-                        <span className={`ml-s-3 font-mono text-mono-sm uppercase tracking-tactical ${s.tone}`}>
+                        <span
+                          className={`ml-s-3 font-mono text-mono-sm uppercase tracking-tactical ${s.tone}`}
+                        >
                           ● {s.status}
                         </span>
                       ) : null}
                     </div>
-                    <Mono size="sm" tone="dim">{s.meta}</Mono>
+                    <Mono size="sm" tone="dim">
+                      {s.meta}
+                    </Mono>
                   </div>
                   <Eyebrow>SUPPORT</Eyebrow>
                 </div>
@@ -148,14 +193,19 @@ function Page07() {
         </div>
 
         <h2 className="m-0 mb-s-4 mt-s-16 font-display text-title-lg font-medium tracking-tight text-ink-hi">
-          Run results — <em className="italic font-normal text-ink-lo not-italic">support-agent-v3 vs v2.8</em>
+          Run results —{" "}
+          <em className="italic font-normal text-ink-lo not-italic">
+            support-agent-v3 vs v2.8
+          </em>
           <span className="ml-s-3 align-middle font-mono text-mono-lg font-normal uppercase tracking-tactical text-ink-dim">
             24 scenarios · run 14m ago
           </span>
         </h2>
         <div className="overflow-hidden rounded-md border border-hairline bg-surface-01">
           <div className="flex items-center gap-s-5 border-b border-hairline p-s-5">
-            <Mono size="md" tone="hi" uppercase tactical>REPLAY SUITE</Mono>
+            <Mono size="md" tone="hi" uppercase tactical>
+              REPLAY SUITE
+            </Mono>
             <Mono size="md" tone="dim">
               Pass <b className="text-event-green font-normal">19</b> · Partial{" "}
               <b className="text-event-amber font-normal">3</b> · Fail{" "}
@@ -174,14 +224,24 @@ function Page07() {
             <ReplayBar
               variant="baseline"
               value={98}
-              label={<>BASELINE <b className="text-ink-hi font-normal">support-agent-v2.8</b></>}
+              label={
+                <>
+                  BASELINE{" "}
+                  <b className="text-ink-hi font-normal">support-agent-v2.8</b>
+                </>
+              }
               readout="98.4% match"
               tone="green"
             />
             <ReplayBar
               variant="candidate"
               value={62}
-              label={<>CANDIDATE <b className="text-ember font-normal">support-agent-v3.0.4</b></>}
+              label={
+                <>
+                  CANDIDATE{" "}
+                  <b className="text-ember font-normal">support-agent-v3.0.4</b>
+                </>
+              }
               readout="62.1% match"
               tone="red"
             />
@@ -189,18 +249,31 @@ function Page07() {
           <RunsTable>
             <RunsTableHead>
               <RunsTableRow>
-                <RunsTableHeader style={{ width: "30%" }}>Scenario</RunsTableHeader>
+                <RunsTableHeader style={{ width: "30%" }}>
+                  Scenario
+                </RunsTableHeader>
                 <RunsTableHeader style={{ width: 120 }}>Turns</RunsTableHeader>
-                <RunsTableHeader style={{ width: 200 }}>Similarity</RunsTableHeader>
-                <RunsTableHeader style={{ width: 180 }}>Turn diff</RunsTableHeader>
-                <RunsTableHeader style={{ width: 120 }}>Latency Δ</RunsTableHeader>
-                <RunsTableHeader style={{ width: 120 }}>Verdict</RunsTableHeader>
+                <RunsTableHeader style={{ width: 200 }}>
+                  Similarity
+                </RunsTableHeader>
+                <RunsTableHeader style={{ width: 180 }}>
+                  Turn diff
+                </RunsTableHeader>
+                <RunsTableHeader style={{ width: 120 }}>
+                  Latency Δ
+                </RunsTableHeader>
+                <RunsTableHeader style={{ width: 120 }}>
+                  Verdict
+                </RunsTableHeader>
               </RunsTableRow>
             </RunsTableHead>
             <tbody>
               <RunsTableRow>
                 <RunsTableCell>
-                  <RunName name="Refund escalation — wrong address" sub="trace_cus_demo_01 · critical" />
+                  <RunName
+                    name="Refund escalation — wrong address"
+                    sub="trace_cus_demo_01 · critical"
+                  />
                 </RunsTableCell>
                 <RunsTableCell>11</RunsTableCell>
                 <RunsTableCell>
@@ -208,7 +281,19 @@ function Page07() {
                 </RunsTableCell>
                 <RunsTableCell>
                   <TurnDiffStrip
-                    turns={["hit","hit","hit","hit","miss","hit","miss","empty","empty","empty","empty"]}
+                    turns={[
+                      "hit",
+                      "hit",
+                      "hit",
+                      "hit",
+                      "miss",
+                      "hit",
+                      "miss",
+                      "empty",
+                      "empty",
+                      "empty",
+                      "empty",
+                    ]}
                   />
                 </RunsTableCell>
                 <RunsTableCell className="text-event-red">+1.4s</RunsTableCell>
@@ -218,7 +303,10 @@ function Page07() {
               </RunsTableRow>
               <RunsTableRow>
                 <RunsTableCell>
-                  <RunName name="Chargeback dispute" sub="trace_cus_ent_22 · billing" />
+                  <RunName
+                    name="Chargeback dispute"
+                    sub="trace_cus_ent_22 · billing"
+                  />
                 </RunsTableCell>
                 <RunsTableCell>14</RunsTableCell>
                 <RunsTableCell>
@@ -227,14 +315,19 @@ function Page07() {
                 <RunsTableCell>
                   <TurnDiffStrip turns={Array(14).fill("hit")} />
                 </RunsTableCell>
-                <RunsTableCell className="text-event-green">−0.2s</RunsTableCell>
+                <RunsTableCell className="text-event-green">
+                  −0.2s
+                </RunsTableCell>
                 <RunsTableCell>
                   <Verdict kind="pass" />
                 </RunsTableCell>
               </RunsTableRow>
               <RunsTableRow>
                 <RunsTableCell>
-                  <RunName name="Out-of-stock replacement" sub="trace_cus_ss_11 · commerce" />
+                  <RunName
+                    name="Out-of-stock replacement"
+                    sub="trace_cus_ss_11 · commerce"
+                  />
                 </RunsTableCell>
                 <RunsTableCell>9</RunsTableCell>
                 <RunsTableCell>
@@ -242,7 +335,17 @@ function Page07() {
                 </RunsTableCell>
                 <RunsTableCell>
                   <TurnDiffStrip
-                    turns={["hit","hit","hit","miss","hit","hit","hit","hit","hit"]}
+                    turns={[
+                      "hit",
+                      "hit",
+                      "hit",
+                      "miss",
+                      "hit",
+                      "hit",
+                      "hit",
+                      "hit",
+                      "hit",
+                    ]}
                   />
                 </RunsTableCell>
                 <RunsTableCell className="text-ink-dim">+0.1s</RunsTableCell>

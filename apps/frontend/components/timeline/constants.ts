@@ -47,7 +47,8 @@ export function sourceColor(source: string): string {
       return "#00A1E0";
     default: {
       let hash = 0;
-      for (let i = 0; i < source.length; i++) hash = (hash + source.charCodeAt(i)) >>> 0;
+      for (let i = 0; i < source.length; i++)
+        hash = (hash + source.charCodeAt(i)) >>> 0;
       const hue = hash % 360;
       return hslToHex(hue, 0.6, 0.5);
     }
@@ -56,7 +57,8 @@ export function sourceColor(source: string): string {
 
 export function pathColor(pathDisplay: string, baseHex: string): string {
   let hash = 0;
-  for (let i = 0; i < pathDisplay.length; i++) hash = (hash + pathDisplay.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < pathDisplay.length; i++)
+    hash = (hash + pathDisplay.charCodeAt(i)) >>> 0;
   const variation = (hash / 255) * 0.2 - 0.1;
   const [r, g, b] = hexToRgb(baseHex);
   const clamp = (x: number) => Math.min(255, Math.max(0, x));

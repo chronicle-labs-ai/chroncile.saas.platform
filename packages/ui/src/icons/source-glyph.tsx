@@ -235,7 +235,15 @@ const GLYPHS: Record<
   ),
   http: (c, size) => (
     <Svg size={size}>
-      <rect x="2" y="5" width="16" height="10" rx="2" stroke={c} strokeWidth="1.3" />
+      <rect
+        x="2"
+        y="5"
+        width="16"
+        height="10"
+        rx="2"
+        stroke={c}
+        strokeWidth="1.3"
+      />
       <path
         d="M5 9h2M9 9h2M13 9h2M5 12h10"
         stroke={c}
@@ -246,7 +254,15 @@ const GLYPHS: Record<
   ),
   gmail: (c, size) => (
     <Svg size={size}>
-      <rect x="2" y="5" width="16" height="11" rx="1.5" stroke={c} strokeWidth="1.3" />
+      <rect
+        x="2"
+        y="5"
+        width="16"
+        height="11"
+        rx="1.5"
+        stroke={c}
+        strokeWidth="1.3"
+      />
       <path
         d="M2.5 5.8L10 11l7.5-5.2"
         stroke={c}
@@ -266,7 +282,15 @@ const GLYPHS: Record<
   ),
   notion: (c, size) => (
     <Svg size={size}>
-      <rect x="3" y="3" width="14" height="14" rx="1.5" stroke={c} strokeWidth="1.3" />
+      <rect
+        x="3"
+        y="3"
+        width="14"
+        height="14"
+        rx="1.5"
+        stroke={c}
+        strokeWidth="1.3"
+      />
       <path
         d="M7 6v8M7 6l6 8M13 6v8"
         stroke={c}
@@ -277,8 +301,9 @@ const GLYPHS: Record<
   ),
 };
 
-export const SOURCE_GLYPH_IDS: readonly SourceGlyphId[] =
-  Object.keys(GLYPHS) as SourceGlyphId[];
+export const SOURCE_GLYPH_IDS: readonly SourceGlyphId[] = Object.keys(
+  GLYPHS
+) as SourceGlyphId[];
 
 export interface SourceGlyphProps {
   id: SourceGlyphId;

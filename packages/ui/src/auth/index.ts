@@ -58,10 +58,7 @@ export { AcceptInvite } from "./accept-invite";
 export type { AcceptInviteProps, AcceptInviteValue } from "./accept-invite";
 
 export { SelectWorkspace } from "./select-workspace";
-export type {
-  SelectWorkspaceProps,
-  Workspace,
-} from "./select-workspace";
+export type { SelectWorkspaceProps, Workspace } from "./select-workspace";
 
 export { WorkspaceSetup } from "./workspace-setup";
 export type {

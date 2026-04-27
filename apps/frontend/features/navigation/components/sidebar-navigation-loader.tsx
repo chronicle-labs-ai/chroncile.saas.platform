@@ -97,7 +97,10 @@ function SidebarNavigationProgressBar({
       <div className="h-[3px] w-full overflow-hidden bg-transparent">
         <div
           className="h-full bg-data shadow-[0_0_12px_rgba(0,212,255,0.7)] transition-[transform] duration-200 ease-out will-change-transform"
-          style={{ transform: `scaleX(${progress / 100})`, transformOrigin: "left center" }}
+          style={{
+            transform: `scaleX(${progress / 100})`,
+            transformOrigin: "left center",
+          }}
         />
       </div>
     </div>
@@ -124,7 +127,7 @@ export function SidebarNavigationLoaderProvider({
   const search = searchParams.toString();
   const routeKey = useMemo(
     () => `${pathname}${search ? `?${search}` : ""}`,
-    [pathname, search],
+    [pathname, search]
   );
 
   const resetLoader = useCallback(() => {
@@ -230,7 +233,7 @@ export function SidebarNavigationLoaderProvider({
         showTimerRef.current = null;
       }, SHOW_DELAY_MS);
     },
-    [finishNavigation, startProgressLoop],
+    [finishNavigation, startProgressLoop]
   );
 
   useEffect(() => {
@@ -250,27 +253,18 @@ export function SidebarNavigationLoaderProvider({
       return;
     }
 
-    if (
-      phaseRef.current === "loading" ||
-      phaseRef.current === "finishing"
-    ) {
+    if (phaseRef.current === "loading" || phaseRef.current === "finishing") {
       finishNavigation();
     }
   }, [finishNavigation, resetLoader, routeKey]);
 
   useEffect(() => resetLoader, [resetLoader]);
 
-  const contextValue = useMemo(
-    () => ({ startNavigation }),
-    [startNavigation],
-  );
+  const contextValue = useMemo(() => ({ startNavigation }), [startNavigation]);
 
   return (
     <SidebarNavigationLoaderContext.Provider value={contextValue}>
-      <SidebarNavigationProgressBar
-        progress={progress}
-        isVisible={isVisible}
-      />
+      <SidebarNavigationProgressBar progress={progress} isVisible={isVisible} />
       {children}
     </SidebarNavigationLoaderContext.Provider>
   );
@@ -281,7 +275,7 @@ export function useSidebarNavigationLoader() {
 
   if (!context) {
     throw new Error(
-      "useSidebarNavigationLoader must be used within SidebarNavigationLoaderProvider",
+      "useSidebarNavigationLoader must be used within SidebarNavigationLoaderProvider"
     );
   }
 

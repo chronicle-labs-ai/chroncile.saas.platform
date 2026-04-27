@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { tv, type VariantProps } from "../utils/tv";
+import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 
 /*
  * Avatar — image with fallback initials. Intentionally simple: we don't
@@ -13,17 +14,27 @@ import { tv, type VariantProps } from "../utils/tv";
  * via the `alt` + error handling.
  */
 
+export type AvatarDensity = "compact" | "brand";
+
 const avatar = tv({
   slots: {
     root:
-      "relative inline-flex shrink-0 items-center justify-center overflow-hidden " +
-      "font-mono uppercase text-ink-hi select-none",
+      "relative inline-flex shrink-0 items-center justify-center overflow-hidden select-none",
     image: "h-full w-full object-cover",
     fallback:
-      "flex h-full w-full items-center justify-center bg-surface-03 " +
-      "text-[0.5em] tracking-tactical",
+      "flex h-full w-full items-center justify-center text-[0.5em]",
   },
   variants: {
+    density: {
+      brand: {
+        root: "font-mono uppercase text-ink-hi tracking-tactical",
+        fallback: "bg-surface-03 tracking-tactical",
+      },
+      compact: {
+        root: "font-sans font-medium text-l-ink",
+        fallback: "bg-l-wash-5 tracking-normal",
+      },
+    },
     size: {
       xs: "h-5 w-5 text-[9px]",
       sm: "h-6 w-6 text-[10px]",
@@ -33,26 +44,33 @@ const avatar = tv({
     },
     shape: {
       circle: "rounded-full",
-      square: "rounded-xs",
+      square: { root: "rounded-xs" },
     },
     tone: {
-      neutral: "bg-surface-03",
-      ember:
-        "bg-[rgba(216,67,10,0.12)] text-ember border border-ember/40",
-      teal:
-        "bg-[rgba(45,212,191,0.12)] text-event-teal border border-event-teal/40",
+      neutral: "",
+      ember: "bg-[rgba(216,67,10,0.12)] text-ember border border-ember/40",
+      teal: "bg-[rgba(45,212,191,0.12)] text-event-teal border border-event-teal/40",
       violet:
         "bg-[rgba(139,92,246,0.12)] text-event-violet border border-event-violet/40",
     },
   },
-  defaultVariants: { size: "md", shape: "circle", tone: "neutral" },
+  compoundVariants: [
+    { density: "brand", tone: "neutral", class: { root: "bg-surface-03" } },
+    { density: "compact", tone: "neutral", class: { root: "bg-l-wash-5" } },
+    { density: "compact", shape: "square", class: { root: "rounded-l" } },
+  ],
+  defaultVariants: {
+    size: "md",
+    shape: "circle",
+    tone: "neutral",
+    density: "brand",
+  },
 });
 
 type AvatarVariantProps = VariantProps<typeof avatar>;
 
 export interface AvatarProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    AvatarVariantProps {
+  extends React.HTMLAttributes<HTMLSpanElement>, AvatarVariantProps {
   /** Image URL. If absent or fails to load, initials render instead. */
   src?: string | null;
   /** Accessible label for the image (or decorative alt fallback). */
@@ -61,15 +79,21 @@ export interface AvatarProps
   initials?: string;
   /** Full name used to derive initials when `initials` isn't passed. */
   name?: string;
+  density?: AvatarDensity;
 }
 
-function deriveInitials(name: string | undefined, override: string | undefined): string {
+function deriveInitials(
+  name: string | undefined,
+  override: string | undefined
+): string {
   if (override) return override.slice(0, 2).toUpperCase();
   if (!name) return "?";
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return (parts[0]?.[0] ?? "?").toUpperCase();
-  return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
+  return (
+    (parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")
+  ).toUpperCase();
 }
 
 export function Avatar({
@@ -80,10 +104,12 @@ export function Avatar({
   size,
   shape,
   tone,
+  density: densityProp,
   className,
   ...props
 }: AvatarProps) {
-  const slots = avatar({ size, shape, tone });
+  const density = useResolvedChromeDensity(densityProp);
+  const slots = avatar({ size, shape, tone, density });
   const [imageFailed, setImageFailed] = React.useState(false);
   const showImage = Boolean(src) && !imageFailed;
   const resolvedInitials = deriveInitials(name, initials);

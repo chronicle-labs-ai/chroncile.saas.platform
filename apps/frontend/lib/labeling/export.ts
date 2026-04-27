@@ -91,7 +91,9 @@ function serializeContextIntegrity(
   violations: ContextIntegrityViolation[]
 ): string {
   if (violations.length === 0) return "Context Integrity: PASSED";
-  const lines = [`Context Integrity: FAILED (${violations.length} violation${violations.length > 1 ? "s" : ""})`];
+  const lines = [
+    `Context Integrity: FAILED (${violations.length} violation${violations.length > 1 ? "s" : ""})`,
+  ];
   for (const v of violations) {
     lines.push(`  - [${v.severity}] ${v.type}: ${v.description}`);
   }
@@ -156,7 +158,9 @@ function buildAutoAuditOutput(trace: Trace): string {
   parts.push("## Detection Layers");
   parts.push(serializeOODScore(auto.ood_score));
   parts.push(serializeContextIntegrity(auto.context_integrity.violations));
-  parts.push(serializeInstructionViolations(auto.instruction_violations_summary));
+  parts.push(
+    serializeInstructionViolations(auto.instruction_violations_summary)
+  );
 
   parts.push("");
   parts.push("## Trace-Level Summary");
@@ -263,9 +267,7 @@ export function exportTraces(traces: Trace[], format: ExportFormat): string {
       rows = labeled.map(traceToShareGPT);
       break;
     case "dpo":
-      rows = labeled
-        .map(traceToDPO)
-        .filter((r): r is DPORow => r !== null);
+      rows = labeled.map(traceToDPO).filter((r): r is DPORow => r !== null);
       break;
     default:
       throw new Error(`Unknown export format: ${format}`);

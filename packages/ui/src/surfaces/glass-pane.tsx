@@ -52,7 +52,7 @@ export const GlassPane = React.forwardRef<HTMLDivElement, GlassPaneProps>(
       style,
       ...rest
     },
-    ref,
+    ref
   ) {
     const mergedStyle: CSSProperties = {
       "--cg-pane-blur": resolveBlur(blur),
@@ -72,5 +72,5 @@ export const GlassPane = React.forwardRef<HTMLDivElement, GlassPaneProps>(
         {...rest}
       />
     );
-  },
+  }
 );

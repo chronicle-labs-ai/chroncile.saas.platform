@@ -16,14 +16,15 @@ export function Header({ user }: { user: User }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState<string>("");
-  const { eventsCount, connectionsCount, isLoading: statsLoading } =
-    useDashboardStats();
+  const {
+    eventsCount,
+    connectionsCount,
+    isLoading: statsLoading,
+  } = useDashboardStats();
 
   useEffect(() => {
     const updateTime = () => {
-      setCurrentTime(
-        new Date().toLocaleTimeString("en-US", { hour12: false }),
-      );
+      setCurrentTime(new Date().toLocaleTimeString("en-US", { hour12: false }));
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
@@ -115,7 +116,9 @@ export function Header({ user }: { user: User }) {
             ) : (
               <div className="status-dot status-dot--nominal status-dot--pulse relative top-[-1px]" />
             )}
-            <span className="text-[11px] text-tertiary leading-none">Events</span>
+            <span className="text-[11px] text-tertiary leading-none">
+              Events
+            </span>
             {statsLoading ? (
               <Skeleton className="h-3.5 w-5 shrink-0" />
             ) : (
@@ -154,7 +157,9 @@ export function Header({ user }: { user: User }) {
           <div className="w-px h-4 bg-border-dim" />
 
           <div className="flex items-baseline gap-1.5">
-            <span className="text-[11px] text-tertiary leading-none">Uptime</span>
+            <span className="text-[11px] text-tertiary leading-none">
+              Uptime
+            </span>
             {statsLoading ? (
               <Skeleton className="h-3.5 w-9 shrink-0" />
             ) : (

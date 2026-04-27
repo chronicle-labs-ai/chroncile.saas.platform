@@ -11,7 +11,5 @@ export default async function DashboardPage() {
   });
   const userName = session?.user?.name?.split(" ")[0] || "Operator";
 
-  return (
-    <DashboardContent userName={userName} currentDate={currentDate} />
-  );
+  return <DashboardContent userName={userName} currentDate={currentDate} />;
 }
