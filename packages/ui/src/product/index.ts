@@ -35,6 +35,16 @@ export type { EventStreamProps, EventStreamItem } from "./event-stream";
 export { TraceRow } from "./trace-row";
 export type { TraceRowProps, TraceRowEventSpan } from "./trace-row";
 
+export { TimelineLane } from "./timeline-lane";
+export type {
+  TimelineEvent,
+  TimelineGroupBy,
+  TimelineLaneProps,
+  TimelineSource,
+  TimelineSpan,
+  TimelineTrace,
+} from "./timeline-lane";
+
 export { InspectorDrawer } from "./inspector-drawer";
 
 export { ReplayBar } from "./replay-bar";
