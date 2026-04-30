@@ -96,14 +96,36 @@ function pickOrganizations(
 
 function flattenErrorSource(err: unknown): unknown {
   if (!err || typeof err !== "object") return err;
+
+  const sources: Record<string, unknown>[] = [];
+
   const errors = (err as { errors?: unknown[] }).errors;
   if (Array.isArray(errors) && errors.length > 0) {
     const first = errors[0];
     if (first && typeof first === "object") {
-      return { ...(first as Record<string, unknown>), ...(err as Record<string, unknown>) };
+      sources.push(first as Record<string, unknown>);
     }
   }
-  return err;
+
+  const rawData = (err as { rawData?: unknown }).rawData;
+  if (rawData && typeof rawData === "object" && !Array.isArray(rawData)) {
+    sources.push(rawData as Record<string, unknown>);
+  }
+
+  // Pull EVERY own property from the error itself (including non-enumerable
+  // ones from Error subclasses, and public class fields).
+  const ownProps: Record<string, unknown> = {};
+  for (const key of Object.getOwnPropertyNames(err as object)) {
+    try {
+      ownProps[key] = (err as Record<string, unknown>)[key];
+    } catch {
+      // ignore non-readable getters
+    }
+  }
+  sources.push(ownProps);
+
+  // Later sources override earlier ones, so outer error wins last.
+  return Object.assign({}, ...sources);
 }
 
 export function classifyAuthError(err: unknown): ClassifiedAuthError {

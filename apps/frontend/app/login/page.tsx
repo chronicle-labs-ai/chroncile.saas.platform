@@ -4,9 +4,9 @@ import { Suspense, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell, SignIn, type SignInValue } from "ui/auth";
 
-function googleAuthPath(from: string): string {
+function oauthPath(provider: "google" | "github", from: string): string {
   const params = new URLSearchParams({ from });
-  return `/api/auth/oauth/google?${params.toString()}`;
+  return `/api/auth/oauth/${provider}?${params.toString()}`;
 }
 
 interface LoginErrorResponse {
@@ -150,8 +150,8 @@ function LoginPageInner() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const startGoogleOAuth = () => {
-    window.location.assign(googleAuthPath(from));
+  const startOAuth = (provider: "google" | "github") => {
+    window.location.assign(oauthPath(provider, from));
   };
 
   const handleSubmit = async (value: SignInValue) => {
@@ -238,16 +238,14 @@ function LoginPageInner() {
         onForgot={() => router.push("/forgot-password")}
         onSignUp={() => router.push("/signup")}
         onSSO={(provider) => {
-          if (provider === "google") {
-            startGoogleOAuth();
+          if (provider === "google" || provider === "github") {
+            startOAuth(provider);
             return;
           }
           setError(
-            provider === "github"
-              ? "GitHub sign-in isn't enabled yet."
-              : provider === "passkey"
-                ? "Passkey sign-in isn't enabled yet."
-                : "That sign-in method isn't enabled.",
+            provider === "passkey"
+              ? "Passkey sign-in isn't enabled yet."
+              : "That sign-in method isn't enabled.",
           );
         }}
         error={error}

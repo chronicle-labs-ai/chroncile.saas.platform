@@ -49,9 +49,9 @@ interface VerifyErrResponse {
   message?: string;
 }
 
-function googleAuthPath(): string {
+function oauthPath(provider: "google" | "github"): string {
   const params = new URLSearchParams({ from: "/dashboard" });
-  return `/api/auth/oauth/google?${params.toString()}`;
+  return `/api/auth/oauth/${provider}?${params.toString()}`;
 }
 
 function humanizeSignupError(code: string | undefined): string {
@@ -106,8 +106,8 @@ function SignupPageInner() {
     }
   }, [step, pendingAuthenticationToken]);
 
-  const startGoogleOAuth = () => {
-    window.location.assign(googleAuthPath());
+  const startOAuth = (provider: "google" | "github") => {
+    window.location.assign(oauthPath(provider));
   };
 
   const handleEmailSubmit = (value: SignUpEmailValue) => {
@@ -235,15 +235,11 @@ function SignupPageInner() {
           onSubmit={handleEmailSubmit}
           onSignIn={() => router.push("/login")}
           onSSO={(provider) => {
-            if (provider === "google") {
-              startGoogleOAuth();
+            if (provider === "google" || provider === "github") {
+              startOAuth(provider);
               return;
             }
-            setError(
-              provider === "github"
-                ? "GitHub sign-up isn't enabled yet."
-                : "That sign-up method isn't enabled.",
-            );
+            setError("That sign-up method isn't enabled.");
           }}
           error={error}
         />
