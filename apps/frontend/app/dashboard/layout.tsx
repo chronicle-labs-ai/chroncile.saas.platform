@@ -28,6 +28,12 @@ export default async function DashboardLayout({
             <Link className="hover:text-neutral-100" href="/dashboard/connections">
               Connections
             </Link>
+            <Link
+              className="hover:text-neutral-100"
+              href="/dashboard/settings/team"
+            >
+              Team
+            </Link>
             <a className="hover:text-neutral-100" href="/api/auth/sign-out">
               Sign out
             </a>

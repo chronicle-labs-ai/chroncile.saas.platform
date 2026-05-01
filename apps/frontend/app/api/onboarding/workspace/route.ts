@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getBackendUrl } from "platform-api";
 
 import {
+  ADMIN_ROLE_SLUG,
+  OWNER_METADATA_KEY,
+} from "@/server/auth/org-helpers";
+import {
   getCookiePassword,
   getSession,
   loadSession,
@@ -69,17 +73,43 @@ export async function POST(request: NextRequest) {
       const organization = await workos.organizations.createOrganization(
         {
           name: orgName,
-          metadata: { chronicleSlug: slug },
+          metadata: {
+            chronicleSlug: slug,
+            [OWNER_METADATA_KEY]: session.user.id,
+          },
         },
         { idempotencyKey: `self-serve:${session.user.id}:${slug}` },
       );
       organizationId = organization.id;
 
-      await workos.userManagement.createOrganizationMembership({
+      const membership = await workos.userManagement.createOrganizationMembership({
         organizationId,
         userId: session.user.id,
-        roleSlug: "admin",
+        roleSlug: ADMIN_ROLE_SLUG,
       });
+
+      const assignedSlug = membership.role?.slug;
+      if (assignedSlug !== ADMIN_ROLE_SLUG) {
+        console.error(
+          "[onboarding/workspace] WorkOS assigned role",
+          assignedSlug,
+          "instead of",
+          ADMIN_ROLE_SLUG,
+          {
+            organizationId,
+            userId: session.user.id,
+            membershipId: membership.id,
+          },
+        );
+        return NextResponse.json(
+          {
+            error: "admin_role_not_configured",
+            detail:
+              "WorkOS assigned a different role than 'admin'. Create the 'admin' role in your WorkOS dashboard and retry.",
+          },
+          { status: 500 },
+        );
+      }
     }
 
     const registerResponse = await fetch(
