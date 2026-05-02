@@ -1,8 +1,73 @@
-export { Avatar } from "./avatar";
-export type { AvatarProps } from "./avatar";
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarBadge,
+  AvatarGroup,
+  AvatarGroupCount,
+  deriveInitials,
+} from "./avatar";
+export type {
+  AvatarProps,
+  AvatarImageProps,
+  AvatarFallbackProps,
+  AvatarBadgeProps,
+  AvatarGroupProps,
+  AvatarGroupCountProps,
+  AvatarTone,
+  AvatarSize,
+  AvatarShape,
+} from "./avatar";
 
 export { Badge } from "./badge";
 export type { BadgeProps, BadgeVariant } from "./badge";
+
+export { Alert, AlertTitle, AlertDescription } from "./alert";
+export type {
+  AlertProps,
+  AlertTitleProps,
+  AlertDescriptionProps,
+  AlertTone,
+} from "./alert";
+
+export {
+  AlertDialog,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "./alert-dialog";
+
+export {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  CardAction,
+} from "./card";
+export type {
+  CardProps,
+  CardHeaderProps,
+  CardTitleProps,
+  CardDescriptionProps,
+  CardContentProps,
+  CardFooterProps,
+  CardActionProps,
+} from "./card";
+
+export { Separator } from "./separator";
+export type { SeparatorProps } from "./separator";
+
+export { Sheet } from "./sheet";
+export type { SheetProps } from "./sheet";
 
 export { Button } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
@@ -84,7 +149,6 @@ export {
 
 export { MultiSelect } from "./multi-select";
 export type {
-  MultiSelectDensity,
   MultiSelectItemType,
   MultiSelectProps,
   MultiSelectRenderState,
@@ -225,7 +289,6 @@ export type { TagProps, TagVariant } from "./tag";
 export { TagList } from "./tag-list";
 export type {
   TagListColor,
-  TagListDensity,
   TagListItem,
   TagListProps,
 } from "./tag-list";
