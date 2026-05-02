@@ -11,42 +11,35 @@
  */
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  breadcrumbItemVariants,
-  breadcrumbLinkVariants,
-  breadcrumbsVariants,
-} from "./shadcn";
+export const breadcrumbsVariants = cva(
+  "flex items-center gap-[6px] font-sans text-[12px] font-medium text-l-ink-lo"
+);
 
-export type BreadcrumbsDensity = "compact" | "brand";
+export const breadcrumbItemVariants = cva(
+  "flex items-center last:after:hidden gap-[6px] after:content-['/'] after:text-l-ink-dim after:mx-[2px] data-[current=true]:text-l-ink"
+);
 
-const BreadcrumbsDensityContext =
-  React.createContext<BreadcrumbsDensity | undefined>(undefined);
+export const breadcrumbLinkVariants = cva(
+  "outline-none transition-colors duration-fast ease-out focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember text-l-ink-dim hover:text-l-ink"
+);
 
 export interface BreadcrumbsProps
   extends Omit<React.OlHTMLAttributes<HTMLOListElement>, "className" | "children"> {
   className?: string;
   children: React.ReactNode;
-  density?: BreadcrumbsDensity;
 }
 
 export function Breadcrumbs({
   className,
   children,
-  density: densityProp,
   ...rest
 }: BreadcrumbsProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
-    <BreadcrumbsDensityContext.Provider value={density}>
-      <ol
-        {...rest}
-        className={breadcrumbsVariants({ density, className })}
-      >
-        {children as React.ReactNode}
-      </ol>
-    </BreadcrumbsDensityContext.Provider>
+    <ol {...rest} className={breadcrumbsVariants({ className })}>
+      {children as React.ReactNode}
+    </ol>
   );
 }
 
@@ -63,15 +56,10 @@ export function Breadcrumb({
   href,
   ...rest
 }: BreadcrumbProps) {
-  const ctxDensity = React.useContext(BreadcrumbsDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   return (
-    <li
-      {...rest}
-      className={breadcrumbItemVariants({ density, className })}
-    >
+    <li {...rest} className={breadcrumbItemVariants({ className })}>
       {href ? (
-        <a href={href} className={breadcrumbLinkVariants({ density })}>
+        <a href={href} className={breadcrumbLinkVariants()}>
           {children}
         </a>
       ) : (

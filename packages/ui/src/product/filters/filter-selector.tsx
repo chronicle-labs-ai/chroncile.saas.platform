@@ -119,7 +119,7 @@ export function FilterSelector<TRow>({
         if (!next) reset();
       }}
     >
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <Button
           variant="secondary"
           size="sm"

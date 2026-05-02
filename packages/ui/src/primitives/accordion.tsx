@@ -1,7 +1,7 @@
 "use client";
 
 /*
- * Accordion — Radix Accordion with Chronicle density variants.
+ * Accordion — Radix Accordion with Chronicle styling.
  *
  *   <Accordion>
  *     <AccordionItem id="intro" title="Introduction">…</AccordionItem>
@@ -11,41 +11,35 @@
 
 import * as React from "react";
 import { Accordion as AccordionPrimitive } from "radix-ui";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  accordionChevronVariants,
-  accordionGroupVariants,
-  accordionHeaderVariants,
-  accordionItemVariants,
-  accordionPanelVariants,
-  accordionTriggerVariants,
-} from "./shadcn";
 
-export type AccordionDensity = "compact" | "brand";
-
-/**
- * Local density context so the parent `<Accordion>` can pin a flavor
- * for its children without relying on the global `ChromeStyleProvider`
- * (e.g. an editorial accordion inside a product surface, or vice versa).
- */
-const AccordionDensityContext = React.createContext<AccordionDensity | undefined>(
-  undefined
+export const accordionGroupVariants = cva(
+  "flex flex-col bg-surface-01 border border-hairline divide-y divide-hairline rounded-md"
 );
 
-export interface AccordionProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "className" | "children" | "defaultValue" | "onChange"
-> {
+export const accordionItemVariants = cva("outline-none");
+export const accordionHeaderVariants = cva("");
+
+export const accordionTriggerVariants = cva(
+  "flex w-full items-center justify-between gap-s-3 text-ink-lo transition-colors duration-fast ease-out outline-none hover:text-ink-hi hover:bg-surface-02 focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed px-s-3 py-s-2 font-sans text-[13px] font-medium tracking-normal leading-none"
+);
+
+export const accordionChevronVariants = cva(
+  "shrink-0 text-ink-dim transition-transform duration-fast ease-out h-3.5 w-3.5"
+);
+
+export const accordionPanelVariants = cva(
+  "pt-0 text-body-sm text-ink-lo outline-none px-s-3 pb-s-3"
+);
+
+export interface AccordionProps
+  extends Omit<
+    React.HTMLAttributes<HTMLDivElement>,
+    "className" | "children" | "defaultValue" | "onChange"
+  > {
   className?: string;
-  /**
-   * Density flavor.
-   *   `"compact"` — Linear-density (sans medium, rounded-l, tighter padding).
-   *   `"brand"`   — editorial mono-uppercase trigger.
-   * Inherits from the nearest `ChromeStyleProvider` when omitted.
-   */
-  density?: AccordionDensity;
   type?: "single" | "multiple";
   value?: string | string[];
   defaultValue?: string | string[];
@@ -58,7 +52,6 @@ export interface AccordionProps extends Omit<
 
 export function Accordion({
   className,
-  density: densityProp,
   children,
   type = "single",
   value,
@@ -69,51 +62,52 @@ export function Accordion({
   allowsMultipleExpanded,
   ...rest
 }: AccordionProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const resolvedType = allowsMultipleExpanded ? "multiple" : type;
   const resolvedDefaultValue = defaultValue ?? defaultExpandedKeys;
   const commonProps = {
     ...rest,
-    "data-density": density,
-    className: cn(accordionGroupVariants({ density }), className),
+    className: cn(accordionGroupVariants(), className),
   };
 
+  if (resolvedType === "multiple") {
+    return (
+      <AccordionPrimitive.Root
+        {...(commonProps as object)}
+        type="multiple"
+        value={Array.isArray(value) ? value : undefined}
+        defaultValue={
+          Array.isArray(resolvedDefaultValue) ? resolvedDefaultValue : undefined
+        }
+        onValueChange={onValueChange as ((value: string[]) => void) | undefined}
+      >
+        {children}
+      </AccordionPrimitive.Root>
+    );
+  }
+
   return (
-    <AccordionDensityContext.Provider value={density}>
-      {resolvedType === "multiple" ? (
-        <AccordionPrimitive.Root
-          {...(commonProps as object)}
-          type="multiple"
-          value={Array.isArray(value) ? value : undefined}
-          defaultValue={Array.isArray(resolvedDefaultValue) ? resolvedDefaultValue : undefined}
-          onValueChange={onValueChange as ((value: string[]) => void) | undefined}
-        >
-          {children}
-        </AccordionPrimitive.Root>
-      ) : (
-        <AccordionPrimitive.Root
-          {...(commonProps as object)}
-          type="single"
-          collapsible={collapsible}
-          value={typeof value === "string" ? value : undefined}
-          defaultValue={
-            typeof resolvedDefaultValue === "string"
-              ? resolvedDefaultValue
-              : resolvedDefaultValue?.[0]
-          }
-          onValueChange={onValueChange as ((value: string) => void) | undefined}
-        >
-          {children}
-        </AccordionPrimitive.Root>
-      )}
-    </AccordionDensityContext.Provider>
+    <AccordionPrimitive.Root
+      {...(commonProps as object)}
+      type="single"
+      collapsible={collapsible}
+      value={typeof value === "string" ? value : undefined}
+      defaultValue={
+        typeof resolvedDefaultValue === "string"
+          ? resolvedDefaultValue
+          : resolvedDefaultValue?.[0]
+      }
+      onValueChange={onValueChange as ((value: string) => void) | undefined}
+    >
+      {children}
+    </AccordionPrimitive.Root>
   );
 }
 
-export interface AccordionItemProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>,
-  "className" | "children" | "title" | "value"
-> {
+export interface AccordionItemProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>,
+    "className" | "children" | "title" | "value"
+  > {
   className?: string;
   title: React.ReactNode;
   value?: string;
@@ -129,8 +123,6 @@ export function AccordionItem({
   id,
   ...rest
 }: AccordionItemProps) {
-  const parentDensity = React.useContext(AccordionDensityContext);
-  const density = useResolvedChromeDensity(parentDensity);
   const fallbackValue = React.useId();
 
   return (
@@ -141,17 +133,13 @@ export function AccordionItem({
     >
       <AccordionPrimitive.Header className={accordionHeaderVariants()}>
         <AccordionPrimitive.Trigger
-          className={accordionTriggerVariants({
-            density,
-            className: "group",
-          })}
+          className={accordionTriggerVariants({ className: "group" })}
         >
           {title}
           <svg
             viewBox="0 0 24 24"
             fill="none"
             className={accordionChevronVariants({
-              density,
               className: "group-data-[state=open]:rotate-180",
             })}
           >
@@ -165,7 +153,7 @@ export function AccordionItem({
           </svg>
         </AccordionPrimitive.Trigger>
       </AccordionPrimitive.Header>
-      <AccordionPrimitive.Content className={accordionPanelVariants({ density })}>
+      <AccordionPrimitive.Content className={accordionPanelVariants()}>
         {children}
       </AccordionPrimitive.Content>
     </AccordionPrimitive.Item>

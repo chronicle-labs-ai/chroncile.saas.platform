@@ -16,33 +16,74 @@
  */
 
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import type { VariantProps } from "class-variance-authority";
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  comboboxButtonVariants,
-  comboboxEmptyVariants,
-  comboboxInputVariants,
-  comboboxInputWrapperVariants,
-  comboboxItemVariants,
-  comboboxListboxVariants,
-  comboboxPopoverVariants,
-  comboboxRootVariants,
-  comboboxSectionHeaderVariants,
-  comboboxSectionVariants,
-} from "./shadcn";
 
-export type ComboboxDensity = "compact" | "brand";
+export const comboboxRootVariants = cva("flex flex-col gap-s-1 w-full");
+export const comboboxInputWrapperVariants = cva("relative");
+
+export const comboboxInputVariants = cva(
+  "w-full border outline-none transition-colors duration-fast ease-out data-[invalid=true]:border-event-red disabled:opacity-50 disabled:cursor-not-allowed h-[28px] rounded-md bg-l-surface-input px-[10px] pr-[28px] font-sans text-[13px] leading-none text-l-ink placeholder:text-l-ink-dim hover:border-l-border-strong focus:border-[rgba(216,67,10,0.5)] focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)]",
+  {
+    variants: {
+      variant: {
+        default: "border-hairline-strong",
+        auth: "bg-transparent border-hairline-strong text-ink-hi focus:border-ink-hi",
+      },
+      invalid: {
+        true: "border-event-red focus:border-event-red",
+      },
+    },
+    compoundVariants: [
+      { variant: "default", className: "border-hairline-strong" },
+    ],
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+export const comboboxButtonVariants = cva(
+  "absolute top-1/2 -translate-y-1/2 inline-flex items-center justify-center outline-none focus-visible:outline focus-visible:outline-1 right-[8px] h-4 w-4 text-l-ink-dim hover:text-l-ink focus-visible:outline-[rgba(216,67,10,0.5)]"
+);
+
+export const comboboxPopoverVariants = cva(
+  "z-50 min-w-[var(--trigger-width)] outline-none rounded-md border border-hairline-strong bg-l-surface-raised p-[2px] shadow-panel animate-in fade-in-0"
+);
+
+export const comboboxListboxVariants = cva(
+  "max-h-[320px] overflow-auto outline-none"
+);
+
+/*
+ * Combobox items are plain `<button>`s. The `data-selected` attribute is
+ * set manually in the component (`data-selected={selected || undefined}`)
+ * so `data-[selected=true]:` is the correct selector.
+ */
+export const comboboxItemVariants = cva(
+  "relative cursor-pointer select-none outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-xs px-[8px] py-[5px] font-sans text-[13px] leading-none text-l-ink hover:bg-l-surface-hover focus-visible:bg-l-surface-hover data-[selected=true]:text-l-ink data-[selected=true]:bg-l-surface-selected"
+);
+
+export const comboboxSectionVariants = cva("py-s-1");
+
+export const comboboxSectionHeaderVariants = cva(
+  "px-[8px] pt-[6px] pb-[3px] font-sans text-[11px] font-medium tracking-normal text-l-ink-dim"
+);
+
+export const comboboxEmptyVariants = cva(
+  "px-[10px] py-[12px] font-sans text-[12px] text-l-ink-dim"
+);
 
 type ComboboxVariantProps = VariantProps<typeof comboboxInputVariants>;
 
 export interface ComboboxProps
-  extends
-    Omit<React.HTMLAttributes<HTMLDivElement>, "className" | "children" | "onChange">,
+  extends Omit<
+      React.HTMLAttributes<HTMLDivElement>,
+      "className" | "children" | "onChange"
+    >,
     ComboboxVariantProps {
   className?: string;
-  density?: ComboboxDensity;
   classNames?: {
     root?: string;
     input?: string;
@@ -60,9 +101,6 @@ export interface ComboboxProps
   children: React.ReactNode;
 }
 
-const ComboboxDensityContext = React.createContext<ComboboxDensity | undefined>(
-  undefined,
-);
 const ComboboxSelectionContext = React.createContext<{
   value?: string;
   onSelect?: (value: string, label: React.ReactNode) => void;
@@ -74,7 +112,6 @@ export function Combobox({
   placeholder,
   variant = "default",
   invalid = false,
-  density: densityProp,
   emptyMessage = "No matches",
   value,
   defaultValue = "",
@@ -85,7 +122,6 @@ export function Combobox({
   children,
   ...rest
 }: ComboboxProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const [open, setOpen] = React.useState(false);
   const resolvedValue = value ?? selectedKey;
   const resolvedDefaultValue = defaultValue || defaultSelectedKey || "";
@@ -104,7 +140,6 @@ export function Combobox({
   return (
     <div
       {...rest}
-      data-density={density}
       className={cn(comboboxRootVariants(), classNames?.root, className)}
     >
       <div className={comboboxInputWrapperVariants()}>
@@ -117,14 +152,14 @@ export function Combobox({
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
           className={cn(
-            comboboxInputVariants({ density, variant, invalid }),
+            comboboxInputVariants({ variant, invalid }),
             classNames?.input
           )}
         />
         <button
           type="button"
           onClick={() => setOpen((next) => !next)}
-          className={comboboxButtonVariants({ density })}
+          className={comboboxButtonVariants()}
           aria-label="Toggle options"
         >
           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
@@ -139,14 +174,13 @@ export function Combobox({
         </button>
       </div>
       {open ? (
-      <div
-        className={cn(
-          comboboxPopoverVariants({ density }),
-          "absolute z-50 mt-[4px]",
-          classNames?.popover
-        )}
-      >
-        <ComboboxDensityContext.Provider value={density}>
+        <div
+          className={cn(
+            comboboxPopoverVariants(),
+            "absolute z-50 mt-[4px]",
+            classNames?.popover
+          )}
+        >
           <ComboboxSelectionContext.Provider
             value={{
               value: currentValue,
@@ -156,25 +190,28 @@ export function Combobox({
               },
             }}
           >
-            <div role="listbox" className={cn(comboboxListboxVariants(), classNames?.listbox)}>
+            <div
+              role="listbox"
+              className={cn(comboboxListboxVariants(), classNames?.listbox)}
+            >
               {children ? (
                 children
               ) : (
-                <div className={comboboxEmptyVariants({ density })}>
-                  {emptyMessage}
-                </div>
+                <div className={comboboxEmptyVariants()}>{emptyMessage}</div>
               )}
             </div>
           </ComboboxSelectionContext.Provider>
-        </ComboboxDensityContext.Provider>
-      </div>
+        </div>
       ) : null}
     </div>
   );
 }
 
 export interface ComboboxItemProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "className" | "value"> {
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    "className" | "value"
+  > {
   className?: string;
   value?: string;
   id?: string;
@@ -188,9 +225,7 @@ export function ComboboxItem({
   children,
   ...props
 }: ComboboxItemProps) {
-  const ctxDensity = React.useContext(ComboboxDensityContext);
   const selection = React.useContext(ComboboxSelectionContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   const itemValue = value ?? id ?? "";
   const selected = selection.value === itemValue;
 
@@ -205,7 +240,7 @@ export function ComboboxItem({
         onClick?.(event);
         if (!event.defaultPrevented) selection.onSelect?.(itemValue, children);
       }}
-      className={cn(comboboxItemVariants({ density }), className)}
+      className={cn(comboboxItemVariants(), className)}
     >
       {children}
     </button>
@@ -213,7 +248,10 @@ export function ComboboxItem({
 }
 
 export interface ComboboxSectionProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "className" | "children" | "title"> {
+  extends Omit<
+    React.HTMLAttributes<HTMLDivElement>,
+    "className" | "children" | "title"
+  > {
   className?: string;
   title?: React.ReactNode;
   children?: React.ReactNode;
@@ -225,8 +263,6 @@ export function ComboboxSection({
   children,
   ...rest
 }: ComboboxSectionProps) {
-  const ctxDensity = React.useContext(ComboboxDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   return (
     <div
       {...rest}
@@ -234,9 +270,7 @@ export function ComboboxSection({
       className={comboboxSectionVariants({ className })}
     >
       {title ? (
-        <div className={comboboxSectionHeaderVariants({ density })}>
-          {title}
-        </div>
+        <div className={comboboxSectionHeaderVariants()}>{title}</div>
       ) : null}
       {children as React.ReactNode}
     </div>

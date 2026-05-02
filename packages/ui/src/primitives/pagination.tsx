@@ -2,21 +2,33 @@
 
 /*
  * Pagination — a numeric page selector with prev/next affordances.
- * Uncontrolled by default (internal state from `defaultPage`); become
+ * Uncontrolled by default (internal state from `defaultPage`); becomes
  * controlled by passing `page` + `onPageChange`.
  *
  * Uses native buttons so it can be embedded in any app shell.
  */
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  paginationButtonVariants,
-  paginationEllipsisVariants,
-  paginationVariants,
-} from "./shadcn";
+
+export const paginationVariants = cva("inline-flex items-center gap-[2px]");
+
+export const paginationButtonVariants = cva(
+  "inline-flex items-center justify-center border outline-none transition-colors duration-fast ease-out focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember disabled:opacity-40 disabled:cursor-not-allowed h-[26px] min-w-[26px] rounded-md border-hairline-strong bg-l-surface-raised px-[8px] font-sans text-[12px] font-medium text-l-ink-lo hover:bg-l-surface-hover hover:text-l-ink",
+  {
+    variants: {
+      current: {
+        true: "border-ember bg-[rgba(216,67,10,0.08)] text-ember hover:bg-[rgba(216,67,10,0.12)]",
+      },
+    },
+  }
+);
+
+export const paginationEllipsisVariants = cva(
+  "px-[6px] font-sans text-[12px] text-l-ink-dim"
+);
 
 export interface PaginationProps {
   page?: number;
@@ -26,7 +38,6 @@ export interface PaginationProps {
   siblings?: number;
   onPageChange?: (page: number) => void;
   className?: string;
-  density?: "compact" | "brand";
   labels?: {
     previous?: string;
     next?: string;
@@ -69,18 +80,16 @@ function buildItems(
 
 const PageButton = ({
   isCurrent,
-  density,
   className,
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   isCurrent?: boolean;
-  density: "compact" | "brand";
 }) => {
   return (
     <button
       type="button"
       {...rest}
-      className={cn(paginationButtonVariants({ density, current: isCurrent }), className)}
+      className={cn(paginationButtonVariants({ current: isCurrent }), className)}
     />
   );
 };
@@ -92,10 +101,8 @@ export function Pagination({
   siblings = 1,
   onPageChange,
   className,
-  density: densityProp,
   labels,
 }: PaginationProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const [internal, setInternal] = React.useState(defaultPage);
   const current = page ?? internal;
   const set = (p: number) => {
@@ -109,10 +116,9 @@ export function Pagination({
   return (
     <nav
       aria-label="Pagination"
-      className={paginationVariants({ density, className })}
+      className={paginationVariants({ className })}
     >
       <PageButton
-        density={density}
         onClick={() => set(current - 1)}
         disabled={current === 1}
         aria-label={labels?.previous ?? "Previous page"}
@@ -123,14 +129,13 @@ export function Pagination({
         it === "…" ? (
           <span
             key={`gap-${idx}`}
-            className={paginationEllipsisVariants({ density })}
+            className={paginationEllipsisVariants()}
             aria-hidden
           >
             …
           </span>
         ) : (
           <PageButton
-            density={density}
             key={it}
             onClick={() => set(it)}
             isCurrent={it === current}
@@ -142,7 +147,6 @@ export function Pagination({
         )
       )}
       <PageButton
-        density={density}
         onClick={() => set(current + 1)}
         disabled={current === totalPages}
         aria-label={labels?.next ?? "Next page"}

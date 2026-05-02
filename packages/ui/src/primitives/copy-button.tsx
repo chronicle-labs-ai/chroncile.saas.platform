@@ -1,21 +1,57 @@
 "use client";
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { copyButtonVariants } from "./shadcn";
 
-export interface CopyButtonProps extends Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  "className" | "children"
-> {
+export const copyButtonVariants = cva(
+  "inline-flex items-center justify-center border transition-colors duration-fast ease-out outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember h-[24px] w-[24px] rounded-md",
+  {
+    variants: {
+      appearance: {
+        icon: "",
+        text: "h-auto w-auto border-0 bg-transparent px-[6px] py-[2px] font-mono text-[10px] uppercase tracking-[0.04em]",
+      },
+      copied: {
+        true: "border-event-green/40 bg-[rgba(74,222,128,0.08)] text-event-green",
+        false: "",
+      },
+    },
+    compoundVariants: [
+      {
+        copied: false,
+        className:
+          "border-hairline-strong bg-l-surface-raised text-l-ink-lo hover:border-l-border-strong hover:text-l-ink",
+      },
+      {
+        appearance: "text",
+        copied: false,
+        className:
+          "h-auto w-auto border-transparent bg-transparent text-ink-dim hover:bg-surface-03 hover:text-ink-hi",
+      },
+      {
+        appearance: "text",
+        copied: true,
+        className:
+          "h-auto w-auto border-transparent bg-transparent text-event-green hover:bg-surface-03",
+      },
+    ],
+    defaultVariants: {
+      appearance: "icon",
+      copied: false,
+    },
+  }
+);
+
+export interface CopyButtonProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    "className" | "children"
+  > {
   text: string;
   /** Milliseconds the "copied" confirmation stays visible. */
   confirmFor?: number;
-  /** Force a density flavor. Defaults to whichever the surrounding
-   * `ChromeStyleProvider` resolves to. */
-  density?: "compact" | "brand";
   /** Render as an icon button (default) or a compact text action. */
   appearance?: "icon" | "text";
   label?: string;
@@ -27,7 +63,6 @@ export interface CopyButtonProps extends Omit<
 export function CopyButton({
   text,
   confirmFor = 2000,
-  density: densityProp,
   appearance = "icon",
   label = "Copy",
   copiedLabel = "Copied",
@@ -38,7 +73,6 @@ export function CopyButton({
   ...props
 }: CopyButtonProps) {
   const [copied, setCopied] = React.useState(false);
-  const density = useResolvedChromeDensity(densityProp);
   const timeoutRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
@@ -72,8 +106,7 @@ export function CopyButton({
         if (!event.defaultPrevented) void handleCopy();
       }}
       aria-label={copied ? "Copied" : "Copy to clipboard"}
-      data-density={density}
-      className={cn(copyButtonVariants({ appearance, density, copied }), className)}
+      className={cn(copyButtonVariants({ appearance, copied }), className)}
     >
       {appearance === "text" ? (
         copied ? (
@@ -82,11 +115,7 @@ export function CopyButton({
           label
         )
       ) : copied ? (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className={density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"}
-        >
+        <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
           <path
             d="M4.5 12.75l6 6 9-13.5"
             stroke="currentColor"
@@ -96,11 +125,7 @@ export function CopyButton({
           />
         </svg>
       ) : (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className={density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"}
-        >
+        <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
           <rect
             x="8"
             y="8"

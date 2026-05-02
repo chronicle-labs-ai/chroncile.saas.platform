@@ -17,20 +17,56 @@
  */
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  toastActionVariants,
-  toastCloseVariants,
-  toastContentVariants,
-  toastDescriptionVariants,
-  toastRegionVariants,
-  toastTitleVariants,
-  toastVariants,
-} from "./shadcn";
+export const toastRegionVariants = cva(
+  "fixed top-s-4 right-s-4 z-50 flex flex-col gap-s-2 outline-none"
+);
+
+export const toastVariants = cva(
+  "relative pointer-events-auto flex items-start gap-s-3 border shadow-panel min-w-[260px] max-w-[440px] outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember rounded-md bg-l-surface-raised px-[12px] py-[10px]",
+  {
+    variants: {
+      tone: {
+        default: "",
+        success: "",
+        danger: "",
+        info: "",
+        warning: "",
+      },
+    },
+    compoundVariants: [
+      { tone: "default", className: "border-hairline-strong" },
+      { tone: "success", className: "border-event-green/40" },
+      { tone: "danger", className: "border-event-red/40" },
+      { tone: "info", className: "border-event-teal/40" },
+      { tone: "warning", className: "border-event-amber/40" },
+    ],
+    defaultVariants: {
+      tone: "default",
+    },
+  }
+);
+
+export const toastContentVariants = cva("flex-1 flex flex-col gap-s-1");
+
+export const toastTitleVariants = cva(
+  "font-sans text-[13px] font-medium text-l-ink"
+);
+
+export const toastDescriptionVariants = cva(
+  "font-sans text-[13px] text-l-ink-lo"
+);
+
+export const toastActionVariants = cva(
+  "inline-flex items-center border outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember rounded-md border-hairline-strong bg-l-surface-input px-[8px] py-[4px] font-sans text-[12px] font-medium text-l-ink hover:bg-l-surface-hover hover:text-l-ink"
+);
+
+export const toastCloseVariants = cva(
+  "inline-flex items-center justify-center outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember h-5 w-5 rounded-md text-l-ink-dim hover:bg-l-surface-hover hover:text-l-ink"
+);
 
 export type ToastTone = "default" | "success" | "danger" | "info" | "warning";
-export type ToastDensity = "compact" | "brand";
 
 export interface ChronicleToastContent {
   title: React.ReactNode;
@@ -82,7 +118,6 @@ export interface ToastProviderProps {
 }
 
 export function ToastProvider({ children }: ToastProviderProps) {
-  const density = useResolvedChromeDensity();
   const [items, setItems] = React.useState(toasts);
 
   React.useEffect(
@@ -103,14 +138,14 @@ export function ToastProvider({ children }: ToastProviderProps) {
             <div
               key={toast.key}
               role="status"
-              className={toastVariants({ tone, density })}
+              className={toastVariants({ tone })}
             >
               <div className={toastContentVariants()}>
-                <div className={toastTitleVariants({ density })}>
+                <div className={toastTitleVariants()}>
                   {toast.content.title}
                 </div>
                 {toast.content.description ? (
-                  <div className={toastDescriptionVariants({ density })}>
+                  <div className={toastDescriptionVariants()}>
                     {toast.content.description}
                   </div>
                 ) : null}
@@ -123,7 +158,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
                     toast.content.action?.onPress?.();
                     closeToast(toast.key);
                   }}
-                  className={toastActionVariants({ density })}
+                  className={toastActionVariants()}
                 >
                   {toast.content.action.label}
                 </button>
@@ -131,7 +166,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
               <button
                 type="button"
                 onClick={() => closeToast(toast.key)}
-                className={toastCloseVariants({ density })}
+                className={toastCloseVariants()}
                 aria-label="Close"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
@@ -164,8 +199,7 @@ export interface UseToastReturn {
 export function useToast(): UseToastReturn {
   return React.useMemo(
     () => ({
-      add: (content, options) =>
-        addToast(content, options?.timeout ?? 5000),
+      add: (content, options) => addToast(content, options?.timeout ?? 5000),
       dismiss: (key) => closeToast(key),
     }),
     []

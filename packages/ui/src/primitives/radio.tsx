@@ -12,53 +12,96 @@
 
 import * as React from "react";
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  radioBaseVariants,
-  radioDotVariants,
-  radioGroupVariants,
-  radioIndicatorVariants,
-  radioLabelVariants,
-} from "./shadcn";
+
+export const radioGroupVariants = cva(
+  "flex flex-col gap-s-2 data-[orientation=horizontal]:flex-row"
+);
+
+/*
+ * Radio is wrapped around Radix `RadioGroup.Item` (a `<button>`). The
+ * indicator/dot live on inner `<span>` nodes where `data-selected` is
+ * set imperatively. Hover/focus styles use the `group-` selectors so
+ * they fire from the outer button (which gets the CSS pseudo states).
+ */
+export const radioBaseVariants = cva(
+  "group inline-flex items-center gap-s-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 outline-none"
+);
+
+export const radioIndicatorVariants = cva(
+  "relative flex shrink-0 items-center justify-center rounded-full transition-colors duration-fast ease-out group-focus-visible:outline group-focus-visible:outline-1 group-focus-visible:outline-ember data-[selected=true]:border-ember data-[invalid=true]:border-event-red",
+  {
+    variants: {
+      size: {
+        sm: "h-[14px] w-[14px] border border-l-border-strong bg-transparent group-hover:border-l-border-hover",
+        md: "h-[16px] w-[16px] border border-hairline-strong bg-surface-00 group-hover:border-ink-dim",
+      },
+    },
+    defaultVariants: {
+      size: "sm",
+    },
+  }
+);
+
+export const radioDotVariants = cva(
+  "rounded-full bg-ember opacity-0 data-[selected=true]:opacity-100",
+  {
+    variants: {
+      size: {
+        sm: "h-[6px] w-[6px]",
+        md: "h-[6px] w-[6px]",
+      },
+    },
+    defaultVariants: {
+      size: "sm",
+    },
+  }
+);
+
+export const radioLabelVariants = cva("font-sans text-sm text-ink", {
+  variants: {
+    size: {
+      sm: "text-[12.5px] text-l-ink",
+      md: "text-sm text-ink",
+    },
+  },
+  defaultVariants: {
+    size: "sm",
+  },
+});
 
 export type RadioSize = "sm" | "md";
 
-export interface RadioGroupProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>,
-  "className" | "children"
-> {
+export interface RadioGroupProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>,
+    "className" | "children"
+  > {
   className?: string;
   children: React.ReactNode;
   /**
    * Default size for Radios inside this group. Individual `<Radio size>`
-   * still wins. Reach for `"sm"` on Linear-density product surfaces.
-   * When omitted, the surrounding `ChromeStyleProvider` decides
-   * (`compact` → `sm`, `brand` → `md`).
+   * still wins. `"sm"` is the Linear-density product default.
    */
   size?: RadioSize;
-  /** Explicit density override (alias for choosing between `sm` and `md`). */
-  density?: "compact" | "brand";
   ref?: React.Ref<HTMLDivElement>;
 }
 
-const RadioSizeContext = React.createContext<RadioSize>("md");
+const RadioSizeContext = React.createContext<RadioSize>("sm");
 const RadioValueContext = React.createContext<string | undefined>(undefined);
 
 export function RadioGroup({
   className,
   children,
-  size,
-  density: densityProp,
+  size = "sm",
   value,
   defaultValue,
   onValueChange,
   ref,
   ...rest
 }: RadioGroupProps) {
-  const density = useResolvedChromeDensity(densityProp);
-  const resolvedSize: RadioSize = size ?? (density === "compact" ? "sm" : "md");
   const [uncontrolled, setUncontrolled] = React.useState(defaultValue);
   const selectedValue = value ?? uncontrolled;
 
@@ -77,10 +120,9 @@ export function RadioGroup({
       value={value}
       defaultValue={defaultValue}
       onValueChange={handleValueChange}
-      data-density={density}
       className={cn(radioGroupVariants(), className)}
     >
-      <RadioSizeContext.Provider value={resolvedSize}>
+      <RadioSizeContext.Provider value={size}>
         <RadioValueContext.Provider value={selectedValue}>
           {children as React.ReactNode}
         </RadioValueContext.Provider>
@@ -89,10 +131,11 @@ export function RadioGroup({
   );
 }
 
-export interface RadioProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>,
-  "className" | "children"
-> {
+export interface RadioProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>,
+    "className" | "children"
+  > {
   className?: string;
   classNames?: {
     base?: string;

@@ -1,24 +1,100 @@
 "use client";
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  tagListButtonVariants,
-  tagListCheckboxVariants,
-  tagListDotStackVariants,
-  tagListDotVariants,
-  tagListDropdownSearchLabelVariants,
-  tagListDropdownSearchVariants,
-  tagListDropdownVariants,
-  tagListOptionContentVariants,
-  tagListOptionDotWrapVariants,
-  tagListOptionLabelVariants,
-  tagListOptionVariants,
-  tagListOptionsVariants,
-  tagListPendingIndicatorVariants,
-  tagListShortcutVariants,
-} from "./shadcn";
+export const tagListButtonVariants = cva(
+  "inline-flex items-center border transition-[background-color,border-color,color] duration-fast ease-out outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember h-[26px] gap-[4px] rounded-md border-hairline-strong bg-l-wash-5 px-[8px] py-[4.5px] font-sans text-[12px] text-l-ink shadow-[0_1px_0.5px_rgba(0,0,0,0.15)] hover:border-l-border-strong hover:bg-l-surface-hover"
+);
+
+export const tagListDotStackVariants = cva("relative inline-block shrink-0", {
+  variants: {
+    count: {
+      0: "hidden",
+      1: "h-[9px] w-[9px]",
+      2: "h-[9px] w-[13px]",
+      3: "h-[9px] w-[17px]",
+    },
+  },
+  defaultVariants: {
+    count: 1,
+  },
+});
+
+export const tagListDotVariants = cva(
+  "absolute left-0 top-0 size-[9px] rounded-pill border border-[var(--l-dot-edge)]"
+);
+
+export const tagListDropdownVariants = cva(
+  "flex flex-col items-center rounded-[8px] border border-[var(--l-pop-border)] bg-[var(--l-pop-bg)] shadow-l-pop w-[204px]"
+);
+
+export const tagListDropdownSearchVariants = cva(
+  "flex h-[36px] w-full items-center border-b border-l-border-faint pr-[12px]"
+);
+
+export const tagListDropdownSearchLabelVariants = cva(
+  "flex h-full min-w-0 flex-1 items-start px-[14px] py-[10px] font-sans text-[12px] text-l-ink-dim"
+);
+
+export const tagListShortcutVariants = cva(
+  "flex w-[16px] shrink-0 items-center justify-center rounded-[3px] bg-l-wash-5 p-[2px] font-sans text-[11px] leading-[1.1] text-l-ink-lo"
+);
+
+export const tagListOptionsVariants = cva(
+  "flex w-full flex-col items-start p-[4px]"
+);
+
+export const tagListOptionVariants = cva(
+  "flex h-[32px] w-full items-center gap-[4px] rounded-[4px] px-[8px] py-[4.5px] text-left shadow-[0_1px_0.5px_rgba(0,0,0,0.15)] outline-none transition-colors duration-fast focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+  {
+    variants: {
+      selected: {
+        true: "bg-l-surface-selected",
+        false: "hover:bg-l-surface-hover",
+      },
+    },
+    defaultVariants: {
+      selected: false,
+    },
+  }
+);
+
+export const tagListCheckboxVariants = cva(
+  "flex size-[16px] shrink-0 items-center justify-center rounded-[4px] border border-l-border-strong text-[var(--l-accent)]",
+  {
+    variants: {
+      selected: {
+        true: "border-[var(--l-accent)] bg-[var(--l-accent-muted)]",
+        false: "",
+      },
+      pending: {
+        true: "cursor-wait opacity-80",
+        false: "",
+      },
+    },
+    defaultVariants: {
+      pending: false,
+      selected: false,
+    },
+  }
+);
+
+export const tagListPendingIndicatorVariants = cva(
+  "size-[10px] animate-spin rounded-full border-2 border-current border-t-transparent"
+);
+
+export const tagListOptionContentVariants = cva(
+  "flex shrink-0 items-center gap-[12px]"
+);
+
+export const tagListOptionDotWrapVariants = cva(
+  "relative h-[9px] w-[16px] shrink-0"
+);
+
+export const tagListOptionLabelVariants = cva(
+  "font-sans text-[12px] text-l-ink"
+);
 
 export type TagListColor =
   | "bug"
@@ -40,7 +116,6 @@ export interface TagListItem {
   color?: TagListColor;
 }
 
-export type TagListDensity = "compact" | "brand";
 export type TagListSelectionResult = Iterable<string> | void;
 export type TagListSelectionChange = (
   ids: Set<string>,
@@ -101,7 +176,6 @@ function toSelectionSet(value: Iterable<string> | undefined): Set<string> {
 export interface TagListProps
   extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
   items: TagListItem[];
-  density?: TagListDensity;
   maxDots?: 1 | 2 | 3;
   emptyLabel?: React.ReactNode;
   label?: React.ReactNode;
@@ -126,7 +200,6 @@ export interface TagListProps
 
 export function TagList({
   items,
-  density: densityProp,
   maxDots = 3,
   emptyLabel = "No labels",
   label,
@@ -148,18 +221,19 @@ export function TagList({
   type,
   ...props
 }: TagListProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
   const [internalSelected, setInternalSelected] = React.useState<Set<string>>(
-    () => new Set(defaultSelectedIds ?? selectedIds ?? items.map((item) => item.id))
+    () =>
+      new Set(defaultSelectedIds ?? selectedIds ?? items.map((item) => item.id))
   );
   const baseSelected = React.useMemo(
     () => toSelectionSet(selectedIds ?? internalSelected),
     [internalSelected, selectedIds]
   );
-  const [optimisticSelected, setOptimisticSelected] =
-    React.useState<Set<string>>(() => new Set(baseSelected));
+  const [optimisticSelected, setOptimisticSelected] = React.useState<
+    Set<string>
+  >(() => new Set(baseSelected));
   const [pendingIds, setPendingIds] = React.useState<Set<string>>(
     () => new Set()
   );
@@ -167,7 +241,8 @@ export function TagList({
   const pendingIdsRef = React.useRef(new Set<string>());
   const latestRequestRef = React.useRef(0);
   const isOpen = open ?? internalOpen;
-  const selected = selectionMode === "async" ? optimisticSelected : baseSelected;
+  const selected =
+    selectionMode === "async" ? optimisticSelected : baseSelected;
   selectedRef.current = selected;
   pendingIdsRef.current = pendingIds;
 
@@ -291,8 +366,7 @@ export function TagList({
         {...props}
         ref={ref}
         type={type ?? "button"}
-        className={tagListButtonVariants({ density, className })}
-        data-density={density}
+        className={tagListButtonVariants({ className })}
         aria-expanded={dropdown ? isOpen : undefined}
         onClick={(event) => {
           onClick?.(event);
@@ -319,10 +393,8 @@ export function TagList({
       {dropdown && isOpen ? (
         <div
           className={tagListDropdownVariants({
-            density,
             className: `absolute left-0 top-full z-50 mt-[6px] ${dropdownClassName ?? ""}`,
           })}
-          data-density={density}
         >
           <div className={tagListDropdownSearchVariants()}>
             <div className={tagListDropdownSearchLabelVariants()}>
@@ -332,7 +404,11 @@ export function TagList({
               <span className={tagListShortcutVariants()}>{shortcut}</span>
             ) : null}
           </div>
-          <div className={tagListOptionsVariants()} role="listbox" aria-multiselectable>
+          <div
+            className={tagListOptionsVariants()}
+            role="listbox"
+            aria-multiselectable
+          >
             {items.map((item) => {
               const isSelected = selected.has(item.id);
               const isPending = pendingIds.has(item.id);
@@ -367,7 +443,9 @@ export function TagList({
                         })}
                       />
                     </span>
-                    <span className={tagListOptionLabelVariants()}>{item.label}</span>
+                    <span className={tagListOptionLabelVariants()}>
+                      {item.label}
+                    </span>
                   </span>
                 </button>
               );

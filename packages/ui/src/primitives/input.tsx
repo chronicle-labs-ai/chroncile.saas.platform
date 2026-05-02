@@ -1,26 +1,35 @@
 "use client";
 
 import * as React from "react";
-import type { VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { inputVariants } from "./shadcn";
+import { cn } from "../utils/cn";
 
 /**
- * Input is a styled `<input>` with Chronicle density and validation variants.
+ * Input is a styled `<input>` with Chronicle validation variants.
  * Form wiring is explicit through native `id`, `aria-describedby`, and
  * `aria-invalid` props.
  */
-
-/**
- * Two density flavors:
- *   `"compact"` (default) — Linear-density 28 px h, 13 px sans, ember
- *                            focus halo. Use on product surfaces.
- *   `"brand"`             — 36 px-ish mono input on the brand surface
- *                            stack (`bg-surface-00`). Reach for this on
- *                            marketing forms / auth.
- */
-export type InputDensity = "compact" | "brand";
+export const inputVariants = cva(
+  "w-full border outline-none transition-[border-color,box-shadow,background-color] duration-fast ease-out h-[28px] rounded-md border-hairline-strong bg-l-surface-input px-[10px] font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim hover:border-l-border-strong focus:border-[rgba(216,67,10,0.5)] focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] data-[invalid=true]:border-event-red focus:data-[invalid=true]:border-event-red disabled:cursor-not-allowed disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "",
+        auth: "border-hairline-strong bg-transparent text-ink-hi focus:border-ink-hi",
+      },
+      search: {
+        true: "pl-[36px]",
+      },
+      invalid: {
+        true: "border-event-red focus:border-event-red",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
 
 type InputVariantProps = VariantProps<typeof inputVariants>;
 
@@ -28,7 +37,6 @@ export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "className">,
     InputVariantProps {
   className?: string;
-  density?: InputDensity;
   /** Render a leading search glyph and adjust padding. */
   search?: boolean;
   invalid?: boolean;
@@ -41,21 +49,18 @@ export interface InputProps
 export function Input({
   search = false,
   invalid = false,
-  density: densityProp,
   variant = "default",
   className,
   wrapperClassName,
   ref,
   ...props
-}: InputProps & { ref?: React.Ref<HTMLInputElement> }) {
-  const density = useResolvedChromeDensity(densityProp);
+}: InputProps) {
   const field = (
     <input
       {...props}
       ref={ref}
-      data-density={density}
       data-invalid={invalid || undefined}
-      className={inputVariants({ density, variant, search, invalid, className })}
+      className={cn(inputVariants({ variant, search, invalid }), className)}
     />
   );
 
@@ -69,11 +74,7 @@ export function Input({
         fill="none"
         stroke="currentColor"
         strokeWidth={1.5}
-        className={
-          density === "compact"
-            ? "pointer-events-none absolute left-[10px] top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-l-ink-dim"
-            : "pointer-events-none absolute left-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim"
-        }
+        className="pointer-events-none absolute left-[10px] top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-l-ink-dim"
       >
         <path
           strokeLinecap="round"

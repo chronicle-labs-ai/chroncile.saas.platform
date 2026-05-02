@@ -90,7 +90,7 @@ export function DataTableFilterPill<TRow>({
       </span>
       <span className={slots.divider()} aria-hidden />
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger>
+        <PopoverTrigger asChild>
           <button type="button" className={slots.value()} aria-label="Edit value">
             {renderValueSummary(column, filter, slots.placeholder())}
           </button>

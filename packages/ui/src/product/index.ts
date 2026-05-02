@@ -1,5 +1,5 @@
-export { Card } from "./card";
-export type { CardProps } from "./card";
+export { ShowcaseCard } from "./showcase-card";
+export type { ShowcaseCardProps } from "./showcase-card";
 
 export { SectionHeader } from "./section-header";
 export type { SectionHeaderProps } from "./section-header";
@@ -100,7 +100,12 @@ export {
   DataGrid,
   FileTree,
   FloatingToc,
-  HoverCard,
+  // `HoverCard` is now the shadcn-shape primitive (Radix-backed) at
+  // `ui/primitives/hover-card`. The Chronicle dot-namespaced compound
+  // (`HoverCard.Trigger` / `HoverCard.Content` / `HoverCard.Arrow`) is
+  // re-exported here under `LegacyHoverCard` to avoid a barrel
+  // collision; reach for the new primitive in new code.
+  HoverCard as LegacyHoverCard,
   ItemCard,
   ItemCardGroup,
   KPI,
@@ -124,8 +129,8 @@ export type {
   FileTreeProps,
   FloatingTocItem,
   FloatingTocProps,
-  HoverCardProps,
-  HoverCardContentProps,
+  HoverCardProps as LegacyHoverCardProps,
+  HoverCardContentProps as LegacyHoverCardContentProps,
   ItemCardProps,
   ItemCardGroupProps,
   KPIProps,

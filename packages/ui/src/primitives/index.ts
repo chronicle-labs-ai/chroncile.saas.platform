@@ -27,6 +27,7 @@ export type {
   AlertProps,
   AlertTitleProps,
   AlertDescriptionProps,
+  AlertVariant,
   AlertTone,
 } from "./alert";
 
@@ -66,8 +67,19 @@ export type {
 export { Separator } from "./separator";
 export type { SeparatorProps } from "./separator";
 
-export { Sheet } from "./sheet";
-export type { SheetProps } from "./sheet";
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetPortal,
+  SheetOverlay,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "./sheet";
+export type { SheetContentProps, SheetSide } from "./sheet";
 
 export { Button } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
@@ -199,6 +211,19 @@ export type {
   ListboxSectionProps,
 } from "./listbox";
 
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from "./command";
+export type { CommandDialogProps } from "./command";
+
 export { Combobox, ComboboxItem, ComboboxSection } from "./combobox";
 export type {
   ComboboxProps,
@@ -241,6 +266,9 @@ export type {
   UseToastReturn,
 } from "./toast";
 
+export { Toaster, toast } from "./sonner";
+export type { ToasterProps } from "./sonner";
+
 export { Breadcrumbs, Breadcrumb } from "./breadcrumbs";
 export type { BreadcrumbsProps, BreadcrumbProps } from "./breadcrumbs";
 
@@ -258,6 +286,31 @@ export type { SparklineProps, SparklineTone } from "./sparkline";
 
 export { ScrollShadow } from "./scroll-shadow";
 export type { ScrollShadowProps } from "./scroll-shadow";
+
+export { ScrollArea, ScrollBar } from "./scroll-area";
+
+export {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuGroup,
+  ContextMenuPortal,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
+  ContextMenuSubContent,
+  ContextMenuRadioGroup,
+} from "./context-menu";
+
+export {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+  HoverCardPortal,
+} from "./hover-card";
 
 export { EmptyState } from "./empty-state";
 export type {
@@ -298,6 +351,13 @@ export type { TextareaProps } from "./textarea";
 
 export { OTPInput } from "./otp-input";
 export type { OTPInputProps } from "./otp-input";
+
+export {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "./input-otp";
 
 export { PasswordMeter, scorePassword } from "./password-meter";
 export type { PasswordMeterProps } from "./password-meter";

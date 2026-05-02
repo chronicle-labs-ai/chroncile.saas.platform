@@ -14,23 +14,40 @@
 
 import * as React from "react";
 import { Slider as SliderPrimitive } from "radix-ui";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  sliderFillVariants,
-  sliderOutputVariants,
-  sliderRootVariants,
-  sliderThumbVariants,
-  sliderTrackVariants,
-} from "./shadcn";
 
-export interface SliderProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>,
-  "className" | "children" | "value" | "defaultValue" | "onValueChange"
-> {
+export const sliderRootVariants = cva("flex flex-col gap-s-2 w-full");
+
+export const sliderTrackVariants = cva(
+  "relative w-full rounded-pill data-[orientation=vertical]:h-full h-[4px] bg-l-wash-3 data-[orientation=vertical]:w-[4px]"
+);
+
+export const sliderFillVariants = cva(
+  "absolute inset-y-0 left-0 rounded-pill bg-ember pointer-events-none"
+);
+
+/*
+ * Radix Slider Thumb emits `data-disabled` when disabled and
+ * `data-orientation`. Active drag uses the standard `:active` pseudo
+ * class. Earlier `data-[dragging=true]`/`data-[focus-visible=true]`
+ * (RAC vintage) never fire under Radix.
+ */
+export const sliderThumbVariants = cva(
+  "rounded-full bg-white border border-ember shadow-card cursor-grab active:cursor-grabbing active:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember focus-visible:outline-offset-2 data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed h-[12px] w-[12px]"
+);
+
+export const sliderOutputVariants = cva(
+  "self-end font-sans text-[11px] font-medium text-l-ink-dim"
+);
+
+export interface SliderProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>,
+    "className" | "children" | "value" | "defaultValue" | "onValueChange"
+  > {
   className?: string;
-  density?: "compact" | "brand";
   value?: number | number[];
   defaultValue?: number | number[];
   onValueChange?: (value: number[]) => void;
@@ -51,9 +68,8 @@ function formatOutput(value: number[]) {
   return value.length > 1 ? value.join(" – ") : (value[0] ?? 0).toString();
 }
 
-export function Slider<T extends number | number[] = number[]>({
+export function Slider<_T extends number | number[] = number[]>({
   className,
-  density: densityProp,
   value,
   defaultValue = [0],
   onValueChange,
@@ -64,7 +80,6 @@ export function Slider<T extends number | number[] = number[]>({
   ref,
   ...rest
 }: SliderProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const defaultArray = React.useMemo(() => toArray(defaultValue), [defaultValue]);
   const [uncontrolled, setUncontrolled] = React.useState(defaultArray);
   const values = value === undefined ? uncontrolled : toArray(value);
@@ -86,15 +101,14 @@ export function Slider<T extends number | number[] = number[]>({
       value={value === undefined ? undefined : toArray(value)}
       defaultValue={defaultArray}
       onValueChange={handleValueChange}
-      data-density={density}
       className={cn(sliderRootVariants(), className)}
     >
       {showOutput ? (
-        <output className={sliderOutputVariants({ density })}>
+        <output className={sliderOutputVariants()}>
           {formatOutput(values)}
         </output>
       ) : null}
-      <SliderPrimitive.Track className={sliderTrackVariants({ density })}>
+      <SliderPrimitive.Track className={sliderTrackVariants()}>
         {showFill ? (
           <SliderPrimitive.Range className={sliderFillVariants()} />
         ) : null}
@@ -102,7 +116,7 @@ export function Slider<T extends number | number[] = number[]>({
       {values.map((_, index) => (
         <SliderPrimitive.Thumb
           key={index}
-          className={sliderThumbVariants({ density })}
+          className={sliderThumbVariants()}
         />
       ))}
     </SliderPrimitive.Root>

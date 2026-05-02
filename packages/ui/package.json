@@ -12,7 +12,6 @@
     "./tailwind.config": "./tailwind.config.ts",
     "./styles/globals.css": "./src/styles/globals.css",
     "./styles/tokens.css": "./src/styles/tokens.css",
-    "./styles/linear.css": "./src/styles/linear.css",
     "./styles/auth.css": "./src/styles/auth.css",
     "./styles/connectors.css": "./src/styles/connectors.css",
     "./styles/fonts.css": "./src/styles/fonts.css",
@@ -20,7 +19,8 @@
     "./auth": "./src/auth/index.ts",
     "./onboarding": "./src/onboarding/index.ts",
     "./connectors": "./src/connectors/index.ts",
-    "./icons": "./src/icons/index.ts"
+    "./icons": "./src/icons/index.ts",
+    "./rhf": "./src/primitives/rhf.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -28,8 +28,8 @@
     "build-storybook": "storybook build -o storybook-static"
   },
   "peerDependencies": {
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.0",
@@ -55,8 +55,12 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "input-otp": "^1.4.2",
     "lucide-react": "^1.11.0",
     "radix-ui": "^1.4.3",
+    "react-hook-form": "^7.75.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2"
   }

@@ -7,24 +7,32 @@
  */
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  listboxItemVariants,
-  listboxRootVariants,
-  listboxSectionHeaderVariants,
-  listboxSectionVariants,
-} from "./shadcn";
 
-const ListboxDensityContext = React.createContext<"compact" | "brand" | undefined>(
-  undefined,
+export const listboxRootVariants = cva(
+  "flex flex-col border bg-surface-01 outline-none max-h-[320px] overflow-auto focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember rounded-md border-hairline-strong p-[2px]"
+);
+
+/*
+ * Listbox items are plain `<button>`s. The `data-selected` attribute is
+ * set in the component (`data-selected={selected || undefined}`) so the
+ * `data-[selected=true]:` selector does fire.
+ */
+export const listboxItemVariants = cva(
+  "relative cursor-pointer select-none outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-xs px-[8px] py-[5px] font-sans text-[13px] leading-none text-l-ink hover:bg-l-surface-hover focus-visible:bg-l-surface-hover data-[selected=true]:text-l-ink data-[selected=true]:bg-l-surface-selected"
+);
+
+export const listboxSectionVariants = cva("py-s-1");
+
+export const listboxSectionHeaderVariants = cva(
+  "px-[8px] pt-[6px] pb-[3px] font-sans text-[11px] font-medium tracking-normal text-l-ink-dim"
 );
 
 export interface ListboxProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "className" | "children"> {
   className?: string;
-  density?: "compact" | "brand";
   children: React.ReactNode;
   value?: string;
   onValueChange?: (value: string) => void;
@@ -41,7 +49,6 @@ const ListboxValueContext = React.createContext<{
 
 export function Listbox({
   className,
-  density: densityProp,
   children,
   value,
   onValueChange,
@@ -51,7 +58,6 @@ export function Listbox({
   selectionMode: _selectionMode,
   ...rest
 }: ListboxProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const firstSelected = selectedKeys
     ? Array.from(selectedKeys)[0]
     : defaultSelectedKeys
@@ -67,20 +73,17 @@ export function Listbox({
   );
 
   return (
-    <ListboxDensityContext.Provider value={density}>
-      <ListboxValueContext.Provider
-        value={{ value: resolvedValue, onValueChange: handleValueChange }}
-      >
+    <ListboxValueContext.Provider
+      value={{ value: resolvedValue, onValueChange: handleValueChange }}
+    >
       <div
         {...rest}
         role="listbox"
-        data-density={density}
-        className={cn(listboxRootVariants({ density }), className)}
+        className={cn(listboxRootVariants(), className)}
       >
         {children as React.ReactNode}
       </div>
-      </ListboxValueContext.Provider>
-    </ListboxDensityContext.Provider>
+    </ListboxValueContext.Provider>
   );
 }
 
@@ -98,9 +101,7 @@ export function ListboxItem({
   onClick,
   ...props
 }: ListboxItemProps) {
-  const ctxDensity = React.useContext(ListboxDensityContext);
   const selection = React.useContext(ListboxValueContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   const itemValue = value ?? id ?? "";
   const selected = selection.value === itemValue;
 
@@ -115,7 +116,7 @@ export function ListboxItem({
         onClick?.(event);
         if (!event.defaultPrevented) selection.onValueChange?.(itemValue);
       }}
-      className={cn(listboxItemVariants({ density }), className)}
+      className={cn(listboxItemVariants(), className)}
     />
   );
 }
@@ -133,8 +134,6 @@ export function ListboxSection({
   children,
   ...rest
 }: ListboxSectionProps) {
-  const ctxDensity = React.useContext(ListboxDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   return (
     <div
       {...rest}
@@ -142,9 +141,7 @@ export function ListboxSection({
       className={listboxSectionVariants({ className })}
     >
       {title ? (
-        <div className={listboxSectionHeaderVariants({ density })}>
-          {title}
-        </div>
+        <div className={listboxSectionHeaderVariants()}>{title}</div>
       ) : null}
       {children as React.ReactNode}
     </div>
