@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Logo } from "./logo";
 
 const meta: Meta<typeof Logo> = {
-  title: "Primitives/Logo (inline)",
+  title: "Primitives/Logo",
   component: Logo,
   parameters: { layout: "padded" },
   argTypes: {

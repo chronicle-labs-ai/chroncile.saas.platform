@@ -2,8 +2,14 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ToastProvider, useToast } from "./toast";
 import { Button } from "./button";
 
+/*
+ * @deprecated The Chronicle `<ToastProvider>` + `useToast()` queue
+ * lives on for existing call sites; new product code should reach for
+ * `Toaster` + `toast()` from `./sonner` (see "Primitives/Sonner").
+ */
+
 const meta: Meta = {
-  title: "Primitives/Toast",
+  title: "Primitives/Toast (legacy)",
   parameters: { layout: "padded" },
 };
 export default meta;

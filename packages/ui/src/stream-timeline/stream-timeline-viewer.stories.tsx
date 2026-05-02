@@ -20,7 +20,7 @@ import type {
 } from "./types";
 
 const meta: Meta<typeof StreamTimelineViewer> = {
-  title: "StreamTimeline/Viewer",
+  title: "Stream Timeline/Viewer",
   component: StreamTimelineViewer,
   parameters: { layout: "fullscreen" },
 };
@@ -244,7 +244,7 @@ function DatasetSidebar({
 }) {
   return (
     <aside className="flex min-h-0 flex-col gap-s-3 overflow-hidden">
-      <section className="flex flex-col overflow-hidden rounded-l border border-hairline bg-l-surface">
+      <section className="flex flex-col overflow-hidden rounded-md border border-hairline bg-l-surface">
         <header className="border-b border-hairline bg-l-surface-bar px-s-3 py-s-2">
           <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             Datasets ({datasets.length})
@@ -283,7 +283,7 @@ function DatasetSidebar({
         </ul>
       </section>
 
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-l border border-hairline bg-l-surface">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-hairline bg-l-surface">
         <header className="border-b border-hairline bg-l-surface-bar px-s-3 py-s-2">
           <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             Recent additions ({log.length})
@@ -295,7 +295,7 @@ function DatasetSidebar({
               Pick any event → click &ldquo;Add trace&rdquo; in the
               bottom-right of the sidebar. Single-event additions are
               tagged{" "}
-              <span className="rounded-l-sm bg-l-surface-hover px-s-1 uppercase tracking-tactical text-ink-faint">
+              <span className="rounded-xs bg-l-surface-hover px-s-1 uppercase tracking-tactical text-ink-faint">
                 solo
               </span>{" "}
               so callers can route them differently.

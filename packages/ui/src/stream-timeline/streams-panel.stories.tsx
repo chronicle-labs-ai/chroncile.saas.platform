@@ -12,7 +12,7 @@ import {
 } from "./types";
 
 const meta: Meta<typeof StreamsPanel> = {
-  title: "StreamTimeline/StreamsPanel",
+  title: "Stream Timeline/StreamsPanel",
   component: StreamsPanel,
 };
 export default meta;

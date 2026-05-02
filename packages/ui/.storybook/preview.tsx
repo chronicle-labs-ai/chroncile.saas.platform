@@ -3,9 +3,8 @@ import { withThemeByDataAttribute } from "@storybook/addon-themes";
 import * as React from "react";
 
 import { ThemeProvider } from "../src/theme/theme-provider";
-import { ChromeStyleProvider } from "../src/theme/chrome-style-context";
-import type { ChromeStyle } from "../src/theme/chrome-style-context";
 import { UIProviders } from "../src/providers/ui-providers";
+import { Toaster } from "../src/primitives/sonner";
 // Order matters: Tailwind preflight first, then our tokens/fonts/base so
 // they win the cascade against `@tailwind base`'s resets.
 import "./preview.css";
@@ -16,41 +15,17 @@ const withProvider: Decorator = (Story) => (
   // RouterProvider in stories — navigate is only wired inside apps.
   // ThemeProvider's attachToRoot={false} keeps the <html data-theme>
   // attribute driven by the addon-themes decorator below.
+  // <Toaster /> mounts the sonner host once so any story can just call
+  // `toast(...)` without scaffolding (see "Primitives/Sonner").
   <UIProviders>
     <ThemeProvider attachToRoot={false} toggleShortcut={null}>
       <div className="min-h-screen p-s-6 bg-page text-ink">
         <Story />
       </div>
+      <Toaster />
     </ThemeProvider>
   </UIProviders>
 );
-
-/**
- * Global `data-chrome` toggle: brand (`--c-*` editorial) vs product
- * (`--l-*` Linear-density). Drives the CSS remap in `chrome.css` AND
- * feeds `<ChromeStyleProvider>` so primitives that read context for
- * their `density` (Button, Input, …) flip in step. Stories that
- * accept their own `chromeStyle` prop (e.g. `AuthShell`) can override
- * the global; that local value wins because it sets `data-chrome`
- * on a deeper element in the cascade.
- */
-const withChromeAttribute: Decorator = (Story, context) => {
-  const chrome = (context.globals.chrome ?? "brand") as ChromeStyle;
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-chrome", chrome);
-    return () => {
-      root.removeAttribute("data-chrome");
-    };
-  }, [chrome]);
-
-  return (
-    <ChromeStyleProvider value={chrome}>
-      <Story />
-    </ChromeStyleProvider>
-  );
-};
 
 const preview: Preview = {
   parameters: {
@@ -76,19 +51,28 @@ const preview: Preview = {
             "Density",
           ],
           "Brand",
-          "Primitives",
           "Typography",
           "Surfaces",
-          "Product",
+          "Primitives",
+          "Icons",
           "Layout",
-          "Templates",
+          "Auth",
+          "Onboarding",
+          "Connections",
+          "Connectors",
+          "Datasets",
+          "Agents",
+          "Backtests",
+          "Stream Timeline",
+          "Env Manager",
+          "Product",
+          "Admin",
         ],
       },
     },
   },
   decorators: [
     withProvider,
-    withChromeAttribute,
     withThemeByDataAttribute({
       themes: { dark: "dark", light: "light" },
       defaultTheme: "dark",
@@ -96,29 +80,6 @@ const preview: Preview = {
     }),
   ],
   tags: ["autodocs"],
-};
-
-/**
- * Top-level globals export — Storybook reads `globalTypes` from a
- * named export at the preview-file root and renders the toolbar
- * from it. (Nesting under the default `Preview` config is silently
- * ignored in 8.x for the toolbar, so keep this here.)
- */
-export const globalTypes = {
-  chrome: {
-    name: "Chrome",
-    description: "Brand (editorial) vs Product (Linear-density) chrome",
-    defaultValue: "brand",
-    toolbar: {
-      title: "Chrome",
-      icon: "mirror",
-      items: [
-        { value: "brand", title: "Brand", right: "--c-*" },
-        { value: "product", title: "Product", right: "--l-*" },
-      ],
-      dynamicTitle: true,
-    },
-  },
 };
 
 export default preview;

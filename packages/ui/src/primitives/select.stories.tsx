@@ -13,12 +13,12 @@ type Story = StoryObj<typeof Select>;
 export const Default: Story = {
   render: () => (
     <div className="w-[280px]">
-      <Select defaultSelectedKey="intercom" placeholder="Pick a source">
-        <SelectItem id="intercom">Intercom</SelectItem>
-        <SelectItem id="shopify">Shopify</SelectItem>
-        <SelectItem id="stripe">Stripe</SelectItem>
-        <SelectItem id="slack">Slack</SelectItem>
-        <SelectItem id="sandbox">Sandbox</SelectItem>
+      <Select defaultValue="intercom" placeholder="Pick a source">
+        <SelectItem value="intercom">Intercom</SelectItem>
+        <SelectItem value="shopify">Shopify</SelectItem>
+        <SelectItem value="stripe">Stripe</SelectItem>
+        <SelectItem value="slack">Slack</SelectItem>
+        <SelectItem value="sandbox">Sandbox</SelectItem>
       </Select>
     </div>
   ),
@@ -29,15 +29,15 @@ export const WithSections: Story = {
     <div className="w-[280px]">
       <Select placeholder="Select integration">
         <SelectSection title="Support">
-          <SelectItem id="intercom">Intercom</SelectItem>
-          <SelectItem id="zendesk">Zendesk</SelectItem>
+          <SelectItem value="intercom">Intercom</SelectItem>
+          <SelectItem value="zendesk">Zendesk</SelectItem>
         </SelectSection>
         <SelectSection title="Commerce">
-          <SelectItem id="shopify">Shopify</SelectItem>
-          <SelectItem id="stripe">Stripe</SelectItem>
+          <SelectItem value="shopify">Shopify</SelectItem>
+          <SelectItem value="stripe">Stripe</SelectItem>
         </SelectSection>
         <SelectSection title="Workspace">
-          <SelectItem id="slack">Slack</SelectItem>
+          <SelectItem value="slack">Slack</SelectItem>
         </SelectSection>
       </Select>
     </div>
@@ -48,8 +48,8 @@ export const Invalid: Story = {
   render: () => (
     <div className="w-[280px]">
       <Select invalid placeholder="Required">
-        <SelectItem id="a">A</SelectItem>
-        <SelectItem id="b">B</SelectItem>
+        <SelectItem value="a">A</SelectItem>
+        <SelectItem value="b">B</SelectItem>
       </Select>
     </div>
   ),
