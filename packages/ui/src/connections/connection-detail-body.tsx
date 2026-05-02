@@ -1,0 +1,675 @@
+"use client";
+
+import * as React from "react";
+import {
+  Pause,
+  Play,
+  RefreshCw,
+  Activity,
+  Trash2,
+  KeyRound,
+  ExternalLink,
+} from "lucide-react";
+
+import { cx } from "../utils/cx";
+import { Button } from "../primitives/button";
+import { Tabs, TabList, Tab, TabPanel } from "../primitives/tabs";
+import { CompanyLogo } from "../icons";
+import { InlineAlert } from "../auth/_internal";
+import {
+  CodeBlock,
+  EventRecv,
+  FieldRow,
+  ReadonlyInput,
+  ScopeList,
+  type ScopeListItem,
+} from "../connectors/_internal";
+import { getSource } from "../onboarding/data";
+import {
+  HUBSPOT_SCOPES,
+  REVERSE_WEBHOOK_URL_TEMPLATE,
+  SLACK_SCOPES,
+  type HubSpotScope,
+  type SlackScope,
+} from "../connectors/data";
+import { ConnectionHealthBadge } from "./connection-health-badge";
+import {
+  type Connection,
+  type ConnectionBackfillRecord,
+  type ConnectionDelivery,
+  type ConnectionEventTypeSub,
+} from "./data";
+import {
+  formatNumber,
+  formatStableDate,
+  formatStableDateTime,
+  formatStableTime,
+} from "./time";
+
+/*
+ * ConnectionDetailBody — shared content for both the slide-in drawer
+ * and the full-page detail surface. Six tabs:
+ *
+ *   Overview  — health, last event, scopes summary, primary actions
+ *   Scopes    — checkbox editor (vendor scope catalog when known)
+ *   Secret    — webhook secret / API key fingerprint + rotate
+ *   Backfills — historical run rows + "Run backfill" CTA
+ *   Activity  — recent deliveries (200/4xx/5xx) + error payload
+ *   Events    — per-event-type toggle list (Stripe-style)
+ *
+ * Presentational. State lives at the boundary; this body just
+ * routes UI events back to the parent via the `on*` props.
+ */
+
+export type ConnectionDetailTab =
+  | "overview"
+  | "scopes"
+  | "secret"
+  | "backfills"
+  | "activity"
+  | "events";
+
+export const CONNECTION_DETAIL_TABS: readonly {
+  id: ConnectionDetailTab;
+  label: string;
+}[] = [
+  { id: "overview", label: "Overview" },
+  { id: "scopes", label: "Scopes" },
+  { id: "secret", label: "Secret" },
+  { id: "backfills", label: "Backfills" },
+  { id: "activity", label: "Activity" },
+  { id: "events", label: "Event types" },
+];
+
+export interface ConnectionDetailBodyProps {
+  connection: Connection;
+  /** Active tab id. Defaults to "overview". */
+  tab?: ConnectionDetailTab;
+  onTabChange?: (next: ConnectionDetailTab) => void;
+  /** Backfill rows for this connection. */
+  backfills?: readonly ConnectionBackfillRecord[];
+  /** Recent deliveries for the Activity tab. */
+  deliveries?: readonly ConnectionDelivery[];
+  /** Event-type subscription rows. Empty array hides the toggle list. */
+  events?: readonly ConnectionEventTypeSub[];
+  /** Toggle a scope on/off. */
+  onToggleScope?: (id: string, next: boolean) => void;
+  /** Toggle an event-type subscription. */
+  onToggleEvent?: (id: string, next: boolean) => void;
+  /** Rotate webhook secret / API key. */
+  onRotateSecret?: () => void;
+  /** Start a new backfill run. */
+  onRunBackfill?: () => void;
+  /** Action callbacks (also surfaced in the Overview tab). */
+  onPause?: () => void;
+  onResume?: () => void;
+  onReauth?: () => void;
+  onTest?: () => void;
+  onDisconnect?: () => void;
+  /** Hide the inner header chrome (used when the parent renders its own). */
+  hideHeader?: boolean;
+  className?: string;
+}
+
+export function ConnectionDetailBody({
+  connection,
+  tab,
+  onTabChange,
+  backfills = [],
+  deliveries = [],
+  events = [],
+  onToggleScope,
+  onToggleEvent,
+  onRotateSecret,
+  onRunBackfill,
+  onPause,
+  onResume,
+  onReauth,
+  onTest,
+  onDisconnect,
+  hideHeader,
+  className,
+}: ConnectionDetailBodyProps) {
+  const src = getSource(connection.source);
+  const isPaused = connection.health === "paused";
+  const isErrored = connection.health === "error";
+  const isExpired = connection.health === "expired";
+
+  return (
+    <div className={cx("flex flex-col gap-4", className)}>
+      {hideHeader ? null : <DetailHeader connection={connection} />}
+
+      <Tabs
+        density="compact"
+        value={tab ?? "overview"}
+        onValueChange={(next) => onTabChange?.(next as ConnectionDetailTab)}
+        className="flex flex-col gap-3"
+      >
+        <TabList>
+          {CONNECTION_DETAIL_TABS.map((t) => (
+            <Tab key={t.id} value={t.id}>
+              {t.label}
+            </Tab>
+          ))}
+        </TabList>
+
+        <TabPanel value="overview" className="flex flex-col gap-4">
+          {isErrored ? (
+            <InlineAlert tone="danger">
+              {connection.errorKind === "auth"
+                ? "Auth failed — credentials rejected by the upstream API."
+                : connection.errorKind === "signature"
+                  ? "Recent events failed signature verification."
+                  : connection.errorKind === "rate-limit"
+                    ? "Upstream rate-limited Chronicle on recent calls."
+                    : "Something went wrong with this connection."}
+            </InlineAlert>
+          ) : null}
+          {isExpired ? (
+            <InlineAlert tone="warning">
+              Token expired{" "}
+              {connection.expiresAt
+                ? `at ${formatStableDateTime(connection.expiresAt)}`
+                : ""}
+              . New events buffer upstream until you re-authorize.
+            </InlineAlert>
+          ) : null}
+          {isPaused ? (
+            <InlineAlert tone="info">
+              Stream paused. Resume to resume ingestion immediately.
+            </InlineAlert>
+          ) : null}
+
+          <SummaryGrid connection={connection} />
+
+          <div className="flex flex-wrap items-center gap-2">
+            {isPaused ? (
+              <Button
+                density="compact"
+                size="sm"
+                variant="primary"
+                leadingIcon={<Play className="size-3.5" strokeWidth={1.75} />}
+                onPress={onResume}
+                isDisabled={!onResume}
+              >
+                Resume
+              </Button>
+            ) : (
+              <Button
+                density="compact"
+                size="sm"
+                variant="secondary"
+                leadingIcon={<Pause className="size-3.5" strokeWidth={1.75} />}
+                onPress={onPause}
+                isDisabled={!onPause}
+              >
+                Pause
+              </Button>
+            )}
+            <Button
+              density="compact"
+              size="sm"
+              variant={isExpired || isErrored ? "primary" : "secondary"}
+              leadingIcon={
+                <RefreshCw className="size-3.5" strokeWidth={1.75} />
+              }
+              onPress={onReauth}
+              isDisabled={!onReauth}
+            >
+              Re-authorize
+            </Button>
+            <Button
+              density="compact"
+              size="sm"
+              variant="secondary"
+              leadingIcon={<Activity className="size-3.5" strokeWidth={1.75} />}
+              onPress={onTest}
+              isDisabled={!onTest}
+            >
+              Test connection
+            </Button>
+            <span className="ml-auto" />
+            <Button
+              density="compact"
+              size="sm"
+              variant="critical"
+              leadingIcon={<Trash2 className="size-3.5" strokeWidth={1.75} />}
+              onPress={onDisconnect}
+              isDisabled={!onDisconnect}
+            >
+              Disconnect
+            </Button>
+          </div>
+        </TabPanel>
+
+        <TabPanel value="scopes" className="flex flex-col gap-4">
+          <ScopesEditor
+            connection={connection}
+            onToggleScope={onToggleScope}
+          />
+        </TabPanel>
+
+        <TabPanel value="secret" className="flex flex-col gap-4">
+          <SecretSection
+            connection={connection}
+            onRotateSecret={onRotateSecret}
+          />
+        </TabPanel>
+
+        <TabPanel value="backfills" className="flex flex-col gap-4">
+          <BackfillsSection
+            backfills={backfills}
+            onRunBackfill={onRunBackfill}
+            sourceSupportsBackfill={!!src?.backfill}
+          />
+        </TabPanel>
+
+        <TabPanel value="activity" className="flex flex-col gap-4">
+          <ActivitySection
+            deliveries={deliveries}
+            errorPayload={connection.errorPayload}
+          />
+        </TabPanel>
+
+        <TabPanel value="events" className="flex flex-col gap-4">
+          <EventsSection events={events} onToggleEvent={onToggleEvent} />
+        </TabPanel>
+      </Tabs>
+    </div>
+  );
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+function DetailHeader({ connection }: { connection: Connection }) {
+  const src = getSource(connection.source);
+  return (
+    <div className="flex items-center gap-3 border-b border-divider pb-4">
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-hairline bg-surface-02"
+        aria-hidden
+      >
+        <CompanyLogo
+          name={src?.name ?? connection.name}
+          size={22}
+          radius={4}
+          fallbackBackground="var(--c-surface-02)"
+          fallbackColor="var(--c-ink-dim)"
+        />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-display text-[18px] leading-none tracking-[-0.03em] text-ink-hi">
+          {connection.name}
+        </span>
+        <span className="truncate font-mono text-mono-sm text-ink-dim">
+          {src?.cat ?? "—"} · {src?.auth ?? "—"} · {connection.id}
+        </span>
+      </div>
+      <ConnectionHealthBadge health={connection.health} />
+    </div>
+  );
+}
+
+/* ── Overview summary ────────────────────────────────────── */
+
+function SummaryGrid({ connection }: { connection: Connection }) {
+  const items: { label: string; value: React.ReactNode }[] = [
+    {
+      label: "Connected",
+      value: formatStableDate(connection.connectedAt),
+    },
+    {
+      label: "Last event",
+      value: formatStableTime(connection.lastEventAt),
+    },
+    { label: "Events / 24h", value: formatNumber(connection.eventsLast24h) },
+    { label: "Scopes", value: connection.scopes.length },
+    {
+      label: "Owner",
+      value: connection.ownerEmail ?? "—",
+    },
+    {
+      label: "Token expires",
+      value: formatStableDate(connection.expiresAt),
+    },
+  ];
+  return (
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+      {items.map((it) => (
+        <div key={it.label} className="flex flex-col gap-[2px]">
+          <dt className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+            {it.label}
+          </dt>
+          <dd className="font-sans text-[13.5px] text-ink-hi">{it.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/* ── Scopes ──────────────────────────────────────────────── */
+
+function ScopesEditor({
+  connection,
+  onToggleScope,
+}: {
+  connection: Connection;
+  onToggleScope?: (id: string, next: boolean) => void;
+}) {
+  const items = scopeCatalogFor(connection);
+  if (items.length === 0) {
+    return (
+      <p className="font-sans text-[13px] text-ink-lo">
+        No scope catalog is registered for {getSource(connection.source)?.name ?? "this source"}. Granted ids:
+        <span className="ml-2 font-mono text-mono-sm text-ink-hi">
+          {connection.scopes.join(", ") || "—"}
+        </span>
+      </p>
+    );
+  }
+  return (
+    <ScopeList
+      items={items}
+      selected={connection.scopes}
+      onToggle={(id, next) => onToggleScope?.(id, next)}
+    />
+  );
+}
+
+function scopeCatalogFor(connection: Connection): ScopeListItem[] {
+  switch (connection.source) {
+    case "slack":
+      return SLACK_SCOPES.map(
+        (s: SlackScope): ScopeListItem => ({
+          id: s.id,
+          label: s.id,
+          reason: s.reason,
+          required: s.required,
+        }),
+      );
+    case "hubspot":
+      return HUBSPOT_SCOPES.map(
+        (s: HubSpotScope): ScopeListItem => ({
+          id: s.id,
+          label: s.label,
+          reason: s.reason,
+        }),
+      );
+    default: {
+      if (connection.scopes.length === 0) return [];
+      return connection.scopes.map(
+        (id): ScopeListItem => ({ id, label: id, reason: "Granted" }),
+      );
+    }
+  }
+}
+
+/* ── Secret / endpoint ───────────────────────────────────── */
+
+function SecretSection({
+  connection,
+  onRotateSecret,
+}: {
+  connection: Connection;
+  onRotateSecret?: () => void;
+}) {
+  const src = getSource(connection.source);
+  const isWebhook = src?.auth === "webhook";
+  const isOauth = src?.auth === "oauth";
+
+  const endpoint = REVERSE_WEBHOOK_URL_TEMPLATE.replace(
+    "{tenant}",
+    connection.id,
+  );
+  const sampleSecret = `whsec_${connection.id}_${Math.abs(hash(connection.id)).toString(36)}`;
+  const sampleKey = `sk_live_${Math.abs(hash(connection.id + "key")).toString(36).padStart(24, "0")}`;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {isWebhook ? (
+        <FieldRow
+          label="Ingest endpoint"
+          help="Send any JSON to this URL — Chronicle normalizes and streams it."
+        >
+          <ReadonlyInput value={endpoint} />
+        </FieldRow>
+      ) : null}
+
+      <FieldRow
+        label={isWebhook ? "Signing secret" : isOauth ? "Refresh token" : "API key"}
+        hint={
+          <span className="inline-flex items-center gap-2">
+            {onRotateSecret ? (
+              <button
+                type="button"
+                onClick={onRotateSecret}
+                className="inline-flex items-center gap-1 font-mono text-mono-sm text-ember hover:underline"
+              >
+                <KeyRound className="size-3" strokeWidth={1.75} />
+                Rotate
+              </button>
+            ) : null}
+          </span>
+        }
+        help="Stored encrypted. Reveal copies the secret to the system clipboard."
+      >
+        <ReadonlyInput
+          value={isWebhook ? sampleSecret : sampleKey}
+          secret
+          reveal={false}
+        />
+      </FieldRow>
+
+      {isOauth ? (
+        <p className="font-sans text-[12.5px] leading-5 text-ink-dim">
+          Chronicle uses OAuth refresh tokens for {src?.name}. Rotation
+          re-runs the consent screen and replaces the stored token without
+          interrupting ingestion.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function hash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    h = Math.imul(31, h) + s.charCodeAt(i);
+  }
+  return h | 0;
+}
+
+/* ── Backfills ───────────────────────────────────────────── */
+
+function BackfillsSection({
+  backfills,
+  onRunBackfill,
+  sourceSupportsBackfill,
+}: {
+  backfills: readonly ConnectionBackfillRecord[];
+  onRunBackfill?: () => void;
+  sourceSupportsBackfill: boolean;
+}) {
+  if (!sourceSupportsBackfill) {
+    return (
+      <p className="font-sans text-[13px] text-ink-lo">
+        This source is stream-only — there is no historical window to
+        backfill.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+          {backfills.length} run{backfills.length === 1 ? "" : "s"}
+        </span>
+        <Button
+          density="compact"
+          size="sm"
+          variant="primary"
+          onPress={onRunBackfill}
+          isDisabled={!onRunBackfill}
+        >
+          Run new backfill
+        </Button>
+      </div>
+      {backfills.length === 0 ? (
+        <p className="font-sans text-[13px] text-ink-dim">
+          No backfill runs yet.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {backfills.map((bf) => (
+            <li
+              key={bf.id}
+              className="grid grid-cols-[110px_minmax(0,1fr)_120px_80px] items-center gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-2"
+            >
+              <span className="font-mono text-mono-sm text-ink-dim">
+                {formatStableDate(bf.startedAt)}
+              </span>
+              <span className="truncate font-mono text-mono-sm text-ink-lo">
+                {bf.windowDays}d · {bf.entities.join(", ") || "—"}
+              </span>
+              <span className="font-mono text-mono-sm text-ink-lo">
+                {formatNumber(bf.estEvents)} events
+              </span>
+              <span
+                className={cx(
+                  "font-mono text-mono-sm uppercase tracking-tactical",
+                  bf.status === "done"
+                    ? "text-event-green"
+                    : bf.status === "failed"
+                      ? "text-event-red"
+                      : "text-ember",
+                )}
+              >
+                {bf.status}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ── Activity ────────────────────────────────────────────── */
+
+function ActivitySection({
+  deliveries,
+  errorPayload,
+}: {
+  deliveries: readonly ConnectionDelivery[];
+  errorPayload?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {errorPayload ? (
+        <FieldRow label="Most recent failure">
+          <CodeBlock code={errorPayload} caption="Last failed payload" />
+        </FieldRow>
+      ) : null}
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+            Recent deliveries
+          </span>
+          <span className="font-mono text-mono-sm text-ink-dim">
+            {deliveries.length}
+          </span>
+        </div>
+        {deliveries.length === 0 ? (
+          <p className="font-sans text-[13px] text-ink-dim">
+            No recent deliveries.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {deliveries.map((d, i) => (
+              <EventRecv
+                key={`${d.ts}-${i}`}
+                ts={d.ts}
+                method={d.method}
+                preview={d.preview}
+                status={d.status}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <a
+        href="#"
+        className="inline-flex items-center gap-1 font-mono text-mono-sm text-ember hover:underline"
+      >
+        Open full activity log
+        <ExternalLink className="size-3" strokeWidth={1.75} />
+      </a>
+    </div>
+  );
+}
+
+/* ── Event-type subscriptions ────────────────────────────── */
+
+function EventsSection({
+  events,
+  onToggleEvent,
+}: {
+  events: readonly ConnectionEventTypeSub[];
+  onToggleEvent?: (id: string, next: boolean) => void;
+}) {
+  if (events.length === 0) {
+    return (
+      <p className="font-sans text-[13px] text-ink-lo">
+        Per-event subscription isn&rsquo;t available for this source.
+        Chronicle ingests every event the upstream sends.
+      </p>
+    );
+  }
+  const grouped = new Map<string, ConnectionEventTypeSub[]>();
+  for (const e of events) {
+    const k = e.object ?? "—";
+    const arr = grouped.get(k) ?? [];
+    arr.push(e);
+    grouped.set(k, arr);
+  }
+  const enabledCount = events.filter((e) => e.enabled).length;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+          {enabledCount} of {events.length} enabled
+        </span>
+      </div>
+      {Array.from(grouped.entries()).map(([object, items]) => (
+        <div key={object} className="flex flex-col gap-2">
+          <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+            {object}
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {items.map((e) => (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => onToggleEvent?.(e.id, !e.enabled)}
+                aria-pressed={e.enabled}
+                data-active={e.enabled || undefined}
+                className={cx(
+                  "rounded-[2px] border px-2 py-1 font-mono text-mono-sm transition-colors duration-fast",
+                  e.enabled
+                    ? "border-ember/35 bg-[rgba(216,67,10,0.06)] text-ink-hi"
+                    : "border-divider bg-[rgba(255,255,255,0.012)] text-ink-dim hover:bg-[rgba(255,255,255,0.025)]",
+                )}
+              >
+                {e.id}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

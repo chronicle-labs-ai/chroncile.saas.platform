@@ -4,6 +4,7 @@ import type {
 } from "@workos-inc/node";
 import { cookies } from "next/headers";
 
+import { isNetworkError, summarizeNetworkError } from "./network-errors";
 import { assertWorkOSEnvironment, workos } from "./workos";
 
 export const SESSION_COOKIE_NAME = "wos-session";
@@ -51,7 +52,9 @@ export type AuthenticateResult =
         | "invalid_jwt"
         | "invalid_session_cookie"
         | "no_session_cookie_provided"
-        | "no_cookie";
+        | "no_cookie"
+        | "auth_provider_unreachable"
+        | "authenticate_failed";
     };
 
 export type RefreshResult =
@@ -97,11 +100,39 @@ export async function loadSession(): Promise<SealedSession | null> {
 }
 
 export async function getSession(): Promise<AuthenticateResult> {
-  const session = await loadSession();
+  let session: SealedSession | null;
+  try {
+    session = await loadSession();
+  } catch (error) {
+    // Bad cookie / missing env vars — both unrecoverable, treat as
+    // "no cookie" so the caller redirects to /login cleanly.
+    console.warn(
+      "[auth] loadSession failed:",
+      error instanceof Error ? error.message : error,
+    );
+    return { authenticated: false, reason: "invalid_session_cookie" };
+  }
+
   if (!session) {
     return { authenticated: false, reason: "no_cookie" };
   }
-  return session.authenticate();
+
+  try {
+    return await session.authenticate();
+  } catch (error) {
+    if (isNetworkError(error)) {
+      console.warn(
+        "[auth] auth provider unreachable while authenticating:",
+        summarizeNetworkError(error),
+      );
+      return { authenticated: false, reason: "auth_provider_unreachable" };
+    }
+    console.warn(
+      "[auth] session.authenticate threw:",
+      error instanceof Error ? error.message : error,
+    );
+    return { authenticated: false, reason: "authenticate_failed" };
+  }
 }
 
 export async function setSealedSession(sealedSession: string): Promise<void> {

@@ -1,7 +1,21 @@
 import { cva } from "class-variance-authority";
 
+/*
+ * Variant classnames for `<Drawer>` — consumed by
+ * `packages/ui/src/primitives/drawer.tsx`, which wires them onto
+ * `radix-ui`'s `Dialog.*` primitives.
+ *
+ * Radix Dialog emits:
+ *   - `data-state="open" | "closed"` on `Overlay` and `Content`
+ *
+ * Slide utilities (`slide-in-from-*`, `slide-out-to-*`) come from the
+ * `tailwindcss-animate` plugin registered in the preset.
+ */
+
 export const drawerOverlayVariants = cva(
-  "fixed inset-0 z-50 flex bg-black/60 data-[entering=true]:animate-in data-[entering=true]:fade-in data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
+  "fixed inset-0 z-50 flex bg-black/60 " +
+    "data-[state=open]:animate-in data-[state=open]:fade-in-0 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
   {
     variants: {
       placement: {
@@ -27,13 +41,21 @@ export const drawerVariants = cva(
       },
       placement: {
         right:
-          "w-full max-w-[520px] border-l data-[entering=true]:animate-in data-[entering=true]:slide-in-from-right data-[exiting=true]:animate-out data-[exiting=true]:slide-out-to-right",
+          "w-full max-w-[520px] border-l " +
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-right " +
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right",
         left:
-          "w-full max-w-[520px] border-r data-[entering=true]:animate-in data-[entering=true]:slide-in-from-left data-[exiting=true]:animate-out data-[exiting=true]:slide-out-to-left",
+          "w-full max-w-[520px] border-r " +
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-left " +
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left",
         bottom:
-          "w-full max-h-[80vh] border-t data-[entering=true]:animate-in data-[entering=true]:slide-in-from-bottom data-[exiting=true]:animate-out data-[exiting=true]:slide-out-to-bottom",
+          "w-full max-h-[80vh] border-t " +
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom " +
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom",
         top:
-          "w-full max-h-[80vh] border-b data-[entering=true]:animate-in data-[entering=true]:slide-in-from-top data-[exiting=true]:animate-out data-[exiting=true]:slide-out-to-top",
+          "w-full max-h-[80vh] border-b " +
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-top " +
+          "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top",
       },
       size: {
         sm: "",
@@ -80,7 +102,9 @@ export const drawerTitleVariants = cva("text-ink-hi", {
 });
 
 export const drawerCloseVariants = cva(
-  "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out data-[hovered=true]:bg-surface-03 data-[hovered=true]:text-ink-hi",
+  "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out " +
+    "hover:bg-surface-03 hover:text-ink-hi " +
+    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
   {
     variants: {
       density: {

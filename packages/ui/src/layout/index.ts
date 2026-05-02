@@ -15,6 +15,9 @@ export { GroupHead } from "./group-head";
 
 export {
   Sidebar,
+  SidebarProvider,
+  SidebarInset,
+  SidebarContent,
   SidebarHeader,
   SidebarStatus,
   SidebarNav,
@@ -23,9 +26,22 @@ export {
   SidebarMeta,
   SidebarFooter,
   SidebarUserCard,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuAction,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+  SidebarInput,
+  useSidebar,
 } from "./sidebar";
 export type {
   SidebarProps,
+  SidebarProviderProps,
   SidebarHeaderProps,
   SidebarStatusProps,
   SidebarNavProps,
@@ -36,6 +52,33 @@ export type {
   SidebarFooterProps,
   SidebarUserCardProps,
 } from "./sidebar";
+
+export {
+  AppSidebar,
+  NavMain,
+  NavProjects,
+  NavSecondary,
+  NavUser,
+  SearchForm,
+  SiteHeader,
+} from "./dashboard-sidebar-shell";
+export type {
+  AppSidebarProps,
+  DashboardShellUser,
+  DashboardShellWorkspace,
+} from "./dashboard-sidebar-shell";
+
+export {
+  LinkProvider,
+  useLinkComponent,
+  useNavigate,
+} from "./link-context";
+export type {
+  LinkComponent,
+  LinkComponentProps,
+  LinkProviderProps,
+  NavigateFn,
+} from "./link-context";
 
 export { WorkspaceSwitcher } from "./workspace-switcher";
 export type {

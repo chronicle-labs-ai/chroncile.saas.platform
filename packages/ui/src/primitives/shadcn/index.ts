@@ -31,6 +31,11 @@ export {
   checkboxMarkVariants,
 } from "./checkbox";
 export {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./collapsible";
+export {
   chipCountVariants,
   chipRemoveVariants,
   chipSeparatorVariants,

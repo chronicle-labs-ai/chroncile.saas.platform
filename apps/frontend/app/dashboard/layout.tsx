@@ -1,46 +1,54 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/server/auth/auth";
+import { AppSidebar, SidebarInset, SidebarProvider, SiteHeader } from "ui";
+import {
+  authWithReason,
+  loginErrorCodeFromAuthReason,
+} from "@/server/auth/auth";
+import { DashboardLinkRouterProvider } from "./link-router-provider";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const { session, reason } = await authWithReason();
 
   if (!session?.user) {
-    redirect("/login?from=/dashboard");
+    const errorCode = loginErrorCodeFromAuthReason(reason);
+    const params = new URLSearchParams({ from: "/dashboard" });
+    if (errorCode) params.set("error", errorCode);
+    redirect(`/login?${params.toString()}`);
   }
 
   if (!session.user.tenantId) {
     redirect("/onboarding/workspace");
   }
 
+  const user = session.user;
+
   return (
-    <div className="min-h-screen bg-neutral-950">
-      <header className="border-b border-neutral-800 bg-neutral-950/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link className="text-sm font-semibold tracking-wide" href="/dashboard">
-            Chronicle
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-neutral-400">
-            <Link className="hover:text-neutral-100" href="/dashboard/connections">
-              Connections
-            </Link>
-            <Link
-              className="hover:text-neutral-100"
-              href="/dashboard/settings/team"
-            >
-              Team
-            </Link>
-            <a className="hover:text-neutral-100" href="/api/auth/sign-out">
-              Sign out
-            </a>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-    </div>
+    <DashboardLinkRouterProvider>
+      <div className="[--header-height:3.5rem]">
+        <SidebarProvider className="flex flex-col">
+          <SiteHeader />
+          <div className="flex flex-1">
+            <AppSidebar
+              user={{
+                name: user.name || user.email || "Chronicle user",
+                email: user.email || "",
+                avatar: user.image,
+              }}
+              workspace={{
+                name: user.tenantName || "Chronicle",
+                plan: user.role || "Workspace",
+              }}
+            />
+            <SidebarInset>
+              <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </div>
+    </DashboardLinkRouterProvider>
   );
 }

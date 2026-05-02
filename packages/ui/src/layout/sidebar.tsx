@@ -1,332 +1,518 @@
 "use client";
 
-/*
- * Sidebar — the chronicle product shell's left rail. A compound primitive:
- *
- *   <Sidebar>
- *     <SidebarHeader>
- *       <WorkspaceSwitcher … />   (optional)
- *     </SidebarHeader>
- *
- *     <SidebarStatus tone="nominal" label="System Nominal" trailing="00:42:01" />
- *
- *     <SidebarNav aria-label="Main">
- *       <SidebarNavSection title="Workspace">
- *         <SidebarNavItem href="/dashboard" icon={…} isActive>Overview</SidebarNavItem>
- *         <SidebarNavItem href="/events" icon={…} status="LIVE">Events</SidebarNavItem>
- *       </SidebarNavSection>
- *     </SidebarNav>
- *
- *     <SidebarMeta
- *       rows={[
- *         { label: "Version",     value: "1.0.0" },
- *         { label: "Environment", value: "PROD", tone: "nominal" },
- *       ]}
- *     />
- *
- *     <SidebarFooter>
- *       <SidebarUserCard name="…" email="…" onSignOut={…} />
- *     </SidebarFooter>
- *   </Sidebar>
- *
- * The shell is responsive (`hidden lg:flex`) and fixed-positioned by
- * default — same geometry as the existing frontend/env-manager sidebars —
- * but the `variant` prop lets it render as a static flex column when
- * consumers host it inside their own layout grid.
- */
-
 import * as React from "react";
 
-import { tv, type VariantProps } from "../utils/tv";
-import { Avatar } from "../primitives/avatar";
+import { cn } from "../utils/cn";
 
-// ─────────────────────────────────────────────────────────────
-// Sidebar shell
-// ─────────────────────────────────────────────────────────────
+const SIDEBAR_WIDTH = "16rem";
+const SIDEBAR_WIDTH_ICON = "3rem";
 
-const sidebarStyles = tv({
-  slots: {
-    root: "flex-col [&>*]:border-hairline",
-    inner: "flex h-full flex-col",
-  },
-  variants: {
-    density: {
-      compact: { root: "bg-l-surface-bar-2 border-r border-l-border" },
-      brand: { root: "bg-surface-01 border-r border-hairline" },
-      product: { root: "bg-surface-01 border-r border-hairline" },
-    },
-    variant: {
-      /** Fixed-width panel pinned to the viewport edge (dashboard shells). */
-      fixed: "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col",
-      /** Static flex column (hosts render it inside their own grid). */
-      static: "flex flex-col",
-    },
-    width: {
-      sm: "lg:w-[200px] w-[200px]",
-      md: "lg:w-[224px] w-[224px]",
-      product: "lg:w-[256px] w-[256px]",
-      lg: "lg:w-[280px] w-[280px]",
-    },
-  },
-  defaultVariants: { density: "compact", variant: "fixed", width: "md" },
-});
+type SidebarContextValue = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  openMobile: boolean;
+  setOpenMobile: (open: boolean) => void;
+  isMobile: boolean;
+  toggleSidebar: () => void;
+};
 
-type SidebarVariantProps = VariantProps<typeof sidebarStyles>;
-export type SidebarDensity = "compact" | "brand" | "product";
+const SidebarContext = React.createContext<SidebarContextValue | null>(null);
 
-export interface SidebarProps
-  extends React.HTMLAttributes<HTMLElement>, SidebarVariantProps {
-  variant?: "fixed" | "static";
-  width?: "sm" | "md" | "product" | "lg";
-  density?: SidebarDensity;
+export function useSidebar() {
+  const context = React.useContext(SidebarContext);
+  if (!context) {
+    throw new Error("useSidebar must be used within a SidebarProvider.");
+  }
+  return context;
 }
 
-const SidebarDensityContext = React.createContext<SidebarDensity>("compact");
+export interface SidebarProviderProps
+  extends React.ComponentPropsWithoutRef<"div"> {
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function SidebarProvider({
+  defaultOpen = true,
+  open: openProp,
+  onOpenChange,
+  className,
+  style,
+  children,
+  ...props
+}: SidebarProviderProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
+  const [openMobile, setOpenMobile] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const open = openProp ?? uncontrolledOpen;
+
+  React.useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const setOpen = React.useCallback(
+    (value: boolean) => {
+      onOpenChange?.(value);
+      if (openProp === undefined) setUncontrolledOpen(value);
+    },
+    [onOpenChange, openProp],
+  );
+
+  const toggleSidebar = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile((value) => !value);
+    } else {
+      setOpen(!open);
+    }
+  }, [isMobile, open, setOpen]);
+
+  const value = React.useMemo(
+    () => ({
+      open,
+      setOpen,
+      openMobile,
+      setOpenMobile,
+      isMobile,
+      toggleSidebar,
+    }),
+    [isMobile, open, openMobile, setOpen, toggleSidebar],
+  );
+
+  return (
+    <SidebarContext.Provider value={value}>
+      <div
+        data-slot="sidebar-wrapper"
+        style={
+          {
+            "--sidebar-width": SIDEBAR_WIDTH,
+            "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+            ...style,
+          } as React.CSSProperties
+        }
+        className={cn(
+          "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar text-foreground",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    </SidebarContext.Provider>
+  );
+}
+
+export interface SidebarProps extends React.ComponentPropsWithoutRef<"aside"> {
+  side?: "left" | "right";
+  variant?: "sidebar" | "floating" | "inset" | "fixed" | "static";
+  collapsible?: "offcanvas" | "icon" | "none";
+  width?: "sm" | "md" | "product" | "lg";
+  density?: "compact" | "brand" | "product";
+}
 
 function SidebarRoot({
-  variant = "fixed",
-  density = "compact",
-  width,
+  side = "left",
+  variant = "sidebar",
+  collapsible = "offcanvas",
   className,
   children,
   ...props
 }: SidebarProps) {
-  const resolvedWidth = width ?? (density === "product" ? "product" : "md");
-  const slots = React.useMemo(
-    () => sidebarStyles({ density, variant, width: resolvedWidth }),
-    [density, variant, resolvedWidth]
-  );
-  return (
-    <SidebarDensityContext.Provider value={density}>
+  const context = React.useContext(SidebarContext);
+  const open = context?.isMobile ? context.openMobile : (context?.open ?? true);
+  const staticVariant = variant === "static";
+
+  if (staticVariant || collapsible === "none") {
+    return (
       <aside
         data-slot="sidebar"
-        data-density={density}
-        className={slots.root({ className })}
+        data-state={open ? "expanded" : "collapsed"}
+        data-side={side}
+        data-variant={variant}
+        data-collapsible={open ? "" : collapsible}
+        className={cn(
+          "group/sidebar peer flex h-full w-[var(--sidebar-width)] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+          side === "right" && "border-l border-r-0",
+          className,
+        )}
         {...props}
       >
-        <div className={slots.inner()}>{children}</div>
+        {children}
       </aside>
-    </SidebarDensityContext.Provider>
+    );
+  }
+
+  return (
+    <div
+      data-slot="sidebar"
+      data-state={open ? "expanded" : "collapsed"}
+      data-side={side}
+      data-variant={variant}
+      data-collapsible={open ? "" : collapsible}
+      className={cn(
+        "group/sidebar peer hidden text-sidebar-foreground md:block",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "relative w-[var(--sidebar-width)] bg-transparent transition-[width] duration-200 ease-linear",
+          "group-data-[collapsible=offcanvas]/sidebar:w-0",
+          "group-data-[side=right]/sidebar:rotate-180",
+          variant === "floating" || variant === "inset"
+            ? "group-data-[collapsible=icon]/sidebar:w-[calc(var(--sidebar-width-icon)+1rem)]"
+            : "group-data-[collapsible=icon]/sidebar:w-[var(--sidebar-width-icon)]",
+        )}
+      />
+      <aside
+        className={cn(
+          "fixed inset-y-0 z-10 hidden h-svh w-[var(--sidebar-width)] transition-[left,right,width] duration-200 ease-linear md:flex",
+          side === "left"
+            ? "left-0 group-data-[collapsible=offcanvas]/sidebar:left-[calc(var(--sidebar-width)*-1)]"
+            : "right-0 group-data-[collapsible=offcanvas]/sidebar:right-[calc(var(--sidebar-width)*-1)]",
+          variant === "floating" || variant === "inset"
+            ? "p-2 group-data-[collapsible=icon]/sidebar:w-[calc(var(--sidebar-width-icon)+1rem+2px)]"
+            : "group-data-[collapsible=icon]/sidebar:w-[var(--sidebar-width-icon)] group-data-[side=left]/sidebar:border-r group-data-[side=right]/sidebar:border-l",
+          className,
+        )}
+        {...props}
+      >
+        <div
+          data-sidebar="sidebar"
+          className={cn(
+            "flex h-full w-full flex-col bg-sidebar text-sidebar-foreground",
+            "group-data-[variant=floating]/sidebar:rounded-lg group-data-[variant=floating]/sidebar:border group-data-[variant=floating]/sidebar:border-sidebar-border group-data-[variant=floating]/sidebar:shadow",
+          )}
+        >
+          {children}
+        </div>
+      </aside>
+    </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Sidebar header — brand / workspace switcher slot
-// ─────────────────────────────────────────────────────────────
-
-const headerStyles = tv({
-  base: "flex items-center",
-  variants: {
-    density: {
-      compact: "px-s-2 py-[6px] border-0",
-      brand: "px-s-4 border-b border-hairline bg-surface-02",
-      product: "h-[58px] px-s-4 border-b border-hairline bg-surface-01",
-    },
-    height: {
-      sm: "h-[44px]",
-      md: "h-[52px]",
-      lg: "h-[64px]",
-    },
-  },
-  defaultVariants: { density: "compact", height: "md" },
-});
-
-export interface SidebarHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  height?: "sm" | "md" | "lg";
+export function SidebarInset({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"main">) {
+  return (
+    <main
+      data-slot="sidebar-inset"
+      className={cn(
+        "relative flex min-w-0 flex-1 flex-col bg-background",
+        "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] peer-data-[variant=inset]:rounded-xl peer-data-[variant=inset]:shadow",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function SidebarHeader({
-  height,
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      data-slot="sidebar-header"
+      className={cn("flex flex-col gap-2 p-2", className)}
+      {...props}
+    />
+  );
+}
+
+export function SidebarContent({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      data-slot="sidebar-content"
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]/sidebar:overflow-hidden",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function SidebarFooter({
+  className,
+  padded,
+  ...props
+}: React.ComponentPropsWithoutRef<"div"> & { padded?: boolean }) {
+  return (
+    <div
+      data-slot="sidebar-footer"
+      className={cn(
+        "flex flex-col gap-2 p-2",
+        padded && "border-t border-sidebar-border",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function SidebarGroup({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      data-slot="sidebar-group"
+      className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
+      {...props}
+    />
+  );
+}
+
+export function SidebarGroupLabel({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      data-slot="sidebar-group-label"
+      className={cn(
+        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2",
+        "group-data-[collapsible=icon]/sidebar:-mt-8 group-data-[collapsible=icon]/sidebar:opacity-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function SidebarGroupContent({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      data-slot="sidebar-group-content"
+      className={cn("w-full text-sm", className)}
+      {...props}
+    />
+  );
+}
+
+export function SidebarMenu({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"ul">) {
+  return (
+    <ul
+      data-slot="sidebar-menu"
+      className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+      {...props}
+    />
+  );
+}
+
+export function SidebarMenuItem({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"li">) {
+  return (
+    <li
+      data-slot="sidebar-menu-item"
+      className={cn("group/menu-item relative", className)}
+      {...props}
+    />
+  );
+}
+
+export interface SidebarMenuButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean;
+  isActive?: boolean;
+  tooltip?: string | React.ReactNode;
+  size?: "default" | "sm" | "lg";
+}
+
+export function SidebarMenuButton({
+  asChild = false,
+  isActive = false,
+  tooltip: _tooltip,
+  size = "default",
   className,
   children,
   ...props
-}: SidebarHeaderProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const cls = React.useMemo(
-    () => headerStyles({ density, height, className }),
-    [density, height, className]
+}: SidebarMenuButtonProps) {
+  const classes = cn(
+    "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm outline-none ring-sidebar-ring",
+    "transition-[width,height,padding,color,background-color] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+    "disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+    "group-has-[[data-sidebar=menu-action]]/menu-item:pr-8",
+    "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
+    "group-data-[collapsible=icon]/sidebar:!size-8 group-data-[collapsible=icon]/sidebar:!p-2",
+    "[&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+    size === "sm" && "h-7 text-xs",
+    size === "default" && "h-8",
+    size === "lg" && "h-12 text-sm group-data-[collapsible=icon]/sidebar:!p-0",
+    className,
   );
+
+  const shared = {
+    className: classes,
+    "data-active": isActive || undefined,
+    "data-sidebar": "menu-button",
+    "data-size": size,
+  };
+
+  if (asChild && React.isValidElement(children)) {
+    return mergeChild(children, { ...props, ...shared });
+  }
+
   return (
-    <div data-slot="sidebar-header" className={cls} {...props}>
+    <button type="button" {...props} {...shared}>
       {children}
-    </div>
+    </button>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Sidebar status strip — colored banner with tone + label + trailing
-// ─────────────────────────────────────────────────────────────
-
-const statusStyles = tv({
-  slots: {
-    root: "flex items-center justify-between gap-s-2 border-b border-hairline px-s-4 py-s-3",
-    label:
-      "inline-flex items-center gap-s-2 font-mono text-mono-sm uppercase tracking-tactical",
-    dot: "h-[6px] w-[6px] shrink-0 rounded-full animate-chron-pulse",
-    trailing: "font-mono text-mono-sm tabular-nums text-ink-dim text-right",
-  },
-  variants: {
-    density: {
-      compact: {},
-      brand: {},
-      product: {
-        root: "px-s-4 py-[10px]",
-        label: "text-[10px] tracking-[0.06em] text-ink-dim",
-        trailing: "text-[10px] tracking-[0.06em] text-ink-lo",
-      },
-    },
-    tone: {
-      nominal: {
-        root: "bg-[rgba(74,222,128,0.05)]",
-        label: "text-event-green",
-        dot: "bg-event-green",
-      },
-      data: {
-        root: "bg-[rgba(45,212,191,0.05)]",
-        label: "text-event-teal",
-        dot: "bg-event-teal",
-      },
-      caution: {
-        root: "bg-[rgba(251,191,36,0.05)]",
-        label: "text-event-amber",
-        dot: "bg-event-amber",
-      },
-      critical: {
-        root: "bg-[rgba(239,68,68,0.05)]",
-        label: "text-event-red",
-        dot: "bg-event-red",
-      },
-      ember: {
-        root: "bg-[var(--l-accent-muted)]",
-        label: "text-[color:var(--l-accent)]",
-        dot: "bg-[var(--l-accent)]",
-      },
-      neutral: {
-        root: "bg-surface-02",
-        label: "text-ink-lo",
-        dot: "bg-ink-dim",
-      },
-    },
-  },
-  compoundVariants: [
-    {
-      density: "product",
-      class: {
-        root: "bg-transparent",
-        label: "text-ink-dim",
-      },
-    },
-  ],
-  defaultVariants: { density: "compact", tone: "nominal" },
-});
-
-type SidebarStatusVariantProps = VariantProps<typeof statusStyles>;
-
-export interface SidebarStatusProps
-  extends
-    Omit<React.HTMLAttributes<HTMLDivElement>, "children">,
-    SidebarStatusVariantProps {
-  label: React.ReactNode;
-  trailing?: React.ReactNode;
-  /** Show pulsing dot. Defaults to true. */
-  pulse?: boolean;
-  tone?: "nominal" | "data" | "caution" | "critical" | "ember" | "neutral";
+export interface SidebarMenuActionProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean;
+  showOnHover?: boolean;
 }
 
-export function SidebarStatus({
-  label,
-  trailing,
-  pulse = true,
-  tone,
+export function SidebarMenuAction({
+  asChild = false,
+  showOnHover = false,
+  className,
+  children,
+  ...props
+}: SidebarMenuActionProps) {
+  const classes = cn(
+    "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground",
+    "after:absolute after:-inset-2 after:md:hidden group-data-[collapsible=icon]/sidebar:hidden [&>svg]:size-4 [&>svg]:shrink-0",
+    showOnHover &&
+      "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
+    className,
+  );
+
+  const shared = {
+    className: classes,
+    "data-sidebar": "menu-action",
+  };
+
+  if (asChild && React.isValidElement(children)) {
+    return mergeChild(children, { ...props, ...shared });
+  }
+
+  return (
+    <button type="button" {...props} {...shared}>
+      {children}
+    </button>
+  );
+}
+
+export function SidebarMenuSub({
   className,
   ...props
-}: SidebarStatusProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const slots = React.useMemo(
-    () => statusStyles({ density, tone }),
-    [density, tone]
-  );
+}: React.ComponentPropsWithoutRef<"ul">) {
   return (
-    <div
-      data-slot="sidebar-status"
-      className={slots.root({ className })}
+    <ul
+      data-slot="sidebar-menu-sub"
+      className={cn(
+        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
+        "group-data-[collapsible=icon]/sidebar:hidden",
+        className,
+      )}
       {...props}
-    >
-      <span className={slots.label()}>
-        <span
-          className={slots.dot()}
-          style={!pulse ? { animation: "none" } : undefined}
-        />
-        {label}
-      </span>
-      {trailing ? <span className={slots.trailing()}>{trailing}</span> : null}
-    </div>
+    />
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Sidebar nav — ARIA-labelled scrolling region with sections/items
-// ─────────────────────────────────────────────────────────────
+export function SidebarMenuSubItem({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"li">) {
+  return <li data-slot="sidebar-menu-sub-item" className={className} {...props} />;
+}
 
-const navStyles = tv({
-  slots: {
-    root: "flex-1 overflow-y-auto",
-    sectionHeader: "font-mono uppercase tracking-eyebrow",
-    sectionBody: "flex flex-col gap-[2px]",
-  },
-  variants: {
-    density: {
-      compact: {
-        root: "px-s-2 py-s-2",
-        sectionHeader: "px-s-3 pt-s-3 pb-[4px] text-[10.5px] text-l-ink-dim",
-        sectionBody: "px-0",
-      },
-      brand: {
-        root: "py-s-4",
-        sectionHeader:
-          "px-s-4 mb-s-2 text-mono-sm tracking-tactical text-ink-dim",
-        sectionBody: "px-s-2",
-      },
-      product: {
-        root: "px-s-2 py-s-2",
-        sectionHeader:
-          "px-[10px] pt-s-3 pb-[6px] text-[9px] tracking-[0.12em] text-ink-dim",
-        sectionBody: "px-0",
-      },
-    },
-  },
-  defaultVariants: { density: "compact" },
-});
+export interface SidebarMenuSubButtonProps
+  extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  asChild?: boolean;
+  isActive?: boolean;
+  size?: "sm" | "md";
+}
 
-export interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  "aria-label"?: string;
+export function SidebarMenuSubButton({
+  asChild = false,
+  isActive = false,
+  size = "md",
+  className,
+  children,
+  ...props
+}: SidebarMenuSubButtonProps) {
+  const classes = cn(
+    "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground/80 outline-none ring-sidebar-ring",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+    "aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+    "group-data-[collapsible=icon]/sidebar:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+    size === "sm" && "text-xs",
+    size === "md" && "text-sm",
+    className,
+  );
+
+  if (asChild && React.isValidElement(children)) {
+    return mergeChild(children, {
+      ...props,
+      className: classes,
+      "data-active": isActive || undefined,
+    });
+  }
+
+  return (
+    <a className={classes} data-active={isActive || undefined} {...props}>
+      {children}
+    </a>
+  );
+}
+
+export function SidebarInput({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"input">) {
+  return (
+    <input
+      data-slot="sidebar-input"
+      className={cn(
+        "flex h-8 w-full rounded-md border border-sidebar-border bg-background px-2 text-sm outline-none shadow-none",
+        "placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export interface SidebarNavItemProps {
+  href?: string;
+  isActive?: boolean;
+  isDisabled?: boolean;
+  icon?: React.ReactNode;
+  status?: React.ReactNode;
+  statusTone?: "nominal" | "ember" | "data" | "caution" | "critical";
+  onPress?: () => void;
+  className?: string;
+  children: React.ReactNode;
 }
 
 export function SidebarNav({
-  "aria-label": ariaLabel = "Sidebar",
   className,
-  children,
   ...props
-}: SidebarNavProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const slots = React.useMemo(() => navStyles({ density }), [density]);
-  return (
-    <nav
-      data-slot="sidebar-nav"
-      aria-label={ariaLabel}
-      className={slots.root({ className })}
-      {...props}
-    >
-      {children}
-    </nav>
-  );
-}
-
-export interface SidebarNavSectionProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "title"
-> {
-  title?: React.ReactNode;
+}: React.ComponentPropsWithoutRef<"nav">) {
+  return <nav data-slot="sidebar-nav" className={cn("flex-1", className)} {...props} />;
 }
 
 export function SidebarNavSection({
@@ -334,464 +520,175 @@ export function SidebarNavSection({
   className,
   children,
   ...props
-}: SidebarNavSectionProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const slots = React.useMemo(() => navStyles({ density }), [density]);
+}: React.ComponentPropsWithoutRef<"div"> & { title?: React.ReactNode }) {
   return (
-    <div data-slot="sidebar-nav-section" className={className} {...props}>
-      {title ? <div className={slots.sectionHeader()}>{title}</div> : null}
-      <div className={slots.sectionBody()}>{children}</div>
-    </div>
+    <SidebarGroup className={className} {...props}>
+      {title ? <SidebarGroupLabel>{title}</SidebarGroupLabel> : null}
+      <SidebarGroupContent>
+        <SidebarMenu>{children}</SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Sidebar nav item — anchor for navigation, or plain button
-// ─────────────────────────────────────────────────────────────
-
-const navItemStyles = tv({
-  slots: {
-    root:
-      "relative flex items-center outline-none " +
-      "transition-colors duration-fast ease-out " +
-      "data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 " +
-      "data-[focus-visible=true]:outline-ember " +
-      "data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
-    icon: "shrink-0",
-    label: "flex-1 truncate text-left",
-    status:
-      "ml-auto flex items-center gap-s-1 rounded-xs " +
-      "font-mono uppercase tracking-tactical",
-  },
-  variants: {
-    density: {
-      compact: {
-        root:
-          "h-[26px] gap-s-2 px-s-3 rounded-l font-sans text-[13px] " +
-          "data-[hovered=true]:bg-l-wash-3 data-[hovered=true]:text-l-ink",
-        icon: "text-l-ink-dim",
-        status: "px-[5px] py-[1px] text-mono-xs",
-      },
-      brand: {
-        root:
-          "gap-s-3 px-s-3 py-s-2 font-sans text-sm border-l-2 border-transparent " +
-          "data-[hovered=true]:bg-surface-02 data-[hovered=true]:text-ink-hi",
-        icon: "text-ink-dim",
-        status: "px-s-2 py-[2px] text-mono-xs",
-      },
-      product: {
-        root:
-          "h-[28px] gap-[10px] rounded-sm px-[10px] font-sans text-[13px] leading-none " +
-          "data-[hovered=true]:bg-surface-02 data-[hovered=true]:text-ink-hi",
-        icon: "text-ink-dim",
-        status: "px-[5px] py-[1px] text-[10px]",
-      },
-    },
-    isActive: {
-      true: {},
-      false: {},
-    },
-  },
-  compoundVariants: [
-    {
-      density: "compact",
-      isActive: true,
-      class: {
-        // Linear-style active row: ember left bar via `::before`,
-        // tinted bg, ink hi.
-        root:
-          "bg-l-surface-selected text-l-ink " +
-          "before:content-[''] before:absolute before:left-0 before:top-1/2 " +
-          "before:-translate-y-1/2 before:h-[14px] before:w-[2px] before:bg-[var(--l-accent)] before:rounded-r-sm",
-        icon: "text-l-ink",
-      },
-    },
-    {
-      density: "compact",
-      isActive: false,
-      class: { root: "text-l-ink-lo" },
-    },
-    {
-      density: "brand",
-      isActive: true,
-      class: {
-        root: "border-l-ember bg-row-active text-ink-hi",
-        icon: "text-[color:var(--l-accent)]",
-      },
-    },
-    {
-      density: "brand",
-      isActive: false,
-      class: { root: "text-ink-lo" },
-    },
-    {
-      density: "product",
-      isActive: true,
-      class: {
-        root: "bg-l-surface-selected text-l-ink",
-        icon: "text-[color:var(--l-accent)]",
-      },
-    },
-    {
-      density: "product",
-      isActive: false,
-      class: { root: "text-ink-lo" },
-    },
-  ],
-  defaultVariants: { density: "compact", isActive: false },
-});
-
-export interface SidebarNavItemProps {
-  /** If omitted, renders as a plain button. */
-  href?: string;
-  isActive?: boolean;
-  isDisabled?: boolean;
-  icon?: React.ReactNode;
-  /** Small right-aligned status pill (e.g. "LIVE", "BETA"). */
-  status?: React.ReactNode;
-  /** Status pill color tone. */
-  statusTone?: "nominal" | "ember" | "data" | "caution" | "critical";
-  /** Click/press handler (mainly for non-href items). */
-  onPress?: () => void;
-  /** Consumer className. */
-  className?: string;
-  children: React.ReactNode;
-}
-
-const statusToneClass: Record<
-  NonNullable<SidebarNavItemProps["statusTone"]>,
-  string
-> = {
-  nominal: "bg-[rgba(74,222,128,0.1)] text-event-green",
-  ember: "bg-[var(--l-accent-muted)] text-[color:var(--l-accent)]",
-  data: "bg-[rgba(45,212,191,0.1)] text-event-teal",
-  caution: "bg-[rgba(251,191,36,0.1)] text-event-amber",
-  critical: "bg-[rgba(239,68,68,0.1)] text-event-red",
-};
-
 export function SidebarNavItem({
   href,
-  isActive = false,
-  isDisabled = false,
+  isActive,
+  isDisabled,
   icon,
   status,
-  statusTone = "nominal",
   onPress,
   className,
   children,
 }: SidebarNavItemProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const slots = React.useMemo(
-    () => navItemStyles({ density, isActive }),
-    [density, isActive]
-  );
   const content = (
     <>
-      {icon ? <span className={slots.icon()}>{icon}</span> : null}
-      <span className={slots.label()}>{children}</span>
+      {icon}
+      <span className="truncate">{children}</span>
       {status ? (
-        <span className={`${slots.status()} ${statusToneClass[statusTone]}`}>
+        <span className="ml-auto rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
           {status}
         </span>
       ) : null}
     </>
   );
 
-  if (href) {
-    return (
-      <a
-        data-slot="sidebar-nav-item"
-        href={href}
-        aria-disabled={isDisabled || undefined}
-        data-disabled={isDisabled || undefined}
-        className={`${slots.root()}${className ? ` ${className}` : ""}`}
-        aria-current={isActive ? "page" : undefined}
-      >
-        {content}
-      </a>
-    );
-  }
-
   return (
-    <button
-      data-slot="sidebar-nav-item"
-      type="button"
-      disabled={isDisabled}
-      onClick={onPress}
-      className={`${slots.root()}${className ? ` ${className}` : ""}`}
-      data-disabled={isDisabled || undefined}
-      aria-current={isActive ? "page" : undefined}
-    >
-      {content}
-    </button>
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild={Boolean(href)}
+        isActive={isActive}
+        disabled={isDisabled}
+        onClick={onPress}
+        className={className}
+      >
+        {href ? (
+          <a href={href} aria-current={isActive ? "page" : undefined}>
+            {content}
+          </a>
+        ) : (
+          content
+        )}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Sidebar meta — system-info key/value grid
-// ─────────────────────────────────────────────────────────────
-
-const metaStyles = tv({
-  slots: {
-    root: "border-t border-hairline bg-surface-02 px-s-4 py-s-3",
-    title:
-      "mb-s-2 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim",
-    rows: "flex flex-col gap-[6px]",
-    row: "flex items-center justify-between",
-    label: "font-sans text-xs text-ink-dim",
-    value: "font-mono text-mono-sm tabular-nums",
-  },
-  variants: {
-    density: {
-      compact: {},
-      brand: {},
-      product: {
-        root: "bg-surface-01 px-s-4 py-s-3",
-        title: "mb-[6px] text-[9px] tracking-[0.12em]",
-        rows: "gap-[4px]",
-        label: "font-mono text-[10px] uppercase tracking-[0.08em] text-ink-dim",
-        value: "text-[10px] tracking-[0.04em] text-ink-lo",
-      },
-    },
-    valueTone: {
-      default: { value: "text-ink-lo" },
-      nominal: { value: "text-event-green" },
-      caution: { value: "text-event-amber" },
-      critical: { value: "text-event-red" },
-      ember: { value: "text-[color:var(--l-accent)]" },
-      data: { value: "text-event-teal" },
-    },
-  },
-});
-
-export interface SidebarMetaRow {
+export function SidebarStatus({
+  label,
+  trailing,
+  tone,
+  pulse: _pulse,
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div"> & {
   label: React.ReactNode;
-  value: React.ReactNode;
-  tone?: "default" | "nominal" | "caution" | "critical" | "ember" | "data";
-}
+  trailing?: React.ReactNode;
+  tone?: "nominal" | "data" | "caution" | "critical" | "ember" | "neutral";
+  pulse?: boolean;
+}) {
+  const toneClass = {
+    nominal: "text-event-green",
+    data: "text-event-teal",
+    caution: "text-event-amber",
+    critical: "text-event-red",
+    ember: "text-primary",
+    neutral: "text-muted-foreground",
+  }[tone ?? "neutral"];
 
-export interface SidebarMetaProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "title"
-> {
-  title?: React.ReactNode;
-  rows: SidebarMetaRow[];
+  return (
+    <div
+      data-slot="sidebar-status"
+      className={cn(
+        "flex items-center justify-between border-y border-border px-4 py-2 text-xs text-muted-foreground",
+        className,
+      )}
+      {...props}
+    >
+      <span className={toneClass}>{label}</span>
+      {trailing ? <span>{trailing}</span> : null}
+    </div>
+  );
 }
 
 export function SidebarMeta({
-  title = "System info",
   rows,
+  title,
   className,
   ...props
-}: SidebarMetaProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const slots = React.useMemo(() => metaStyles({ density }), [density]);
+}: React.ComponentPropsWithoutRef<"div"> & {
+  rows: { label: React.ReactNode; value: React.ReactNode; tone?: string }[];
+  title?: React.ReactNode;
+}) {
   return (
     <div
       data-slot="sidebar-meta"
-      className={slots.root({ className })}
+      className={cn("border-t border-border p-4 text-xs text-muted-foreground", className)}
       {...props}
     >
-      {title ? <div className={slots.title()}>{title}</div> : null}
-      <div className={slots.rows()}>
-        {rows.map((row, i) => {
-          const toneSlots = metaStyles({
-            density,
-            valueTone: row.tone ?? "default",
-          });
-          return (
-            <div key={i} className={slots.row()}>
-              <span className={slots.label()}>{row.label}</span>
-              <span className={toneSlots.value()}>{row.value}</span>
-            </div>
-          );
-        })}
+      {title ? <div className="mb-2 font-medium">{title}</div> : null}
+      <div className="space-y-1">
+        {rows.map((row, index) => (
+          <div key={index} className="flex justify-between gap-3">
+            <span>{row.label}</span>
+            <span className="text-foreground">{row.value}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Sidebar footer — slot for user card / legal line
-// ─────────────────────────────────────────────────────────────
-
-const footerStyles = tv({
-  base: "border-t border-hairline",
-  variants: {
-    padded: { true: "px-s-4 py-s-3 bg-surface-02" },
-    density: {
-      compact: "",
-      brand: "",
-      product: "bg-surface-01",
-    },
-  },
-  defaultVariants: { padded: false },
-});
-
-type SidebarFooterVariantProps = VariantProps<typeof footerStyles>;
-
-export interface SidebarFooterProps
-  extends React.HTMLAttributes<HTMLDivElement>, SidebarFooterVariantProps {
-  padded?: boolean;
-}
-
-export function SidebarFooter({
-  padded,
-  className,
-  children,
-  ...props
-}: SidebarFooterProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const cls = React.useMemo(
-    () => footerStyles({ density, padded, className }),
-    [density, padded, className]
-  );
-  return (
-    <div data-slot="sidebar-footer" className={cls} {...props}>
-      {children}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Sidebar user card — avatar + name + email + sign-out
-// ─────────────────────────────────────────────────────────────
-
-const userCardStyles = tv({
-  slots: {
-    root: "flex items-center justify-between gap-s-2 bg-surface-02 px-s-4 py-s-3",
-    identity: "flex min-w-0 items-center gap-s-2",
-    text: "min-w-0 flex-1",
-    name: "truncate text-xs text-ink-hi",
-    email: "truncate font-mono text-mono-sm text-ink-dim",
-    action:
-      "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xs " +
-      "text-ink-dim outline-none transition-colors duration-fast ease-out " +
-      "hover:bg-surface-03 hover:text-event-red " +
-      "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
-  },
-  variants: {
-    density: {
-      compact: {},
-      brand: {},
-      product: {
-        root: "bg-surface-01 px-[14px] py-s-3",
-        identity: "gap-[10px]",
-        name: "text-[12.5px] font-medium",
-        email: "text-[10px]",
-        action: "h-[26px] w-[26px] rounded-sm",
-      },
-    },
-  },
-  defaultVariants: { density: "brand" },
-});
-
-export interface SidebarUserCardProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "children"
-> {
-  name?: string | null;
-  email?: string | null;
-  avatarUrl?: string | null;
-  /** Explicit initials override. */
-  initials?: string;
-  /** Called when the user presses the sign-out action. */
-  onSignOut?: () => void;
-  /** Custom trailing action (overrides the default sign-out button). */
-  trailing?: React.ReactNode;
 }
 
 export function SidebarUserCard({
   name,
   email,
-  avatarUrl,
   initials,
-  onSignOut,
   trailing,
+  onSignOut,
   className,
   ...props
-}: SidebarUserCardProps) {
-  const density = React.useContext(SidebarDensityContext);
-  const slots = React.useMemo(() => userCardStyles({ density }), [density]);
-  const productInitials = initials ?? deriveSidebarInitials(name ?? undefined);
+}: React.ComponentPropsWithoutRef<"div"> & {
+  name?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
+  initials?: string;
+  onSignOut?: () => void;
+  trailing?: React.ReactNode;
+}) {
   return (
     <div
       data-slot="sidebar-user-card"
-      className={slots.root({ className })}
+      className={cn("flex items-center justify-between gap-2 p-2 text-sm", className)}
       {...props}
     >
-      <div className={slots.identity()}>
-        {density === "product" && !avatarUrl ? (
-          <span
-            className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--l-accent),var(--c-bronze))] font-mono text-[9px] tracking-[0.08em] text-white"
-            aria-hidden={Boolean(name)}
-          >
-            {productInitials}
-          </span>
-        ) : (
-          <Avatar
-            size="sm"
-            src={avatarUrl}
-            name={name ?? undefined}
-            initials={initials}
-            alt={name ? `${name} avatar` : ""}
-          />
-        )}
-        <div className={slots.text()}>
-          {name ? <p className={slots.name()}>{name}</p> : null}
-          {email ? <p className={slots.email()}>{email}</p> : null}
-        </div>
+      <div className="min-w-0">
+        <p className="truncate font-medium">{name ?? initials ?? "User"}</p>
+        {email ? <p className="truncate text-xs text-muted-foreground">{email}</p> : null}
       </div>
-
       {trailing ??
         (onSignOut ? (
           <button
             type="button"
             onClick={onSignOut}
-            aria-label="Sign out"
-            title="Sign out"
-            className={slots.action()}
+            className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              className="h-4 w-4"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
-              />
-            </svg>
+            Sign out
           </button>
         ) : null)}
     </div>
   );
 }
 
-function deriveSidebarInitials(name: string | undefined): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return (parts[0]?.[0] ?? "?").toUpperCase();
-  return (
-    (parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")
-  ).toUpperCase();
+function mergeChild(
+  child: React.ReactElement,
+  props: Record<string, unknown> & { className?: string },
+) {
+  const childProps = child.props as { className?: string };
+  return React.cloneElement(child, {
+    ...props,
+    className: cn(childProps.className, props.className),
+  } as React.HTMLAttributes<HTMLElement>);
 }
-
-// ─────────────────────────────────────────────────────────────
-// Namespaced exports
-// ─────────────────────────────────────────────────────────────
-// Both forms are supported for ergonomics:
-//   import { Sidebar, SidebarHeader } from 'ui';
-//   <Sidebar><SidebarHeader /></Sidebar>
-//
-//   import { Sidebar } from 'ui';
-//   <Sidebar><Sidebar.Header /></Sidebar>
-//
-// The dot-namespaced form mirrors the HeroUI v3 Dropdown pattern.
 
 interface SidebarNamespace {
   (props: SidebarProps): React.ReactElement;
@@ -816,3 +713,12 @@ Sidebar.Footer = SidebarFooter;
 Sidebar.UserCard = SidebarUserCard;
 
 export { Sidebar };
+export type SidebarDensity = "compact" | "brand" | "product";
+export type SidebarHeaderProps = React.ComponentPropsWithoutRef<typeof SidebarHeader>;
+export type SidebarStatusProps = React.ComponentPropsWithoutRef<typeof SidebarStatus>;
+export type SidebarNavProps = React.ComponentPropsWithoutRef<typeof SidebarNav>;
+export type SidebarNavSectionProps = React.ComponentPropsWithoutRef<typeof SidebarNavSection>;
+export type SidebarMetaProps = React.ComponentPropsWithoutRef<typeof SidebarMeta>;
+export type SidebarFooterProps = React.ComponentPropsWithoutRef<typeof SidebarFooter>;
+export type SidebarUserCardProps = React.ComponentPropsWithoutRef<typeof SidebarUserCard>;
+export type SidebarMetaRow = { label: React.ReactNode; value: React.ReactNode; tone?: string };

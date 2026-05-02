@@ -16,6 +16,11 @@ export * from "./admin";
 export * from "./env-manager";
 export * from "./onboarding";
 export * from "./connectors";
+export * from "./connections";
+export * from "./stream-timeline";
+export * from "./datasets";
+export * from "./agents";
+export * from "./backtests";
 
 // Theme
 export {

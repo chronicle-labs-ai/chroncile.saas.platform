@@ -75,6 +75,26 @@ export { Minimap, generateMinimapBars } from "./minimap";
 export type { MinimapProps, MinimapBar, MinimapDensity } from "./minimap";
 
 export {
+  DashboardOverview,
+  dashboardOverviewSeed,
+} from "./dashboard-overview";
+
+export { TimelineDashboard } from "./timeline-dashboard";
+export type { TimelineDashboardProps } from "./timeline-dashboard";
+export type {
+  DashboardActionItem,
+  DashboardActionTone,
+  DashboardConnection,
+  DashboardConnectionState,
+  DashboardMetric,
+  DashboardMetricTone,
+  DashboardOverviewData,
+  DashboardOverviewProps,
+  DashboardTimelineEvent,
+  DashboardValidationRun,
+} from "./dashboard-overview";
+
+export {
   ActionBar,
   Carousel,
   DataGrid,

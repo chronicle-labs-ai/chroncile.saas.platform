@@ -10,6 +10,12 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
 export { Checkbox } from "./checkbox";
 export type { CheckboxProps } from "./checkbox";
 
+export {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./collapsible";
+
 export { CopyButton } from "./copy-button";
 export type { CopyButtonProps } from "./copy-button";
 

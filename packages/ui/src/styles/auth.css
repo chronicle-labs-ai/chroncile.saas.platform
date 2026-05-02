@@ -87,6 +87,61 @@
   opacity: 0.05;
 }
 
+/* ── AuthShell glass background — light theme variant ──────
+   The shell paints the `Ember` recipe (a `GlassScene` with
+   `background="void"` and dark glass slats over an ember pill).
+   That composition is tuned for the dark stage; on a cream
+   surface it reads as a near-black overlay because the scene
+   bg, slat gradient, and pane blend mode all assume a dark
+   backdrop.
+
+   Under `[data-theme="light"]`, scope the glass-system tokens
+   to the auth shell so the same `Ember` JSX produces a warm,
+   luminous variant: cream stage, soft white-on-warm slat
+   gradient, and `soft-light` blending which reads correctly
+   against a light surface (overlay would crush contrast at
+   this lightness).
+
+   Scoped to `[data-slot="auth-shell"]` so other glass scenes
+   (recipes stories, Foundations, etc.) keep their dark stage
+   even when the toolbar is flipped to light.
+
+   Only tokens that cascade are listed here. The React glass
+   primitives write a few custom properties inline (e.g.
+   `--cg-light-grain-opacity` from `LightSource`) — those win
+   over any parent override and are intentionally left alone. */
+[data-theme="light"] [data-slot="auth-shell"] {
+  /* `Ember` calls `background="void"`, which resolves to
+   * `var(--cg-bg-void)` at the scene element. Override that
+   * token (and `--cg-bg-obsidian`, used by the cascade
+   * fallback) to a warm cream surface. */
+  --cg-bg-void: #faf6ed;
+  --cg-bg-obsidian: #faf6ed;
+
+  /* Slat gradient inverts: subtle white highlight on the
+   * warm surface, with a faint warm core to mimic the
+   * "dark-core / bright-edge tube" illusion in reverse. */
+  --cg-pane-edge: rgba(255, 255, 255, 0.55);
+  --cg-pane-core: rgba(40, 28, 12, 0.08);
+  --cg-pane-edge-soft: rgba(255, 255, 255, 0.25);
+  --cg-pane-core-soft: rgba(40, 28, 12, 0.03);
+
+  /* Stack-level film grain — toned down so the cream stays
+   * editorial rather than gritty. */
+  --cg-stack-noise-opacity: 0.05;
+}
+/* `mix-blend-mode` on `.cg-pane` is set via
+ * `var(--cg-pane-blend, overlay)`, with `--cg-pane-blend`
+ * written inline by `<GlassPane blend="overlay">`. Inline
+ * custom properties win the cascade for that variable, so
+ * override the resolved `mix-blend-mode` directly here —
+ * `soft-light` darkens darks and brightens lights gently,
+ * reading as glass on a cream surface where `overlay` would
+ * crush the slats into hard shadows. */
+[data-theme="light"] [data-slot="auth-shell"] .cg-pane {
+  mix-blend-mode: soft-light;
+}
+
 /* ── Animations: fade-up, slide-in, blink, pulse-ember ───── */
 @keyframes cg-fade-up {
   0% {

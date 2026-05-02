@@ -1,7 +1,20 @@
 import { cva } from "class-variance-authority";
 
+/*
+ * Radix Tooltip emits `data-state="delayed-open" | "instant-open" | "closed"`
+ * on `Content`, plus `data-side="…"`. We match on state presence (`open` /
+ * `closed`) using attribute wildcards.
+ */
+
 export const tooltipVariants = cva(
-  "z-50 border bg-surface-02 shadow-card outline-none data-[entering=true]:animate-in data-[entering=true]:fade-in data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
+  "z-50 border bg-surface-02 shadow-card outline-none " +
+    "data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 " +
+    "data-[state=instant-open]:animate-in data-[state=instant-open]:fade-in-0 data-[state=instant-open]:zoom-in-95 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 " +
+    "data-[side=bottom]:slide-in-from-top-2 " +
+    "data-[side=left]:slide-in-from-right-2 " +
+    "data-[side=right]:slide-in-from-left-2 " +
+    "data-[side=top]:slide-in-from-bottom-2",
   {
     variants: {
       density: {

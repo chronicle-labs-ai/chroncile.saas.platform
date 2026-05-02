@@ -58,6 +58,8 @@ function humanizeError(code: string | undefined): string {
     organization_selection_required:
       "Multi-organization sign-in is not yet supported.",
     rate_limit_exceeded: "Too many attempts. Wait a moment and try again.",
+    auth_unreachable:
+      "We couldn't reach the auth provider. Check your connection and try again — your session is preserved.",
   };
   return map[code] ?? code.replaceAll("_", " ");
 }

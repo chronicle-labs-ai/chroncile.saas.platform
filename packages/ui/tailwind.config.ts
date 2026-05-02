@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -64,6 +65,16 @@ const preset: Config = {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
+        sidebar: {
+          DEFAULT: "var(--sidebar-background)",
+          foreground: "var(--sidebar-foreground)",
+          primary: "var(--sidebar-primary)",
+          "primary-foreground": "var(--sidebar-primary-foreground)",
+          accent: "var(--sidebar-accent)",
+          "accent-foreground": "var(--sidebar-accent-foreground)",
+          border: "var(--sidebar-border)",
+          ring: "var(--sidebar-ring)",
+        },
         void: "var(--c-void)",
         black: "var(--c-black)",
         page: "var(--c-page)",
@@ -284,6 +295,7 @@ const preset: Config = {
       },
     },
   },
+  plugins: [animate],
 };
 
 export default preset;

@@ -165,6 +165,16 @@
   --input: var(--c-hairline-strong);
   --ring: var(--c-ember);
   --radius: var(--r-lg);
+
+  /* shadcn sidebar aliases, mapped onto Chronicle product surfaces. */
+  --sidebar-background: var(--c-surface-01);
+  --sidebar-foreground: var(--c-ink);
+  --sidebar-primary: var(--c-ember);
+  --sidebar-primary-foreground: var(--c-ink-inv-hi);
+  --sidebar-accent: var(--c-surface-03);
+  --sidebar-accent-foreground: var(--c-ink-hi);
+  --sidebar-border: var(--c-hairline-strong);
+  --sidebar-ring: var(--c-ember);
 }
 
 /* ─────────────────────────────────────────────────────────────

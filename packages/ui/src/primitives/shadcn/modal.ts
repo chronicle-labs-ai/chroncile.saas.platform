@@ -1,11 +1,29 @@
 import { cva } from "class-variance-authority";
 
+/*
+ * Variant classnames for `<Modal>` — consumed by
+ * `packages/ui/src/primitives/modal.tsx`, which wires them onto
+ * `radix-ui`'s `Dialog.*` primitives.
+ *
+ * Radix Dialog emits:
+ *   - `data-state="open" | "closed"` on `Overlay` and `Content`
+ *
+ * Keep in sync with `drawer.ts`. Earlier revisions used
+ * `data-[entering=true]` / `data-[exiting=true]` (react-aria-components)
+ * so the animations never fired.
+ */
+
 export const modalOverlayVariants = cva(
-  "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm data-[entering=true]:animate-in data-[entering=true]:fade-in data-[exiting=true]:animate-out data-[exiting=true]:fade-out"
+  "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm " +
+    "data-[state=open]:animate-in data-[state=open]:fade-in-0 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
 );
 
 export const modalVariants = cva(
-  "fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[520px] -translate-x-1/2 -translate-y-1/2 overflow-hidden border bg-surface-01 shadow-panel outline-none data-[entering=true]:animate-in data-[entering=true]:zoom-in-95 data-[exiting=true]:animate-out data-[exiting=true]:zoom-out-95",
+  "fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[520px] " +
+    "-translate-x-1/2 -translate-y-1/2 overflow-hidden border bg-surface-01 shadow-panel outline-none " +
+    "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
   {
     variants: {
       density: {
@@ -55,7 +73,9 @@ export const modalTitleVariants = cva("", {
 });
 
 export const modalCloseVariants = cva(
-  "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out data-[hovered=true]:bg-surface-03 data-[hovered=true]:text-ink-hi data-[focus-visible=true]:outline data-[focus-visible=true]:outline-1 data-[focus-visible=true]:outline-ember",
+  "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out " +
+    "hover:bg-surface-03 hover:text-ink-hi " +
+    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
   {
     variants: {
       density: {

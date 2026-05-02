@@ -1,7 +1,30 @@
 import { cva } from "class-variance-authority";
 
+/*
+ * Variant classnames for `<DropdownMenu>` — consumed by
+ * `packages/ui/src/primitives/dropdown-menu.tsx`, which wires them onto
+ * `radix-ui`'s `DropdownMenu.*` primitives.
+ *
+ * Radix emits these data attributes (matching shadcn/ui upstream):
+ *   - `data-state="open" | "closed"`       on `Content`
+ *   - `data-side="top" | "right" | …`      on `Content`
+ *   - `data-highlighted`                   on hovered / keyboard-focused `Item`
+ *   - `data-disabled`                      on disabled `Item`
+ *
+ * Earlier revisions of this file targeted `data-[focused=true]`,
+ * `data-[entering=true]`, `data-[disabled=true]` (the react-aria-components
+ * attribute surface) and therefore never fired. Keep these selectors in
+ * sync with Radix UI if the primitive library ever changes.
+ */
+
 export const dropdownMenuPopoverVariants = cva(
-  "z-50 min-w-[180px] border bg-surface-02 shadow-panel outline-none data-[entering=true]:animate-in data-[entering=true]:fade-in data-[exiting=true]:animate-out data-[exiting=true]:fade-out",
+  "z-50 min-w-[180px] overflow-hidden border bg-surface-02 shadow-panel outline-none " +
+    "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 " +
+    "data-[side=bottom]:slide-in-from-top-2 " +
+    "data-[side=left]:slide-in-from-right-2 " +
+    "data-[side=right]:slide-in-from-left-2 " +
+    "data-[side=top]:slide-in-from-bottom-2",
   {
     variants: {
       density: {
@@ -18,16 +41,21 @@ export const dropdownMenuPopoverVariants = cva(
 export const dropdownMenuVariants = cva("outline-none max-h-[360px] overflow-auto");
 
 export const dropdownMenuItemVariants = cva(
-  "relative cursor-pointer select-none outline-none data-[focused=true]:bg-surface-03 data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed",
+  "relative flex cursor-pointer select-none items-center gap-2 outline-none transition-colors " +
+    "data-[highlighted]:outline-none " +
+    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
   {
     variants: {
       density: {
-        brand: "rounded-xs px-s-2 py-s-2 font-mono text-mono-lg text-ink",
+        brand:
+          "rounded-xs px-s-2 py-s-2 font-mono text-mono-lg text-ink " +
+          "data-[highlighted]:bg-surface-03 data-[highlighted]:text-ink-hi",
         compact:
-          "rounded-l-sm px-[8px] py-[5px] font-sans text-[13px] leading-none text-l-ink data-[focused=true]:bg-l-surface-hover",
+          "rounded-l-sm px-[8px] py-[5px] font-sans text-[13px] leading-none text-l-ink " +
+          "data-[highlighted]:bg-l-surface-hover data-[highlighted]:text-l-ink",
       },
       danger: {
-        true: "text-event-red data-[focused=true]:bg-[rgba(239,68,68,0.08)]",
+        true: "text-event-red data-[highlighted]:bg-[rgba(239,68,68,0.08)] data-[highlighted]:text-event-red",
       },
     },
     defaultVariants: {

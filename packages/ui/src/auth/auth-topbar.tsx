@@ -19,13 +19,14 @@ const topbar = tv({
   slots: {
     root:
       "relative z-10 flex h-[64px] w-full items-center justify-between " +
-      "px-s-6 border-b border-hairline bg-transparent",
-    left: "flex items-center gap-s-3 min-w-0",
-    word: "h-[36px] w-auto shrink-0",
-    div: "h-[18px] w-px bg-hairline-strong shrink-0 mx-s-1",
+      "px-s-6 border-b border-hairline " +
+      "bg-page/75 supports-[backdrop-filter]:bg-page/60 backdrop-blur-md",
+    left: "flex items-center gap-s-3 min-w-0 overflow-hidden",
+    word: "block h-[36px] w-[196px] shrink-0 aspect-[1044/192]",
+    div: "hidden sm:block h-[18px] w-px bg-hairline-strong shrink-0 mx-s-1",
     stepLabel:
-      "font-mono text-mono-sm uppercase tracking-tactical text-ink-dim " +
-      "whitespace-nowrap",
+      "hidden sm:inline font-mono text-mono-sm uppercase tracking-tactical " +
+      "text-ink-dim whitespace-nowrap",
     stepLabelB: "text-ink-hi font-medium",
     right:
       "flex items-center gap-s-3 font-mono text-mono-sm uppercase " +

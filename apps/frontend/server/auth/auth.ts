@@ -21,6 +21,37 @@ export interface AuthSession {
   backendToken: string;
 }
 
+/**
+ * Reason an `auth()` call returned null. Useful for server components
+ * that want to forward the failure mode to the login page so the user
+ * sees a meaningful banner instead of a silent redirect.
+ */
+export type AuthFailureReason =
+  | "no_cookie"
+  | "invalid_session_cookie"
+  | "invalid_jwt"
+  | "no_session_cookie_provided"
+  | "auth_provider_unreachable"
+  | "authenticate_failed";
+
+/**
+ * Convert a session failure reason to the matching `?error=` code on
+ * the login page. Returns `undefined` when the failure is the boring
+ * "no session yet" path so we don't show a banner on first load.
+ */
+export function loginErrorCodeFromAuthReason(
+  reason: AuthFailureReason | undefined,
+): string | undefined {
+  switch (reason) {
+    case "auth_provider_unreachable":
+      return "auth_unreachable";
+    case "authenticate_failed":
+      return "authenticate_failed";
+    default:
+      return undefined;
+  }
+}
+
 interface BackendMeResponse {
   userId: string;
   email: string;
@@ -39,11 +70,29 @@ interface BackendMeResponse {
  *
  * The caller should redirect to `/login` on null. The client-side
  * `AuthSessionProvider` will handle refresh attempts.
+ *
+ * Use `authWithReason()` instead when you need to differentiate
+ * between "not signed in" and "auth provider unreachable" so the
+ * login page can show a friendly banner.
  */
 export async function auth(): Promise<AuthSession | null> {
+  const result = await authWithReason();
+  return result.session;
+}
+
+export interface AuthResult {
+  session: AuthSession | null;
+  /** Populated when `session === null`. */
+  reason?: AuthFailureReason;
+}
+
+export async function authWithReason(): Promise<AuthResult> {
   const session = await getSession();
   if (!session.authenticated) {
-    return null;
+    return {
+      session: null,
+      reason: session.reason as AuthFailureReason,
+    };
   }
 
   // Best-effort backend enrichment for tenant details.
@@ -81,7 +130,7 @@ export async function auth(): Promise<AuthSession | null> {
       me?.workosOrganizationId ?? session.organizationId ?? null,
   };
 
-  return { user, backendToken: session.accessToken };
+  return { session: { user, backendToken: session.accessToken } };
 }
 
 // ---------------------------------------------------------------------------
