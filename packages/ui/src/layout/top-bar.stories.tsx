@@ -11,7 +11,7 @@ type Story = StoryObj<typeof TopBar>;
 
 export const Default: Story = {
   render: () => (
-    <div className="border-b border-l-border bg-l-surface px-s-3 h-[44px] w-[1100px] flex items-center">
+    <div className="border-b border-hairline-strong bg-l-surface px-s-3 h-[44px] w-[1100px] flex items-center">
       <TopBar>
         <TopBar.Crumb>
           Chronicle <TopBar.CrumbSep /> support-agent <TopBar.CrumbSep />
@@ -28,7 +28,7 @@ export const Default: Story = {
 
 export const Paused: Story = {
   render: () => (
-    <div className="border-b border-l-border bg-l-surface px-s-3 h-[44px] w-[1100px] flex items-center">
+    <div className="border-b border-hairline-strong bg-l-surface px-s-3 h-[44px] w-[1100px] flex items-center">
       <TopBar>
         <TopBar.Crumb>
           <TopBar.CrumbActive>Replay suite</TopBar.CrumbActive>

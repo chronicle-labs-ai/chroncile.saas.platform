@@ -46,7 +46,64 @@ export const A4Capture: Story = {
     <Frame>
       <WorkspaceSetup
         sub="capture"
-        email="ada@stripe.com"
+        email="ayman@chronicle-labs.com"
+        onSubmit={(v) => alert("submit " + JSON.stringify(v))}
+      />
+    </Frame>
+  ),
+};
+
+export const A4CaptureNoEmail: Story = {
+  name: "A.4 · capture (no email — identity card hidden)",
+  render: () => (
+    <Frame>
+      <WorkspaceSetup
+        sub="capture"
+        onSubmit={(v) => alert("submit " + JSON.stringify(v))}
+      />
+    </Frame>
+  ),
+};
+
+export const A4CaptureFieldError: Story = {
+  name: "A.4 · capture (server: slug already taken)",
+  render: () => (
+    <Frame>
+      <WorkspaceSetup
+        sub="capture"
+        email="ayman@chronicle-labs.com"
+        defaultValue={{ orgName: "Chronicle Labs", slug: "chronicle" }}
+        fieldErrors={{
+          slug: "That slug is already in use. Try chronicle-labs.",
+        }}
+        onSubmit={(v) => alert("submit " + JSON.stringify(v))}
+      />
+    </Frame>
+  ),
+};
+
+export const A4CaptureServerError: Story = {
+  name: "A.4 · capture (top-level / network error)",
+  render: () => (
+    <Frame>
+      <WorkspaceSetup
+        sub="capture"
+        email="ayman@chronicle-labs.com"
+        defaultValue={{ orgName: "Chronicle Labs", slug: "chronicle-labs" }}
+        error="We couldn't reach the auth provider. Try again — your input is preserved."
+        onSubmit={(v) => alert("submit " + JSON.stringify(v))}
+      />
+    </Frame>
+  ),
+};
+
+export const A4CaptureLongEmail: Story = {
+  name: "A.4 · capture (long email — domain wraps gracefully)",
+  render: () => (
+    <Frame>
+      <WorkspaceSetup
+        sub="capture"
+        email="someone.with.a.really.long.handle@chronicle-labs.com"
         onSubmit={(v) => alert("submit " + JSON.stringify(v))}
       />
     </Frame>

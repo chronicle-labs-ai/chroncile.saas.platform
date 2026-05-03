@@ -64,7 +64,6 @@ export function DatasetActionsMenu({
       <DropdownMenuTrigger>
         {trigger ?? (
           <Button
-            density="compact"
             variant="icon"
             size="sm"
             aria-label={`Actions for ${dataset.name}`}
@@ -73,7 +72,7 @@ export function DatasetActionsMenu({
           </Button>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent density="compact" align="end">
+      <DropdownMenuContent align="end">
         <DropdownMenuSection>
           {onOpen ? (
             <DropdownMenuItem onAction={() => onOpen(dataset.id)}>

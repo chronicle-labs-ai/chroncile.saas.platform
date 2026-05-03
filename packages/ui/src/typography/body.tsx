@@ -23,8 +23,9 @@ const tones: Record<BodyTone, string> = {
 };
 
 /**
- * Body — TWK Lausanne, light weight, generous line-height. The "reading"
- * text of the system. Headlines go to Display, evidence goes to Mono.
+ * Body — Inter Variable, regular weight, generous line-height. The
+ * "reading" text of the system. Headlines go to Display (Kalice),
+ * evidence goes to Mono (Berkeley Mono / IBM Plex Mono).
  */
 export function Body({
   as: Tag = "p",

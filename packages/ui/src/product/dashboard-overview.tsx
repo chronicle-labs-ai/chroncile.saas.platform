@@ -238,7 +238,7 @@ const metricToneClass: Record<DashboardMetricTone, string> = {
 const actionToneClass: Record<DashboardActionTone, string> = {
   deferred: "border-ember/25 bg-[rgba(216,67,10,0.075)] text-ember",
   review: "border-event-amber/20 bg-[rgba(251,191,36,0.035)] text-event-amber",
-  diagnostic: "border-hairline bg-[rgba(255,255,255,0.012)] text-ink-dim",
+  diagnostic: "border-hairline bg-wash-micro text-ink-dim",
 };
 
 const liveTimelineTemplates: Array<Omit<DashboardTimelineEvent, "time" | "latency">> = [
@@ -373,7 +373,7 @@ function DashboardHero({ data }: { data: DashboardOverviewData }) {
         <span className="font-mono text-[8.5px] uppercase tracking-[0.14em] text-ink-dim">
           {data.range}
         </span>
-        <Button density="compact" variant="primary" size="sm" className="rounded-sm">
+        <Button variant="primary" size="sm" className="rounded-sm">
           Run backtest
         </Button>
       </div>
@@ -387,7 +387,7 @@ function DashboardMetricStrip({ metrics }: { metrics: DashboardMetric[] }) {
       {metrics.map((metric) => (
         <article
           key={metric.label}
-          className="min-h-[76px] rounded-none border border-divider bg-[rgba(255,255,255,0.012)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.012)]"
+          className="min-h-[76px] rounded-none border border-divider bg-wash-micro px-4 py-3 shadow-[inset_0_1px_0_var(--c-wash-micro)]"
         >
           <p className="font-mono text-[8.5px] uppercase tracking-[0.17em] text-ink-dim">
             {metric.label}
@@ -425,7 +425,7 @@ function Panel({
   return (
     <section
       className={[
-        "rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.012)]",
+        "rounded-[2px] border border-divider bg-wash-micro p-4 shadow-[inset_0_1px_0_var(--c-wash-micro)]",
         className,
       ]
         .filter(Boolean)
@@ -529,7 +529,7 @@ function WaitingOnYouPanel({ items }: { items: DashboardActionItem[] }) {
             key={`${item.tone}-${item.detail}`}
             type="button"
             className={[
-              "flex w-full items-center gap-3 rounded-[2px] border px-3 py-2 text-left transition-colors hover:bg-[rgba(255,255,255,0.025)]",
+              "flex w-full items-center gap-3 rounded-[2px] border px-3 py-2 text-left transition-colors hover:bg-wash-2",
               actionToneClass[item.tone],
             ].join(" ")}
           >

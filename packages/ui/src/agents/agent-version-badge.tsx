@@ -28,7 +28,7 @@ export interface AgentVersionBadgeProps {
 
 const TONE_CLASSES: Record<AgentVersionStatus, string> = {
   current: "border-ember/55 bg-ember/12 text-ember",
-  stable: "border-l-border bg-l-surface-input text-l-ink-lo",
+  stable: "border-hairline-strong bg-l-surface-input text-l-ink-lo",
   deprecated:
     "border-l-border-faint bg-transparent text-l-ink-dim line-through decoration-l-ink-dim/60",
   draft:

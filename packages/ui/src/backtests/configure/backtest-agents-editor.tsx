@@ -77,7 +77,7 @@ export function BacktestAgentsEditor({
           {agents.map((a, i) => (
             <div
               key={a.id}
-              className="group flex items-center gap-2 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-2.5 py-1.5"
+              className="group flex items-center gap-2 rounded-[2px] border border-divider bg-wash-micro px-2.5 py-1.5"
             >
               <Mono size="sm" tone="dim" className="w-4 text-center">
                 {i + 1}
@@ -119,8 +119,8 @@ export function BacktestAgentsEditor({
                 type="button"
                 onClick={() => add(findCandidate(c.id) ?? c)}
                 className={cx(
-                  "group flex w-full items-center gap-2 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-2.5 py-1.5 text-left",
-                  "transition-colors hover:border-hairline-strong hover:bg-[rgba(255,255,255,0.025)]",
+                  "group flex w-full items-center gap-2 rounded-[2px] border border-divider bg-wash-micro px-2.5 py-1.5 text-left",
+                  "transition-colors hover:border-hairline-strong hover:bg-wash-2",
                 )}
               >
                 <Plus className="size-3 text-ink-dim group-hover:text-ember" strokeWidth={1.8} />

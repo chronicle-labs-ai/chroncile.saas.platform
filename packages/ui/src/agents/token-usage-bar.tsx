@@ -44,7 +44,7 @@ export function TokenUsageBar({
     return (
       <span
         className={cx(
-          "inline-flex items-center gap-1 font-mono text-[10.5px] text-l-ink-dim",
+          "inline-flex items-center gap-1 font-mono text-[10.5px] tabular-nums text-l-ink-dim",
           className,
         )}
       >
@@ -54,33 +54,48 @@ export function TokenUsageBar({
   }
 
   const pct = (n: number) => `${(n / total) * 100}%`;
+  const summary =
+    `${formatNumber(total)} tokens — ` +
+    `${formatNumber(input)} input` +
+    (cached > 0 ? ` (${formatNumber(cached)} cached)` : "") +
+    (reasoning > 0 ? `, ${formatNumber(reasoning)} reasoning` : "") +
+    `, ${formatNumber(output)} output`;
 
+  // Width-based segments are read-only / static here, not animated frame-by-
+  // frame, so layout reflow isn't a concern. Accessibility is exposed via the
+  // outer progressbar role + a single descriptive aria-label.
   const bar = (
-    <div className="flex h-1.5 w-full overflow-hidden rounded-pill bg-l-surface-input">
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-valuenow={total}
+      aria-label={summary}
+      className="flex h-1.5 w-full overflow-hidden rounded-pill bg-l-surface-input"
+    >
       <div
+        aria-hidden
         className="relative bg-event-teal/70"
         style={{ width: pct(input) }}
-        aria-label={`Input ${input} tokens`}
       >
         {cached > 0 ? (
           <div
             className="absolute inset-y-0 left-0 bg-event-teal/35"
             style={{ width: pct(cached) }}
-            aria-label={`Cached input ${cached} tokens`}
           />
         ) : null}
       </div>
       {reasoning > 0 ? (
         <div
+          aria-hidden
           className="bg-event-violet/70"
           style={{ width: pct(reasoning) }}
-          aria-label={`Reasoning ${reasoning} tokens`}
         />
       ) : null}
       <div
+        aria-hidden
         className="bg-event-amber/70"
         style={{ width: pct(output) }}
-        aria-label={`Output ${output} tokens`}
       />
     </div>
   );
@@ -93,8 +108,10 @@ export function TokenUsageBar({
           className,
         )}
       >
-        <span className="shrink-0 text-l-ink-lo">{formatNumber(total)}</span>
         <div className="flex-1">{bar}</div>
+        <span className="shrink-0 tabular-nums text-l-ink-lo">
+          {formatNumber(total)}
+        </span>
       </div>
     );
   }
@@ -143,14 +160,16 @@ function Cell({ label, value, colorClass, subValue, emphasized }: CellProps) {
       </dt>
       <dd
         className={cx(
-          "font-mono text-[12px]",
+          "font-mono text-[12px] tabular-nums",
           emphasized ? "font-medium text-l-ink" : "text-l-ink-lo",
         )}
       >
         {formatNumber(value)}
       </dd>
       {subValue ? (
-        <span className="font-mono text-[9.5px] text-l-ink-dim">{subValue}</span>
+        <span className="font-mono text-[9.5px] tabular-nums text-l-ink-dim">
+          {subValue}
+        </span>
       ) : null}
     </div>
   );

@@ -103,7 +103,7 @@ export function BacktestGraderBuilder({
       onClose={onClose}
     >
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-h-[480px] flex-col gap-4 rounded-l border border-hairline bg-surface-01 p-3">
+        <div className="flex min-h-[480px] flex-col gap-4 rounded-md border border-hairline bg-surface-01 p-3">
           <div className="flex items-center gap-1 border-b border-hairline pb-3">
             <BuilderTab active={tab === "proposed"} onClick={() => setTab("proposed")}>
               <Eye className="size-3.5" strokeWidth={1.4} /> Proposed from data
@@ -132,7 +132,7 @@ export function BacktestGraderBuilder({
           {tab === "custom" ? <CustomGrader /> : null}
         </div>
 
-        <aside className="flex flex-col gap-3 rounded-l border border-hairline bg-surface-01 p-3">
+        <aside className="flex flex-col gap-3 rounded-md border border-hairline bg-surface-01 p-3">
           <div className="flex items-start justify-between border-b border-hairline pb-2">
             <div>
               <Eyebrow className="text-ember">ACTIVE CHECKS</Eyebrow>
@@ -142,7 +142,7 @@ export function BacktestGraderBuilder({
             </div>
           </div>
           {graders.length === 0 ? (
-            <div className="rounded-l border border-dashed border-hairline-strong bg-surface-02 px-3 py-5 text-center">
+            <div className="rounded-md border border-dashed border-hairline-strong bg-surface-02 px-3 py-5 text-center">
               <Mono tone="dim">no graders selected. accept some from the proposed list.</Mono>
             </div>
           ) : (
@@ -150,7 +150,7 @@ export function BacktestGraderBuilder({
               {graders.map((g, i) => (
                 <div
                   key={g.id}
-                  className="flex flex-col gap-2 rounded-l border border-hairline bg-surface-02 p-3"
+                  className="flex flex-col gap-2 rounded-md border border-hairline bg-surface-02 p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ function ProposedGraders({
 }) {
   if (proposed.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-l border border-dashed border-hairline-strong bg-surface-02 px-6 py-12 text-center">
+      <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-hairline-strong bg-surface-02 px-6 py-12 text-center">
         <h4 className="font-display text-title-sm font-light text-ink-hi">
           Add some data first
         </h4>
@@ -229,7 +229,7 @@ function ProposedGraders({
             key={p.id}
             data-on={on || undefined}
             className={cx(
-              "flex flex-col gap-3 rounded-l border bg-surface-02 p-3",
+              "flex flex-col gap-3 rounded-md border bg-surface-02 p-3",
               on ? "border-ember/60" : "border-hairline",
             )}
           >
@@ -245,14 +245,13 @@ function ProposedGraders({
                 <p className="mt-1 text-body-sm text-ink-lo">{p.evidence}</p>
               </div>
               <Button
-                density="compact"
                 variant={on ? "ghost" : "ember"}
                 onClick={() => onToggle(p)}
               >
                 {on ? "✓ accepted" : "+ accept"}
               </Button>
             </div>
-            <div className="rounded-l border border-hairline bg-surface-01 p-2">
+            <div className="rounded-md border border-hairline bg-surface-01 p-2">
               <div className="flex items-center justify-between border-b border-hairline pb-1.5">
                 <Eyebrow className="text-ink-dim">LIVE PREVIEW · 3 cases</Eyebrow>
                 <Mono size="sm" tone="dim">
@@ -264,7 +263,7 @@ function ProposedGraders({
                   <div
                     key={i}
                     className={cx(
-                      "grid grid-cols-[80px_minmax(0,1fr)_60px] items-center gap-3 rounded-l-sm px-2 py-1",
+                      "grid grid-cols-[80px_minmax(0,1fr)_60px] items-center gap-3 rounded-xs px-2 py-1",
                       row.pass
                         ? "border border-event-green/20 bg-event-green/[0.06]"
                         : "border border-event-red/20 bg-event-red/[0.06]",
@@ -331,14 +330,14 @@ function LibraryGraders({
             onClick={() => onToggle(g)}
             data-on={on || undefined}
             className={cx(
-              "flex items-start gap-3 rounded-l border bg-surface-02 p-3 text-left transition-colors",
+              "flex items-start gap-3 rounded-md border bg-surface-02 p-3 text-left transition-colors",
               on ? "border-ember/60" : "border-hairline hover:border-hairline-strong",
             )}
           >
             <span
               aria-hidden
               className={cx(
-                "mt-0.5 grid size-4 place-items-center rounded-l-sm border",
+                "mt-0.5 grid size-4 place-items-center rounded-xs border",
                 on ? "border-ember bg-ember text-ink-inv-hi" : "border-hairline-strong",
               )}
             >
@@ -379,7 +378,6 @@ function CustomGrader() {
         <BuilderTab>LLM judge</BuilderTab>
       </div>
       <Textarea
-        density="compact"
         rows={6}
         placeholder='e.g. "The agent should refund up to $200 without escalating. If the refund amount exceeds $200, it must escalate to a human. No double refunds."'
       />
@@ -387,7 +385,7 @@ function CustomGrader() {
         <Mono size="sm" tone="dim">
           chronicle will test your rubric against 5 sample traces before saving
         </Mono>
-        <Button variant="ember" density="compact">
+        <Button variant="ember">
           test + save grader
         </Button>
       </div>
@@ -412,7 +410,7 @@ function BuilderTab({
       onClick={onClick}
       data-active={active || undefined}
       className={cx(
-        "inline-flex items-center gap-2 rounded-l-sm border px-3 py-1.5 text-body-sm transition-colors",
+        "inline-flex items-center gap-2 rounded-xs border px-3 py-1.5 text-body-sm transition-colors",
         active
           ? "border-hairline-strong bg-surface-02 text-ink-hi"
           : "border-transparent text-ink-lo hover:bg-surface-02 hover:text-ink-hi",
@@ -442,7 +440,7 @@ function GraderKindChip({ kind }: { kind: BacktestGraderKind }) {
   return (
     <span
       className={cx(
-        "rounded-l-sm px-1.5 py-0.5 font-mono text-mono-sm uppercase tracking-tactical",
+        "rounded-xs px-1.5 py-0.5 font-mono text-mono-sm uppercase tracking-tactical",
         GRADER_KIND_TONE(kind),
       )}
     >
@@ -460,7 +458,7 @@ function IconBtn({
       type="button"
       {...props}
       className={cx(
-        "grid size-6 place-items-center rounded-l-sm border border-hairline text-ink-lo transition-colors",
+        "grid size-6 place-items-center rounded-xs border border-hairline text-ink-lo transition-colors",
         "hover:border-hairline-strong hover:bg-surface-03 hover:text-ink-hi",
         "disabled:cursor-not-allowed disabled:opacity-30",
       )}
@@ -480,7 +478,7 @@ function Segmented({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="inline-flex rounded-l border border-hairline bg-surface-01 p-0.5">
+    <div className="inline-flex rounded-md border border-hairline bg-surface-01 p-0.5">
       {options.map((o) => (
         <button
           key={o}
@@ -488,7 +486,7 @@ function Segmented({
           onClick={() => onChange(o)}
           data-on={value === o || undefined}
           className={cx(
-            "rounded-l-sm px-2 py-0.5 font-mono text-mono-sm uppercase tracking-tactical transition-colors",
+            "rounded-xs px-2 py-0.5 font-mono text-mono-sm uppercase tracking-tactical transition-colors",
             value === o ? "bg-surface-03 text-ink-hi" : "text-ink-lo hover:text-ink-hi",
           )}
         >

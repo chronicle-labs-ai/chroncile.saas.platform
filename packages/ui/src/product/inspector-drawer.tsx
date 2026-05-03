@@ -62,7 +62,7 @@ function Root({
       role="complementary"
       className={cx(
         "absolute right-0 top-0 bottom-0 z-30",
-        "flex flex-col border-l border-l-border bg-l-surface-raised",
+        "flex flex-col border-l border-hairline-strong bg-l-surface-raised",
         "shadow-l-pop",
         "transition-transform duration-[200ms] ease-out",
         open ? "translate-x-0" : "translate-x-full",
@@ -78,7 +78,7 @@ function Root({
           onClick={onClose}
           className={cx(
             "absolute right-s-2 top-s-2 z-10",
-            "inline-flex h-[24px] w-[24px] items-center justify-center rounded-l text-l-ink-dim",
+            "inline-flex h-[24px] w-[24px] items-center justify-center rounded-md text-l-ink-dim",
             "hover:bg-l-wash-3 hover:text-l-ink transition-colors duration-fast"
           )}
         >

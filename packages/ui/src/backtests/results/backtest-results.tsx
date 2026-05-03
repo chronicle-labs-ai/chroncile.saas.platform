@@ -74,7 +74,7 @@ export function BacktestResults({
   return (
     <div className={cx("mx-auto flex w-full max-w-[1320px] flex-col gap-4 px-6 py-6", className)}>
       {/* Verdict */}
-      <header className="flex flex-wrap items-start justify-between gap-4 rounded-l border border-hairline bg-surface-01 px-4 py-4">
+      <header className="flex flex-wrap items-start justify-between gap-4 rounded-md border border-hairline bg-surface-01 px-4 py-4">
         <div className="flex max-w-3xl flex-col gap-2">
           <Eyebrow className="text-event-green">RUN COMPLETE · 28m 14s</Eyebrow>
           <h1 className="font-display text-display-sm font-light tracking-tight text-ink-hi">
@@ -103,21 +103,18 @@ export function BacktestResults({
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
-            density="compact"
             leadingIcon={<FileJson className="size-3.5" strokeWidth={1.6} />}
           >
             export JSON
           </Button>
           <Button
             variant="ghost"
-            density="compact"
             leadingIcon={<Share2 className="size-3.5" strokeWidth={1.6} />}
           >
             share report
           </Button>
           <Button
             variant="ember"
-            density="compact"
             leadingIcon={<CheckCircle2 className="size-3.5" strokeWidth={1.6} />}
             onClick={() => winner && onPromote?.(winner.id)}
           >
@@ -142,13 +139,12 @@ export function BacktestResults({
       </section>
 
       {/* Metrics table */}
-      <section className="flex flex-col gap-3 rounded-l border border-hairline bg-surface-01">
+      <section className="flex flex-col gap-3 rounded-md border border-hairline bg-surface-01">
         <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
           <Eyebrow className="text-ink-dim">METRICS · BASELINE vs CANDIDATES</Eyebrow>
           <div className="flex items-center gap-2">
             <span className="text-mono-sm uppercase tracking-tactical text-ink-dim">sort by</span>
             <NativeSelect
-              density="compact"
               value={sortBy}
               onChange={(e) => setSortBy((e.target as HTMLSelectElement).value)}
             >
@@ -245,13 +241,13 @@ export function BacktestResults({
       </section>
 
       {/* Divergences */}
-      <section className="flex flex-col gap-3 rounded-l border border-hairline bg-surface-01">
+      <section className="flex flex-col gap-3 rounded-md border border-hairline bg-surface-01">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-4 py-3">
           <Eyebrow className="text-ember">
             DIVERGENCES · {divergences.length} flagged · sorted by severity
           </Eyebrow>
           {onEditRecipe ? (
-            <Button variant="ghost" density="compact" onClick={onEditRecipe}>
+            <Button variant="ghost" onClick={onEditRecipe}>
               edit recipe
             </Button>
           ) : null}
@@ -321,7 +317,7 @@ function AgentScoreCard({
       data-baseline={isBaseline || undefined}
       data-focused={isFocused || undefined}
       className={cx(
-        "flex flex-col gap-3 rounded-l border bg-surface-01 p-3 text-left transition-colors",
+        "flex flex-col gap-3 rounded-md border bg-surface-01 p-3 text-left transition-colors",
         isWinner
           ? "border-event-green/40 bg-event-green/[0.04]"
           : isWatch
@@ -416,7 +412,7 @@ function DivergenceRow({ divergence }: { divergence: BacktestDivergence }) {
       </div>
       <button
         type="button"
-        className="self-start rounded-l border border-hairline px-2.5 py-1 text-body-sm text-ink-lo transition-colors hover:border-hairline-strong hover:text-ink-hi"
+        className="self-start rounded-md border border-hairline px-2.5 py-1 text-body-sm text-ink-lo transition-colors hover:border-hairline-strong hover:text-ink-hi"
       >
         open →
       </button>

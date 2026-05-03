@@ -4,7 +4,7 @@ import { StreamEventDetail } from "./stream-event-detail";
 import { streamTimelineSeed } from "./data";
 
 const meta: Meta<typeof StreamEventDetail> = {
-  title: "StreamTimeline/EventDetail",
+  title: "Stream Timeline/EventDetail",
   component: StreamEventDetail,
 };
 export default meta;

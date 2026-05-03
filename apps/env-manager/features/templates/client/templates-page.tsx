@@ -17,7 +17,7 @@ import {
   PanelContent,
   PanelHeader,
   Row,
-  Skeleton,
+  SkeletonBlock,
   Table,
   TableBody,
   TableHeader,
@@ -320,8 +320,8 @@ export function TemplatesPage() {
               </div>
             ) : isLoading ? (
               <div className="space-y-s-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+                <SkeletonBlock className="h-10 w-full" />
+                <SkeletonBlock className="h-10 w-full" />
               </div>
             ) : (templates?.length ?? 0) === 0 ? (
               <div className="py-s-8 text-center">

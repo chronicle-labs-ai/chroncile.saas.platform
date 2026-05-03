@@ -37,7 +37,7 @@ function EnvCardRoot({
   return (
     <div
       className={cx(
-        "group relative flex flex-col gap-[12px] overflow-hidden rounded-l border border-l-border bg-l-surface-raised px-[14px] py-[12px]",
+        "group relative flex flex-col gap-[12px] overflow-hidden rounded-md border border-hairline-strong bg-l-surface-raised px-[14px] py-[12px]",
         "transition-colors duration-fast ease-out hover:border-l-border-strong hover:bg-l-surface-hover",
         className
       )}
@@ -76,7 +76,7 @@ function EnvCardHosts({ className, children, ...props }: EnvCardHostsProps) {
   return (
     <div
       className={cx(
-        "flex flex-col gap-[4px] rounded-l border border-l-border-faint bg-l-surface p-[10px] font-mono text-[11px]",
+        "flex flex-col gap-[4px] rounded-md border border-l-border-faint bg-l-surface p-[10px] font-mono text-[11px]",
         className
       )}
       {...props}

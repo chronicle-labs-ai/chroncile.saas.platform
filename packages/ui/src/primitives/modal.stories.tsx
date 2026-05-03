@@ -3,8 +3,16 @@ import * as React from "react";
 import { Modal, ConfirmModal } from "./modal";
 import { Button } from "./button";
 
+/*
+ * @deprecated The declarative `<Modal>` and `<ConfirmModal>` APIs are
+ * retained for the in-flight call sites that haven't migrated yet. New
+ * code should reach for `<Dialog>` (non-destructive — see
+ * "Primitives/Dialog") or `<AlertDialog>` (destructive — see
+ * "Primitives/AlertDialog").
+ */
+
 const meta: Meta<typeof Modal> = {
-  title: "Primitives/Modal",
+  title: "Primitives/Modal (legacy)",
   component: Modal,
   parameters: { layout: "centered" },
 };

@@ -1,11 +1,35 @@
 import * as React from "react";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { ShadcnTag, type ShadcnTagProps } from "./shadcn";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
 
 /**
  * Tag — the tighter, label-style pill used on events and roles
- * (CUSTOMER / AGENT / SYSTEM / DIVERGENCE). Smaller than Badge, no border.
+ * (CUSTOMER / AGENT / SYSTEM / DIVERGENCE). Smaller than Badge, no
+ * border.
  */
+export const tagVariants = cva(
+  "inline-flex items-center rounded-md px-[6px] py-[1px] font-sans text-[11px] font-medium leading-[16px]",
+  {
+    variants: {
+      variant: {
+        neutral: "bg-surface-02 text-ink-lo",
+        teal: "bg-[rgba(45,212,191,0.1)] text-event-teal",
+        amber: "bg-[rgba(251,191,36,0.1)] text-event-amber",
+        green: "bg-[rgba(74,222,128,0.1)] text-event-green",
+        orange: "bg-[rgba(216,107,61,0.1)] text-event-orange",
+        pink: "bg-[rgba(244,114,182,0.1)] text-event-pink",
+        violet: "bg-[rgba(139,92,246,0.1)] text-event-violet",
+        red: "bg-[rgba(239,68,68,0.1)] text-event-red",
+        ember: "bg-[rgba(216,67,10,0.1)] text-ember",
+      },
+    },
+    defaultVariants: {
+      variant: "neutral",
+    },
+  }
+);
+
 export type TagVariant =
   | "neutral"
   | "teal"
@@ -17,29 +41,25 @@ export type TagVariant =
   | "red"
   | "ember";
 
-export type TagDensity = "compact" | "brand";
-
-export interface TagProps extends Omit<ShadcnTagProps, "density" | "variant"> {
+export interface TagProps
+  extends Omit<React.HTMLAttributes<HTMLSpanElement>, "color">,
+    Omit<VariantProps<typeof tagVariants>, "variant"> {
   variant?: TagVariant;
-  density?: TagDensity;
+  ref?: React.Ref<HTMLSpanElement>;
 }
 
 export function Tag({
-  variant = "neutral",
-  density: densityProp,
   className,
-  children,
+  variant = "neutral",
+  ref,
   ...props
 }: TagProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
-    <ShadcnTag
-      className={className}
-      density={density}
-      variant={variant}
+    <span
+      ref={ref}
+      className={cn(tagVariants({ variant }), className)}
+      data-variant={variant}
       {...props}
-    >
-      {children}
-    </ShadcnTag>
+    />
   );
 }

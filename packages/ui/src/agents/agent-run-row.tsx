@@ -41,64 +41,65 @@ export function AgentRunRow({
 
   return (
     <div
-      role={interactive ? "button" : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      onKeyDown={
-        interactive
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelect?.(run.runId);
-              }
-            }
-          : undefined
-      }
-      onClick={interactive ? () => onSelect?.(run.runId) : undefined}
       data-active={isActive || undefined}
       data-status={run.status}
       className={cx(
-        "group relative grid items-center gap-3 px-4",
+        "group relative isolate grid items-center gap-3 px-4",
         "grid-cols-[16px_minmax(0,76px)_minmax(0,90px)_minmax(0,80px)_minmax(0,80px)_minmax(0,1fr)_minmax(0,140px)]",
         density === "compact" ? "h-9" : "h-10",
         "border-b border-l-border-faint last:border-b-0 first:rounded-t-[4px] last:rounded-b-[4px]",
         "font-sans text-[13px] text-l-ink",
-        interactive
-          ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
-          : null,
         isActive
-          ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-ember"
+          ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:z-10 before:w-[2px] before:bg-ember"
           : null,
         className,
       )}
     >
-      <RunStatusDot status={run.status} />
+      {interactive ? (
+        <button
+          type="button"
+          aria-label={`Open run ${run.runId} (${run.status})`}
+          onClick={() => onSelect?.(run.runId)}
+          className={cx(
+            "absolute inset-0 z-0 cursor-pointer",
+            "first:rounded-t-[3px] last:rounded-b-[3px]",
+            "transition-colors duration-fast",
+            "hover:bg-l-surface-hover",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
+          )}
+        />
+      ) : null}
 
-      <span className="flex min-w-0 flex-col gap-[1px]">
-        <span className="truncate font-sans text-[12px] text-l-ink-lo">
+      <span className="pointer-events-none relative">
+        <RunStatusDot status={run.status} />
+      </span>
+
+      <span className="pointer-events-none relative flex min-w-0 flex-col gap-[1px]">
+        <span className="truncate font-sans text-[12px] tabular-nums text-l-ink-lo">
           {formatStableTime(run.startedAt)}
         </span>
-        <span className="truncate font-sans text-[11px] text-l-ink-dim">
+        <span className="truncate font-sans text-[11px] tabular-nums text-l-ink-dim">
           <RelativeTime iso={run.startedAt} fallback="—" />
         </span>
       </span>
 
-      <span className="text-left">
+      <span className="pointer-events-none relative text-left">
         <AgentVersionBadge version={version} />
       </span>
 
-      <span className="truncate font-sans text-[12px] text-l-ink-lo">
+      <span className="pointer-events-none relative truncate font-sans text-[12px] text-l-ink-lo">
         {run.operation}
       </span>
 
-      <span className="truncate text-right font-sans text-[12px] text-l-ink-lo">
+      <span className="pointer-events-none relative truncate text-right font-sans text-[12px] tabular-nums text-l-ink-lo">
         {run.durationMs != null ? formatMs(run.durationMs) : "—"}
       </span>
 
-      <span className="flex min-w-0 items-center">
+      <span className="pointer-events-none relative flex min-w-0 items-center">
         <TokenUsageBar usage={run.response?.usage} />
       </span>
 
-      <span className="flex min-w-0 flex-col items-end gap-[1px] truncate font-sans text-[11px] text-l-ink-dim">
+      <span className="pointer-events-none relative flex min-w-0 flex-col items-end gap-[1px] truncate font-sans text-[11px] text-l-ink-dim">
         <span className="truncate">{run.trace?.userId ?? "—"}</span>
         <span className="truncate">
           {run.trace?.environment ?? run.response?.modelId ?? "—"}

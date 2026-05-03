@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 /*
  * ScanLoader — typed wrapper around the `.cg-scan-loader` CSS class
@@ -36,7 +36,7 @@ export function ScanLoader({
       aria-label={ariaLabel}
       aria-live="polite"
       aria-busy
-      className={cx("cg-scan-loader w-full", className)}
+      className={cn("cg-scan-loader w-full", className)}
       {...rest}
     />
   );

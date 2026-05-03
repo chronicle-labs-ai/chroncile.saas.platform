@@ -113,12 +113,12 @@ export function TimelineLane({
           groups.map((group) => (
             <React.Fragment key={group.key}>
               {group.label ? (
-                <div className="sticky top-0 z-10 flex h-[30px] items-center gap-s-2 border-b border-l-border bg-l-surface-bar px-s-4 font-mono text-[10.5px] uppercase tracking-eyebrow text-l-ink-dim">
+                <div className="sticky top-0 z-10 flex h-[30px] items-center gap-s-2 border-b border-hairline-strong bg-l-surface-bar px-s-4 font-mono text-[10.5px] uppercase tracking-eyebrow text-l-ink-dim">
                   {group.outcome ? (
                     <Status kind={statusForOutcome(group.outcome)} />
                   ) : null}
                   <span>{group.label}</span>
-                  <span className="rounded-l-sm bg-l-wash-3 px-[5px] py-[1px] text-l-ink-lo">
+                  <span className="rounded-xs bg-l-wash-3 px-[5px] py-[1px] text-l-ink-lo">
                     {group.traces.length}
                   </span>
                 </div>
@@ -154,8 +154,8 @@ function TimelineRuler({
   const tickCount = 8;
   const span = win[1] - win[0];
   return (
-    <div className="absolute left-0 right-0 top-0 z-20 grid h-[28px] grid-cols-[280px_1fr] border-b border-l-border bg-l-surface-bar">
-      <div className="flex items-center border-r border-l-border px-s-4 font-mono text-[10.5px] uppercase tracking-eyebrow text-l-ink-dim">
+    <div className="absolute left-0 right-0 top-0 z-20 grid h-[28px] grid-cols-[280px_1fr] border-b border-hairline-strong bg-l-surface-bar">
+      <div className="flex items-center border-r border-hairline-strong px-s-4 font-mono text-[10.5px] uppercase tracking-eyebrow text-l-ink-dim">
         Trace
       </div>
       <div className="relative">
@@ -249,7 +249,7 @@ function TimelineTraceRow({
         {envelopeVisible ? (
           <span
             aria-hidden
-            className="absolute top-[11px] h-[24px] rounded-l border bg-[linear-gradient(90deg,var(--timeline-env-a),var(--timeline-env-b))]"
+            className="absolute top-[11px] h-[24px] rounded-md border bg-[linear-gradient(90deg,var(--timeline-env-a),var(--timeline-env-b))]"
             style={
               {
                 left: `${Math.max(0, traceLeft)}%`,

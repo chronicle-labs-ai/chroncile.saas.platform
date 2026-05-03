@@ -1,15 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
+
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  ssoButtonVariants,
-  ssoIconVariants,
-  ssoKbdVariants,
-  ssoLabelVariants,
-  ssoSpinnerVariants,
-} from "./shadcn";
 
 /*
  * SSOButton — branded "Continue with Google / GitHub / Passkey" button.
@@ -18,6 +12,24 @@ import {
  * a custom IdP, pass `provider="custom"` plus `icon` + the visible
  * `children` label.
  */
+
+export const ssoButtonVariants = cva(
+  "group inline-flex w-full items-center border transition-[background-color,border-color,color] duration-fast ease-out focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember disabled:opacity-40 disabled:cursor-not-allowed data-[pending=true]:cursor-wait h-[32px] gap-[8px] px-[10px] rounded-md border-hairline-strong bg-l-surface-raised font-sans text-[13px] font-medium text-l-ink hover:bg-l-surface-hover hover:border-l-border-strong"
+);
+
+export const ssoIconVariants = cva(
+  "inline-flex shrink-0 items-center justify-center h-4 w-4 text-l-ink"
+);
+
+export const ssoLabelVariants = cva("flex-1 text-left");
+
+export const ssoKbdVariants = cva(
+  "inline-flex items-center justify-center h-[16px] min-w-[16px] rounded-xs bg-l-wash-3 px-[4px] font-sans text-[10px] font-medium text-l-ink-dim"
+);
+
+export const ssoSpinnerVariants = cva(
+  "shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent h-3.5 w-3.5"
+);
 
 export type SSOProvider = "google" | "github" | "passkey" | "custom";
 
@@ -80,10 +92,11 @@ const PROVIDER_GLYPH: Record<SSOProvider, React.ReactNode> = {
   custom: null,
 };
 
-export interface SSOButtonProps extends Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  "className" | "children" | "disabled"
-> {
+export interface SSOButtonProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    "className" | "children" | "disabled"
+  > {
   /** SSO provider preset. Use `"custom"` and pass `icon` + `children`. */
   provider: SSOProvider;
   /** Override the default label for the provider. */
@@ -96,9 +109,6 @@ export interface SSOButtonProps extends Omit<
   isLoading?: boolean;
   isDisabled?: boolean;
   onPress?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  /** Force a density flavor. Defaults to whichever the surrounding
-   * `ChromeStyleProvider` resolves to. */
-  density?: "compact" | "brand";
   className?: string;
   ref?: React.Ref<HTMLButtonElement>;
   disabled?: boolean;
@@ -106,8 +116,7 @@ export interface SSOButtonProps extends Omit<
 
 /**
  * Branded SSO button — built-in icon + label per provider
- * (Google, GitHub, passkey). Wraps `<Button density="brand">` so
- * size / variant tokens line up with the rest of the auth flow.
+ * (Google, GitHub, passkey).
  */
 export function SSOButton({
   provider,
@@ -115,7 +124,6 @@ export function SSOButton({
   icon,
   kbd,
   isLoading,
-  density: densityProp,
   className,
   disabled,
   isDisabled,
@@ -125,7 +133,6 @@ export function SSOButton({
   type,
   ...rest
 }: SSOButtonProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const pending = Boolean(isLoading);
   const label = children ?? PROVIDER_LABEL[provider];
   const glyph = icon ?? PROVIDER_GLYPH[provider];
@@ -136,20 +143,19 @@ export function SSOButton({
       ref={ref}
       type={type ?? "button"}
       data-provider={provider}
-      data-density={density}
       data-pending={pending || undefined}
       disabled={disabled || isDisabled || pending}
       onClick={(event) => {
         onClick?.(event);
         if (!event.defaultPrevented) onPress?.(event);
       }}
-      className={cn(ssoButtonVariants({ density }), className)}
+      className={cn(ssoButtonVariants(), className)}
     >
-      <span className={ssoIconVariants({ density })}>
-        {pending ? <span className={ssoSpinnerVariants({ density })} /> : glyph}
+      <span className={ssoIconVariants()}>
+        {pending ? <span className={ssoSpinnerVariants()} /> : glyph}
       </span>
       <span className={ssoLabelVariants()}>{label}</span>
-      {kbd ? <span className={ssoKbdVariants({ density })}>{kbd}</span> : null}
+      {kbd ? <span className={ssoKbdVariants()}>{kbd}</span> : null}
     </button>
   );
 }

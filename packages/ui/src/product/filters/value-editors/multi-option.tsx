@@ -4,11 +4,12 @@ import * as React from "react";
 
 import { Input } from "../../../primitives/input";
 import { tv } from "../../../utils/tv";
+import { useIsCoarsePointer } from "../../../utils/use-is-coarse-pointer";
 import type { ColumnOption } from "../types";
 
 const styles = tv({
   slots: {
-    root: "flex w-[280px] flex-col gap-s-2 p-s-2",
+    root: "flex w-full flex-col gap-s-2 p-s-2",
     list: "max-h-[280px] overflow-auto outline-none",
     item:
       "flex cursor-pointer select-none items-center gap-s-3 rounded-xs px-s-2 py-s-2 " +
@@ -48,6 +49,7 @@ export function MultiOptionEditor({
   onChange,
 }: MultiOptionEditorProps) {
   const [query, setQuery] = React.useState("");
+  const coarsePointer = useIsCoarsePointer();
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
@@ -67,9 +69,12 @@ export function MultiOptionEditor({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search\u2026"
-        autoFocus
+        autoFocus={!coarsePointer}
         aria-label="Search options"
       />
+      <div role="status" aria-live="polite" className="sr-only">
+        {filtered.length} {filtered.length === 1 ? "option" : "options"}
+      </div>
       <div
         className={slots.list()}
         role="listbox"

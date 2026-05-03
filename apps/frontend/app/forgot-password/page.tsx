@@ -39,7 +39,7 @@ function ForgotPasswordPageInner() {
   };
 
   return (
-    <AuthShell topbar={{}} align="center" chromeStyle="product">
+    <AuthShell topbar={{}} align="center">
       <ForgotPassword
         value={email}
         onChange={setEmail}

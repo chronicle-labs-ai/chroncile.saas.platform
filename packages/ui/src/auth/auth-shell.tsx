@@ -2,12 +2,6 @@
 
 import * as React from "react";
 import { tv } from "../utils/tv";
-import {
-  ChromeStyleProvider,
-  useChromeStyleContext,
-  type ChromeStyle,
-} from "../theme/chrome-style-context";
-import { Blinds } from "../surfaces/recipes/blinds";
 import { Ember } from "../surfaces/recipes/ember";
 import { AuthTopbar, type AuthTopbarProps } from "./auth-topbar";
 
@@ -21,18 +15,13 @@ import { AuthTopbar, type AuthTopbarProps } from "./auth-topbar";
  * Pass `topbar={false}` to hide the topbar entirely (e.g. embedded in a
  * tab). Pass a custom node to override the default `AuthTopbar`.
  *
- * `chromeStyle` is inherited from the nearest `ChromeStyleProvider`
- * (e.g. the Storybook `data-chrome` toolbar) and falls back to
- * `"brand"` when no parent context is set — auth pages rendered
- * standalone in `apps/frontend` therefore stay editorial. Pass an
- * explicit `chromeStyle` to force a flavor regardless of context;
- * the shell wraps children in `ChromeStyleProvider` so `Button` /
- * `Input` / composites pick up the right density without per-control
- * `density` props.
- *
  * The shell paints the Blinds glass recipe background, sets the page
  * surface, and caps the content column at ~520 px so long lede paragraphs
  * stay readable. Set `maxWidth` to override.
+ *
+ * Note: the legacy `chromeStyle` prop has been removed. Auth surfaces
+ * now share the unified design system with the rest of the product;
+ * the glass `Ember` scene is preserved as the signature backdrop.
  */
 
 const shell = tv({
@@ -69,13 +58,6 @@ export interface AuthShellProps extends Omit<
   align?: "top" | "center";
   /** Hide the Blinds background (rare — only inside dense embeds). */
   bare?: boolean;
-  /**
-   * Drives default control density + auth composite surfaces under this shell.
-   * Inherits from the nearest `ChromeStyleProvider` (or the Storybook
-   * `data-chrome` toolbar); falls back to `"brand"` when neither is set.
-   * Pass explicitly to force a flavor regardless of context.
-   */
-  chromeStyle?: ChromeStyle;
   children: React.ReactNode;
 }
 
@@ -99,14 +81,11 @@ export function AuthShell({
   maxWidth = 520,
   align = "top",
   bare = false,
-  chromeStyle,
   className,
   children,
   ...rest
 }: AuthShellProps) {
   const slots = shell({ align });
-  const inheritedChrome = useChromeStyleContext();
-  const resolvedChrome: ChromeStyle = chromeStyle ?? inheritedChrome ?? "brand";
 
   let topbarNode: React.ReactNode = null;
   if (topbar !== false) {
@@ -122,27 +101,24 @@ export function AuthShell({
   }
 
   return (
-    <ChromeStyleProvider value={resolvedChrome}>
-      <div
-        className={slots.root({ className })}
-        data-slot="auth-shell"
-        data-chrome={resolvedChrome}
-        {...rest}
-      >
-        {bare ? null : (
-          <Ember
-            slats={10}
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-70"
-          />
-        )}
-        {topbarNode}
-        <main className={slots.main()}>
-          <div className={slots.inner()} style={{ maxWidth }}>
-            {children}
-          </div>
-        </main>
-      </div>
-    </ChromeStyleProvider>
+    <div
+      className={slots.root({ className })}
+      data-slot="auth-shell"
+      {...rest}
+    >
+      {bare ? null : (
+        <Ember
+          slats={10}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-70"
+        />
+      )}
+      {topbarNode}
+      <main className={slots.main()}>
+        <div className={slots.inner()} style={{ maxWidth }}>
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }

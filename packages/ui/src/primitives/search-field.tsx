@@ -6,22 +6,29 @@
  */
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  searchFieldClearVariants,
-  searchFieldIconVariants,
-  searchFieldInputVariants,
-  searchFieldRootVariants,
-} from "./shadcn";
 
-export type SearchFieldDensity = "compact" | "brand";
+export const searchFieldRootVariants = cva(
+  "relative flex w-full items-center transition-colors duration-fast ease-out h-[28px] rounded-md border border-hairline-strong bg-l-surface-input pl-[34px] pr-[6px] focus-within:border-[rgba(216,67,10,0.5)] focus-within:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] has-[input:disabled]:opacity-50"
+);
+
+export const searchFieldInputVariants = cva(
+  "flex-1 bg-transparent outline-none font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim"
+);
+
+export const searchFieldIconVariants = cva(
+  "pointer-events-none absolute top-1/2 -translate-y-1/2 left-[10px] h-[14px] w-[14px] text-l-ink-dim"
+);
+
+export const searchFieldClearVariants = cva(
+  "inline-flex items-center justify-center rounded-md transition-colors duration-fast ease-out focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember h-[20px] w-[20px] text-l-ink-dim hover:text-l-ink hover:bg-l-wash-3 disabled:invisible"
+);
 
 export interface SearchFieldProps {
   className?: string;
   placeholder?: string;
-  density?: SearchFieldDensity;
   /** Controlled value. */
   value?: string;
   /** Fires with the latest value as the user types or clears. */
@@ -46,7 +53,6 @@ export interface SearchFieldProps {
 export function SearchField({
   className,
   placeholder,
-  density: densityProp,
   value,
   onChange,
   defaultValue,
@@ -59,7 +65,6 @@ export function SearchField({
   autoFocus,
   id,
 }: SearchFieldProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const [internalValue, setInternalValue] = React.useState(defaultValue ?? "");
   const currentValue = value ?? internalValue;
 
@@ -78,8 +83,7 @@ export function SearchField({
         event.preventDefault();
         onSubmit?.(currentValue);
       }}
-      data-density={density}
-      className={cn(searchFieldRootVariants({ density }), className)}
+      className={cn(searchFieldRootVariants(), className)}
     >
       <svg
         aria-hidden
@@ -87,7 +91,7 @@ export function SearchField({
         fill="none"
         stroke="currentColor"
         strokeWidth={1.5}
-        className={searchFieldIconVariants({ density })}
+        className={searchFieldIconVariants()}
       >
         <path
           strokeLinecap="round"
@@ -111,7 +115,7 @@ export function SearchField({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         placeholder={placeholder}
-        className={searchFieldInputVariants({ density })}
+        className={searchFieldInputVariants()}
       />
       <button
         type="button"
@@ -120,7 +124,7 @@ export function SearchField({
           setValue("");
           onClear?.();
         }}
-        className={searchFieldClearVariants({ density })}
+        className={searchFieldClearVariants()}
         aria-label="Clear"
       >
         <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">

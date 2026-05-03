@@ -10,6 +10,11 @@ export type ClassValue =
  * Minimal class-name concatenator. Fine-grained merge is a non-goal —
  * the primitives own their base classes and callers pass overrides via
  * `className`, which come last so they win on equal specificity.
+ *
+ * @deprecated Use `cn` from `./cn` (the shadcn-canonical helper that
+ * pipes through `tailwind-merge`). `cx` is retained for the dozens of
+ * existing call sites that don't need precise utility merging; new code
+ * should reach for `cn` to match the rest of the design system.
  */
 export function cx(...args: ClassValue[]): string {
   const out: string[] = [];

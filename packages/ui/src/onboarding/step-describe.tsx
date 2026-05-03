@@ -190,8 +190,15 @@ export function StepDescribe({
       <div className="cg-fade-up cg-fade-up-3 mt-s-5 flex flex-col gap-s-3">
         {value.mode === "freeform" ? (
           <>
+            {/*
+             * Trimmed to one sentence so the empty field doesn't
+             * dominate the viewport on mobile. The longer
+             * "Intercom + Stripe + Slack" example moves to the
+             * `placeholder` slot of `<ParseStrip>` below where it
+             * acts as a parsing hint instead of a hero example.
+             */}
             <Textarea
-              placeholder="A support agent for our Shopify store. It reads Intercom conversations, looks up orders, issues Stripe refunds for late shipments, and escalates to Slack when a customer is upset."
+              placeholder="A support agent for our Shopify store that triages Intercom conversations and issues Stripe refunds."
               value={value.prompt ?? ""}
               onChange={(e) =>
                 onChange({ ...value, prompt: e.currentTarget.value })

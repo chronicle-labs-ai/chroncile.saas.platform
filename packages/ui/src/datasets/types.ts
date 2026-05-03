@@ -203,6 +203,160 @@ export type RemoveTraceFromDatasetHandler = (
   payload: RemoveTraceFromDatasetPayload,
 ) => void | Promise<void>;
 
+/* ── Bulk + inline trace mutations ─────────────────────────── */
+
+/**
+ * Patch payload fired when the user edits trace metadata inline (a
+ * single chip click) or in bulk (the batch-actions strip on the
+ * canvas toolbar).
+ *
+ * `traceIds` is always a list, so handlers don't have to fork on
+ * cardinality. Each key in `patch` follows the
+ * "undefined = leave alone, null = clear" convention so the same
+ * payload can both assign and remove a value.
+ */
+export interface UpdateTracesPayload {
+  datasetId: string;
+  traceIds: readonly string[];
+  patch: {
+    /** New cluster id, or null to drop the trace from any cluster. */
+    clusterId?: string | null;
+    /** New split, or null to mark unassigned. */
+    split?: DatasetSplit | null;
+    /** New status. */
+    status?: TraceStatus;
+    /** Replace the membership note, or null to clear it. */
+    note?: string | null;
+  };
+}
+
+/**
+ * Handler signature for inline + bulk trace mutations. May be sync
+ * or async; callers surface a pending state on the relevant chip /
+ * batch button while the returned promise resolves.
+ */
+export type UpdateTracesHandler = (
+  payload: UpdateTracesPayload,
+) => void | Promise<void>;
+
+/* ── Saved views ─────────────────────────────────────────── */
+
+/**
+ * Persisted slice of the dataset canvas state. Saved views give
+ * agent builders one-keystroke jumps to "P0 failures last 7 days",
+ * "Drift watch", "Ready for promotion" — the durable Linear-style
+ * view affordance.
+ *
+ * Stored opaquely as a JSON-serializable payload so adding new
+ * canvas dimensions doesn't require migrations: the canvas renders
+ * whatever it can apply and ignores the rest.
+ */
+export interface DatasetSavedView {
+  /** Stable id assigned by the backend (or synthesized in stories). */
+  id: string;
+  /** Display name. */
+  name: string;
+  /** Visibility scope. `personal` = only the creator; `workspace` =
+   *  shared with everyone. */
+  scope: "personal" | "workspace";
+  /** ISO timestamp of last save. */
+  updatedAt?: string;
+  /** Optional creator label for the rail. */
+  createdBy?: string;
+  /**
+   * Captured canvas state. Every key is optional so older views keep
+   * working when new dimensions are added.
+   */
+  state: {
+    lens?: string;
+    groupBy?: string;
+    /** @deprecated since the table moved to TanStack multi-column
+     *  sort. New views write `sorting` instead; this is still read at
+     *  apply-time as a back-compat fallback for views captured before
+     *  the migration. */
+    ordering?: string;
+    /**
+     * Multi-column TanStack sort. Each entry mirrors `ColumnSort`:
+     * `{ id: traceColumnId, desc: boolean }`. Typed loosely so this
+     * module doesn't depend on `@tanstack/react-table`.
+     */
+    sorting?: ReadonlyArray<{ id: string; desc: boolean }>;
+    density?: string;
+    showEmptyGroups?: boolean;
+    /** List of trace-row column ids that should be visible. */
+    displayProperties?: readonly string[];
+    /** Filter chips. Stored as the canvas's `FilterState[]`-shaped
+     *  payload but typed loosely so this module doesn't depend on
+     *  `product/filters` types. */
+    filters?: ReadonlyArray<{
+      id?: string;
+      columnId: string;
+      operator: string;
+      value: unknown;
+    }>;
+    /** Free-text search. */
+    search?: string;
+  };
+  /** Optional shortcut hint shown on the rail item. */
+  shortcut?: string;
+}
+
+export interface CreateSavedViewPayload {
+  datasetId: string;
+  name: string;
+  scope: "personal" | "workspace";
+  state: DatasetSavedView["state"];
+}
+
+export interface UpdateSavedViewPayload {
+  datasetId: string;
+  viewId: string;
+  patch: Partial<Omit<DatasetSavedView, "id">>;
+}
+
+export interface DeleteSavedViewPayload {
+  datasetId: string;
+  viewId: string;
+}
+
+export type CreateSavedViewHandler = (
+  payload: CreateSavedViewPayload,
+) => Promise<DatasetSavedView> | DatasetSavedView;
+export type UpdateSavedViewHandler = (
+  payload: UpdateSavedViewPayload,
+) => Promise<DatasetSavedView> | DatasetSavedView;
+export type DeleteSavedViewHandler = (
+  payload: DeleteSavedViewPayload,
+) => void | Promise<void>;
+
+/* ── Eval runs ───────────────────────────────────────────── */
+
+/** Status badge tone for an eval run. */
+export type DatasetEvalRunStatus = "passing" | "regressed" | "running" | "failed";
+
+/**
+ * One eval run scoped to a dataset. Surfaces the agent version, the
+ * outcome, and the trace ids that failed so the canvas can mark
+ * those rows in the active lens.
+ */
+export interface DatasetEvalRun {
+  id: string;
+  /** Display label — usually `agent.name@version` or a build hash. */
+  agentLabel: string;
+  /** ISO timestamp the run started. */
+  startedAt: string;
+  status: DatasetEvalRunStatus;
+  /** 0–1; null while running. */
+  passRate?: number | null;
+  /** Total traces evaluated. */
+  totalCount: number;
+  /** Trace ids the run failed on — drives the failed-row markers in
+   *  the list lens when this run is the active selection. */
+  failedTraceIds: readonly string[];
+  /** Optional short human description. */
+  note?: string;
+}
+
 /* ── Re-exports for ergonomic import ───────────────────────── */
 
 export type {

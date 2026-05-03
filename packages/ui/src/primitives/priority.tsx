@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 /**
  * Priority — Linear's three-bar glyph encoding urgency.
@@ -42,7 +42,7 @@ export function Priority({
       role="img"
       aria-label={ariaLabel ?? `${level} priority`}
       data-level={level}
-      className={cx(
+      className={cn(
         "inline-flex items-end justify-center",
         // gap stays consistent regardless of size
         "gap-[1.5px]",

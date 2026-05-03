@@ -11,7 +11,7 @@ import {
 } from "../primitives/collapsible";
 import { formatNumber } from "../connections/time";
 
-import { TraceSummaryRow } from "./trace-summary-row";
+import { DatasetTracesTableRow } from "./dataset-traces-table-row";
 import type { DatasetCluster, TraceSummary } from "./types";
 
 /*
@@ -66,7 +66,7 @@ export function DatasetClusterCard({
     <Collapsible
       defaultOpen={defaultOpen}
       className={cx(
-        "rounded-[4px] border border-l-border bg-l-surface-raised",
+        "rounded-[4px] border border-hairline-strong bg-l-surface-raised",
         className,
       )}
     >
@@ -112,13 +112,14 @@ export function DatasetClusterCard({
           ) : (
             <div className="divide-y divide-l-border-faint">
               {visibleTraces.map((trace) => (
-                <TraceSummaryRow
+                <DatasetTracesTableRow
                   key={trace.traceId}
                   trace={trace}
                   cluster={null}
-                  density="comfy"
+                  rowHeightPx={36}
                   isActive={trace.traceId === selectedTraceId}
                   onSelect={onSelectTrace}
+                  asDiv
                 />
               ))}
             </div>

@@ -13,7 +13,7 @@ const meta: Meta<typeof BacktestAgentsEditor> = {
   decorators: [
     (Story) => (
       <ProductChromeFrame padding="md">
-        <div className="rounded-l border border-hairline bg-surface-00 p-4">
+        <div className="rounded-md border border-hairline bg-surface-00 p-4">
           <Story />
         </div>
       </ProductChromeFrame>

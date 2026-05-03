@@ -340,7 +340,7 @@ export function StreamEventDetail({
             <CollapsibleTrigger asChild>
               <button
                 type="button"
-                className="-mt-[2px] mb-s-1 flex h-[24px] items-center gap-[5px] rounded-l px-[8px] font-sans text-[12px] font-medium text-l-ink-lo transition-colors hover:bg-l-wash-3 hover:text-l-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember"
+                className="-mt-[2px] mb-s-1 flex h-[24px] items-center gap-[5px] rounded-md px-[8px] font-sans text-[12px] font-medium text-l-ink-lo transition-colors hover:bg-l-wash-3 hover:text-l-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember"
               >
                 <ChevronRight
                   size={11}
@@ -352,7 +352,7 @@ export function StreamEventDetail({
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <pre className="mt-s-1 max-h-[240px] overflow-auto rounded-l-sm border border-hairline bg-l-surface px-[10px] py-[8px] font-mono text-[11.5px] leading-[1.6] text-l-ink-lo">
+              <pre className="mt-s-1 max-h-[240px] overflow-auto rounded-xs border border-hairline bg-l-surface px-[10px] py-[8px] font-mono text-[11.5px] leading-[1.6] text-l-ink-lo">
                 {payloadJson}
               </pre>
             </CollapsibleContent>
@@ -414,7 +414,7 @@ function DetailHeader({
         ) : null}
         <div className="ml-auto flex items-center gap-[2px]">
           {prevEvent !== undefined || nextEvent !== undefined ? (
-            <div className="mr-[2px] inline-flex items-center rounded-l border border-hairline bg-l-surface">
+            <div className="mr-[2px] inline-flex items-center rounded-md border border-hairline bg-l-surface">
               <HeaderIconButton
                 icon={
                   <ChevronLeft
@@ -477,7 +477,7 @@ function HeaderIconButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-l-sm text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-l-ink-dim focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember"
+      className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-xs text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-l-ink-dim focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember"
     >
       {icon}
     </button>
@@ -518,7 +518,7 @@ function DetailRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="group flex min-h-[28px] items-center gap-[8px] rounded-l px-[4px] py-[4px] transition-colors hover:bg-l-wash-3">
+    <div className="group flex min-h-[28px] items-center gap-[8px] rounded-md px-[4px] py-[4px] transition-colors hover:bg-l-wash-3">
       <span className="w-[88px] shrink-0 font-sans text-[12px] font-medium text-l-ink-dim">
         {label}
       </span>
@@ -608,7 +608,7 @@ function TraceStrip({
                 type="button"
                 onClick={() => onSelect?.(e)}
                 className={cx(
-                  "flex w-full items-center gap-[6px] rounded-l-sm py-[3px] pl-[12px] pr-[6px] text-left transition-colors",
+                  "flex w-full items-center gap-[6px] rounded-xs py-[3px] pl-[12px] pr-[6px] text-left transition-colors",
                   "hover:bg-l-wash-3 focus-visible:bg-l-wash-3 focus-visible:outline-none",
                   isActive ? "bg-l-wash-3" : undefined,
                 )}
@@ -693,7 +693,7 @@ function DatasetFooter({
           trigger={
             <button
               type="button"
-              className="inline-flex h-[26px] items-center gap-[5px] rounded-l border border-transparent bg-ember px-[10px] font-sans text-[12px] font-medium leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] transition-colors hover:bg-[#e85520] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page"
+              className="inline-flex h-[26px] items-center gap-[5px] rounded-md border border-transparent bg-ember px-[10px] font-sans text-[12px] font-medium leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] transition-colors hover:bg-ember-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page"
             >
               <Database size={11} strokeWidth={1.75} aria-hidden />
               {ctaLabel}
@@ -772,10 +772,10 @@ function DatasetMembershipChip({
     : "bg-l-ink-dim";
   return (
     <li>
-      <div className="group flex items-center gap-[8px] rounded-l px-[4px] py-[4px] transition-colors hover:bg-l-wash-3">
+      <div className="group flex items-center gap-[8px] rounded-md px-[4px] py-[4px] transition-colors hover:bg-l-wash-3">
         <span
           className={cx(
-            "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-l-sm",
+            "inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-xs",
             tile,
           )}
         >

@@ -38,24 +38,18 @@ export default function DashboardErrorBoundary({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center px-6 py-12">
+    <div className="flex min-h-[60vh] items-center justify-center px-s-6 py-s-12">
       <EmptyState
-        icon={<AlertTriangle strokeWidth={1.5} />}
+        icon={<AlertTriangle aria-hidden strokeWidth={1.5} />}
         title={title}
         description={description}
         actions={
-          <div className="flex items-center gap-2">
-            <Button
-              density="compact"
-              variant="primary"
-              size="sm"
-              onPress={reset}
-            >
+          <div className="flex items-center gap-s-2">
+            <Button variant="primary" size="sm" onPress={reset}>
               Try again
             </Button>
             {isOffline ? null : (
               <Button
-                density="compact"
                 variant="ghost"
                 size="sm"
                 onPress={() => {

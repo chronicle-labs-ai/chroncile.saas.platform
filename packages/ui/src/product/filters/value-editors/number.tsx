@@ -28,7 +28,7 @@ export function NumberEditor({ operator, value, onChange }: NumberEditorProps) {
       ? (value as [unknown, unknown])
       : [undefined, undefined];
     return (
-      <div className="flex w-[260px] flex-col gap-s-2 p-s-2">
+      <div className="flex w-full flex-col gap-s-2 p-s-2">
         <label className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
           Min
         </label>
@@ -51,7 +51,7 @@ export function NumberEditor({ operator, value, onChange }: NumberEditorProps) {
 
   const current = typeof value === "number" ? value : undefined;
   return (
-    <div className="w-[220px] p-s-2">
+    <div className="w-full p-s-2">
       <NumberField
         value={current}
         onChange={(next) => onChange(normalize(next))}

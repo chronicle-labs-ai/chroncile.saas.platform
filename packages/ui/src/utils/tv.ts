@@ -8,6 +8,12 @@
  * known order, and flipping tw-merge off keeps `tv()` calls as cheap static
  * string concatenation at runtime. Callers that know they need merging can
  * opt in per-invocation by passing `{ twMerge: true }` as the second arg.
+ *
+ * @deprecated Reach for `cva` from `class-variance-authority` in new code
+ * (the rest of the design system uses it). This wrapper survives because
+ * many existing slot-heavy components in `product/`, `agents/`, `datasets/`
+ * still consume it; once those have migrated to `cva` (or vanilla `cn`),
+ * delete this file and remove `tailwind-variants` from `dependencies`.
  */
 
 import type { TV } from "tailwind-variants";

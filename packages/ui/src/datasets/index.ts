@@ -5,15 +5,14 @@
  * Builds on the existing stream-timeline event + dataset primitives:
  *
  *   - Dataset CRUD (Create / Edit / Delete) at the manager level.
- *   - Per-dataset detail page with Overview / Traces / Clusters /
- *     Graph / Timeline tabs.
+ *   - Per-dataset detail page rendered as a unified canvas with a
+ *     lens picker (List / Cluster / Graph / Timeline / Coverage),
+ *     a filter rail, and a Display popover.
  *   - Trace detail drawer that embeds `StreamTimelineViewer` for the
  *     selected trace, plus a Remove-from-dataset confirm flow.
  *
- * Renders under `data-chrome="product"` (Linear-density). Storybook
- * stories explicitly opt into product chrome via
- * `<ChromeStyleProvider value="product">` because the global default
- * is brand chrome — see `../.storybook/preview.tsx`.
+ * Renders under the unified Linear-density chrome. The earlier brand
+ * vs product chrome split has been retired.
  */
 
 /* ── Top-level surfaces ─────────────────────────────────────── */
@@ -23,11 +22,89 @@ export type {
   ManagerDetailHelpers,
 } from "./datasets-manager";
 
-export { DatasetDetailPage, DATASET_DETAIL_TABS } from "./dataset-detail-page";
+export {
+  DatasetDetailPage,
+  DATASET_DETAIL_LENSES,
+  DATASET_DETAIL_TABS,
+  DATASET_DISPLAY_PROPERTIES,
+} from "./dataset-detail-page";
 export type {
   DatasetDetailPageProps,
+  DatasetDetailLens,
   DatasetDetailTab,
+  DatasetDensity,
+  DatasetDisplayProperty,
+  DatasetGroupBy,
+  DatasetOrdering,
 } from "./dataset-detail-page";
+
+export { defaultDatasetTraceColumns } from "./dataset-trace-columns";
+
+export { DatasetCoverageLens } from "./dataset-coverage-lens";
+export type {
+  DatasetCoverageLensProps,
+  CoverageBucketSelection,
+} from "./dataset-coverage-lens";
+
+export {
+  ClusterPicker,
+  SplitPicker,
+  StatusPicker,
+  ClearSelectionButton,
+} from "./dataset-trace-pickers";
+export type {
+  ClusterPickerProps,
+  SplitPickerProps,
+  StatusPickerProps,
+} from "./dataset-trace-pickers";
+
+/* ── Keyboard layer + palette + sheet ─────────────────────── */
+
+export {
+  DATASET_CANVAS_SHORTCUTS,
+  DATASET_CANVAS_SHORTCUTS_BY_ID,
+  DATASET_CANVAS_GROUPS,
+  parseChord,
+  chordMatches,
+  chordToKeys,
+} from "./dataset-canvas-keymap";
+export type {
+  DatasetCanvasShortcut,
+  DatasetCanvasShortcutGroup,
+  ParsedChord,
+} from "./dataset-canvas-keymap";
+
+export {
+  useDatasetCanvasKeyboard,
+  isEditableTarget,
+} from "./dataset-canvas-keyboard";
+export type {
+  DatasetCanvasShortcutId,
+  DatasetCanvasHandlers,
+  UseDatasetCanvasKeyboardOptions,
+} from "./dataset-canvas-keyboard";
+
+export { DatasetShortcutSheet } from "./dataset-shortcut-sheet";
+export type { DatasetShortcutSheetProps } from "./dataset-shortcut-sheet";
+
+export { DatasetCommandPalette } from "./dataset-command-palette";
+export type {
+  DatasetCommandPaletteProps,
+  DatasetCommandPaletteCommand,
+} from "./dataset-command-palette";
+
+/* ── Saved views + eval runs + compare ────────────────────── */
+
+export { DatasetCanvasRail } from "./dataset-canvas-rail";
+export type { DatasetCanvasRailProps } from "./dataset-canvas-rail";
+
+export { DatasetTraceCompareDrawer } from "./dataset-trace-compare";
+export type { DatasetTraceCompareDrawerProps } from "./dataset-trace-compare";
+
+/* ── Linear-density filter rail ─────────────────────────── */
+
+export { DatasetFilterRail } from "./dataset-filter-rail";
+export type { DatasetFilterRailProps } from "./dataset-filter-rail";
 
 export { DatasetTraceDetailDrawer } from "./dataset-trace-detail-drawer";
 export type { DatasetTraceDetailDrawerProps } from "./dataset-trace-detail-drawer";
@@ -83,11 +160,51 @@ export { DatasetClusterCard } from "./dataset-cluster-card";
 export type { DatasetClusterCardProps } from "./dataset-cluster-card";
 
 export {
-  TraceSummaryRow,
+  DatasetTracesTableRow,
+  /** @deprecated alias retained for back-compat — use `DatasetTracesTableRow`. */
+  DatasetTracesTableRow as TraceSummaryRow,
   buildClusterIndex,
   formatTraceDuration,
-} from "./trace-summary-row";
-export type { TraceSummaryRowProps } from "./trace-summary-row";
+} from "./dataset-traces-table-row";
+export type {
+  DatasetTracesTableRowProps,
+  /** @deprecated alias retained for back-compat — use `DatasetTracesTableRowProps`. */
+  DatasetTracesTableRowProps as TraceSummaryRowProps,
+  TracesRowColumnId,
+} from "./dataset-traces-table-row";
+
+/* New tablecn-flavored List lens. */
+export {
+  DatasetTracesTable,
+  useDatasetTracesTable,
+  visibilityFromDisplayProperties,
+  displayPropertiesFromVisibility,
+  rowSelectionFromIds,
+  idsFromRowSelection,
+  DATASET_TRACES_DISPLAY_PROPERTIES,
+} from "./dataset-traces-table";
+export type {
+  DatasetTracesTableProps,
+  DatasetTracesGroupBy,
+  DatasetTracesDensity,
+  DatasetTracesDisplayProperty,
+} from "./dataset-traces-table";
+
+/* Tablecn-shaped data-table primitives (faceted filter, view options,
+ * multi-column sort) — exposed for any other surface that wants to
+ * adopt the same chrome on top of TanStack Table. */
+export {
+  DataTableFacetedFilter,
+  DataTableViewOptions,
+  DataTableSortList,
+} from "./data-table";
+export type {
+  Option as DataTableOption,
+  FilterVariant as DataTableFilterVariant,
+} from "./data-table";
+
+export { SourceLogoStack } from "./source-logo-stack";
+export type { SourceLogoStackProps } from "./source-logo-stack";
 
 /* ── Graph view ────────────────────────────────────────────── */
 export { DatasetGraphView } from "./dataset-graph-view";
@@ -136,17 +253,28 @@ export {
 export type {
   CreateDatasetHandler,
   CreateDatasetPayload,
+  CreateSavedViewHandler,
+  CreateSavedViewPayload,
   DatasetCluster,
+  DatasetEvalRun,
+  DatasetEvalRunStatus,
+  DatasetSavedView,
   DatasetSimilarityEdge,
   DatasetSnapshot,
   DeleteDatasetHandler,
   DeleteDatasetPayload,
+  DeleteSavedViewHandler,
+  DeleteSavedViewPayload,
   RemoveTraceFromDatasetHandler,
   RemoveTraceFromDatasetPayload,
   TraceStatus,
   TraceSummary,
   UpdateDatasetHandler,
   UpdateDatasetPayload,
+  UpdateSavedViewHandler,
+  UpdateSavedViewPayload,
+  UpdateTracesHandler,
+  UpdateTracesPayload,
 } from "./types";
 
 /* ── Mock seeds for stories + bring-up ─────────────────────── */

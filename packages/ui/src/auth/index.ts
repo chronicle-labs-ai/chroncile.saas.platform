@@ -68,6 +68,7 @@ export type {
   WorkspaceSetupProps,
   WorkspaceSetupSub,
   WorkspaceSetupCaptureValue,
+  WorkspaceSetupFieldErrors,
 } from "./workspace-setup";
 
 export { SSORedirect } from "./sso-redirect";

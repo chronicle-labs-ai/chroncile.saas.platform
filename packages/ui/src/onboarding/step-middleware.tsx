@@ -5,7 +5,12 @@ import { Button } from "../primitives/button";
 import { Eyebrow } from "../primitives/eyebrow";
 import { Spinner } from "../primitives/spinner";
 import { CopyButton } from "../primitives/copy-button";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "../icons/glyphs";
+import {
+  AlertIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+} from "../icons/glyphs";
 import {
   AuthDisplay,
   AuthLede,
@@ -39,6 +44,12 @@ export interface StepMiddlewareProps {
   received?: boolean;
   /** Externally-controlled "waiting for the first event" state. */
   waiting?: boolean;
+  /**
+   * Externally-controlled error message — shows the alert glyph + the
+   * provided copy in the test row and overrides the success / waiting
+   * states. The Test button stays clickable so the user can retry.
+   */
+  error?: string | null;
   onNext?: () => void;
   onBack?: () => void;
 }
@@ -87,6 +98,7 @@ export function StepMiddleware({
   onTest,
   received: receivedProp,
   waiting: waitingProp,
+  error,
   onNext,
   onBack,
 }: StepMiddlewareProps) {
@@ -144,23 +156,47 @@ export function StepMiddleware({
         </pre>
       </div>
 
+      {/*
+       * Test row — pinned icon column + min-width button so the
+       * leading glyph stays put across idle / waiting / received /
+       * error states and the test button doesn't reflow as its label
+       * cycles through different lengths.
+       */}
       <div className="mt-s-4 flex items-center gap-s-3 rounded-sm border border-hairline bg-surface-01 px-s-3 py-s-2">
-        <span className="flex-1 font-mono text-mono text-ink-dim">
-          {received ? (
-            <span className="inline-flex items-center gap-[6px] text-event-green">
-              <CheckIcon /> First event received
-            </span>
-          ) : waiting ? (
-            <span className="inline-flex items-center gap-[6px]">
-              <Spinner size="sm" tone="ember" /> Waiting for first event…
-            </span>
-          ) : (
-            "Run your code, then test the connection."
-          )}
+        <span className="flex flex-1 items-center gap-s-2 font-mono text-mono text-ink-dim">
+          <span className="inline-flex h-[14px] w-[14px] shrink-0 items-center justify-center">
+            {error ? (
+              <AlertIcon className="text-event-red" />
+            ) : received ? (
+              <CheckIcon className="text-event-green" />
+            ) : waiting ? (
+              <Spinner size="sm" tone="ember" />
+            ) : null}
+          </span>
+          <span
+            className={
+              error
+                ? "text-event-red"
+                : received
+                  ? "text-event-green"
+                  : waiting
+                    ? "text-ink-lo"
+                    : undefined
+            }
+          >
+            {error
+              ? error
+              : received
+                ? "First event received"
+                : waiting
+                  ? "Waiting for first event…"
+                  : "Run your code, then test the connection."}
+          </span>
         </span>
         <Button
           variant="secondary"
           size="sm"
+          className="min-w-[104px]"
           isDisabled={waiting}
           onPress={simulate}
         >

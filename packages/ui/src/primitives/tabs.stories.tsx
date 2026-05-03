@@ -11,19 +11,19 @@ type Story = StoryObj;
 export const Default: Story = {
   render: () => (
     <div className="w-[560px]">
-      <Tabs defaultSelectedKey="events">
+      <Tabs defaultValue="events">
         <TabList aria-label="Dashboard">
-          <Tab id="events">Events</Tab>
-          <Tab id="runs">Runs</Tab>
-          <Tab id="rules">Rules</Tab>
+          <Tab value="events">Events</Tab>
+          <Tab value="runs">Runs</Tab>
+          <Tab value="rules">Rules</Tab>
         </TabList>
-        <TabPanel id="events">
+        <TabPanel value="events">
           <div className="py-s-4">Events panel content</div>
         </TabPanel>
-        <TabPanel id="runs">
+        <TabPanel value="runs">
           <div className="py-s-4">Runs panel content</div>
         </TabPanel>
-        <TabPanel id="rules">
+        <TabPanel value="rules">
           <div className="py-s-4">Rules panel content</div>
         </TabPanel>
       </Tabs>
@@ -34,19 +34,19 @@ export const Default: Story = {
 export const Vertical: Story = {
   render: () => (
     <div className="w-[560px]">
-      <Tabs orientation="vertical" defaultSelectedKey="general">
+      <Tabs orientation="vertical" defaultValue="general">
         <TabList aria-label="Settings">
-          <Tab id="general">General</Tab>
-          <Tab id="billing">Billing</Tab>
-          <Tab id="members">Members</Tab>
+          <Tab value="general">General</Tab>
+          <Tab value="billing">Billing</Tab>
+          <Tab value="members">Members</Tab>
         </TabList>
-        <TabPanel id="general">
+        <TabPanel value="general">
           <div className="px-s-4">General settings</div>
         </TabPanel>
-        <TabPanel id="billing">
+        <TabPanel value="billing">
           <div className="px-s-4">Billing settings</div>
         </TabPanel>
-        <TabPanel id="members">
+        <TabPanel value="members">
           <div className="px-s-4">Members settings</div>
         </TabPanel>
       </Tabs>

@@ -125,7 +125,7 @@ export function BacktestDataBuilder({
         </div>
 
         {/* Tray */}
-        <aside className="flex flex-col gap-2 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] p-2.5">
+        <aside className="flex flex-col gap-2 rounded-[2px] border border-divider bg-wash-micro p-2.5">
           <div className="flex items-start justify-between border-b border-divider pb-2">
             <div>
               <Eyebrow className="text-ember">DATASET</Eyebrow>
@@ -194,7 +194,6 @@ export function BacktestDataBuilder({
                 <div className="mt-auto flex flex-col gap-1 border-t border-divider pt-2">
                   <Eyebrow className="text-ink-dim">SAVE AS</Eyebrow>
                   <Input
-                    density="compact"
                     placeholder="e.g. refund-regressions-v3"
                     value={data.savedAs ?? ""}
                     onChange={(e) =>
@@ -378,8 +377,8 @@ function ProdBrowser({ onAdd }: { onAdd: (source: BacktestDataSource) => void })
                 className={cx(
                   "flex items-center gap-1.5 rounded-[2px] border px-2 py-1 text-left transition-colors",
                   on
-                    ? "border-ember/45 bg-[rgba(216,67,10,0.045)]"
-                    : "border-divider hover:border-hairline-strong hover:bg-[rgba(255,255,255,0.025)]",
+                    ? "border-ember/45 bg-row-active"
+                    : "border-divider hover:border-hairline-strong hover:bg-wash-2",
                 )}
               >
                 <CandidateHueDot hue={c.hue} size="xs" />
@@ -438,7 +437,6 @@ function ProdBrowser({ onAdd }: { onAdd: (source: BacktestDataSource) => void })
         </Mono>
         <Button
           variant="primary"
-          density="compact"
           size="sm"
           leadingIcon={<Plus className="size-3" strokeWidth={1.8} />}
           onClick={addToTray}
@@ -611,7 +609,6 @@ function ScenarioGen({
         </Mono>
         <Button
           variant="primary"
-          density="compact"
           size="sm"
           leadingIcon={<Sparkles className="size-3" strokeWidth={1.6} />}
           onClick={addAll}
@@ -664,8 +661,8 @@ function SavedDatasets({
           className={cx(
             "flex items-center gap-2 rounded-[2px] border px-2.5 py-1.5 text-left transition-colors",
             current === d.id
-              ? "border-ember/45 bg-[rgba(216,67,10,0.045)]"
-              : "border-divider hover:border-hairline-strong hover:bg-[rgba(255,255,255,0.025)]",
+              ? "border-ember/45 bg-row-active"
+              : "border-divider hover:border-hairline-strong hover:bg-wash-2",
           )}
         >
           <span
@@ -722,7 +719,7 @@ function Segmented({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="inline-flex rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] p-0.5">
+    <div className="inline-flex rounded-[2px] border border-divider bg-wash-micro p-0.5">
       {options.map((o) => (
         <button
           key={o}

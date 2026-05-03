@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 export type KpiValueTone = "default" | "ember" | "green" | "amber" | "red";
 
@@ -36,7 +36,7 @@ export function KpiCard({
 }: KpiCardProps) {
   return (
     <div
-      className={cx(
+      className={cn(
         "flex flex-col gap-[4px] rounded-md border border-hairline bg-surface-01 px-s-4 py-[14px]",
         className
       )}
@@ -46,7 +46,7 @@ export function KpiCard({
         {label}
       </span>
       <span
-        className={cx(
+        className={cn(
           monoValue
             ? "font-mono text-sm tracking-normal"
             : "font-display text-[22px] font-medium leading-none tracking-[-0.015em]",
@@ -83,7 +83,7 @@ export function KpiGrid({
 }: KpiGridProps) {
   return (
     <div
-      className={cx(
+      className={cn(
         "grid grid-cols-1 gap-s-3",
         gridColumns[columns],
         className

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { AlertTriangle, Check, X } from "lucide-react";
 
 import { formatNumber, RelativeTime } from "../connections/time";
 import { cx } from "../utils/cx";
@@ -62,6 +63,10 @@ export function AgentMetricsStrip({
       : successPct >= 80
         ? "text-event-amber"
         : "text-event-red";
+  const successLabel =
+    successPct >= 95 ? "healthy" : successPct >= 80 ? "warning" : "failing";
+  const SuccessIcon =
+    successPct >= 95 ? Check : successPct >= 80 ? AlertTriangle : X;
 
   return (
     <div
@@ -94,9 +99,19 @@ export function AgentMetricsStrip({
       <Tile
         label="Success rate"
         value={
-          <span className={successTone}>
-            {summary.totalRuns === 0 ? "—" : `${successPct}%`}
-          </span>
+          summary.totalRuns === 0 ? (
+            <span className={successTone}>—</span>
+          ) : (
+            <span className={cx("inline-flex items-center gap-2", successTone)}>
+              <SuccessIcon
+                className="size-4 shrink-0"
+                strokeWidth={2}
+                aria-hidden
+              />
+              {`${successPct}%`}
+              <span className="sr-only">{` (${successLabel})`}</span>
+            </span>
+          )
         }
         sub={
           summary.totalRuns === 0
@@ -160,15 +175,15 @@ function Tile({
   sub?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-[4px] border border-l-border bg-l-surface-raised px-3 py-2.5">
+    <div className="flex flex-col gap-1 rounded-[4px] border border-hairline-strong bg-l-surface-raised px-3 py-2.5">
       <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim">
         {label}
       </span>
-      <span className="font-sans text-[18px] font-medium leading-tight text-l-ink">
+      <span className="font-sans text-[18px] font-medium leading-tight tabular-nums text-l-ink">
         {value}
       </span>
       {sub ? (
-        <span className="font-mono text-[10px] tracking-[0.04em] text-l-ink-dim">
+        <span className="font-mono text-[10px] tracking-[0.04em] tabular-nums text-l-ink-dim">
           {sub}
         </span>
       ) : null}

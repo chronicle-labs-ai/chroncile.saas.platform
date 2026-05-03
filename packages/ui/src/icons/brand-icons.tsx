@@ -105,6 +105,48 @@ function getCompanyLogoDomain(name: string, domain: string | null | undefined) {
   return getBrandIconDomain(name);
 }
 
+/**
+ * Brands whose default logo.dev mark is essentially monochrome black
+ * (pure or near-pure black silhouette on a transparent background).
+ * Rendered straight onto our dark product canvas the mark disappears.
+ *
+ * For these brands the rendered `<img>` is tagged with
+ * `data-brand-tone="dark-mark"`; a single CSS rule in `globals.css`
+ * applies `filter: invert(1) hue-rotate(180deg)` under
+ * `[data-theme="dark"]` so the silhouette flips to white. The
+ * `hue-rotate(180deg)` is a no-op for pure black/white but preserves
+ * subtle tint for near-monochrome marks (e.g. Pydantic's red accent).
+ *
+ * Keep this set TIGHT — only include brands whose logo.dev response
+ * is unambiguously monochrome-dark. Inverting a multi-color logo
+ * (Slack, Figma, Stripe, Linear's purple gradient) distorts brand
+ * color and is worse than the original. Brands that need help but
+ * don't invert cleanly should use `<AgentCompanyMark>` (tile-based
+ * contrast) or wrap the logo in their own contrasting surface.
+ */
+export const MONOCHROME_DARK_MARK_BRANDS: ReadonlySet<string> = new Set([
+  "anthropic",
+  "apple",
+  "cursor",
+  "github",
+  "langchain",
+  "llamaindex",
+  "next",
+  "next.js",
+  "nextjs",
+  "notion",
+  "openai",
+  "pydantic",
+  "shadcn",
+  "twitter",
+  "vercel",
+  "x",
+]);
+
+export function isMonochromeDarkMarkBrand(name: string): boolean {
+  return MONOCHROME_DARK_MARK_BRANDS.has(normalizeBrandIconName(name));
+}
+
 export type BrandIconFormat = "svg" | "png" | "webp" | "jpg";
 
 export interface LogoDevUrlOptions {
@@ -170,6 +212,16 @@ export interface BrandIconProps
   rounded?: boolean;
   /** Custom border radius for the logo or fallback badge. Overrides `rounded`. */
   radius?: React.CSSProperties["borderRadius"];
+  /**
+   * When `true` (default), the rendered `<img>` is tagged with
+   * `data-brand-tone="dark-mark"` for monochrome-dark brands so a
+   * single CSS rule (`globals.css`) can invert the mark under
+   * `[data-theme="dark"]`. Set to `false` when the icon is already
+   * paired with a contrasting tile (e.g. inside `<AgentCompanyMark>`)
+   * — otherwise the inversion would flip a black mark to white on a
+   * white tile and re-hide it.
+   */
+  themeAware?: boolean;
 }
 
 export function BrandIcon({
@@ -184,6 +236,7 @@ export function BrandIcon({
   fallbackIcon: FallbackIcon = Building2,
   rounded = false,
   radius,
+  themeAware = true,
   className,
   onError,
   style,
@@ -225,10 +278,13 @@ export function BrandIcon({
     );
   }
 
+  const isDarkMark = themeAware && MONOCHROME_DARK_MARK_BRANDS.has(id);
+
   return (
     <img
       alt={alt}
       className={className}
+      data-brand-tone={isDarkMark ? "dark-mark" : undefined}
       height={size}
       loading="lazy"
       src={getLogoDevUrl(BRAND_ICON_DOMAINS[id], {
@@ -266,6 +322,14 @@ export interface CompanyLogoProps
   fallbackIcon?: LucideIcon;
   rounded?: boolean;
   radius?: React.CSSProperties["borderRadius"];
+  /**
+   * When `true` (default), monochrome-dark brand marks (GitHub,
+   * OpenAI, Vercel, Cursor, …) invert to white under
+   * `[data-theme="dark"]` so they stay readable on the dark product
+   * canvas. Set to `false` when the logo is already rendered inside
+   * a contrasting tile (e.g. `<AgentCompanyMark>`).
+   */
+  themeAware?: boolean;
 }
 
 export function CompanyLogo({
@@ -281,6 +345,7 @@ export function CompanyLogo({
   fallbackIcon,
   rounded = false,
   radius,
+  themeAware = true,
   className,
   onError,
   style,
@@ -324,10 +389,13 @@ export function CompanyLogo({
     );
   }
 
+  const isDarkMark = themeAware && isMonochromeDarkMarkBrand(name);
+
   return (
     <img
       alt={alt}
       className={className}
+      data-brand-tone={isDarkMark ? "dark-mark" : undefined}
       height={size}
       loading="lazy"
       src={getLogoDevUrl(resolvedDomain, {

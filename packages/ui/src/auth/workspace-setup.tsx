@@ -7,13 +7,17 @@ import { FormField } from "../primitives/form-field";
 import { Input } from "../primitives/input";
 import { ScanLoader } from "../primitives/scan-loader";
 import { WorkspaceUrlField, slugify } from "../primitives/workspace-url-field";
+import { useIsCoarsePointer } from "../utils/use-is-coarse-pointer";
 import { ArrowRightIcon } from "../icons/glyphs";
 import {
   AuthDisplay,
   AuthLede,
+  IdentityCard,
   InlineAlert,
   StepFoot,
   SuccessSeal,
+  validateOrgName,
+  validateSlug,
 } from "./_internal";
 import {
   ProvisioningChecklist,
@@ -38,16 +42,35 @@ export interface WorkspaceSetupCaptureValue {
   slug: string;
 }
 
+export interface WorkspaceSetupFieldErrors {
+  /** Workspace-name field error (e.g. server-side "name already taken"). */
+  orgName?: string | null;
+  /** Slug field error (e.g. "slug already taken"). */
+  slug?: string | null;
+}
+
 export interface WorkspaceSetupProps {
   sub: WorkspaceSetupSub;
-  /** Email of the signed-in WorkOS user — referenced in A.4's alert. */
+  /** Email of the signed-in WorkOS user — drives A.4's identity card. */
   email?: string;
   /** Submit handler for A.4 capture. */
   onSubmit?: (value: WorkspaceSetupCaptureValue) => void;
   /** Initial value for A.4's two fields. */
   defaultValue?: Partial<WorkspaceSetupCaptureValue>;
-  /** A.4 error banner. */
+  /**
+   * Top-level / catastrophic error for A.4 (network, unauthorized,
+   * unknown server failure). Field-specific errors should be passed
+   * via `fieldErrors` so they render inline against the offending
+   * input rather than as a banner.
+   */
   error?: string | null;
+  /**
+   * Server-side field errors for A.4. Routed onto the matching
+   * `<FormField>` so the user sees the message next to the field
+   * that caused it (Emil's "colocate errors" rule). Pass `null` to
+   * clear an error after the user starts editing.
+   */
+  fieldErrors?: WorkspaceSetupFieldErrors;
   /** A.4 in-flight state (the moment between submit and `sub === "running"`). */
   isSubmitting?: boolean;
   /** A.5 — array of provisioning steps. */
@@ -80,28 +103,89 @@ export function WorkspaceSetup(props: WorkspaceSetupProps) {
 
 /* ── A.4 — capture ────────────────────────────────────────── */
 
+const FORM_ID = "auth-workspace-capture";
+
 function Capture({
   email,
   onSubmit,
   defaultValue,
   error = null,
+  fieldErrors,
   isSubmitting = false,
 }: WorkspaceSetupProps) {
   const [orgName, setOrgName] = React.useState(defaultValue?.orgName ?? "");
   const [slug, setSlug] = React.useState(defaultValue?.slug ?? "");
-  const [touched, setTouched] = React.useState(!!defaultValue?.slug);
+  const [slugTouched, setSlugTouched] = React.useState(!!defaultValue?.slug);
+
+  /*
+   * Local error state per field. We split "client-side validation
+   * (clears on edit)" from "server-side validation (clears on
+   * submit-retry)" so a user who corrected their input doesn't
+   * still see the stale "name already taken" message.
+   */
+  const [nameErr, setNameErr] = React.useState<string | null>(null);
+  const [slugErr, setSlugErr] = React.useState<string | null>(null);
+  /*
+   * Submission attempted at least once — gates between gentle
+   * (only-on-blur) validation and aggressive (every-keystroke)
+   * validation. Avoids screaming at the user before they've
+   * finished typing.
+   */
+  const [tried, setTried] = React.useState(false);
 
   /* Auto-derive slug from name unless the user has touched it. */
   React.useEffect(() => {
-    if (touched) return;
+    if (slugTouched) return;
     setSlug(slugify(orgName));
-  }, [orgName, touched]);
+  }, [orgName, slugTouched]);
 
-  const canSubmit = orgName.trim().length >= 2 && slug.length >= 2;
+  /*
+   * Re-validate live once we've already tried (and failed) — the
+   * form moves to "fix it now" mode and clears each field error
+   * the moment it becomes valid. Without this the user has to
+   * blur the field again to see the red border drop.
+   */
+  React.useEffect(() => {
+    if (!tried) return;
+    setNameErr(validateOrgName(orgName));
+    setSlugErr(validateSlug(slug));
+  }, [orgName, slug, tried]);
+
+  /*
+   * Skip `autoFocus` on touch devices — see Emil's
+   * touch-accessibility rules. `useIsCoarsePointer` returns false
+   * during SSR + first client render so the markup matches; the
+   * effect flips it on touch *after* mount, which silently drops
+   * the prop on those devices.
+   */
+  const isCoarse = useIsCoarsePointer();
+
+  /*
+   * Server-side errors win over local validation while present —
+   * they describe a server-known truth (e.g. "slug already taken")
+   * the client can't infer. Cleared by re-submitting; while typing
+   * we keep the local validator in sync below.
+   */
+  const displayedNameErr = fieldErrors?.orgName || nameErr;
+  const displayedSlugErr = fieldErrors?.slug || slugErr;
 
   const submit = () => {
-    if (canSubmit) onSubmit?.({ orgName: orgName.trim(), slug });
+    setTried(true);
+    const nextNameErr = validateOrgName(orgName);
+    const nextSlugErr = validateSlug(slug);
+    setNameErr(nextNameErr);
+    setSlugErr(nextSlugErr);
+    if (nextNameErr || nextSlugErr) return;
+    onSubmit?.({ orgName: orgName.trim(), slug });
   };
+
+  /*
+   * `disabled` state for the Create-workspace button. Different
+   * from "validation failed" — keep the button enabled even with
+   * empty fields so the first submit reveals the rules. It only
+   * goes disabled while the parent is mid-flight.
+   */
+  const disabled = isSubmitting;
 
   return (
     <div className="flex flex-col">
@@ -114,51 +198,98 @@ function Capture({
         URL — both editable later.
       </AuthLede>
 
-      <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
+      <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-5">
+        {/* Identity context strip — replaces the legacy "Almost there"
+            InlineAlert. Reads as confirmation, not warning. */}
+        {email ? <IdentityCard email={email} /> : null}
+
+        {/* Catastrophic / non-field error banner. Field-specific errors
+            land beneath their input via `fieldErrors`. */}
         {error ? <InlineAlert>{error}</InlineAlert> : null}
 
-        {email ? (
-          <InlineAlert tone="info" title="Almost there.">
-            Signed in as <code className="font-mono text-ink-hi">{email}</code>.
-            We&rsquo;ll provision the workspace and route this email&rsquo;s
-            domain to it automatically.
-          </InlineAlert>
-        ) : null}
-
-        <FormField
-          tone="auth"
-          label={<>Workspace name</>}
-          htmlFor="auth-ws-name"
+        <form
+          id={FORM_ID}
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+          className="flex flex-col gap-s-3"
         >
-          <Input
-            id="auth-ws-name"
-            type="text"
-            autoComplete="organization"
-            placeholder="Acme Industries"
-            variant="auth"
-            value={orgName}
-            onChange={(e) => setOrgName(e.currentTarget.value)}
-            onKeyDown={(e) => e.key === "Enter" && submit()}
-            autoFocus
-          />
-        </FormField>
+          <FormField
+            tone="auth"
+            label="Workspace name"
+            htmlFor="auth-ws-name"
+            error={displayedNameErr ?? undefined}
+          >
+            <Input
+              id="auth-ws-name"
+              type="text"
+              autoComplete="organization"
+              placeholder="Acme Industries"
+              variant="auth"
+              value={orgName}
+              onChange={(e) => setOrgName(e.currentTarget.value)}
+              onBlur={() => setNameErr(validateOrgName(orgName))}
+              invalid={!!displayedNameErr}
+              aria-invalid={!!displayedNameErr || undefined}
+              aria-describedby={
+                displayedNameErr ? "auth-ws-name-error" : undefined
+              }
+              maxLength={60}
+              autoFocus={!isCoarse}
+            />
+          </FormField>
 
-        <FormField
-          tone="auth"
-          label={<>Workspace URL</>}
-          htmlFor="auth-ws-slug"
-          description="Lowercase letters, numbers, and hyphens. Choose carefully — it shows up in webhook URLs and SDK keys."
-        >
-          <WorkspaceUrlField
-            id="auth-ws-slug"
-            value={slug}
-            onChange={(s) => {
-              setTouched(true);
-              setSlug(s);
-            }}
-            placeholder="acme-industries"
-          />
-        </FormField>
+          <FormField
+            tone="auth"
+            label="Workspace URL"
+            htmlFor="auth-ws-slug"
+            error={displayedSlugErr ?? undefined}
+          >
+            <WorkspaceUrlField
+              id="auth-ws-slug"
+              value={slug}
+              onChange={(s) => {
+                setSlugTouched(true);
+                setSlug(s);
+              }}
+              onBlur={() => setSlugErr(validateSlug(slug))}
+              invalid={!!displayedSlugErr}
+              aria-invalid={!!displayedSlugErr || undefined}
+              maxLength={32}
+              placeholder="acme-industries"
+            />
+            {/*
+             * Live URL preview — gives the user a concrete picture of
+             * what they're committing to without making them read the
+             * description paragraph. Goes neutral when empty, ember
+             * when present. Sized so the field's `error` slot below
+             * (when fired) and this preview row don't fight each
+             * other for space.
+             */}
+            <p
+              id="auth-ws-slug-preview"
+              className="font-mono text-mono-sm leading-[1.5] text-ink-dim"
+            >
+              Your URL will be{" "}
+              <span
+                className={
+                  slug
+                    ? "text-ink-hi"
+                    : "text-ink-faint"
+                }
+              >
+                chronicle.io/{slug || "your-workspace"}
+              </span>
+              .{" "}
+              <span className="text-ink-dim">
+                Lowercase letters, numbers, hyphens. Shows up in webhook
+                URLs and SDK keys — pick carefully.
+              </span>
+            </p>
+          </FormField>
+        </form>
       </div>
 
       <StepFoot
@@ -166,9 +297,10 @@ function Capture({
         next={
           <Button
             variant="ember"
+            type="submit"
+            form={FORM_ID}
             isLoading={isSubmitting}
-            isDisabled={!canSubmit}
-            onPress={submit}
+            isDisabled={disabled}
             trailingIcon={!isSubmitting && <ArrowRightIcon />}
           >
             Create workspace

@@ -66,10 +66,12 @@ export type {
   AppSidebarProps,
   DashboardShellUser,
   DashboardShellWorkspace,
+  NavMainItem,
 } from "./dashboard-sidebar-shell";
 
 export {
   LinkProvider,
+  RouterLink,
   useLinkComponent,
   useNavigate,
 } from "./link-context";

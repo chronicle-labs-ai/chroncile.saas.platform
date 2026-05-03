@@ -22,7 +22,7 @@ function TypeScale() {
 
       <section className="flex flex-col gap-s-3">
         <div className="font-mono text-mono uppercase tracking-eyebrow text-ember">
-          Body · TWK Lausanne
+          Body · Inter Variable
         </div>
         <Body size="lg">
           A unified design language for Chronicle — serif headlines for
@@ -33,14 +33,14 @@ function TypeScale() {
           stream, sortable as list or timeline.
         </Body>
         <Body size="sm" tone="dim">
-          Drafted in one session · tokens in tokens.css · Kalice + TWK Lausanne
-          + Geist Mono.
+          Tokens in tokens.css · Kalice (display) + Inter Variable
+          (body) + Berkeley Mono / IBM Plex Mono (code).
         </Body>
       </section>
 
       <section className="flex flex-col gap-s-3">
         <div className="font-mono text-mono uppercase tracking-eyebrow text-ember">
-          Mono · Geist Mono
+          Mono · Berkeley Mono / IBM Plex Mono
         </div>
         <Mono size="lg" tone="hi">
           agent.tool.invoke → escalate()

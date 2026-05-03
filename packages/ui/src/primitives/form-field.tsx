@@ -1,20 +1,42 @@
 "use client";
 
 import * as React from "react";
-
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  formFieldDescriptionVariants,
-  formFieldErrorVariants,
-  formFieldLabelVariants,
-  formFieldRootVariants,
-} from "./shadcn";
+import { cva } from "class-variance-authority";
 
 /*
  * FormField is a layout shell that pairs a label, description, and error
  * slot with a single field child. Consumers pass `htmlFor` / ARIA wiring
  * explicitly when the child needs programmatic association.
  */
+
+export const formFieldRootVariants = cva("flex flex-col gap-[6px]");
+
+export const formFieldLabelVariants = cva(
+  "font-sans text-[12px] font-medium tracking-normal text-l-ink-lo",
+  {
+    variants: {
+      tone: {
+        default: "text-ink-dim",
+        auth: "text-ink-hi",
+      },
+    },
+    compoundVariants: [
+      { tone: "default", className: "text-l-ink-lo" },
+      { tone: "auth", className: "text-l-ink" },
+    ],
+    defaultVariants: {
+      tone: "default",
+    },
+  }
+);
+
+export const formFieldDescriptionVariants = cva(
+  "leading-[1.5] font-sans text-[12px] text-l-ink-dim"
+);
+
+export const formFieldErrorVariants = cva(
+  "leading-[1.5] text-event-red font-sans text-[12px]"
+);
 
 export interface FormFieldProps {
   children: React.ReactNode;
@@ -24,9 +46,6 @@ export interface FormFieldProps {
   error?: React.ReactNode;
   required?: boolean;
   tone?: "default" | "auth";
-  /** Force a density flavor. Defaults to whichever the surrounding
-   * `ChromeStyleProvider` resolves to. */
-  density?: "compact" | "brand";
   className?: string;
   labelClassName?: string;
   descriptionClassName?: string;
@@ -41,24 +60,17 @@ export function FormField({
   error,
   required = false,
   tone = "default",
-  density: densityProp,
   className,
   labelClassName,
   descriptionClassName,
   errorClassName,
 }: FormFieldProps) {
-  const density = useResolvedChromeDensity(densityProp);
-
   return (
-    <div
-      className={formFieldRootVariants({ density, className })}
-      data-density={density}
-    >
+    <div className={formFieldRootVariants({ className })}>
       {label ? (
         <label
           htmlFor={htmlFor}
           className={formFieldLabelVariants({
-            density,
             tone,
             className: labelClassName,
           })}
@@ -75,7 +87,6 @@ export function FormField({
       {description ? (
         <p
           className={formFieldDescriptionVariants({
-            density,
             className: descriptionClassName,
           })}
         >
@@ -86,7 +97,6 @@ export function FormField({
       {error ? (
         <p
           className={formFieldErrorVariants({
-            density,
             className: errorClassName,
           })}
         >

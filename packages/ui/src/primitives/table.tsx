@@ -1,7 +1,7 @@
 "use client";
 
 /*
- * Table — semantic table primitives styled with Chronicle density variants.
+ * Table — semantic table primitives styled with Chronicle tokens.
  *
  *   <Table aria-label="Runs" selectionMode="multiple" sortDescriptor={sort} onSortChange={setSort}>
  *     <TableHeader>
@@ -23,21 +23,36 @@
  */
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  tableBodyVariants,
-  tableCellVariants,
-  tableColumnVariants,
-  tableHeaderVariants,
-  tableRowVariants,
-  tableSortIndicatorVariants,
-  tableVariants,
-} from "./shadcn";
 
-const TableDensityContext = React.createContext<"compact" | "brand" | undefined>(
-  undefined,
+export const tableVariants = cva(
+  "w-full border-separate border-spacing-0 border bg-surface-01 outline-none rounded-md border-hairline-strong"
+);
+
+export const tableHeaderVariants = cva("");
+export const tableBodyVariants = cva("");
+
+/*
+ * Table primitives are plain semantic HTML (`<table>`/`<thead>`/`<tr>`/`<th>`).
+ * Selection / focus styles use CSS pseudo classes; `data-selected` and
+ * `data-allows-sorting` can be set on rows/columns by consumers.
+ */
+export const tableColumnVariants = cva(
+  "sticky top-0 z-10 bg-surface-02 text-left align-middle outline-none data-[allows-sorting=true]:cursor-pointer focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember border-b border-hairline-strong px-[10px] py-[6px] font-sans text-[11px] font-medium tracking-normal text-l-ink-dim hover:text-l-ink"
+);
+
+export const tableRowVariants = cva(
+  "group outline-none data-[selected=true]:bg-[rgba(216,67,10,0.06)] focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-ember hover:bg-l-surface-hover"
+);
+
+export const tableCellVariants = cva(
+  "align-middle outline-none border-b border-l-border-faint px-[10px] py-[6px] font-sans text-[13px] leading-snug text-l-ink"
+);
+
+export const tableSortIndicatorVariants = cva(
+  "inline-block h-3 w-3 group-data-[sort-direction=descending]:rotate-180 ml-[4px] text-l-ink-dim"
 );
 
 export interface SortDescriptor {
@@ -47,7 +62,6 @@ export interface SortDescriptor {
 
 export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
   className?: string;
-  density?: "compact" | "brand";
   selectionMode?: "none" | "single" | "multiple" | string;
   sortDescriptor?: SortDescriptor;
   onSortChange?: (descriptor: SortDescriptor) => void;
@@ -55,22 +69,12 @@ export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> 
 
 export function Table({
   className,
-  density: densityProp,
   selectionMode: _selectionMode,
   sortDescriptor: _sortDescriptor,
   onSortChange: _onSortChange,
   ...rest
 }: TableProps) {
-  const density = useResolvedChromeDensity(densityProp);
-  return (
-    <TableDensityContext.Provider value={density}>
-      <table
-        {...rest}
-        data-density={density}
-        className={cn(tableVariants({ density }), className)}
-      />
-    </TableDensityContext.Provider>
-  );
+  return <table {...rest} className={cn(tableVariants(), className)} />;
 }
 
 export interface TableHeaderProps
@@ -78,13 +82,8 @@ export interface TableHeaderProps
   className?: string;
 }
 
-export function TableHeader({
-  className,
-  ...rest
-}: TableHeaderProps) {
-  return (
-    <thead {...rest} className={cn(tableHeaderVariants(), className)} />
-  );
+export function TableHeader({ className, ...rest }: TableHeaderProps) {
+  return <thead {...rest} className={cn(tableHeaderVariants(), className)} />;
 }
 
 export interface TableBodyProps<T extends object = object>
@@ -115,10 +114,11 @@ export function TableBody<T extends object>({
   );
 }
 
-export interface ColumnProps extends Omit<
-  React.ThHTMLAttributes<HTMLTableCellElement>,
-  "className" | "children"
-> {
+export interface ColumnProps
+  extends Omit<
+    React.ThHTMLAttributes<HTMLTableCellElement>,
+    "className" | "children"
+  > {
   className?: string;
   children?: React.ReactNode;
   allowsSorting?: boolean;
@@ -134,20 +134,18 @@ export function Column({
   isRowHeader,
   ...rest
 }: ColumnProps) {
-  const ctxDensity = React.useContext(TableDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   return (
     <th
       {...rest}
       scope={isRowHeader ? "row" : "col"}
-      className={cn(tableColumnVariants({ density }), className)}
+      className={cn(tableColumnVariants(), className)}
     >
       <span className="inline-flex items-center">
         {children as React.ReactNode}
         {allowsSorting ? (
           <span
             aria-hidden
-            className={tableSortIndicatorVariants({ density })}
+            className={tableSortIndicatorVariants()}
             data-sort-direction={sortDirection}
           >
             <svg viewBox="0 0 12 12" fill="none" className="h-full w-full">
@@ -166,33 +164,19 @@ export function Column({
   );
 }
 
-export interface RowProps
-  extends React.HTMLAttributes<HTMLTableRowElement> {
+export interface RowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   className?: string;
 }
 
-export function Row({
-  className,
-  ...rest
-}: RowProps) {
-  const ctxDensity = React.useContext(TableDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
-  return (
-    <tr {...rest} className={cn(tableRowVariants({ density }), className)} />
-  );
+export function Row({ className, ...rest }: RowProps) {
+  return <tr {...rest} className={cn(tableRowVariants(), className)} />;
 }
 
-export interface CellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
+export interface CellProps
+  extends React.TdHTMLAttributes<HTMLTableCellElement> {
   className?: string;
 }
 
 export function Cell({ className, ...rest }: CellProps) {
-  const ctxDensity = React.useContext(TableDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
-  return (
-    <td
-      {...rest}
-      className={cn(tableCellVariants({ density }), className)}
-    />
-  );
+  return <td {...rest} className={cn(tableCellVariants(), className)} />;
 }

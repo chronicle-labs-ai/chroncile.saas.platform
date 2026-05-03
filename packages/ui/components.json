@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
-  "rsc": false,
+  "rsc": true,
   "tsx": true,
   "tailwind": {
     "config": "tailwind.config.ts",
@@ -11,10 +11,17 @@
   },
   "aliases": {
     "components": "./src",
-    "ui": "./src/primitives/shadcn",
+    "ui": "./src/primitives",
     "utils": "./src/utils",
-    "lib": "./src",
-    "hooks": "./src/hooks"
+    "lib": "./src/utils"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "lucide",
+  "registries": {
+    "chronicle": {
+      "url": "https://chronicle.dev/registry/{name}.json"
+    },
+    "ai-elements": {
+      "url": "https://elements.ai-sdk.dev/api/registry"
+    }
+  }
 }

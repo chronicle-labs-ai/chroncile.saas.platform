@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, Check, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { NativeSelect } from "../primitives/native-select";
@@ -130,7 +136,7 @@ export function AgentVersionCompare({
           ))}
         </div>
 
-        <aside className="flex flex-col gap-3 self-start rounded-[4px] border border-l-border bg-l-surface-raised p-3.5">
+        <aside className="flex flex-col gap-3 self-start rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3.5">
           <h4 className="font-sans text-[13px] font-medium text-l-ink">
             Identity
           </h4>
@@ -160,7 +166,6 @@ function VersionPicker({
     <label className="flex flex-col gap-1">
       <span className="font-sans text-[11px] text-l-ink-dim">{label}</span>
       <NativeSelect
-        density="compact"
         value={value}
         onChange={(e) => onChange?.(e.currentTarget.value)}
         className="min-w-[160px]"
@@ -199,7 +204,7 @@ function DomainSection({ domain, rows, status }: DomainSectionProps) {
         "overflow-hidden rounded-[4px] border bg-l-surface-raised",
         status === "changed"
           ? "border-event-amber/40"
-          : "border-l-border",
+          : "border-hairline-strong",
       )}
     >
       <button
@@ -207,7 +212,7 @@ function DomainSection({ domain, rows, status }: DomainSectionProps) {
         onClick={() => setOpen((v) => !v)}
         className={cx(
           "flex w-full items-center gap-2 px-3 py-2.5",
-          "hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40",
+          "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
         )}
         aria-expanded={open}
       >
@@ -223,12 +228,21 @@ function DomainSection({ domain, rows, status }: DomainSectionProps) {
         <HashDomainChip domain={domain} inline size="sm" />
         <span
           className={cx(
-            "ml-auto font-sans text-[11px]",
+            "ml-auto inline-flex items-center gap-1 font-sans text-[11px]",
             status === "changed"
               ? "text-event-amber"
               : "text-event-green",
           )}
         >
+          {status === "changed" ? (
+            <AlertTriangle
+              className="size-3 shrink-0"
+              strokeWidth={2}
+              aria-hidden
+            />
+          ) : (
+            <Check className="size-3 shrink-0" strokeWidth={2} aria-hidden />
+          )}
           {status === "changed"
             ? `${changedRows.length} changed`
             : "No changes"}
@@ -267,11 +281,17 @@ function DiffRow({ row }: { row: AgentManifestDiffRow }) {
           {row.path}
         </span>
         {row.unchanged ? (
-          <span className="ml-auto font-sans text-[11px] text-event-green">
+          <span className="ml-auto inline-flex items-center gap-1 font-sans text-[11px] text-event-green">
+            <Check className="size-3 shrink-0" strokeWidth={2} aria-hidden />
             Same
           </span>
         ) : (
-          <span className="ml-auto font-sans text-[11px] text-event-amber">
+          <span className="ml-auto inline-flex items-center gap-1 font-sans text-[11px] text-event-amber">
+            <AlertTriangle
+              className="size-3 shrink-0"
+              strokeWidth={2}
+              aria-hidden
+            />
             Changed
           </span>
         )}

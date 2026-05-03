@@ -10,7 +10,7 @@ const meta: Meta<typeof AgentVersionRow> = {
   decorators: [
     (Story) => (
       <ProductChromeFrame padding="md" maxWidth="1100px">
-        <div className="rounded-[4px] border border-l-border bg-l-surface-raised">
+        <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
           <Story />
         </div>
       </ProductChromeFrame>

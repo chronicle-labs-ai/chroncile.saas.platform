@@ -73,7 +73,7 @@ export function AgentDriftTimeline({
   return (
     <ol
       className={cx(
-        "relative rounded-[4px] border border-l-border bg-l-surface-raised",
+        "relative rounded-[4px] border border-hairline-strong bg-l-surface-raised",
         className,
       )}
     >
@@ -87,7 +87,7 @@ export function AgentDriftTimeline({
             className="relative flex w-8 shrink-0 justify-center"
           >
             <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-l-border-faint" />
-            <span className="relative z-10 mt-3 flex size-4 items-center justify-center rounded-pill border border-event-amber/45 bg-event-amber/10 text-event-amber">
+            <span className="relative z-raised mt-3 flex size-4 items-center justify-center rounded-pill border border-event-amber/45 bg-event-amber/10 text-event-amber">
               <AlertTriangle className="size-2.5" strokeWidth={1.75} />
             </span>
           </div>
@@ -98,7 +98,7 @@ export function AgentDriftTimeline({
             className={cx(
               "flex flex-1 flex-col gap-2 border-b border-l-border-faint px-4 py-3 text-left",
               "last:border-b-0",
-              "hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40",
+              "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
             )}
           >
             <div className="flex items-center gap-2 font-sans text-[11px] text-l-ink-dim">
@@ -151,15 +151,23 @@ function ValueChip({
         .map(([k, v]) => `${k}: ${formatScalar(v)}`)
         .join(", ")
     : "—";
+  // Visible glyph so the diff direction survives without colour.
+  // Mirrors the "−" / "+" convention in `AgentVersionCompare`.
+  const glyph = tone === "before" ? "−" : "+";
+  const sr = tone === "before" ? "Before:" : "After:";
   return (
     <span
       className={cx(
-        "rounded-[3px] border px-2 py-[2px] font-mono",
+        "inline-flex items-center gap-1 rounded-[3px] border px-2 py-[2px] font-mono",
         tone === "before"
           ? "border-event-red/30 bg-event-red/[0.05] text-event-red"
           : "border-event-green/30 bg-event-green/[0.05] text-event-green",
       )}
     >
+      <span aria-hidden className="font-medium">
+        {glyph}
+      </span>
+      <span className="sr-only">{sr}</span>
       {label}
     </span>
   );

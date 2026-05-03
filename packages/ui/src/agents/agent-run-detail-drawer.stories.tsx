@@ -34,7 +34,6 @@ function Harness({ runId }: { runId: string }) {
   return (
     <div className="flex flex-col gap-3">
       <Button
-        density="compact"
         variant="secondary"
         size="sm"
         onPress={() => setOpen(true)}

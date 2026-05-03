@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 import { useTheme } from "../theme/theme-provider";
 
 // Inline SVGs generated from the handoff asset files so the component has
@@ -35,15 +35,19 @@ export interface LogoProps extends Omit<
    * `auto`  — mirror whatever `data-theme` is active via `useTheme()`
    */
   theme?: LogoTheme;
+  ref?: React.Ref<SVGSVGElement>;
 }
 
 const darkFill = "#EAEAEA";
 const lightFill = "#1A140A";
 
-export const Logo = React.forwardRef<SVGSVGElement, LogoProps>(function Logo(
-  { variant = "icon", theme = "auto", className, ...rest },
-  ref
-) {
+export function Logo({
+  variant = "icon",
+  theme = "auto",
+  className,
+  ref,
+  ...rest
+}: LogoProps) {
   // Back-compat: treat the legacy `variant="dark"|"light"` as a theme
   // override with an icon-variant render.
   let shape: LogoVariant = "icon";
@@ -97,7 +101,7 @@ export const Logo = React.forwardRef<SVGSVGElement, LogoProps>(function Logo(
         fill="none"
         role="img"
         aria-label="Chronicle Labs"
-        className={cx("block", className)}
+        className={cn("block", className)}
         {...rest}
       >
         <g fill={fill}>
@@ -128,10 +132,10 @@ export const Logo = React.forwardRef<SVGSVGElement, LogoProps>(function Logo(
       fill="none"
       role="img"
       aria-label="Chronicle Labs"
-      className={cx("block", className)}
+      className={cn("block", className)}
       {...rest}
     >
       <g fill={fill} dangerouslySetInnerHTML={{ __html: ICON_PATHS }} />
     </svg>
   );
-});
+}

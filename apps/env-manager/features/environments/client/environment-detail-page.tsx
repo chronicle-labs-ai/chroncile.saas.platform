@@ -15,7 +15,7 @@ import {
   PanelContent,
   PanelHeader,
   ProvisioningTimeline,
-  Skeleton,
+  SkeletonBlock,
   Tab,
   TabList,
   TabPanel,
@@ -75,7 +75,7 @@ export function EnvironmentDetailPage({
   if (isLoading && !error) {
     return (
       <div className="mx-auto max-w-6xl">
-        <Skeleton className="h-6 w-64" />
+        <SkeletonBlock className="h-6 w-64" />
       </div>
     );
   }

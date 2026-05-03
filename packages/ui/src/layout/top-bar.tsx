@@ -92,11 +92,11 @@ const Live = React.forwardRef<HTMLButtonElement, LiveProps>(function Live(
       data-slot="top-bar-live"
       data-on={on || undefined}
       className={cx(
-        "inline-flex h-[26px] items-center gap-[6px] rounded-l border px-[10px] text-[12px] font-medium",
+        "inline-flex h-[26px] items-center gap-[6px] rounded-md border px-[10px] text-[12px] font-medium",
         "transition-colors duration-fast",
         on
           ? "border-[rgba(74,222,128,0.35)] bg-[rgba(74,222,128,0.08)] text-event-green"
-          : "border-l-border bg-l-wash-1 text-l-ink-lo hover:bg-l-wash-5 hover:text-l-ink",
+          : "border-hairline-strong bg-l-wash-1 text-l-ink-lo hover:bg-l-wash-5 hover:text-l-ink",
         className
       )}
       {...props}
@@ -144,7 +144,7 @@ const TimeSelector = React.forwardRef<HTMLButtonElement, TimeSelectorProps>(
         type="button"
         data-slot="top-bar-time"
         className={cx(
-          "inline-flex h-[26px] items-center gap-[6px] rounded-l border border-l-border bg-l-wash-1 px-[8px]",
+          "inline-flex h-[26px] items-center gap-[6px] rounded-md border border-hairline-strong bg-l-wash-1 px-[8px]",
           "font-mono text-[11.5px] tracking-mono text-l-ink-lo",
           "hover:bg-l-wash-3 hover:border-l-border-strong hover:text-l-ink",
           "transition-colors duration-fast",
@@ -193,7 +193,7 @@ const SearchTrigger = React.forwardRef<HTMLButtonElement, SearchTriggerProps>(
         type="button"
         data-slot="top-bar-search"
         className={cx(
-          "inline-flex h-[28px] items-center gap-[6px] rounded-l border border-l-border bg-l-wash-3 px-[10px]",
+          "inline-flex h-[28px] items-center gap-[6px] rounded-md border border-hairline-strong bg-l-wash-3 px-[10px]",
           "font-sans text-[12.5px] font-medium text-l-ink",
           "hover:bg-l-wash-5 hover:border-l-border-strong",
           "transition-colors duration-fast",
@@ -207,10 +207,10 @@ const SearchTrigger = React.forwardRef<HTMLButtonElement, SearchTriggerProps>(
           <span className="ml-[4px] flex gap-[3px]">
             {shortcut ?? (
               <>
-                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-l-sm bg-l-wash-5 px-[3px] font-mono text-[10px] text-l-ink">
+                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-xs bg-l-wash-5 px-[3px] font-mono text-[10px] text-l-ink">
                   ⌘
                 </span>
-                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-l-sm bg-l-wash-5 px-[3px] font-mono text-[10px] text-l-ink">
+                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-xs bg-l-wash-5 px-[3px] font-mono text-[10px] text-l-ink">
                   K
                 </span>
               </>

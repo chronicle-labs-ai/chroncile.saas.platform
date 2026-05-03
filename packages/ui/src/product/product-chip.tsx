@@ -27,12 +27,12 @@ const chipDotClass: Record<ProductChipTone, string> = {
 
 const actionToneClass: Record<ProductChipTone, string> = {
   neutral:
-    "border-l-border bg-l-surface-raised text-l-ink-lo hover:border-l-border-strong hover:bg-l-wash-3 hover:text-l-ink",
-  data: "border-l-border bg-l-surface-raised text-l-ink-lo hover:border-event-teal/40 hover:bg-[rgba(45,212,191,0.08)] hover:text-event-teal",
+    "border-hairline-strong bg-l-surface-raised text-l-ink-lo hover:border-l-border-strong hover:bg-l-wash-3 hover:text-l-ink",
+  data: "border-hairline-strong bg-l-surface-raised text-l-ink-lo hover:border-event-teal/40 hover:bg-[rgba(45,212,191,0.08)] hover:text-event-teal",
   caution:
-    "border-l-border bg-l-surface-raised text-l-ink-lo hover:border-event-amber/40 hover:bg-[rgba(251,191,36,0.08)] hover:text-event-amber",
+    "border-hairline-strong bg-l-surface-raised text-l-ink-lo hover:border-event-amber/40 hover:bg-[rgba(251,191,36,0.08)] hover:text-event-amber",
   nominal:
-    "border-l-border bg-l-surface-raised text-l-ink-lo hover:border-event-green/40 hover:bg-[rgba(74,222,128,0.08)] hover:text-event-green",
+    "border-hairline-strong bg-l-surface-raised text-l-ink-lo hover:border-event-green/40 hover:bg-[rgba(74,222,128,0.08)] hover:text-event-green",
   critical:
     "border-event-red/30 bg-[rgba(239,68,68,0.08)] text-event-red hover:border-event-red/50 hover:bg-[rgba(239,68,68,0.14)]",
 };
@@ -52,7 +52,7 @@ export function ProductChip({
   return (
     <span
       className={cx(
-        "inline-flex h-[20px] items-center gap-[5px] rounded-l px-[7px]",
+        "inline-flex h-[20px] items-center gap-[5px] rounded-md px-[7px]",
         "font-sans text-[11px] font-medium leading-none ring-1 ring-inset",
         chipToneClass[tone],
         className
@@ -89,7 +89,7 @@ export function ProductTableAction({
     <button
       type={type}
       className={cx(
-        "inline-flex h-[24px] items-center justify-center rounded-l border px-[9px]",
+        "inline-flex h-[24px] items-center justify-center rounded-md border px-[9px]",
         "font-sans text-[12px] font-medium leading-none",
         "transition-[background-color,border-color,color,transform] duration-fast ease-out",
         "active:translate-y-px focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",

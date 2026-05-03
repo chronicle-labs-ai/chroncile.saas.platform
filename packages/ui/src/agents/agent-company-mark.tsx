@@ -149,6 +149,11 @@ export function AgentCompanyMark({
       data-tone={tone}
       aria-hidden
       className={cx(
+        // Purely decorative: the brand mark is a visual flourish and never
+        // a semantic affordance. Disable text selection and pointer capture
+        // so the tile can sit on top of clickable wrappers without
+        // intercepting taps or being draggable.
+        "pointer-events-none select-none",
         "inline-flex shrink-0 items-center justify-center",
         TILE_TONE_CLASS[tone],
         tileClassName,
@@ -167,6 +172,11 @@ export function AgentCompanyMark({
         size={SIZE_PX[size]}
         radius={Math.max(radius - 1, 0)}
         fallbackBackground="transparent"
+        // Tile already paints the contrast. Without this opt-out the
+        // global `[data-theme="dark"] img[data-brand-tone="dark-mark"]`
+        // rule would flip a black mark to white on top of the white
+        // tile we just selected for it — re-hiding the logo.
+        themeAware={false}
       />
     </span>
   );

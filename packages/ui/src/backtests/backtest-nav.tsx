@@ -78,7 +78,7 @@ export function BacktestNav({
       </div>
 
       {/* Center: stage switcher */}
-      <div className="flex items-center gap-0.5 rounded-l border border-hairline bg-surface-01 p-0.5">
+      <div className="flex items-center gap-0.5 rounded-md border border-hairline bg-surface-01 p-0.5">
         {STAGES.map((s, idx) => {
           const isActive = s.id === stage;
           const isDone = idx < stageIndex;
@@ -89,7 +89,7 @@ export function BacktestNav({
               onClick={() => onStageChange?.(s.id)}
               data-state={isActive ? "on" : isDone ? "done" : "todo"}
               className={cx(
-                "group inline-flex items-center gap-1.5 rounded-l-sm px-2.5 py-1 transition-colors",
+                "group inline-flex items-center gap-1.5 rounded-xs px-2.5 py-1 transition-colors",
                 isActive
                   ? "bg-surface-03 text-ink-hi"
                   : "text-ink-lo hover:bg-surface-02 hover:text-ink",
@@ -127,7 +127,7 @@ export function BacktestNav({
       <button
         type="button"
         title="Docs"
-        className="inline-flex size-7 items-center justify-center rounded-l border border-hairline text-ink-dim transition-colors hover:border-hairline-strong hover:text-ink-lo"
+        className="inline-flex size-7 items-center justify-center rounded-md border border-hairline text-ink-dim transition-colors hover:border-hairline-strong hover:text-ink-lo"
       >
         <svg
           width="14"

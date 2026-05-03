@@ -1,8 +1,7 @@
 /*
- * Story frame — wraps every agent story in product chrome so the
- * `--l-*` token block activates and primitives that read the chrome
- * context render in compact/Linear density. Mirrors
- * `datasets/_story-frame.tsx`.
+ * Story frame — wraps every agent story in a padded canvas so the
+ * unified Linear chrome renders against the canonical surfaces.
+ * Mirrors `datasets/_story-frame.tsx`.
  */
 
 "use client";
@@ -10,7 +9,6 @@
 import * as React from "react";
 
 import { cx } from "../utils/cx";
-import { ChromeStyleProvider } from "../theme";
 
 export interface ProductChromeFrameProps {
   children: React.ReactNode;
@@ -32,23 +30,20 @@ export function ProductChromeFrame({
   className,
 }: ProductChromeFrameProps) {
   return (
-    <ChromeStyleProvider value="product">
-      <div
-        data-chrome="product"
-        className={cx(
-          "min-h-screen bg-l-surface text-l-ink",
-          PADDING[padding],
-          className,
-        )}
-      >
-        {maxWidth ? (
-          <div style={{ maxWidth }} className="mx-auto">
-            {children}
-          </div>
-        ) : (
-          children
-        )}
-      </div>
-    </ChromeStyleProvider>
+    <div
+      className={cx(
+        "min-h-screen bg-page text-ink",
+        PADDING[padding],
+        className,
+      )}
+    >
+      {maxWidth ? (
+        <div style={{ maxWidth }} className="mx-auto">
+          {children}
+        </div>
+      ) : (
+        children
+      )}
+    </div>
   );
 }

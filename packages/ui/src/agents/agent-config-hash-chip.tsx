@@ -4,6 +4,7 @@ import * as React from "react";
 import { Copy } from "lucide-react";
 
 import { cx } from "../utils/cx";
+import { useCopy } from "../utils/use-copy";
 
 /*
  * AgentConfigHashChip — compact `sha256:abcd…1234` chip with optional
@@ -46,7 +47,7 @@ export function AgentConfigHashChip({
   label,
   className,
 }: AgentConfigHashChipProps) {
-  const [copied, setCopied] = React.useState(false);
+  const { copy, copied } = useCopy();
 
   const { algo, hex } = parseHash(hash);
   const truncated =
@@ -57,23 +58,16 @@ export function AgentConfigHashChip({
   const onCopy = React.useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();
-      try {
-        void navigator.clipboard?.writeText(hash);
-        setCopied(true);
-        const timer = window.setTimeout(() => setCopied(false), 1100);
-        return () => window.clearTimeout(timer);
-      } catch {
-        // Clipboard unavailable — silently noop.
-      }
+      void copy(hash);
     },
-    [hash],
+    [copy, hash],
   );
 
   return (
     <span
       data-tone={tone}
       className={cx(
-        "inline-flex items-center gap-1 font-mono text-[11px]",
+        "inline-flex items-center gap-1 font-mono text-[11px] tabular-nums",
         tone === "outlined" &&
           "rounded-[2px] border border-l-border-faint bg-l-surface-input px-1.5 py-[1px] text-l-ink-lo",
         tone === "subtle" && "text-l-ink-dim",
@@ -93,9 +87,10 @@ export function AgentConfigHashChip({
           onClick={onCopy}
           aria-label={copied ? "Copied hash" : `Copy ${algo} hash`}
           className={cx(
-            "ml-0.5 inline-flex size-3.5 items-center justify-center rounded-[2px] text-l-ink-dim",
+            // Visual stays compact (size-3.5 = 14px) but touch hit area grows to 44px.
+            "ml-0.5 inline-flex size-3.5 [@media(pointer:coarse)]:size-11 items-center justify-center rounded-[2px] text-l-ink-dim touch-manipulation",
             "hover:bg-l-surface-hover hover:text-l-ink",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-ember",
           )}
         >
           {copied ? (

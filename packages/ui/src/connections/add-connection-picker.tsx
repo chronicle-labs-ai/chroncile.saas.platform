@@ -1,10 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { ArrowUpRight, ChevronRight } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Modal } from "../primitives/modal";
+import { Chip } from "../primitives/chip";
 import { Input } from "../primitives/input";
+import { StatusDot } from "../primitives/status-dot";
 import { CompanyLogo } from "../icons";
 import {
   ConnectShared,
@@ -18,6 +21,7 @@ import {
   SOURCES,
   getSource,
   type Source,
+  type SourceAuthMethod,
   type SourceCategory,
   type SourceId,
 } from "../onboarding/data";
@@ -38,7 +42,7 @@ import { type Connection } from "./data";
 export interface AddConnectionPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Source ids already wired up — rendered as "Connected" and disabled. */
+  /** Source ids already wired up — rendered as "Connected" + Open existing. */
   connectedIds?: readonly SourceId[];
   /** Override the catalog. Defaults to the full onboarding `SOURCES`. */
   sources?: readonly Source[];
@@ -52,6 +56,13 @@ export interface AddConnectionPickerProps {
       backfill: BackfillRunConfig | null;
     },
   ) => void;
+  /**
+   * Fired when the user clicks an already-connected source tile.
+   * Wire to the parent so it can dismiss the picker and open the
+   * matching connection row's drawer / page. Without this handler
+   * the connected tile reverts to the legacy disabled state.
+   */
+  onOpenExisting?: (sourceId: SourceId) => void;
 }
 
 const CAT_ORDER: SourceCategory[] = [
@@ -70,27 +81,52 @@ const CAT_ORDER: SourceCategory[] = [
   "Custom",
 ];
 
+const AUTH_FILTERS: readonly { id: SourceAuthMethod; label: string }[] = [
+  { id: "oauth", label: "OAuth" },
+  { id: "apikey", label: "API key" },
+  { id: "webhook", label: "Webhook" },
+];
+
 export function AddConnectionPicker({
   isOpen,
   onClose,
   connectedIds = [],
   sources = SOURCES,
   onConnected,
+  onOpenExisting,
 }: AddConnectionPickerProps) {
   const [query, setQuery] = React.useState("");
+  const [authFilter, setAuthFilter] = React.useState<Set<SourceAuthMethod>>(
+    () => new Set(),
+  );
+  /*
+   * Open the first two categories by default so first paint shows actual
+   * source tiles instead of ~13 collapsed accordion rows. Later rounds of
+   * filtering/searching let users open the rest.
+   */
   const [openCats, setOpenCats] = React.useState<Set<SourceCategory>>(
-    new Set(),
+    () => new Set(CAT_ORDER.slice(0, 2)),
   );
   const [picking, setPicking] = React.useState<SourceId | null>(null);
   const connected = new Set(connectedIds);
 
-  const filtered = sources.filter(
-    (s) =>
-      !query ||
-      `${s.name} ${s.cat} ${s.blurb}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
+  const authCounts = React.useMemo(() => {
+    const out: Record<SourceAuthMethod, number> = {
+      oauth: 0,
+      apikey: 0,
+      webhook: 0,
+    };
+    for (const s of sources) out[s.auth] = (out[s.auth] ?? 0) + 1;
+    return out;
+  }, [sources]);
+
+  const filtered = sources.filter((s) => {
+    if (authFilter.size > 0 && !authFilter.has(s.auth)) return false;
+    if (!query) return true;
+    return `${s.name} ${s.cat} ${s.blurb} ${s.auth}`
+      .toLowerCase()
+      .includes(query.toLowerCase());
+  });
   const groups: Partial<Record<SourceCategory, Source[]>> = {};
   for (const s of filtered) {
     (groups[s.cat] = groups[s.cat] ?? []).push(s);
@@ -103,16 +139,25 @@ export function AddConnectionPicker({
   ];
 
   React.useEffect(() => {
-    if (!query) return;
+    if (!query && authFilter.size === 0) return;
     setOpenCats(new Set(orderedCats));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, authFilter]);
 
   const toggleCat = (c: SourceCategory) => {
     setOpenCats((prev) => {
       const n = new Set(prev);
       if (n.has(c)) n.delete(c);
       else n.add(c);
+      return n;
+    });
+  };
+
+  const toggleAuth = (a: SourceAuthMethod) => {
+    setAuthFilter((prev) => {
+      const n = new Set(prev);
+      if (n.has(a)) n.delete(a);
+      else n.add(a);
       return n;
     });
   };
@@ -140,21 +185,52 @@ export function AddConnectionPicker({
         isOpen={isOpen && picking == null}
         onClose={onClose}
         title="Add a connection"
-        density="compact"
         classNames={{ modal: "max-w-[640px]" }}
       >
         <div className="flex flex-col gap-3">
           <Input
-            density="compact"
             search
             placeholder={`Search ${sources.length} sources`}
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
           />
 
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+              Auth
+            </span>
+            {AUTH_FILTERS.map((a) => {
+              const active = authFilter.has(a.id);
+              return (
+                <Chip
+                  key={a.id}
+                  active={active}
+                  onClick={() => toggleAuth(a.id)}
+                  count={authCounts[a.id] ?? 0}
+                  aria-pressed={active}
+                >
+                  {a.label}
+                </Chip>
+              );
+            })}
+            {authFilter.size > 0 ? (
+              <button
+                type="button"
+                onClick={() => setAuthFilter(new Set())}
+                className="ml-1 font-mono text-mono-sm text-ember hover:underline"
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+
           {orderedCats.length === 0 ? (
-            <p className="py-6 text-center font-mono text-mono text-ink-dim">
-              No sources match &ldquo;{query}&rdquo;.
+            <p className="py-6 text-center font-mono text-mono-sm text-ink-dim">
+              No sources match{query ? ` "${query}"` : ""}
+              {authFilter.size > 0
+                ? ` with ${[...authFilter].join(", ")} auth`
+                : ""}
+              .
             </p>
           ) : null}
 
@@ -167,21 +243,21 @@ export function AddConnectionPicker({
                   <button
                     type="button"
                     onClick={() => toggleCat(cat)}
+                    aria-expanded={isOpen}
                     className="flex w-full items-center gap-2 py-[2px] text-left"
                   >
-                    <span
+                    <ChevronRight
+                      strokeWidth={1.75}
                       className={cx(
-                        "inline-block w-3 font-mono text-mono-sm text-ink-dim transition-transform duration-fast",
+                        "size-3.5 shrink-0 text-ink-dim transition-transform duration-fast",
                         isOpen ? "rotate-90" : "rotate-0",
                       )}
                       aria-hidden
-                    >
-                      ›
-                    </span>
+                    />
                     <span className="flex-1 font-sans text-[13.5px] text-ink-hi">
                       {cat}
                     </span>
-                    <span className="font-mono text-mono-sm text-ink-dim">
+                    <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
                       {items.length}
                     </span>
                   </button>
@@ -193,6 +269,14 @@ export function AddConnectionPicker({
                           source={s}
                           alreadyConnected={connected.has(s.id)}
                           onPick={() => setPicking(s.id)}
+                          onOpenExisting={
+                            onOpenExisting
+                              ? () => {
+                                  onOpenExisting(s.id);
+                                  onClose();
+                                }
+                              : undefined
+                          }
                         />
                       ))}
                     </div>
@@ -220,19 +304,34 @@ interface SourceTileProps {
   source: Source;
   alreadyConnected: boolean;
   onPick: () => void;
+  /**
+   * Optional handler invoked when the user clicks a tile for an
+   * already-connected source. Wire through `onOpenExisting` so the
+   * tile becomes a navigation, not a dead end (P0 finding).
+   */
+  onOpenExisting?: () => void;
 }
 
-function SourceTile({ source, alreadyConnected, onPick }: SourceTileProps) {
+function SourceTile({
+  source,
+  alreadyConnected,
+  onPick,
+  onOpenExisting,
+}: SourceTileProps) {
+  const handleClick = alreadyConnected ? onOpenExisting : onPick;
+  const interactive = !alreadyConnected || !!onOpenExisting;
   return (
     <button
       type="button"
-      onClick={alreadyConnected ? undefined : onPick}
-      disabled={alreadyConnected}
+      onClick={interactive ? handleClick : undefined}
+      disabled={!interactive}
       className={cx(
         "flex min-w-0 items-center gap-2 rounded-[2px] border px-3 py-2 text-left transition-colors duration-fast",
-        alreadyConnected
-          ? "cursor-not-allowed border-divider bg-[rgba(255,255,255,0.012)] opacity-60"
-          : "border-divider bg-[rgba(255,255,255,0.012)] hover:border-ember/35 hover:bg-[rgba(216,67,10,0.04)]",
+        !interactive
+          ? "cursor-not-allowed border-divider bg-wash-micro opacity-60"
+          : alreadyConnected
+            ? "border-divider bg-wash-micro hover:border-event-green/35 hover:bg-[rgba(74,222,128,0.04)]"
+            : "border-divider bg-wash-micro hover:border-ember/35 hover:bg-row-active",
       )}
     >
       <span
@@ -253,8 +352,9 @@ function SourceTile({ source, alreadyConnected, onPick }: SourceTileProps) {
             {source.name}
           </span>
           {alreadyConnected ? (
-            <span className="font-mono text-mono-sm uppercase tracking-tactical text-event-green">
-              ● connected
+            <span className="inline-flex items-center gap-[6px] font-mono text-mono-sm uppercase tracking-tactical text-event-green">
+              <StatusDot variant="green" />
+              connected
             </span>
           ) : null}
         </div>
@@ -262,6 +362,15 @@ function SourceTile({ source, alreadyConnected, onPick }: SourceTileProps) {
           {source.blurb}
         </span>
       </div>
+      {alreadyConnected && onOpenExisting ? (
+        <span
+          className="ml-2 inline-flex shrink-0 items-center gap-1 font-mono text-mono-sm uppercase tracking-tactical text-ember"
+          aria-hidden
+        >
+          Open
+          <ArrowUpRight className="size-3" strokeWidth={1.75} />
+        </span>
+      ) : null}
     </button>
   );
 }

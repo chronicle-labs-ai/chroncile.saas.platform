@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 export interface MetaStripItem {
   label?: React.ReactNode;
@@ -14,7 +14,7 @@ export interface MetaStripProps extends React.HTMLAttributes<HTMLDivElement> {
 export function MetaStrip({ items, className, ...props }: MetaStripProps) {
   return (
     <div
-      className={cx(
+      className={cn(
         "flex flex-wrap items-center gap-x-s-4 gap-y-s-2 font-mono text-[11px] tracking-[0.02em] text-ink-dim",
         className
       )}

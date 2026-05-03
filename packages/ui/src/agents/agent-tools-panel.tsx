@@ -65,7 +65,6 @@ export function AgentToolsPanel({
           {versions.map((v) => (
             <Chip
               key={v.artifact.version}
-              density="compact"
               active={selectedVersion === v.artifact.version}
               onClick={() => onSelectVersion(v.artifact.version)}
             >
@@ -104,7 +103,7 @@ export function AgentToolsPanel({
           )}
         </div>
 
-        <aside className="flex flex-col gap-3 self-start rounded-[4px] border border-l-border bg-l-surface-raised p-3.5">
+        <aside className="flex flex-col gap-3 self-start rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3.5">
           <h4 className="font-sans text-[13px] font-medium text-l-ink">
             Runtime policy
           </h4>
@@ -178,7 +177,7 @@ function ToolCard({ tool, allowed, requiresApproval }: ToolCardProps) {
       data-approval={requiresApproval || undefined}
       className={cx(
         "rounded-[4px] border bg-l-surface-raised px-3 py-2.5",
-        allowed ? "border-l-border" : "border-event-amber/40",
+        allowed ? "border-hairline-strong" : "border-event-amber/40",
       )}
     >
       <div className="flex items-start gap-2">

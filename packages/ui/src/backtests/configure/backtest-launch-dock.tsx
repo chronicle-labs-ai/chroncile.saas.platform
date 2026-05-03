@@ -43,7 +43,7 @@ export function BacktestLaunchDock({
   return (
     <div
       className={cx(
-        "flex flex-wrap items-center justify-between gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-2.5",
+        "flex flex-wrap items-center justify-between gap-3 rounded-[2px] border border-divider bg-wash-micro px-3 py-2.5",
         className,
       )}
     >
@@ -59,7 +59,6 @@ export function BacktestLaunchDock({
       <div className="flex items-center gap-1.5">
         <Button
           variant="secondary"
-          density="compact"
           size="sm"
           leadingIcon={<Sparkles className="size-3.5" strokeWidth={1.6} />}
           onClick={onQuickCheck}
@@ -71,7 +70,6 @@ export function BacktestLaunchDock({
         </Button>
         <Button
           variant="primary"
-          density="compact"
           size="sm"
           leadingIcon={<Play className="size-3.5" fill="currentColor" />}
           onClick={() => onLaunch?.(recipe)}

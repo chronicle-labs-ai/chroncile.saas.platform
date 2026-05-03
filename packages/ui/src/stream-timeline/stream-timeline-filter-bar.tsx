@@ -109,7 +109,7 @@ export function StreamTimelineFilterBar({
         <button
           type="button"
           onClick={() => actions.clearAll()}
-          className="inline-flex h-[22px] items-center rounded-l-sm px-[6px] font-sans text-[11.5px] text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink"
+          className="inline-flex h-[22px] items-center rounded-xs px-[6px] font-sans text-[11.5px] text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink"
         >
           Clear
         </button>
@@ -120,7 +120,7 @@ export function StreamTimelineFilterBar({
           <button
             type="button"
             onClick={onOpenDisplay}
-            className="relative inline-flex h-[24px] items-center gap-[6px] rounded-l border border-l-border bg-l-surface px-[10px] font-sans text-[12px] font-medium text-l-ink-lo transition-colors hover:border-l-border-strong hover:bg-l-wash-3 hover:text-l-ink"
+            className="relative inline-flex h-[24px] items-center gap-[6px] rounded-md border border-hairline-strong bg-l-surface px-[10px] font-sans text-[12px] font-medium text-l-ink-lo transition-colors hover:border-l-border-strong hover:bg-l-wash-3 hover:text-l-ink"
           >
             <SlidersHorizontal size={11} strokeWidth={1.75} aria-hidden />
             Display
@@ -202,18 +202,18 @@ function LinearAddFilterButton({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <button
           type="button"
           aria-label="Add filter"
           className={cx(
-            "inline-flex h-[24px] items-center gap-[6px] rounded-l border px-[8px]",
+            "inline-flex h-[24px] items-center gap-[6px] rounded-md border px-[8px]",
             "font-sans text-[12px] font-medium leading-none",
             "transition-colors duration-fast",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page",
             hasAny
               ? "border-transparent text-l-ink-dim hover:bg-l-wash-3 hover:text-l-ink"
-              : "border-dashed border-l-border text-l-ink-lo hover:border-l-border-strong hover:bg-l-wash-3 hover:text-l-ink",
+              : "border-dashed border-hairline-strong text-l-ink-lo hover:border-l-border-strong hover:bg-l-wash-3 hover:text-l-ink",
           )}
         >
           <Plus size={10} strokeWidth={2} aria-hidden />
@@ -278,7 +278,6 @@ function ColumnPicker({
       <div className="border-b border-hairline px-[8px] py-[8px]">
         <div className="relative">
           <Input
-            density="compact"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Filter…"
@@ -286,7 +285,7 @@ function ColumnPicker({
             aria-label="Filter columns"
             className="pr-[28px]"
           />
-          <span className="pointer-events-none absolute right-[4px] top-1/2 -translate-y-1/2 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-l-sm border border-l-border bg-l-surface px-[4px] font-sans text-[10px] text-l-ink-dim">
+          <span className="pointer-events-none absolute right-[4px] top-1/2 -translate-y-1/2 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-xs border border-hairline-strong bg-l-surface px-[4px] font-sans text-[10px] text-l-ink-dim">
             F
           </span>
         </div>
@@ -393,7 +392,7 @@ function DraftView({
           type="button"
           onClick={onBack}
           aria-label="Back to columns"
-          className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-l-sm text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink"
+          className="inline-flex h-[20px] w-[20px] items-center justify-center rounded-xs text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink"
         >
           <ChevronLeft size={11} strokeWidth={1.75} aria-hidden />
         </button>
@@ -494,10 +493,10 @@ function LinearFilterPill({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <div
-        className="group inline-flex h-[24px] items-stretch overflow-hidden rounded-l border border-l-border bg-l-surface text-l-ink"
+        className="group inline-flex h-[24px] items-stretch overflow-hidden rounded-md border border-hairline-strong bg-l-surface text-l-ink"
         data-filter-id={filter.id}
       >
-        <span className="inline-flex items-center gap-[5px] border-r border-l-border bg-l-surface-bar-2 px-[8px] font-sans text-[11.5px] font-medium text-l-ink-lo">
+        <span className="inline-flex items-center gap-[5px] border-r border-hairline-strong bg-l-surface-bar-2 px-[8px] font-sans text-[11.5px] font-medium text-l-ink-lo">
           {column.icon ? (
             <span className="inline-flex h-[12px] w-[12px] shrink-0 items-center justify-center text-l-ink-dim">
               {column.icon}
@@ -505,14 +504,14 @@ function LinearFilterPill({
           ) : null}
           {column.label}
         </span>
-        <span className="inline-flex items-center border-r border-l-border px-[2px]">
+        <span className="inline-flex items-center border-r border-hairline-strong px-[2px]">
           <FilterOperatorMenu
             type={column.type}
             operator={filter.operator}
             onChange={onOperatorChange}
           />
         </span>
-        <PopoverTrigger>
+        <PopoverTrigger asChild>
           <button
             type="button"
             aria-label={`Edit ${column.label} filter — currently ${operatorMeta?.label ?? filter.operator}`}
@@ -525,7 +524,7 @@ function LinearFilterPill({
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${column.label} filter`}
-          className="inline-flex h-full w-[20px] items-center justify-center border-l border-l-border text-l-ink-dim transition-colors hover:bg-[rgba(239,68,68,0.12)] hover:text-event-red"
+          className="inline-flex h-full w-[20px] items-center justify-center border-l border-hairline-strong text-l-ink-dim transition-colors hover:bg-[rgba(239,68,68,0.12)] hover:text-event-red"
         >
           <X size={10} strokeWidth={1.75} aria-hidden />
         </button>

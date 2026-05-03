@@ -59,13 +59,12 @@ export function AgentRunDetailDrawer({
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      density="compact"
       placement="right"
       size="lg"
       title={
         <div className="flex items-center gap-2">
           <RunStatusDot status={run.status} />
-          <span className="truncate font-mono text-[12px] text-l-ink">
+          <span className="truncate font-mono text-[12px] tabular-nums text-l-ink">
             {run.runId}
           </span>
           <AgentVersionBadge version={version} />
@@ -78,7 +77,6 @@ export function AgentRunDetailDrawer({
         onOpenHashSearch ? (
           <div className="flex items-center justify-between gap-2">
             <Button
-              density="compact"
               variant="secondary"
               size="sm"
               onPress={() => onOpenHashSearch(run.runId)}
@@ -87,7 +85,6 @@ export function AgentRunDetailDrawer({
               Find related hashes
             </Button>
             <Button
-              density="compact"
               variant="ghost"
               size="sm"
               onPress={onClose}
@@ -126,7 +123,7 @@ export function AgentRunDetailDrawer({
               {
                 label: "Started",
                 value: (
-                  <span>
+                  <span className="tabular-nums">
                     {formatStableDateTime(run.startedAt)}
                     <span className="ml-2 text-l-ink-dim">
                       <RelativeTime iso={run.startedAt} />
@@ -136,12 +133,16 @@ export function AgentRunDetailDrawer({
               },
               {
                 label: "Duration",
-                value: run.durationMs != null ? formatMs(run.durationMs) : "—",
+                value: (
+                  <span className="tabular-nums">
+                    {run.durationMs != null ? formatMs(run.durationMs) : "—"}
+                  </span>
+                ),
               },
               {
                 label: "Artifact",
                 value: (
-                  <span className="font-mono">{run.artifactId}</span>
+                  <span className="font-mono tabular-nums">{run.artifactId}</span>
                 ),
               },
               {
@@ -237,7 +238,7 @@ export function AgentRunDetailDrawer({
               {
                 label: "Response id",
                 value: run.response?.id ? (
-                  <span className="font-mono">{run.response.id}</span>
+                  <span className="font-mono tabular-nums">{run.response.id}</span>
                 ) : (
                   <Empty />
                 ),
@@ -296,7 +297,7 @@ export function AgentRunDetailDrawer({
                     className="flex items-baseline gap-2 font-sans text-[11px]"
                   >
                     <dt className="shrink-0 text-l-ink-dim">{key}</dt>
-                    <dd className="truncate font-mono text-l-ink-lo">
+                    <dd className="truncate font-mono tabular-nums text-l-ink-lo">
                       {value}
                     </dd>
                   </div>
@@ -375,7 +376,7 @@ function Section({
   return (
     <section className="flex flex-col gap-2">
       <h3 className="font-sans text-[13px] font-medium text-l-ink">{title}</h3>
-      <div className="rounded-[4px] border border-l-border bg-l-surface-raised p-3">
+      <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3">
         {children}
       </div>
     </section>
@@ -431,10 +432,12 @@ function ToolCallRow({ call }: { call: AgentToolCall }) {
           {call.toolName}
         </span>
         <span className="ml-auto flex items-center gap-1 font-sans text-[11px] text-l-ink-dim">
-          <span>{call.durationMs != null ? formatMs(call.durationMs) : "—"}</span>
+          <span className="tabular-nums">
+            {call.durationMs != null ? formatMs(call.durationMs) : "—"}
+          </span>
           <span aria-hidden>·</span>
           <Hash className="inline size-3" strokeWidth={1.75} />
-          <span className="font-mono">{call.callId.slice(0, 8)}</span>
+          <span className="font-mono tabular-nums">{call.callId.slice(0, 8)}</span>
         </span>
       </div>
       <dl className="grid grid-cols-[72px_1fr] gap-x-3 gap-y-1.5">
@@ -473,7 +476,7 @@ function ToolCallRow({ call }: { call: AgentToolCall }) {
           </>
         ) : null}
       </dl>
-      <span className="font-sans text-[11px] text-l-ink-dim">
+      <span className="font-sans text-[11px] tabular-nums text-l-ink-dim">
         started {formatStableDateTime(call.startedAt)}
       </span>
     </li>

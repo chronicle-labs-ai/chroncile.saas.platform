@@ -17,7 +17,7 @@ import {
 } from "./types";
 
 const meta: Meta = {
-  title: "StreamTimeline/Full",
+  title: "Stream Timeline/Full",
   parameters: { layout: "fullscreen" },
 };
 export default meta;

@@ -139,7 +139,7 @@ export function TraceRow({
       {selectable ? (
         <span
           aria-hidden
-          className="inline-block h-[14px] w-[14px] rounded-l-sm border border-l-border-strong"
+          className="inline-block h-[14px] w-[14px] rounded-xs border border-l-border-strong"
         />
       ) : null}
       <span className="font-mono text-[11.5px] tracking-mono text-l-ink-dim">

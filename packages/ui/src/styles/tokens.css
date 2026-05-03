@@ -1,59 +1,134 @@
 /* ─────────────────────────────────────────────────────────────
-   Chronicle Labs — Design Tokens
+   Chronicle Labs — Design Tokens (single, unified system)
+
+   One token namespace, one set of surfaces, one chrome. The split
+   between "brand" (`--c-*`) and "product" (`--l-*`) is gone — the
+   canonical values now follow Linear's "Midnight Command Center"
+   reference. Ember stays as the primary action color (the Chronicle
+   signal); Linear's lime / aether-blue / cyan-spark / emerald are
+   exposed as secondary status accents and named utility colors.
+
    Font faces live in ./fonts.css so this file is pure vars + helpers.
    ───────────────────────────────────────────────────────────── */
 
 :root {
   /* ── Type families ───────────────────────────────────────── */
   --font-display: "Kalice", "Times New Roman", ui-serif, serif;
-  --font-sans: "TWK Lausanne", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: "Geist Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-sans: "Inter", "Inter Variable", ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", ui-monospace,
+    SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* ── Core surface / neutrals ─────────────────────────────── */
-  --c-void: #000000;                /* absolute black, logos on white */
-  --c-black: #040404;               /* brand canvas (slides, marketing) */
-  --c-surface-00: #0a0806;          /* app background */
-  --c-surface-01: #0f0f0f;          /* default card */
-  --c-surface-02: #131313;          /* elevated card */
-  --c-surface-03: #1a1a1a;          /* input / hover */
-  --c-hairline: rgba(255,255,255,0.06);
-  --c-hairline-strong: rgba(255,255,255,0.12);
-  --c-divider: rgba(255,255,255,0.05);
+  /* ── Linear "Midnight Command Center" — named tokens ──────
+     Reference palette. Reach for these directly when you want
+     a specific Linear hex; otherwise prefer the semantic
+     `--c-surface-*` / `--c-ink-*` aliases below which carry
+     the same values and flip cleanly under `data-theme=light`. */
+  --color-pitch-black: #08090a;
+  --color-graphite: #0f1011;
+  --color-deep-slate: #161718;
+  --color-charcoal-grey: #23252a;
+  --color-muted-ash: #323334;
+  --color-gunmetal: #383b3f;
+  --color-porcelain: #f7f8f8;
+  --color-light-steel: #d0d6e0;
+  --color-storm-cloud: #8a8f98;
+  --color-fog-grey: #62666d;
+  --color-alabaster: #e5e5e6;
+  --color-neon-lime: #e4f222;
+  --color-aether-blue: #5e6ad2;
+  --color-forest-green: #008d2c;
+  --color-cyan-spark: #02b8cc;
+  --color-emerald: #27a644;
+  --color-warning-red: #eb5757;
+  --color-deep-violet: #6366f1;
+  --color-amethyst: #8b5cf6;
+
+  /* ── Core surface / neutrals (semantic aliases) ──────────
+     These are the legacy `--c-*` names mapped onto the Linear
+     surface stack. Existing utilities (`bg-surface-01`,
+     `border-hairline-strong`, …) keep working without edits.
+
+     Note: the reference palette above is Linear's *marketing*
+     canvas (`#08090a` pitch). The *product* app sits one step
+     lifted so body text doesn't collide with absolute black and
+     the elevation stack has breathing room — cf. Emil's Color
+     rule #7: keep a perceivable "brightest dark grey" in the
+     canvas. The `--c-black` token stays pitch for decks and
+     marketing surfaces; `--c-surface-00` is the softer canvas
+     the product UI paints on. */
+  --c-void: #000000;
+  --c-black: var(--color-pitch-black);   /* brand canvas (slides, marketing) */
+  --c-surface-00: #0c0d10;               /* app background — lifted near-black */
+  --c-surface-01: #131418;               /* default card — one step up */
+  --c-surface-02: #191a1f;               /* elevated card — two steps up */
+  --c-surface-03: #23252a;               /* input / hover — charcoal grey */
+  --c-surface-input: var(--color-gunmetal);  /* "Subtle Input Field" fill */
+
+  --c-hairline: rgba(255, 255, 255, 0.08);
+  --c-hairline-strong: rgba(255, 255, 255, 0.14);
+  --c-divider: rgba(255, 255, 255, 0.06);
 
   /* ── Ink (text on dark) ──────────────────────────────────── */
-  --c-ink-hi: #ffffff;              /* titles */
-  --c-ink: #eaeaea;                 /* body */
-  --c-ink-lo: #bfbfbf;              /* secondary */
-  --c-ink-dim: #6b6b6b;             /* labels */
-  --c-ink-faint: rgba(255,255,255,0.35);
+  --c-ink-hi: var(--color-porcelain);     /* titles / primary text */
+  --c-ink: var(--color-light-steel);      /* body / secondary borders */
+  --c-ink-lo: var(--color-storm-cloud);   /* descriptive labels */
+  --c-ink-dim: var(--color-fog-grey);     /* metadata / timestamps */
+  --c-ink-faint: rgba(247, 248, 248, 0.35);
 
-  /* ── Ink (text on light) ─────────────────────────────────── */
-  --c-ink-inv-hi: #040404;
+  /* ── Ink (text on light) — for inverse buttons/badges ────── */
+  --c-ink-inv-hi: var(--color-pitch-black);
   --c-ink-inv: #121212;
-  --c-ink-inv-lo: #2b2720;          /* warm charcoal */
-  --c-ink-inv-dim: #6b6b6b;
+  --c-ink-inv-lo: #2b2720;
+  --c-ink-inv-dim: var(--color-fog-grey);
 
-  /* ── Primary palette (the ember → sage → ember arc) ──────── */
-  --c-ember: #d8430a;               /* signature orange */
+  /* ── Wash / hover overlays (formerly `--l-wash-*`) ─────────
+     `--c-wash-micro` is the barely-there 1.5% tint used on
+     low-elevation cards in the product (trace rows, picker
+     tiles, backtest cards). It has a deliberate light-theme
+     counterpart so these surfaces stay visible when the theme
+     flips — hardcoded `rgba(255,255,255,0.012)` fills would
+     render white-on-white. See Emil's Color rule #9. */
+  --c-wash-micro: rgba(255, 255, 255, 0.015);
+  --c-wash-1: rgba(255, 255, 255, 0.02);
+  --c-wash-2: rgba(255, 255, 255, 0.03);
+  --c-wash-3: rgba(255, 255, 255, 0.04);
+  --c-wash-5: rgba(255, 255, 255, 0.06);
+
+  /* ── Primary action palette ──────────────────────────────
+     Ember stays as the Chronicle signal — primary CTAs,
+     focus rings, ember-tinted selection, etc. The remaining
+     editorial brand accents (sage / gold / bronze / bone)
+     are kept as aux palette entries used by the glass-scene
+     recipes and a handful of marketing surfaces. */
+  --c-ember: #d8430a;
+  --c-ember-hover: #e85520; /* +1 value, for :hover on primary CTAs */
   --c-ember-deep: #b83606;
-  --c-bronze: #905838;               /* "Dark Blue" in figma */
-  --c-gold: #b09b74;                 /* Primary Gold (light) */
-  --c-gold-deep: #786e68;            /* Primary Gold (dark) */
-  --c-sage: #709188;                 /* Primary Blue / teal-sage */
-  --c-sage-deep: #3e547c;            /* deeper teal from figma */
-  --c-bone: #eee4ce;                 /* cream accent */
+  --c-bronze: #905838;
+  --c-gold: #b09b74;
+  --c-gold-deep: #786e68;
+  --c-sage: #709188;
+  --c-sage-deep: #3e547c;
+  --c-bone: #eee4ce;
 
-  /* ── Event / stream colors (used in product UI) ──────────── */
-  --c-event-teal: #2dd4bf;           /* intercom / support */
-  --c-event-amber: #fbbf24;          /* shopify / commerce */
-  --c-event-green: #4ade80;          /* stripe / billing, ok */
-  --c-event-orange: #d86b3d;         /* ops / alerts */
-  --c-event-pink: #f472b6;           /* slack / notify */
-  --c-event-violet: #8b5cf6;         /* replay / sandbox */
-  --c-event-red: #ef4444;            /* fail / divergence */
-  --c-event-white: #ffffff;          /* raw / system */
+  /* ── Event / stream colors (per-source identity) ─────────
+     Kept as a stable semantic palette for product UI. Each
+     key encodes a meaning, not a hue: teal=support,
+     amber=commerce, green=billing/ok, orange=ops/alerts,
+     pink=notify, violet=replay/sandbox, red=fail. */
+  --c-event-teal: #2dd4bf;
+  --c-event-amber: #fbbf24;
+  --c-event-green: #4ade80;
+  --c-event-orange: #d86b3d;
+  --c-event-pink: #f472b6;
+  --c-event-violet: #8b5cf6;
+  --c-event-red: #ef4444;
+  --c-event-white: #ffffff;
 
-  /* ── Signature gradient stops (light-source bar) ─────────── */
+  /* ── Signature gradient stops (light-source bar) ─────────
+     Used by the glass-scene recipes (Ember, Dawn, Dusk, …).
+     Kept on the original ember→bronze→sage→gold stops so
+     the recipes' dark-stage visual identity is preserved. */
   --grad-lightsource: linear-gradient(
     90deg,
     #d8430a 0%,
@@ -79,7 +154,9 @@
     #786e68 100%
   );
 
-  /* ── Type scale (sized for 1440px marketing / 1920 decks) ─ */
+  /* ── Type scale — legacy Chronicle scale ─────────────────
+     Sized for 1440px marketing / 1920 decks. Kept for the
+     existing typography primitives + auth headings. */
   --fs-display-xxl: 120px;
   --fs-display-xl: 96px;
   --fs-display-lg: 72px;
@@ -97,7 +174,33 @@
   --fs-mono-sm: 10px;
   --fs-mono-xs: 9px;
 
-  /* ── Spacing ─────────────────────────────────────────────── */
+  /* ── Type scale — Linear semantic roles ──────────────────
+     These are the canonical product-text roles per the Linear
+     reference. Use them for new product UI; the `--fs-*` legacy
+     scale above is retained for marketing/decks. */
+  --text-caption: 10px;
+  --leading-caption: 1.4;
+  --tracking-caption: -0.1px;
+  --text-body: 14px;
+  --leading-body: 1.4;
+  --tracking-body: -0.13px;
+  --text-heading: 24px;
+  --leading-heading: 1.33;
+  --tracking-heading: -0.22px;
+  --text-heading-lg: 48px;
+  --leading-heading-lg: 1.2;
+  --tracking-heading-lg: -0.22px;
+  --text-display: 72px;
+  --leading-display: 1;
+  --tracking-display: -0.22px;
+
+  /* ── Linear font weights (Inter axis values) ─────────────── */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-w510: 510;
+  --font-weight-w590: 590;
+
+  /* ── Spacing — legacy Chronicle scale ───────────────────── */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -110,41 +213,135 @@
   --s-16: 64px;
   --s-20: 80px;
 
-  /* ── Radius ──────────────────────────────────────────────── */
+  /* ── Spacing — Linear scale (4px base, compact density) ─── */
+  --spacing-unit: 4px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-36: 36px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-56: 56px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-128: 128px;
+
+  /* ── Layout primitives (Linear) ──────────────────────────── */
+  --section-gap: 24px;
+  --card-padding: 12px;
+  --element-gap: 8px;
+
+  /* ── Density metrics — used by primitives that need fixed
+     row / input heights (was `--l-row-h`, `--l-input-h`). */
+  --density-row-h: 32px;
+  --density-row-h-sm: 28px;
+  --density-input-h: 28px;
+  --density-input-h-md: 32px;
+
+  /* ── Radius — legacy + Linear named ──────────────────────── */
   --r-xs: 2px;
   --r-sm: 4px;
   --r-md: 6px;
   --r-lg: 10px;
   --r-xl: 16px;
-  --r-pill: 999px;
+  --r-pill: 9999px;
+  /* Linear named radii — keep semantic names per the reference */
+  --radius-pill: 9999px;
+  --radius-tags: 2px;
+  --radius-cards: 6px;
+  --radius-badges: 4px;
+  --radius-inputs: 6px;
+  --radius-buttons: 6px;
+  --radius-default: 6px;
 
   /* ── Motion ──────────────────────────────────────────────── */
-  --ease-out: cubic-bezier(.22,.61,.36,1);
-  --ease-in-out: cubic-bezier(.65,.05,.36,1);
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
   --dur-fast: 120ms;
   --dur: 220ms;
   --dur-slow: 480ms;
+  /* Asymmetric drawer / modal motion — exits should feel like
+     departure, not entrance-in-reverse. */
+  --dur-enter: 240ms;
+  --dur-exit: 180ms;
 
-  /* ── Shadow ──────────────────────────────────────────────── */
-  --shadow-card: 0 1px 0 rgba(255,255,255,0.02) inset, 0 24px 60px -20px rgba(0,0,0,0.8);
-  --shadow-panel: 0 40px 80px -30px rgba(0,0,0,0.9), 0 0 0 1px var(--c-hairline);
-  --shadow-glow-ember: 0 0 80px -20px rgba(216,67,10,0.55);
+  /* ── Z-index scale ──────────────────────────────────────────
+     One canonical scale for layered surfaces. Replace any
+     ad-hoc `z-50` / `z-9999` with the appropriate token below. */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 100;
+  --z-overlay: 200;       /* full-screen overlays / backdrops */
+  --z-modal: 210;         /* dialogs, drawers (above overlay) */
+  --z-popover: 220;       /* dropdowns, comboboxes, autocompletes */
+  --z-tooltip: 230;       /* tooltips render above everything else */
+  --z-toast: 240;         /* toast / snackbar takes the very top */
 
-  /* ── Semantic surface aliases (theme-aware) ──────────────
-     Prefer these in page-level CSS so light/dark flips cleanly.
-     They default to the dark values above; the light theme
-     remaps them below. */
-  --c-page:          var(--c-black);          /* root page canvas */
-  --c-specimen-bg:   #0a0a0a;                 /* type/color specimen plates */
-  --c-row-hover:     rgba(255,255,255,0.02);  /* subtle row hover */
-  --c-row-active:    rgba(216,67,10,0.06);    /* ember-tinted selection */
-  --c-track:         rgba(255,255,255,0.06);  /* progress track / empty bar */
-  --c-btn-invert-bg: #ffffff;                 /* "primary on dark" button bg */
-  --c-btn-invert-fg: #040404;                 /* its text */
+  /* ── Shadows — Chronicle (brand surfaces) ────────────────── */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
+    0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  --shadow-panel: 0 40px 80px -30px rgba(0, 0, 0, 0.9),
+    0 0 0 1px var(--c-hairline);
+  --shadow-glow-ember: 0 0 80px -20px rgba(216, 67, 10, 0.55);
+
+  /* ── Shadows — Linear ────────────────────────────────────── */
+  --shadow-sm: rgba(0, 0, 0, 0.4) 0px 2px 4px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.2) 0px 0px 12px 0px inset;
+  --shadow-subtle: rgb(35, 37, 42) 0px 0px 0px 1px inset;
+  --shadow-subtle-2: rgba(0, 0, 0, 0.2) 0px 0px 0px 1px;
+  --shadow-subtle-3: rgba(0, 0, 0, 0.01) 0px 5px 2px 0px,
+    rgba(0, 0, 0, 0.04) 0px 3px 2px 0px,
+    rgba(0, 0, 0, 0.07) 0px 1px 1px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 1px 0px;
+  --shadow-xl: rgba(8, 9, 10, 0.6) 0px 4px 32px 0px;
+  --shadow-subtle-4: rgba(0, 0, 0, 0.1) 0px 0px 0px 2px;
+  --shadow-subtle-5: rgba(0, 0, 0, 0.33) 0px 0px 0px 1px;
+  --shadow-subtle-6: rgba(255, 255, 255, 0.03) 0px 0px 0px 1px inset,
+    rgba(255, 255, 255, 0.04) 0px 1px 0px 0px inset,
+    rgba(0, 0, 0, 0.6) 0px 0px 0px 1px,
+    rgba(0, 0, 0, 0.1) 0px 4px 4px 0px;
+
+  /* Popover / dropdown surface (formerly `--l-pop-*`) */
+  --c-pop-bg: rgba(22, 22, 30, 0.96);
+  --c-pop-border: rgba(82, 82, 111, 0.44);
+  --c-pop-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.2);
+  --c-dot-edge: rgba(0, 0, 0, 0.4);
+
+  /* Linear-style row chrome */
+  --c-page: var(--c-surface-00);
+  --c-specimen-bg: #0a0a0a;
+  --c-row-hover: rgba(255, 255, 255, 0.03);
+  --c-row-active: rgba(216, 67, 10, 0.06);
+  --c-row-selected: rgba(216, 67, 10, 0.08);
+  --c-track: rgba(255, 255, 255, 0.06);
+  --c-shade-overlay: rgba(10, 9, 8, 0.7);
+  --c-btn-invert-bg: var(--color-porcelain);
+  --c-btn-invert-fg: var(--color-pitch-black);
+
+  /* Status palette (Linear-style, derived from Linear named tokens) */
+  --c-status-backlog: #95959b;
+  --c-status-todo: var(--color-light-steel);
+  --c-status-inprogress: var(--c-event-amber);
+  --c-status-done: var(--c-sage);
+  --c-status-canceled: var(--color-fog-grey);
+
+  /* Priority palette (Linear-style) */
+  --c-priority-urgent: var(--color-warning-red);
+  --c-priority-high: var(--c-ember);
+  --c-priority-med: var(--c-event-amber);
+  --c-priority-low: var(--color-fog-grey);
+  --c-priority-none: var(--color-fog-grey);
 
   /* ── shadcn semantic aliases ────────────────────────────────
-     These keep generated shadcn-style components on Chronicle's token
-     system instead of introducing a parallel color source. */
+     These keep generated shadcn-style components on the unified
+     token system instead of introducing a parallel color source. */
   --background: var(--c-page);
   --foreground: var(--c-ink);
   --card: var(--c-surface-01);
@@ -164,9 +361,9 @@
   --border: var(--c-hairline-strong);
   --input: var(--c-hairline-strong);
   --ring: var(--c-ember);
-  --radius: var(--r-lg);
+  --radius: var(--r-md);
 
-  /* shadcn sidebar aliases, mapped onto Chronicle product surfaces. */
+  /* shadcn sidebar aliases, mapped onto the unified surface stack. */
   --sidebar-background: var(--c-surface-01);
   --sidebar-foreground: var(--c-ink);
   --sidebar-primary: var(--c-ember);
@@ -175,107 +372,222 @@
   --sidebar-accent-foreground: var(--c-ink-hi);
   --sidebar-border: var(--c-hairline-strong);
   --sidebar-ring: var(--c-ember);
+
+  /* ── Legacy `--l-*` aliases — DEPRECATED ─────────────────
+     The Linear-density layer was retired; these aliases point
+     every former `var(--l-…)` reference at its unified `--c-*`
+     equivalent so inline styles in product components keep
+     working without per-file edits. They flip cleanly under
+     `[data-theme="light"]` because the right-hand side does.
+
+     New code: prefer the canonical token vocabulary instead.
+
+       Layered model:
+       1. Linear named values (`--color-pitch-black`, `--color-porcelain`, …)
+          — reference palette. Use directly when the design calls for a
+          specific Linear hex.
+       2. shadcn semantic aliases (`--background`, `--foreground`, `--card`,
+          `--primary`, `--ring`, `--radius`, …) — for cross-cutting / paste-in
+          shadcn snippets. Wired to the `--c-*` stack below.
+       3. Chronicle semantic (`--c-surface-01`, `--c-ink-hi`, `--c-hairline`,
+          `--c-ember`, `--c-event-*`, `--c-priority-*`, …) — for product UI.
+
+     The `l.*` color tree in tailwind.config.ts (e.g. `bg-l-wash-3`,
+     `text-l-ink`, `border-l-border-strong`) is scheduled for removal
+     once first-party `cva()` strings have been migrated. Do not
+     introduce new references to `--l-*` or `l.*` utilities. */
+  --l-surface: var(--c-surface-00);
+  --l-surface-raised: var(--c-surface-01);
+  --l-surface-raised-2: var(--c-surface-02);
+  --l-surface-input: var(--c-surface-input);
+  --l-surface-bar: var(--c-surface-00);
+  --l-surface-bar-2: var(--c-surface-00);
+  --l-surface-hover: var(--c-row-hover);
+  --l-surface-selected: var(--c-row-selected);
+  --l-wash-micro: var(--c-wash-micro);
+  --l-wash-1: var(--c-wash-1);
+  --l-wash-2: var(--c-wash-2);
+  --l-wash-3: var(--c-wash-3);
+  --l-wash-5: var(--c-wash-5);
+  --l-ink: var(--c-ink-hi);
+  --l-ink-lo: var(--c-ink-lo);
+  --l-ink-dim: var(--c-ink-dim);
+  --l-border: var(--c-hairline-strong);
+  --l-border-strong: var(--c-hairline-strong);
+  --l-border-hover: var(--c-ink-dim);
+  --l-border-faint: var(--c-hairline);
+  --l-pop-bg: var(--c-pop-bg);
+  --l-pop-border: var(--c-pop-border);
+  --l-pop-shadow: var(--c-pop-shadow);
+  --l-dot-edge: var(--c-dot-edge);
+  --l-accent: var(--c-ember);
+  --l-accent-muted: rgba(216, 67, 10, 0.14);
+  --l-p-urgent: var(--c-priority-urgent);
+  --l-p-high: var(--c-priority-high);
+  --l-p-med: var(--c-priority-med);
+  --l-p-low: var(--c-priority-low);
+  --l-p-none: var(--c-priority-none);
+  --l-status-backlog: var(--c-status-backlog);
+  --l-status-todo: var(--c-status-todo);
+  --l-status-inprogress: var(--c-status-inprogress);
+  --l-status-done: var(--c-status-done);
+  --l-status-canceled: var(--c-status-canceled);
+  --l-shade-overlay: var(--c-shade-overlay);
+  --l-radius: var(--r-md);
+  --l-radius-sm: var(--r-xs);
+  --l-row-h: var(--density-row-h);
+  --l-row-h-sm: var(--density-row-h-sm);
+  --l-input-h: var(--density-input-h);
+  --l-input-h-md: var(--density-input-h-md);
 }
 
 /* ─────────────────────────────────────────────────────────────
    LIGHT THEME
    Apply via <html data-theme="light"> or <body data-theme="light">.
-   Keeps the ember/sage/gold arc intact — only neutrals + inks flip.
-   Base palette is a warm bone/cream built off --c-bone.
+   Linear's reference is dark-only, so this is a Chronicle-tuned
+   light variant: cool whites for surfaces, charcoal stack for
+   ink, ember stays the signal. The Linear named tokens
+   (`--color-*`) are *not* remapped — those are reference values
+   and remain stable in both themes.
    ───────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Core surfaces — cool white product canvas */
-  --c-void:        #ffffff;
-  --c-black:       #fafafa;   /* brand canvas (slides, marketing) */
-  --c-surface-00:  #fafafa;   /* app background — cool white */
-  --c-surface-01:  #ffffff;   /* default card */
-  --c-surface-02:  #ffffff;   /* elevated card */
-  --c-surface-03:  #f4f4f5;   /* input / hover */
+  --c-void: #ffffff;
+  --c-black: #fafafa;
+  --c-surface-00: #fafafa; /* app background — cool white */
+  --c-surface-01: #ffffff; /* default card */
+  --c-surface-02: #ffffff; /* elevated card */
+  --c-surface-03: #f4f4f5; /* input / hover */
+  --c-surface-input: #f4f4f5;
 
-  --c-hairline:         rgba(40,28,12,0.10);
-  --c-hairline-strong:  rgba(40,28,12,0.22);
-  --c-divider:          rgba(40,28,12,0.08);
+  --c-hairline: rgba(8, 9, 10, 0.09);
+  --c-hairline-strong: rgba(8, 9, 10, 0.17);
+  --c-divider: rgba(8, 9, 10, 0.06);
 
-  /* Ink (text on light) — warm charcoal stack */
-  --c-ink-hi:    #1a140a;
-  --c-ink:       #2b2720;
-  --c-ink-lo:    #5a5348;
-  --c-ink-dim:   #8a8374;
-  --c-ink-faint: rgba(26,20,10,0.40);
+  /* Ember one value darker on light (primary buttons read
+     stronger on cream, so :hover needs to *deepen* rather than
+     lighten — inverse of dark-mode behaviour). */
+  --c-ember-hover: #b83606;
 
-  /* Inverse ink (text on dark) — unchanged whites for ember accents etc. */
-  --c-ink-inv-hi:  #ffffff;
-  --c-ink-inv:     #eaeaea;
-  --c-ink-inv-lo:  #bfbfbf;
-  --c-ink-inv-dim: #6b6b6b;
+  /* Ink — charcoal stack on cool white */
+  --c-ink-hi: var(--color-pitch-black);
+  --c-ink: var(--color-charcoal-grey);
+  --c-ink-lo: #5c5d63;
+  --c-ink-dim: var(--color-storm-cloud);
+  --c-ink-faint: rgba(8, 9, 10, 0.4);
 
-  /* Semantic aliases */
-  --c-page:          var(--c-black);
-  --c-specimen-bg:   #ffffff;
-  --c-row-hover:     rgba(40,28,12,0.04);
-  --c-row-active:    rgba(216,67,10,0.08);
-  --c-track:         rgba(40,28,12,0.08);
-  --c-btn-invert-bg: #1a140a;
-  --c-btn-invert-fg: #fafafa;
+  /* Inverse ink — light-on-dark for ember/black accents */
+  --c-ink-inv-hi: #ffffff;
+  --c-ink-inv: #fafafa;
+  --c-ink-inv-lo: #d0d6e0;
+  --c-ink-inv-dim: #8a8f98;
 
-  /* Shadow — softer, warmer */
-  --shadow-card:  0 1px 0 rgba(255,255,255,0.6) inset, 0 20px 50px -24px rgba(70,50,20,0.25);
-  --shadow-panel: 0 40px 80px -30px rgba(70,50,20,0.28), 0 0 0 1px var(--c-hairline);
+  /* Wash / hover overlays — dark on light */
+  --c-wash-micro: rgba(8, 9, 10, 0.02);
+  --c-wash-1: rgba(8, 9, 10, 0.03);
+  --c-wash-2: rgba(8, 9, 10, 0.04);
+  --c-wash-3: rgba(8, 9, 10, 0.06);
+  --c-wash-5: rgba(8, 9, 10, 0.1);
+
+  --c-page: var(--c-black);
+  --c-specimen-bg: #ffffff;
+  --c-row-hover: rgba(8, 9, 10, 0.04);
+  --c-row-active: rgba(216, 67, 10, 0.08);
+  --c-row-selected: rgba(216, 67, 10, 0.1);
+  --c-track: rgba(8, 9, 10, 0.08);
+  --c-shade-overlay: rgba(250, 250, 250, 0.7);
+  --c-btn-invert-bg: var(--color-pitch-black);
+  --c-btn-invert-fg: #ffffff;
+
+  /* Popover surface on cream */
+  --c-pop-bg: rgba(255, 255, 255, 0.98);
+  --c-pop-border: rgba(8, 9, 10, 0.18);
+  --c-pop-shadow: 0 4px 24px 0 rgba(8, 9, 10, 0.14),
+    0 0 0 1px rgba(8, 9, 10, 0.04);
+
+  /* Status / priority — bump low-contrast tones on light */
+  --c-priority-low: #5c5d63;
+  --c-priority-none: #5c5d63;
+  --c-status-backlog: #5c5d63;
+  --c-status-todo: var(--color-pitch-black);
+  --c-status-canceled: #5c5d63;
+
+  /* Shadow — softer on cream */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 20px 50px -24px rgba(8, 9, 10, 0.18);
+  --shadow-panel: 0 40px 80px -30px rgba(8, 9, 10, 0.2),
+    0 0 0 1px var(--c-hairline);
 }
 
 /* Slat overlay reads darker on light surfaces */
 [data-theme="light"] .bg-slats {
   background-image: repeating-linear-gradient(
     120deg,
-    rgba(40,28,12,0.10) 0px,
-    rgba(40,28,12,0.10) 1px,
-    rgba(255,255,255,0.20) 1px,
-    rgba(255,255,255,0.20) 140px,
-    rgba(40,28,12,0.05) 140px,
-    rgba(40,28,12,0.05) 280px
+    rgba(8, 9, 10, 0.1) 0px,
+    rgba(8, 9, 10, 0.1) 1px,
+    rgba(255, 255, 255, 0.2) 1px,
+    rgba(255, 255, 255, 0.2) 140px,
+    rgba(8, 9, 10, 0.05) 140px,
+    rgba(8, 9, 10, 0.05) 280px
   );
   mix-blend-mode: multiply;
 }
 
 /* Live status glow softer on light */
-[data-theme="light"] .status-live::before { box-shadow: 0 0 10px rgba(74,222,128,.6); }
+[data-theme="light"] .status-live::before {
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+}
 
 /* ── Light-theme per-page overrides ─────────────────────────
    These selectors patch a handful of hardcoded whites that live in
    page-level <style> blocks. Cheaper than rewriting every page. */
 
-/* 07 Replay Suite + 05 UI components + index thumb — white-alpha tracks */
-[data-theme="light"] table.runs tr:hover { background: rgba(40,28,12,0.04) !important; }
+[data-theme="light"] table.runs tr:hover {
+  background: rgba(8, 9, 10, 0.04) !important;
+}
 [data-theme="light"] .sim-bar,
-[data-theme="light"] .thumb-replay .bar { background: rgba(40,28,12,0.10) !important; }
-[data-theme="light"] .verdict.pending { background: rgba(40,28,12,0.05) !important; }
+[data-theme="light"] .thumb-replay .bar {
+  background: rgba(8, 9, 10, 0.08) !important;
+}
+[data-theme="light"] .verdict.pending {
+  background: rgba(8, 9, 10, 0.05) !important;
+}
 
-/* index + 05: masthead tag chips */
-[data-theme="light"] .tag-row .tag { background: rgba(40,28,12,0.03); }
+[data-theme="light"] .tag-row .tag {
+  background: rgba(8, 9, 10, 0.03);
+}
 
-/* 05: stripe overlay (was repeating white gradient on dark) */
-[data-theme="light"] .mark::after { border-color: rgba(40,28,12,0.10); }
+[data-theme="light"] .mark::after {
+  border-color: rgba(8, 9, 10, 0.1);
+}
 
-/* Colors page swatches — text stays white (contrast against colored swatch) */
-[data-theme="light"] .sw.light .meta { color: rgba(0,0,0,.55); }
+[data-theme="light"] .sw.light .meta {
+  color: rgba(0, 0, 0, 0.55);
+}
 
-/* 06 event stream dots/chrome */
-[data-theme="light"] .minimap .range { background: rgba(139,92,246,.14); }
+[data-theme="light"] .minimap .range {
+  background: rgba(139, 92, 246, 0.14);
+}
 
-/* Replay/thumb placeholder trailing slots — faint track that still reads on cream */
 [data-theme="light"] .thumb-replay > div > b[style*="rgba(255,255,255"],
-[data-theme="light"] .thumb-ui .evt { background: var(--c-surface-02); }
+[data-theme="light"] .thumb-ui .evt {
+  background: var(--c-surface-02);
+}
 
-/* Any inline "empty slot" bar using rgba(255,255,255,.06) — flip via attr selector */
 [data-theme="light"] b[style*="rgba(255,255,255,.06)"] {
-  background: rgba(40,28,12,0.08) !important;
+  background: rgba(8, 9, 10, 0.06) !important;
 }
 
 /* ─── Base helpers ─────────────────────────────────────────── */
 
-.font-display { font-family: var(--font-display); }
-.font-sans    { font-family: var(--font-sans); }
-.font-mono    { font-family: var(--font-mono); }
+.font-display {
+  font-family: var(--font-display);
+}
+.font-sans {
+  font-family: var(--font-sans);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
 
 /* Uppercase tiny mono label — used throughout product + decks */
 .eyebrow {
@@ -296,30 +608,20 @@
   color: var(--c-ink-hi);
 }
 
-/* TWK Lausanne body — light, generous line height */
+/* Inter body — light, generous line height */
 .body {
   font-family: var(--font-sans);
-  font-weight: 300;
+  font-weight: 400;
   font-size: var(--fs-body);
   line-height: 1.45;
   color: var(--c-ink);
 }
 
-/* ─── Base reset for cards ─────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--c-page);
-  color: var(--c-ink);
-  transition: background-color 220ms var(--ease-out), color 220ms var(--ease-out);
-  font-family: var(--font-sans);
-  font-weight: 300;
-  font-feature-settings: "ss01", "ss02", "cv01";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
+/* Base reset + typographic defaults live in `./globals.css` as the
+   single source of truth. `tokens.css` is intentionally vars-only
+   past this point so it can be imported standalone (e.g. by
+   email templates or isolated Storybook stories) without
+   applying a reset. */
 
 /* The signature "light source + glass" background. Drop
    <div class="bg-lightsource"></div> inside a relative parent. */
@@ -342,11 +644,13 @@ html, body {
   filter: blur(0.5px);
 }
 .bg-lightsource::before {
-  top: -20%; left: -55%;
+  top: -20%;
+  left: -55%;
   transform: rotate(-28deg);
 }
 .bg-lightsource::after {
-  bottom: -30%; right: -55%;
+  bottom: -30%;
+  right: -55%;
   transform: rotate(-28deg);
 }
 /* Glass slats sit above the bars. Use .bg-lightsource-slats
@@ -357,12 +661,12 @@ html, body {
   pointer-events: none;
   background-image: repeating-linear-gradient(
     120deg,
-    rgba(0,0,0,0.55) 0px,
-    rgba(0,0,0,0.55) 1px,
-    rgba(255,255,255,0.015) 1px,
-    rgba(255,255,255,0.015) 140px,
-    rgba(0,0,0,0.25) 140px,
-    rgba(0,0,0,0.25) 280px
+    rgba(0, 0, 0, 0.55) 0px,
+    rgba(0, 0, 0, 0.55) 1px,
+    rgba(255, 255, 255, 0.015) 1px,
+    rgba(255, 255, 255, 0.015) 140px,
+    rgba(0, 0, 0, 0.25) 140px,
+    rgba(0, 0, 0, 0.25) 280px
   );
   mix-blend-mode: multiply;
   backdrop-filter: blur(18px);
@@ -380,7 +684,9 @@ html, body {
   opacity: 0.7;
   transition: opacity 200ms ease;
 }
-.chron-header__logo:hover { opacity: 1; }
+.chron-header__logo:hover {
+  opacity: 1;
+}
 .chron-header__logo img {
   height: 100%;
   width: auto;

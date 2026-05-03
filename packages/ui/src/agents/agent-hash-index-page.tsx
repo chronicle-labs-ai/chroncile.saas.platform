@@ -91,6 +91,10 @@ export function AgentHashIndexPage({
   className,
 }: AgentHashIndexPageProps) {
   const [query, setQuery] = React.useState(initialQuery);
+  // `useDeferredValue` lets React keep the input responsive while the
+  // expensive filter+group below catches up at lower priority. Mirrors
+  // a manual 300ms debounce without the timer plumbing.
+  const deferredQuery = React.useDeferredValue(query);
   const [domains, setDomains] = React.useState<HashDomain[]>([
     ...initialDomains,
   ]);
@@ -101,8 +105,17 @@ export function AgentHashIndexPage({
       cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d],
     );
 
+  const clearAllFilters = React.useCallback(() => {
+    setQuery("");
+    setDomains([]);
+    setSourceFilter("all");
+  }, []);
+
+  const hasFilters =
+    query.trim().length > 0 || domains.length > 0 || sourceFilter !== "all";
+
   const filtered = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     return entries.filter((entry) => {
       if (domains.length > 0 && !domains.includes(entry.kind)) return false;
       if (sourceFilter === "artifacts" && entry.runId) return false;
@@ -113,7 +126,7 @@ export function AgentHashIndexPage({
       } ${entry.path} ${entry.preview ?? ""} ${entry.framework ?? ""}`;
       return haystack.toLowerCase().includes(q);
     });
-  }, [entries, query, domains, sourceFilter]);
+  }, [entries, deferredQuery, domains, sourceFilter]);
 
   // Group by hash so the customer sees how many places a single hash
   // was observed (this is the entire point of the index).
@@ -147,8 +160,9 @@ export function AgentHashIndexPage({
 
       <section className="flex flex-col gap-2 rounded-[4px] border border-l-border-faint bg-l-wash-1 p-3">
         <Input
-          density="compact"
+          type="search"
           search
+          aria-label="Search artifact hashes"
           placeholder="Paste a hash or part of one — sha256:…"
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
@@ -179,7 +193,6 @@ export function AgentHashIndexPage({
           {(["all", "artifacts", "runs"] as const).map((s) => (
             <Chip
               key={s}
-              density="compact"
               active={sourceFilter === s}
               onClick={() => setSourceFilter(s)}
             >
@@ -194,9 +207,20 @@ export function AgentHashIndexPage({
       </section>
 
       {grouped.length === 0 ? (
-        <div className="rounded-[4px] border border-l-border-faint bg-l-wash-1 p-6 text-center font-sans text-[12px] text-l-ink-dim">
-          No matching hashes. Try clearing a filter or pasting a different
-          hash.
+        <div className="flex flex-col items-center gap-3 rounded-[4px] border border-l-border-faint bg-l-wash-1 px-4 py-10 text-center">
+          <p className="max-w-md font-sans text-[13px] text-l-ink">
+            No matching hashes
+          </p>
+          <p className="max-w-md font-sans text-[12px] leading-snug text-l-ink-dim">
+            {hasFilters
+              ? "Try a different hash, or clear filters to see every observation in the index."
+              : "Paste a hash from a run or artifact above to see every place it has been observed."}
+          </p>
+          {hasFilters ? (
+            <Button variant="ghost" size="sm" onPress={clearAllFilters}>
+              Clear all filters
+            </Button>
+          ) : null}
         </div>
       ) : (
         <ol className="flex flex-col gap-2">
@@ -244,7 +268,7 @@ function HashGroup({
   return (
     <li
       data-domain={dominantDomain}
-      className="rounded-[4px] border border-l-border bg-l-surface-raised"
+      className="rounded-[4px] border border-hairline-strong bg-l-surface-raised"
     >
       <header className="flex flex-wrap items-center gap-2 border-b border-l-border-faint px-3 py-2.5">
         <span
@@ -313,8 +337,8 @@ function HashGroup({
                   className="flex truncate text-left text-l-ink-lo hover:text-ember"
                 >
                   <span className="text-l-ink-dim">Run</span>
-                  <span className="ml-1 truncate font-mono">
-                    {obs.runId.slice(0, 12)}…
+                  <span className="ml-1 truncate font-mono tabular-nums">
+                    {obs.runId}
                   </span>
                 </button>
               ) : null}
@@ -342,7 +366,6 @@ export function HashIndexLaunchButton({
 }) {
   return (
     <Button
-      density="compact"
       variant="secondary"
       size="sm"
       onPress={onPress}

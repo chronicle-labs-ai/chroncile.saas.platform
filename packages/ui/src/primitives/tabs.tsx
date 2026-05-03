@@ -18,36 +18,53 @@
 
 import * as React from "react";
 import { Tabs as TabsPrimitive } from "radix-ui";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  tabPanelVariants,
-  tabVariants,
-  tabsListVariants,
-  tabsRootVariants,
-} from "./shadcn";
 
-const TabsDensityContext = React.createContext<"compact" | "brand" | undefined>(
-  undefined,
+export const tabsRootVariants = cva(
+  "flex flex-col data-[orientation=vertical]:flex-row gap-[12px]"
 );
 
-export interface TabsProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>,
-  "className" | "children"
-> {
+export const tabsListVariants = cva(
+  "flex border-b border-hairline data-[orientation=vertical]:flex-col data-[orientation=vertical]:border-b-0 data-[orientation=vertical]:border-r gap-[2px] data-[orientation=vertical]:gap-[2px]"
+);
+
+/*
+ * Radix Tabs emits `data-state="active" | "inactive"` on Trigger/Content,
+ * `data-disabled` on disabled Trigger, and `data-orientation`. It does NOT
+ * emit `data-selected`/`data-hovered`/`data-focus-visible`. Earlier
+ * revisions targeted those (RAC vintage) and never fired.
+ */
+export const tabVariants = cva(
+  "relative cursor-pointer outline-none transition-colors duration-fast ease-out " +
+    "data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:bg-ember data-[state=active]:after:h-[2px] " +
+    "data-[state=active]:text-l-ink hover:text-l-ink " +
+    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember " +
+    "data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed " +
+    "px-[10px] py-[6px] font-sans text-[13px] font-medium tracking-normal leading-none text-l-ink-lo"
+);
+
+export const tabPanelVariants = cva("outline-none");
+
+export interface TabsProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>,
+    "className" | "children"
+  > {
   className?: string;
-  density?: "compact" | "brand";
   children: React.ReactNode;
+  /** @deprecated Use `value` (Radix / shadcn canonical). */
   selectedKey?: string;
+  /** @deprecated Use `defaultValue`. */
   defaultSelectedKey?: string;
+  /** @deprecated Use `onValueChange`. */
   onSelectionChange?: (key: string) => void;
   ref?: React.Ref<HTMLDivElement>;
 }
 
 export function Tabs({
   className,
-  density: densityProp,
   children,
   value,
   defaultValue,
@@ -58,7 +75,6 @@ export function Tabs({
   ref,
   ...rest
 }: TabsProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
     <TabsPrimitive.Root
       {...rest}
@@ -69,20 +85,18 @@ export function Tabs({
         onValueChange?.(next);
         onSelectionChange?.(next);
       }}
-      data-density={density}
-      className={cn(tabsRootVariants({ density }), className)}
+      className={cn(tabsRootVariants(), className)}
     >
-      <TabsDensityContext.Provider value={density}>
-        {children}
-      </TabsDensityContext.Provider>
+      {children}
     </TabsPrimitive.Root>
   );
 }
 
-export interface TabListProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>,
-  "className" | "children"
-> {
+export interface TabListProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>,
+    "className" | "children"
+  > {
   className?: string;
   children: React.ReactNode;
   ref?: React.Ref<HTMLDivElement>;
@@ -94,53 +108,59 @@ export function TabList({
   ref,
   ...rest
 }: TabListProps) {
-  const ctxDensity = React.useContext(TabsDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   return (
     <TabsPrimitive.List
       {...rest}
       ref={ref}
-      className={cn(tabsListVariants({ density }), className)}
+      className={cn(tabsListVariants(), className)}
     >
       {children as React.ReactNode}
     </TabsPrimitive.List>
   );
 }
 
-export interface TabProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>,
-  "className" | "value"
-> {
+export interface TabProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>,
+    "className" | "value"
+  > {
   className?: string;
   value?: string;
+  /** @deprecated Use `value` (matches Radix Tabs / shadcn). */
   id?: string;
   ref?: React.Ref<HTMLButtonElement>;
 }
 
 export function Tab({ className, ref, value, id, ...rest }: TabProps) {
-  const ctxDensity = React.useContext(TabsDensityContext);
-  const density = useResolvedChromeDensity(ctxDensity);
   return (
     <TabsPrimitive.Trigger
       {...rest}
       ref={ref}
       value={value ?? id ?? ""}
-      className={cn(tabVariants({ density }), className)}
+      className={cn(tabVariants(), className)}
     />
   );
 }
 
-export interface TabPanelProps extends Omit<
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>,
-  "className" | "value"
-> {
+export interface TabPanelProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>,
+    "className" | "value"
+  > {
   className?: string;
   value?: string;
+  /** @deprecated Use `value` (matches Radix Tabs / shadcn). */
   id?: string;
   ref?: React.Ref<HTMLDivElement>;
 }
 
-export function TabPanel({ className, ref, value, id, ...rest }: TabPanelProps) {
+export function TabPanel({
+  className,
+  ref,
+  value,
+  id,
+  ...rest
+}: TabPanelProps) {
   return (
     <TabsPrimitive.Content
       {...rest}

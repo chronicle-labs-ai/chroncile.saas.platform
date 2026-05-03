@@ -13,7 +13,7 @@ type Story = StoryObj<typeof GroupHead>;
 
 export const Default: Story = {
   render: () => (
-    <div className="w-[800px] border border-l-border bg-l-surface">
+    <div className="w-[800px] border border-hairline-strong bg-l-surface">
       <GroupHead>
         <Status kind="inprogress" />
         <span>In progress</span>
@@ -32,7 +32,7 @@ export const Toggleable: Story = {
       const [openA, setOpenA] = React.useState(true);
       const [openB, setOpenB] = React.useState(false);
       return (
-        <div className="w-[800px] border border-l-border bg-l-surface">
+        <div className="w-[800px] border border-hairline-strong bg-l-surface">
           <GroupHead expanded={openA} onToggle={setOpenA}>
             <Status kind="todo" />
             <span>Todo</span>

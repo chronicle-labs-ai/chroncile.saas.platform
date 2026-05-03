@@ -1,6 +1,5 @@
 import * as React from "react";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { eyebrowVariants } from "./shadcn";
+import { cva } from "class-variance-authority";
 
 /**
  * Eyebrow — the tactical uppercase mono label used above section headers
@@ -11,27 +10,22 @@ import { eyebrowVariants } from "./shadcn";
  *
  *   <Eyebrow><b>SIGN IN</b> · CHRONICLE</Eyebrow>
  */
-export type EyebrowDensity = "compact" | "brand";
+export const eyebrowVariants = cva(
+  "leading-none font-sans text-[11px] font-medium uppercase tracking-[0.04em] text-l-ink-dim [&>b]:text-l-ink [&>b]:font-medium"
+);
 
 export interface EyebrowProps extends React.HTMLAttributes<HTMLSpanElement> {
   as?: "span" | "div" | "p";
-  density?: EyebrowDensity;
 }
 
 export function Eyebrow({
   as: Tag = "span",
-  density: densityProp,
   className,
   children,
   ...props
 }: EyebrowProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
-    <Tag
-      className={eyebrowVariants({ density, className })}
-      data-density={density}
-      {...props}
-    >
+    <Tag className={eyebrowVariants({ className })} {...props}>
       {children}
     </Tag>
   );

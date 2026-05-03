@@ -32,11 +32,11 @@ const appShell = tv({
     density: {
       compact: {
         root: "bg-l-surface text-l-ink",
-        topbar: "gap-s-2 border-b border-l-border bg-l-surface px-s-3",
-        filterBar: "gap-[6px] border-b border-l-border bg-l-surface-bar px-s-3",
-        nav: "border-r border-l-border bg-l-surface-bar-2",
+        topbar: "gap-s-2 border-b border-hairline-strong bg-l-surface px-s-3",
+        filterBar: "gap-[6px] border-b border-hairline-strong bg-l-surface-bar px-s-3",
+        nav: "border-r border-hairline-strong bg-l-surface-bar-2",
         main: "bg-l-surface",
-        detail: "border-l border-l-border bg-l-surface-raised",
+        detail: "border-l border-hairline-strong bg-l-surface-raised",
       },
       brand: {
         root: "bg-surface-00 text-ink",
@@ -124,7 +124,6 @@ export function AppShell({
 
   return (
     <div
-      data-density={density}
       className={slots.root({ className })}
       style={{
         gridTemplateColumns: gridCols,

@@ -13,6 +13,8 @@ import {
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
+import { Chip } from "../primitives/chip";
+import { CopyButton } from "../primitives/copy-button";
 import { Tabs, TabList, Tab, TabPanel } from "../primitives/tabs";
 import { CompanyLogo } from "../icons";
 import { InlineAlert } from "../auth/_internal";
@@ -40,6 +42,7 @@ import {
   type ConnectionEventTypeSub,
 } from "./data";
 import {
+  RelativeTime,
   formatNumber,
   formatStableDate,
   formatStableDateTime,
@@ -81,11 +84,29 @@ export const CONNECTION_DETAIL_TABS: readonly {
   { id: "events", label: "Event types" },
 ];
 
+/**
+ * Subset of tabs the drawer shows by default. The drawer is sized for
+ * triage (Overview + Activity); the deeper config surfaces (Scopes,
+ * Secret, Backfills, Event types) live on the full detail page where
+ * they have room to breathe. P0 finding: 6 tabs in a 720px drawer
+ * overflowed on narrower viewports.
+ */
+export const CONNECTION_DRAWER_TABS: readonly ConnectionDetailTab[] = [
+  "overview",
+  "activity",
+];
+
 export interface ConnectionDetailBodyProps {
   connection: Connection;
   /** Active tab id. Defaults to "overview". */
   tab?: ConnectionDetailTab;
   onTabChange?: (next: ConnectionDetailTab) => void;
+  /**
+   * Subset of tabs to render. Defaults to the full set. Pass
+   * `CONNECTION_DRAWER_TABS` (or any custom list) to slim the strip
+   * inside narrow surfaces.
+   */
+  tabs?: readonly ConnectionDetailTab[];
   /** Backfill rows for this connection. */
   backfills?: readonly ConnectionBackfillRecord[];
   /** Recent deliveries for the Activity tab. */
@@ -106,6 +127,19 @@ export interface ConnectionDetailBodyProps {
   onReauth?: () => void;
   onTest?: () => void;
   onDisconnect?: () => void;
+  /**
+   * Optional handler for the "Open full activity log" affordance in the
+   * Activity tab. Omit to hide the link entirely — the previous
+   * `href="#"` placeholder hijacked the back-stack and scrolled the page
+   * to the top on click.
+   */
+  onOpenActivityLog?: () => void;
+  /**
+   * Hide tabs that aren't in the supplied subset and still want to
+   * jump to a deeper config surface? Render a small "Configure on
+   * detail page" link next to the tab strip. Wired by the drawer.
+   */
+  onJumpToFullDetail?: (tab: ConnectionDetailTab) => void;
   /** Hide the inner header chrome (used when the parent renders its own). */
   hideHeader?: boolean;
   className?: string;
@@ -115,6 +149,7 @@ export function ConnectionDetailBody({
   connection,
   tab,
   onTabChange,
+  tabs,
   backfills = [],
   deliveries = [],
   events = [],
@@ -127,6 +162,8 @@ export function ConnectionDetailBody({
   onReauth,
   onTest,
   onDisconnect,
+  onOpenActivityLog,
+  onJumpToFullDetail,
   hideHeader,
   className,
 }: ConnectionDetailBodyProps) {
@@ -134,19 +171,30 @@ export function ConnectionDetailBody({
   const isPaused = connection.health === "paused";
   const isErrored = connection.health === "error";
   const isExpired = connection.health === "expired";
+  const isTesting = connection.lastTestStatus === "pending";
+
+  const visibleTabs = React.useMemo(() => {
+    if (!tabs) return CONNECTION_DETAIL_TABS;
+    const set = new Set(tabs);
+    return CONNECTION_DETAIL_TABS.filter((t) => set.has(t.id));
+  }, [tabs]);
+  const currentTabId = tab ?? "overview";
+  const currentTabVisible = visibleTabs.some((t) => t.id === currentTabId);
+  const effectiveTab: ConnectionDetailTab = currentTabVisible
+    ? currentTabId
+    : visibleTabs[0]?.id ?? "overview";
 
   return (
     <div className={cx("flex flex-col gap-4", className)}>
       {hideHeader ? null : <DetailHeader connection={connection} />}
 
       <Tabs
-        density="compact"
-        value={tab ?? "overview"}
+        value={effectiveTab}
         onValueChange={(next) => onTabChange?.(next as ConnectionDetailTab)}
         className="flex flex-col gap-3"
       >
         <TabList>
-          {CONNECTION_DETAIL_TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <Tab key={t.id} value={t.id}>
               {t.label}
             </Tab>
@@ -176,7 +224,7 @@ export function ConnectionDetailBody({
           ) : null}
           {isPaused ? (
             <InlineAlert tone="info">
-              Stream paused. Resume to resume ingestion immediately.
+              Stream paused — new events buffer upstream until you resume.
             </InlineAlert>
           ) : null}
 
@@ -185,7 +233,6 @@ export function ConnectionDetailBody({
           <div className="flex flex-wrap items-center gap-2">
             {isPaused ? (
               <Button
-                density="compact"
                 size="sm"
                 variant="primary"
                 leadingIcon={<Play className="size-3.5" strokeWidth={1.75} />}
@@ -196,7 +243,6 @@ export function ConnectionDetailBody({
               </Button>
             ) : (
               <Button
-                density="compact"
                 size="sm"
                 variant="secondary"
                 leadingIcon={<Pause className="size-3.5" strokeWidth={1.75} />}
@@ -207,7 +253,6 @@ export function ConnectionDetailBody({
               </Button>
             )}
             <Button
-              density="compact"
               size="sm"
               variant={isExpired || isErrored ? "primary" : "secondary"}
               leadingIcon={
@@ -219,33 +264,55 @@ export function ConnectionDetailBody({
               Re-authorize
             </Button>
             <Button
-              density="compact"
               size="sm"
               variant="secondary"
               leadingIcon={<Activity className="size-3.5" strokeWidth={1.75} />}
               onPress={onTest}
               isDisabled={!onTest}
+              isPending={isTesting}
             >
-              Test connection
-            </Button>
-            <span className="ml-auto" />
-            <Button
-              density="compact"
-              size="sm"
-              variant="critical"
-              leadingIcon={<Trash2 className="size-3.5" strokeWidth={1.75} />}
-              onPress={onDisconnect}
-              isDisabled={!onDisconnect}
-            >
-              Disconnect
+              {isTesting ? "Testing\u2026" : "Test connection"}
             </Button>
           </div>
+
+          {/*
+           * Danger zone — pulled out of the primary action row so the
+           * destructive button doesn't sit shoulder-to-shoulder with
+           * benign actions. Stripe / Linear pattern: visible divider +
+           * destructive label below.
+           */}
+          {onDisconnect ? (
+            <DangerZone>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-[2px]">
+                  <span className="font-mono text-mono-sm uppercase tracking-tactical text-event-red">
+                    Disconnect
+                  </span>
+                  <span className="font-sans text-[12.5px] text-ink-dim">
+                    Stops ingestion and revokes scopes. You'll need to
+                    re-authorize from scratch to reconnect.
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="critical"
+                  leadingIcon={
+                    <Trash2 className="size-3.5" strokeWidth={1.75} />
+                  }
+                  onPress={onDisconnect}
+                >
+                  Disconnect
+                </Button>
+              </div>
+            </DangerZone>
+          ) : null}
         </TabPanel>
 
         <TabPanel value="scopes" className="flex flex-col gap-4">
           <ScopesEditor
             connection={connection}
             onToggleScope={onToggleScope}
+            onReauth={onReauth}
           />
         </TabPanel>
 
@@ -268,6 +335,7 @@ export function ConnectionDetailBody({
           <ActivitySection
             deliveries={deliveries}
             errorPayload={connection.errorPayload}
+            onOpenActivityLog={onOpenActivityLog}
           />
         </TabPanel>
 
@@ -275,6 +343,55 @@ export function ConnectionDetailBody({
           <EventsSection events={events} onToggleEvent={onToggleEvent} />
         </TabPanel>
       </Tabs>
+
+      {tabs && onJumpToFullDetail ? (
+        <HiddenTabsHint
+          hiddenTabs={CONNECTION_DETAIL_TABS.filter(
+            (t) => !visibleTabs.some((v) => v.id === t.id),
+          )}
+          onJump={onJumpToFullDetail}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/* ── Danger zone wrapper ─────────────────────────────────── */
+
+function DangerZone({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-2 rounded-[2px] border border-event-red/25 bg-[rgba(239,68,68,0.04)] p-3">
+      {children}
+    </div>
+  );
+}
+
+/* ── Hidden-tab hint ─────────────────────────────────────── */
+
+function HiddenTabsHint({
+  hiddenTabs,
+  onJump,
+}: {
+  hiddenTabs: readonly { id: ConnectionDetailTab; label: string }[];
+  onJump: (tab: ConnectionDetailTab) => void;
+}) {
+  if (hiddenTabs.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-divider pt-3">
+      <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+        Configure
+      </span>
+      {hiddenTabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onJump(t.id)}
+          className="inline-flex items-center gap-1 rounded-xs font-mono text-mono-sm text-ember focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember hover:underline"
+        >
+          {t.label}
+          <ExternalLink className="size-3" strokeWidth={1.75} />
+        </button>
+      ))}
     </div>
   );
 }
@@ -301,8 +418,17 @@ function DetailHeader({ connection }: { connection: Connection }) {
         <span className="truncate font-display text-[18px] leading-none tracking-[-0.03em] text-ink-hi">
           {connection.name}
         </span>
-        <span className="truncate font-mono text-mono-sm text-ink-dim">
-          {src?.cat ?? "—"} · {src?.auth ?? "—"} · {connection.id}
+        <span className="flex min-w-0 items-center gap-2 font-mono text-mono-sm text-ink-dim">
+          <span className="truncate">
+            {src?.cat ?? "—"} · {src?.auth ?? "—"} · {connection.id}
+          </span>
+          <CopyButton
+            text={connection.id}
+            appearance="text"
+            label="Copy"
+            copiedLabel="Copied"
+            aria-label="Copy connection id"
+          />
         </span>
       </div>
       <ConnectionHealthBadge health={connection.health} />
@@ -313,6 +439,7 @@ function DetailHeader({ connection }: { connection: Connection }) {
 /* ── Overview summary ────────────────────────────────────── */
 
 function SummaryGrid({ connection }: { connection: Connection }) {
+  const lastTestedValue = lastTestedSummary(connection);
   const items: { label: string; value: React.ReactNode }[] = [
     {
       label: "Connected",
@@ -320,10 +447,19 @@ function SummaryGrid({ connection }: { connection: Connection }) {
     },
     {
       label: "Last event",
-      value: formatStableTime(connection.lastEventAt),
+      value: connection.lastEventAt ? (
+        <span title={formatStableDateTime(connection.lastEventAt)}>
+          <RelativeTime
+            iso={connection.lastEventAt}
+            fallback={formatStableTime(connection.lastEventAt)}
+          />
+        </span>
+      ) : (
+        "—"
+      ),
     },
     { label: "Events / 24h", value: formatNumber(connection.eventsLast24h) },
-    { label: "Scopes", value: connection.scopes.length },
+    { label: "Last tested", value: lastTestedValue },
     {
       label: "Owner",
       value: connection.ownerEmail ?? "—",
@@ -340,10 +476,35 @@ function SummaryGrid({ connection }: { connection: Connection }) {
           <dt className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             {it.label}
           </dt>
-          <dd className="font-sans text-[13.5px] text-ink-hi">{it.value}</dd>
+          <dd className="font-sans text-[13.5px] tabular-nums text-ink-hi">
+            {it.value}
+          </dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+function lastTestedSummary(connection: Connection): React.ReactNode {
+  if (connection.lastTestStatus === "pending") {
+    return <span className="text-ember">testing now</span>;
+  }
+  if (!connection.lastTestedAt) return "never";
+  const tone =
+    connection.lastTestStatus === "fail"
+      ? "text-event-red"
+      : "text-event-green";
+  const label = connection.lastTestStatus === "fail" ? "failed" : "passed";
+  return (
+    <span
+      className="inline-flex items-baseline gap-2"
+      title={formatStableDateTime(connection.lastTestedAt)}
+    >
+      <RelativeTime iso={connection.lastTestedAt} fallback="—" />
+      <span className={cx("font-mono text-mono-sm uppercase", tone)}>
+        {label}
+      </span>
+    </span>
   );
 }
 
@@ -352,19 +513,42 @@ function SummaryGrid({ connection }: { connection: Connection }) {
 function ScopesEditor({
   connection,
   onToggleScope,
+  onReauth,
 }: {
   connection: Connection;
   onToggleScope?: (id: string, next: boolean) => void;
+  onReauth?: () => void;
 }) {
   const items = scopeCatalogFor(connection);
+  const sourceName = getSource(connection.source)?.name ?? "this source";
   if (items.length === 0) {
     return (
-      <p className="font-sans text-[13px] text-ink-lo">
-        No scope catalog is registered for {getSource(connection.source)?.name ?? "this source"}. Granted ids:
-        <span className="ml-2 font-mono text-mono-sm text-ink-hi">
-          {connection.scopes.join(", ") || "—"}
-        </span>
-      </p>
+      <div className="flex flex-col gap-3">
+        <InlineAlert tone="info">
+          Chronicle doesn&rsquo;t maintain a scope catalog for {sourceName}.
+          To add or remove scopes, re-authorize and pick the new set on the
+          consent screen.
+        </InlineAlert>
+        <div className="flex flex-col gap-1">
+          <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+            Granted scopes
+          </span>
+          <span className="break-all font-mono text-mono-sm text-ink-hi">
+            {connection.scopes.join(", ") || "none"}
+          </span>
+        </div>
+        {onReauth ? (
+          <Button
+            size="sm"
+            variant="primary"
+            leadingIcon={<RefreshCw className="size-3.5" strokeWidth={1.75} />}
+            onPress={onReauth}
+            className="self-start"
+          >
+            Re-authorize to edit
+          </Button>
+        ) : null}
+      </div>
     );
   }
   return (
@@ -503,10 +687,10 @@ function BackfillsSection({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
-          {backfills.length} run{backfills.length === 1 ? "" : "s"}
+          <span className="tabular-nums">{backfills.length}</span> run
+          {backfills.length === 1 ? "" : "s"}
         </span>
         <Button
-          density="compact"
           size="sm"
           variant="primary"
           onPress={onRunBackfill}
@@ -520,11 +704,13 @@ function BackfillsSection({
           No backfill runs yet.
         </p>
       ) : (
+        // Currently flat; switch to `<Virtuoso>` if/when a tenant
+        // exceeds ~50 historical runs (P2 from the connections review).
         <ul className="flex flex-col gap-2">
           {backfills.map((bf) => (
             <li
               key={bf.id}
-              className="grid grid-cols-[110px_minmax(0,1fr)_120px_80px] items-center gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-2"
+              className="grid grid-cols-[110px_minmax(0,1fr)_120px_80px] items-center gap-3 rounded-[2px] border border-divider bg-wash-micro px-3 py-2"
             >
               <span className="font-mono text-mono-sm text-ink-dim">
                 {formatStableDate(bf.startedAt)}
@@ -532,7 +718,7 @@ function BackfillsSection({
               <span className="truncate font-mono text-mono-sm text-ink-lo">
                 {bf.windowDays}d · {bf.entities.join(", ") || "—"}
               </span>
-              <span className="font-mono text-mono-sm text-ink-lo">
+              <span className="font-mono text-mono-sm tabular-nums text-ink-lo">
                 {formatNumber(bf.estEvents)} events
               </span>
               <span
@@ -560,9 +746,11 @@ function BackfillsSection({
 function ActivitySection({
   deliveries,
   errorPayload,
+  onOpenActivityLog,
 }: {
   deliveries: readonly ConnectionDelivery[];
   errorPayload?: string;
+  onOpenActivityLog?: () => void;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -577,7 +765,7 @@ function ActivitySection({
           <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             Recent deliveries
           </span>
-          <span className="font-mono text-mono-sm text-ink-dim">
+          <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
             {deliveries.length}
           </span>
         </div>
@@ -600,13 +788,16 @@ function ActivitySection({
         )}
       </div>
 
-      <a
-        href="#"
-        className="inline-flex items-center gap-1 font-mono text-mono-sm text-ember hover:underline"
-      >
-        Open full activity log
-        <ExternalLink className="size-3" strokeWidth={1.75} />
-      </a>
+      {onOpenActivityLog ? (
+        <button
+          type="button"
+          onClick={onOpenActivityLog}
+          className="inline-flex w-fit items-center gap-1 rounded-xs font-mono text-mono-sm text-ember focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember hover:underline"
+        >
+          Open full activity log
+          <ExternalLink className="size-3" strokeWidth={1.75} />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -641,7 +832,8 @@ function EventsSection({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
-          {enabledCount} of {events.length} enabled
+          <span className="tabular-nums">{enabledCount}</span> of{" "}
+          <span className="tabular-nums">{events.length}</span> enabled
         </span>
       </div>
       {Array.from(grouped.entries()).map(([object, items]) => (
@@ -651,21 +843,15 @@ function EventsSection({
           </span>
           <div className="flex flex-wrap gap-1.5">
             {items.map((e) => (
-              <button
+              <Chip
                 key={e.id}
-                type="button"
-                onClick={() => onToggleEvent?.(e.id, !e.enabled)}
+                active={e.enabled}
                 aria-pressed={e.enabled}
-                data-active={e.enabled || undefined}
-                className={cx(
-                  "rounded-[2px] border px-2 py-1 font-mono text-mono-sm transition-colors duration-fast",
-                  e.enabled
-                    ? "border-ember/35 bg-[rgba(216,67,10,0.06)] text-ink-hi"
-                    : "border-divider bg-[rgba(255,255,255,0.012)] text-ink-dim hover:bg-[rgba(255,255,255,0.025)]",
-                )}
+                onClick={() => onToggleEvent?.(e.id, !e.enabled)}
+                className="font-mono"
               >
                 {e.id}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>

@@ -2,21 +2,81 @@
 
 import * as React from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import type { VariantProps } from "class-variance-authority";
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
 import { Button } from "./button";
-import {
-  modalActionsVariants,
-  modalBodyVariants,
-  modalCloseVariants,
-  modalDialogVariants,
-  modalHeaderVariants,
-  modalOverlayVariants,
-  modalTitleVariants,
-  modalVariants,
-} from "./shadcn";
+
+/*
+ * Variant classnames for `<Modal>` and `<Dialog>` (which composes the
+ * same Radix Dialog primitives but with a more granular API).
+ *
+ * Radix Dialog emits:
+ *   - `data-state="open" | "closed"` on `Overlay` and `Content`
+ *
+ * Keep in sync with `drawer.tsx`. Earlier revisions used
+ * `data-[entering=true]` / `data-[exiting=true]` (react-aria-components)
+ * so the animations never fired.
+ */
+
+export const modalOverlayVariants = cva(
+  "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm " +
+    "data-[state=open]:animate-in data-[state=open]:fade-in-0 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
+);
+
+export const modalVariants = cva(
+  /*
+   * Centered with `translate-x-[-50%] translate-y-[-50%]`. The
+   * `slide-in-from-left-1/2` / `slide-in-from-top-[48%]` classes pin
+   * `--tw-enter-translate-x` / `--tw-enter-translate-y` so the keyframe's
+   * FROM transform matches the natural centering — without this the modal
+   * would visibly jump from (0,0) on open. Mirror the same numbers in the
+   * exit classes so close animates symmetrically.
+   */
+  "fixed top-[50%] left-[50%] z-50 max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[520px] " +
+    "translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-md border border-hairline-strong bg-surface-01 shadow-panel outline-none duration-200 " +
+    "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 " +
+    "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 " +
+    "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]"
+);
+
+export const modalDialogVariants = cva("outline-none");
+
+export const modalHeaderVariants = cva(
+  "flex items-center justify-between border-b border-hairline bg-surface-02 px-[14px] py-[10px]"
+);
+
+export const modalTitleVariants = cva(
+  "font-sans text-[14px] font-medium tracking-normal",
+  {
+    variants: {
+      variant: {
+        default: "text-ink-hi",
+        danger: "text-event-red",
+        dark: "text-ink-hi",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+export const modalCloseVariants = cva(
+  "inline-flex items-center justify-center text-ink-dim transition-colors duration-fast ease-out " +
+    "hover:bg-surface-03 hover:text-ink-hi " +
+    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember h-7 w-7 rounded-md"
+);
+
+export const modalBodyVariants = cva(
+  "text-ink-lo px-[14px] py-[14px] font-sans text-[13px] leading-snug"
+);
+
+export const modalActionsVariants = cva(
+  "flex items-center justify-end border-t border-hairline bg-surface-02 gap-[8px] px-[14px] py-[10px]"
+);
 
 type ModalVariantProps = VariantProps<typeof modalTitleVariants>;
 
@@ -32,7 +92,6 @@ export interface ModalProps extends ModalVariantProps {
    * `dark`    — alias for `default`, kept for API compatibility
    */
   variant?: "default" | "danger" | "dark";
-  density?: "compact" | "brand";
   className?: string;
   /** Per-slot overrides. */
   classNames?: {
@@ -49,6 +108,21 @@ export interface ModalProps extends ModalVariantProps {
   isDismissable?: boolean;
 }
 
+/**
+ * @deprecated Prefer the shadcn-style `<Dialog>` compound for non-destructive
+ * flows and `<AlertDialog>` for destructive confirms. `Modal` will be removed
+ * once first-party callers have migrated.
+ *
+ * Migration:
+ *
+ *   <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+ *     <DialogContent>
+ *       <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+ *       <DialogBody>{children}</DialogBody>
+ *       {actions ? <DialogFooter>{actions}</DialogFooter> : null}
+ *     </DialogContent>
+ *   </Dialog>
+ */
 export function Modal({
   isOpen,
   onClose,
@@ -56,13 +130,10 @@ export function Modal({
   children,
   actions,
   variant = "default",
-  density: densityProp,
   className,
   classNames,
   isDismissable = true,
 }: ModalProps) {
-  const density = useResolvedChromeDensity(densityProp);
-
   return (
     <DialogPrimitive.Root
       open={isOpen}
@@ -81,18 +152,14 @@ export function Modal({
           onEscapeKeyDown={(event) => {
             if (!isDismissable) event.preventDefault();
           }}
-          className={cn(modalVariants({ density }), classNames?.modal, className)}
+          className={cn(modalVariants(), classNames?.modal, className)}
         >
           <div className={modalDialogVariants({ className: classNames?.dialog })}>
             <div
-              className={modalHeaderVariants({
-                density,
-                className: classNames?.header,
-              })}
+              className={modalHeaderVariants({ className: classNames?.header })}
             >
               <DialogPrimitive.Title
                 className={modalTitleVariants({
-                  density,
                   variant,
                   className: classNames?.title,
                 })}
@@ -103,10 +170,7 @@ export function Modal({
                 <button
                   type="button"
                   aria-label="Close dialog"
-                  className={modalCloseVariants({
-                    density,
-                    className: classNames?.close,
-                  })}
+                  className={modalCloseVariants({ className: classNames?.close })}
                 >
                   <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
                     <path
@@ -120,19 +184,13 @@ export function Modal({
               </DialogPrimitive.Close>
             </div>
 
-            <div
-              className={modalBodyVariants({
-                density,
-                className: classNames?.body,
-              })}
-            >
+            <div className={modalBodyVariants({ className: classNames?.body })}>
               {children}
             </div>
 
             {actions ? (
               <div
                 className={modalActionsVariants({
-                  density,
                   className: classNames?.actions,
                 })}
               >
@@ -158,6 +216,24 @@ export interface ConfirmModalProps {
   isLoading?: boolean;
 }
 
+/**
+ * @deprecated Use `<AlertDialog>` for destructive confirms (proper
+ * `role=alertdialog` + outside-click / Escape are no-ops by default).
+ * For non-destructive confirms, compose `<Dialog>` directly.
+ *
+ *   <AlertDialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+ *     <AlertDialogContent>
+ *       <AlertDialogHeader>
+ *         <AlertDialogTitle>{title}</AlertDialogTitle>
+ *         <AlertDialogDescription>{message}</AlertDialogDescription>
+ *       </AlertDialogHeader>
+ *       <AlertDialogFooter>
+ *         <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+ *         <AlertDialogAction onClick={onConfirm}>{confirmText}</AlertDialogAction>
+ *       </AlertDialogFooter>
+ *     </AlertDialogContent>
+ *   </AlertDialog>
+ */
 export function ConfirmModal({
   isOpen,
   onClose,

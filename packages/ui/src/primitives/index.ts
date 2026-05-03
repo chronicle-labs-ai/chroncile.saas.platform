@@ -1,8 +1,85 @@
-export { Avatar } from "./avatar";
-export type { AvatarProps } from "./avatar";
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarBadge,
+  AvatarGroup,
+  AvatarGroupCount,
+  deriveInitials,
+} from "./avatar";
+export type {
+  AvatarProps,
+  AvatarImageProps,
+  AvatarFallbackProps,
+  AvatarBadgeProps,
+  AvatarGroupProps,
+  AvatarGroupCountProps,
+  AvatarTone,
+  AvatarSize,
+  AvatarShape,
+} from "./avatar";
 
 export { Badge } from "./badge";
 export type { BadgeProps, BadgeVariant } from "./badge";
+
+export { Alert, AlertTitle, AlertDescription } from "./alert";
+export type {
+  AlertProps,
+  AlertTitleProps,
+  AlertDescriptionProps,
+  AlertVariant,
+  AlertTone,
+} from "./alert";
+
+export {
+  AlertDialog,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "./alert-dialog";
+
+export {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  CardAction,
+} from "./card";
+export type {
+  CardProps,
+  CardHeaderProps,
+  CardTitleProps,
+  CardDescriptionProps,
+  CardContentProps,
+  CardFooterProps,
+  CardActionProps,
+} from "./card";
+
+export { Separator } from "./separator";
+export type { SeparatorProps } from "./separator";
+
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetPortal,
+  SheetOverlay,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "./sheet";
+export type { SheetContentProps, SheetSide } from "./sheet";
 
 export { Button } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
@@ -84,7 +161,6 @@ export {
 
 export { MultiSelect } from "./multi-select";
 export type {
-  MultiSelectDensity,
   MultiSelectItemType,
   MultiSelectProps,
   MultiSelectRenderState,
@@ -135,6 +211,19 @@ export type {
   ListboxSectionProps,
 } from "./listbox";
 
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from "./command";
+export type { CommandDialogProps } from "./command";
+
 export { Combobox, ComboboxItem, ComboboxSection } from "./combobox";
 export type {
   ComboboxProps,
@@ -177,6 +266,9 @@ export type {
   UseToastReturn,
 } from "./toast";
 
+export { Toaster, toast } from "./sonner";
+export type { ToasterProps } from "./sonner";
+
 export { Breadcrumbs, Breadcrumb } from "./breadcrumbs";
 export type { BreadcrumbsProps, BreadcrumbProps } from "./breadcrumbs";
 
@@ -194,6 +286,31 @@ export type { SparklineProps, SparklineTone } from "./sparkline";
 
 export { ScrollShadow } from "./scroll-shadow";
 export type { ScrollShadowProps } from "./scroll-shadow";
+
+export { ScrollArea, ScrollBar } from "./scroll-area";
+
+export {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuGroup,
+  ContextMenuPortal,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
+  ContextMenuSubContent,
+  ContextMenuRadioGroup,
+} from "./context-menu";
+
+export {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+  HoverCardPortal,
+} from "./hover-card";
 
 export { EmptyState } from "./empty-state";
 export type {
@@ -213,6 +330,9 @@ export type {
   CellProps,
 } from "./table";
 
+export { SkeletonBlock } from "./skeleton-block";
+export type { SkeletonBlockProps } from "./skeleton-block";
+
 export { Skeleton } from "./skeleton";
 export type { SkeletonProps } from "./skeleton";
 
@@ -225,7 +345,6 @@ export type { TagProps, TagVariant } from "./tag";
 export { TagList } from "./tag-list";
 export type {
   TagListColor,
-  TagListDensity,
   TagListItem,
   TagListProps,
 } from "./tag-list";
@@ -235,6 +354,13 @@ export type { TextareaProps } from "./textarea";
 
 export { OTPInput } from "./otp-input";
 export type { OTPInputProps } from "./otp-input";
+
+export {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "./input-otp";
 
 export { PasswordMeter, scorePassword } from "./password-meter";
 export type { PasswordMeterProps } from "./password-meter";

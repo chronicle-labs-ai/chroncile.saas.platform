@@ -72,7 +72,6 @@ export function AgentActionsMenu({
       <DropdownMenuTrigger>
         {trigger ?? (
           <Button
-            density="compact"
             variant="icon"
             size="sm"
             aria-label={`Actions for ${agent.name}`}
@@ -81,7 +80,7 @@ export function AgentActionsMenu({
           </Button>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent density="compact" align="end">
+      <DropdownMenuContent align="end">
         <DropdownMenuSection>
           {onOpen ? (
             <DropdownMenuItem onAction={() => onOpen(agent.name)}>

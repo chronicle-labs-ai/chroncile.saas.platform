@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cx } from "../utils/cx";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
+import { cn } from "../utils/cn";
 
 /**
  * FilterPill — Linear-style applied-filter pill.
@@ -17,10 +16,8 @@ import { useResolvedChromeDensity } from "../theme/chrome-style-context";
  * Reach for this in `FilterBar` (Phase 4) above lists and timelines.
  * For one-shot dropdown triggers without an applied value, use `<Chip>`.
  */
-export interface FilterPillProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "onChange"
-> {
+export interface FilterPillProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
   icon?: React.ReactNode;
   dimension: React.ReactNode;
   /** "is" / "is not" / "in" — defaults to "is". */
@@ -29,9 +26,6 @@ export interface FilterPillProps extends Omit<
   onEditDim?: () => void;
   onEditValue?: () => void;
   onRemove?: () => void;
-  /** Force a density flavor. Defaults to whichever the surrounding
-   * `ChromeStyleProvider` resolves to. */
-  density?: "compact" | "brand";
 }
 
 const RemoveX = () => (
@@ -62,30 +56,22 @@ export function FilterPill({
   onEditValue,
   onRemove,
   className,
-  density: densityProp,
   ...props
 }: FilterPillProps) {
-  const density = useResolvedChromeDensity(densityProp);
-  const isBrand = density === "brand";
   return (
     <div
       data-component="filter-pill"
-      data-density={density}
-      className={cx(
+      className={cn(
         "inline-flex items-stretch select-none overflow-hidden border",
-        isBrand
-          ? "h-[26px] text-mono text-ink rounded-xs border-hairline-strong bg-surface-01 [&>span+span]:border-l [&>span+span]:border-hairline"
-          : "h-[22px] text-[11.5px] text-l-ink rounded-[4px] border-l-border bg-l-wash-2 [&>span+span]:border-l [&>span+span]:border-l-border",
+        "h-[22px] text-[11.5px] text-l-ink rounded-[4px] border-hairline-strong bg-l-wash-2 [&>span+span]:border-l [&>span+span]:border-hairline-strong",
         className
       )}
       {...props}
     >
       <span
-        className={cx(
+        className={cn(
           baseSegment,
-          isBrand
-            ? "font-mono uppercase tracking-tactical text-ink-lo hover:bg-surface-02 hover:text-ink-hi"
-            : "text-l-ink-lo hover:bg-l-wash-3 hover:text-l-ink"
+          "text-l-ink-lo hover:bg-l-wash-3 hover:text-l-ink"
         )}
         onClick={onEditDim}
       >
@@ -93,22 +79,15 @@ export function FilterPill({
         <span>{dimension}</span>
       </span>
       <span
-        className={cx(
+        className={cn(
           "inline-flex items-center cursor-default",
-          isBrand
-            ? "px-[6px] font-mono text-mono-sm uppercase tracking-tactical text-ink-dim"
-            : "px-[6px] font-mono text-[10.5px] text-l-ink-dim"
+          "px-[6px] font-mono text-[10.5px] text-l-ink-dim"
         )}
       >
         {verb}
       </span>
       <span
-        className={cx(
-          baseSegment,
-          isBrand
-            ? "font-mono text-ink hover:bg-surface-02"
-            : "font-medium text-l-ink hover:bg-l-wash-3"
-        )}
+        className={cn(baseSegment, "font-medium text-l-ink hover:bg-l-wash-3")}
         onClick={onEditValue}
       >
         {value}
@@ -118,11 +97,9 @@ export function FilterPill({
           role="button"
           tabIndex={-1}
           aria-label="Remove filter"
-          className={cx(
+          className={cn(
             "inline-flex items-center px-[5px] cursor-pointer",
-            isBrand
-              ? "text-ink-dim hover:bg-[rgba(239,68,68,0.12)] hover:text-event-red"
-              : "text-l-ink-dim hover:bg-[rgba(239,68,68,0.12)] hover:text-event-red"
+            "text-l-ink-dim hover:bg-[rgba(239,68,68,0.12)] hover:text-event-red"
           )}
           onClick={(e) => {
             e.stopPropagation();

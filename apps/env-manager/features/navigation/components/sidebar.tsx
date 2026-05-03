@@ -64,7 +64,6 @@ export function Sidebar({ className, variant = "fixed" }: SidebarProps) {
   return (
     <UISidebar
       className={className}
-      density="product"
       variant={variant}
       width="md"
     >

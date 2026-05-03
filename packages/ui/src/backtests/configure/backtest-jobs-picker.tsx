@@ -114,8 +114,8 @@ function JobCard({
       type="button"
       onClick={() => onPick?.(job)}
       className={cx(
-        "group relative flex items-start gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-3 text-left",
-        "transition-colors duration-fast hover:border-hairline-strong hover:bg-[rgba(255,255,255,0.025)]",
+        "group relative flex items-start gap-3 rounded-[2px] border border-divider bg-wash-micro px-3 py-3 text-left",
+        "transition-colors duration-fast hover:border-hairline-strong hover:bg-wash-2",
       )}
     >
       <span
@@ -147,7 +147,7 @@ function RecentRunButton({ run }: { run: BacktestRecentRun }) {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1.5 rounded-[2px] border border-transparent px-1.5 py-0.5 font-sans text-[12.5px] text-ink-lo transition-colors hover:border-divider hover:bg-[rgba(255,255,255,0.025)] hover:text-ink-hi"
+      className="inline-flex items-center gap-1.5 rounded-[2px] border border-transparent px-1.5 py-0.5 font-sans text-[12.5px] text-ink-lo transition-colors hover:border-divider hover:bg-wash-2 hover:text-ink-hi"
     >
       <CandidateHueDot hue={run.hue} size="xs" />
       <span>{run.name}</span>

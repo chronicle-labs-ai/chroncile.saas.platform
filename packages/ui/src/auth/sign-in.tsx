@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Button } from "../primitives/button";
+import { useIsCoarsePointer } from "../utils/use-is-coarse-pointer";
 import { Eyebrow } from "../primitives/eyebrow";
 import { FormField } from "../primitives/form-field";
 import { Input } from "../primitives/input";
@@ -119,6 +120,17 @@ export function SignIn({
   const [emailErr, setEmailErr] = React.useState<string | null>(null);
   const [pwErr, setPwErr] = React.useState<string | null>(null);
 
+  /*
+   * Auto-focus is desktop-only: on touch devices it pops the
+   * software keyboard before the user has read the page, hiding
+   * the welcome lede and the SSO buttons. `useIsCoarsePointer`
+   * starts `false` on the server so the SSR markup matches the
+   * client's first render — the effect flips it after mount on
+   * touch devices, and React quietly drops the `autoFocus` prop
+   * (which only fires on the very first mount) on those.
+   */
+  const isCoarse = useIsCoarsePointer();
+
   const submit = () => {
     let bad = false;
     setEmailErr(null);
@@ -144,8 +156,7 @@ export function SignIn({
 
   return (
     <div className="flex flex-col">
-      <Eyebrow className="inline-flex items-center gap-s-2" style={{ fontFamily: "TWK Lausanne, sans-serif" }}>
- 
+      <Eyebrow className="inline-flex items-center gap-s-2 font-sans">
         <b>SIGN IN</b> · CHRONICLE LABS
       </Eyebrow>
       <AuthDisplay>
@@ -157,7 +168,23 @@ export function SignIn({
       </AuthDisplay>
       <AuthLede>{lede ?? "Pick up where the stream left off."}</AuthLede>
 
-      <div className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3">
+      {/*
+       * Wrapping the credential pair in a `<form>` gives us native
+       * Enter-to-submit (no per-input `onKeyDown` bookkeeping),
+       * predictable browser autofill, and password-manager hints.
+       * The submit button lives in the StepFoot below and references
+       * this form by id so the visual layout (sticky footer rail)
+       * stays intact.
+       */}
+      <form
+        id="auth-signin-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+        noValidate
+        className="cg-fade-up cg-fade-up-2 mt-s-8 flex flex-col gap-s-3"
+      >
         {error ? <InlineAlert>{error}</InlineAlert> : null}
 
         {hideSSO || isSSORequired ? null : (
@@ -205,16 +232,16 @@ export function SignIn({
           <Input
             id="auth-signin-email"
             type="email"
+            inputMode="email"
             autoComplete="email"
+            spellCheck={false}
+            autoCapitalize="off"
             placeholder="you@company.com"
             variant="auth"
             invalid={!!emailErr}
             value={v.email}
             onChange={(e) => setField("email", e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submit();
-            }}
-            autoFocus
+            autoFocus={!isCoarse}
           />
         </FormField>
 
@@ -282,23 +309,29 @@ export function SignIn({
                 invalid={!!pwErr}
                 value={v.password}
                 onChange={(e) => setField("password", e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") submit();
-                }}
-                className="pr-[40px]"
+                className="pr-[44px]"
               />
+              {/*
+               * Visual size stays at the icon's natural 16-18px so
+               * the trigger doesn't dominate the field, but the hit
+               * area expands to ≥36px (and ≥44px on coarse pointers)
+               * via padding so users with imprecise input — fingers,
+               * stylus — can hit it reliably. Per Emil's tap-target
+               * rule and WCAG 2.5.5 (target size).
+               */}
               <button
                 type="button"
                 onClick={() => setShowPw((s) => !s)}
                 aria-label={showPw ? "Hide password" : "Show password"}
-                className="absolute right-[10px] top-1/2 -translate-y-1/2 text-ink-dim hover:text-ink-hi transition-colors"
+                aria-pressed={showPw}
+                className="absolute right-[2px] top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-ink-dim transition-colors duration-fast ease-out hover:text-ink-hi focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-ember [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 touch-manipulation"
               >
                 {showPw ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
           </FormField>
         )}
-      </div>
+      </form>
 
       <StepFoot
         back={
@@ -310,8 +343,9 @@ export function SignIn({
           isSSORequired ? null : (
             <Button
               variant="ember"
+              type="submit"
+              form="auth-signin-form"
               isLoading={isSubmitting}
-              onPress={submit}
               trailingIcon={!isSubmitting && <ArrowRightIcon />}
             >
               {isSubmitting ? "Signing in…" : "Sign in"}

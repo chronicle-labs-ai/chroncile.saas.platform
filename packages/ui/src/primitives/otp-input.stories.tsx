@@ -2,8 +2,15 @@ import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 import { OTPInput } from "./otp-input";
 
+/*
+ * @deprecated The single-prop `<OTPInput>` API powers existing auth
+ * flows and stays here as a regression baseline. New code should reach
+ * for the shadcn-shape `<InputOTP>` compound (see "Primitives/InputOTP")
+ * which composes the `input-otp` package.
+ */
+
 const meta: Meta<typeof OTPInput> = {
-  title: "Primitives/OTPInput",
+  title: "Primitives/OTPInput (legacy)",
   component: OTPInput,
   parameters: { layout: "centered" },
   argTypes: {

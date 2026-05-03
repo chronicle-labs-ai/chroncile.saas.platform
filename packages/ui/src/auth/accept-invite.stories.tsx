@@ -4,10 +4,9 @@ import { AcceptInvite } from "./accept-invite";
 import { AuthShell } from "./auth-shell";
 
 /*
- * Chrome (brand vs product) is driven by the global `data-chrome`
- * toolbar in `.storybook/preview.tsx`. `AuthShell` inherits from
- * that toolbar via `useChromeStyleContext`, so individual stories
- * don't need to plumb a `chromeStyle` prop.
+ * The brand vs product chrome split has been retired — every surface
+ * renders the unified Linear-density chrome. Stories no longer need to
+ * plumb a `chromeStyle` prop.
  */
 
 const meta: Meta<typeof AcceptInvite> = {

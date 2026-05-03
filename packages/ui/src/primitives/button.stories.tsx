@@ -12,14 +12,12 @@ const meta: Meta<typeof Button> = {
       options: ["primary", "secondary", "ember", "ghost", "icon", "critical"],
     },
     size: { control: "radio", options: ["sm", "md", "lg"] },
-    density: { control: "radio", options: ["compact", "brand"] },
     isLoading: { control: "boolean" },
     disabled: { control: "boolean" },
   },
   args: {
     variant: "primary",
     size: "md",
-    density: "compact",
     children: "Run replay",
   },
 };
@@ -33,6 +31,9 @@ export const Ghost: Story = {
 };
 export const Critical: Story = {
   args: { variant: "critical", children: "Block deploy" },
+};
+export const Ember: Story = {
+  args: { variant: "ember", children: "Ember" },
 };
 
 export const WithKbd: Story = {
@@ -64,8 +65,7 @@ export const Sizes: Story = {
   ),
 };
 
-export const CompactVariants: Story = {
-  args: { density: "compact" },
+export const AllVariants: Story = {
   render: (args) => (
     <div className="flex flex-wrap items-center gap-s-3">
       <Button {...args} variant="primary">
@@ -88,71 +88,4 @@ export const CompactVariants: Story = {
       </Button>
     </div>
   ),
-};
-
-export const BrandVariants: Story = {
-  args: { density: "brand" },
-  render: (args) => (
-    <div className="flex flex-wrap items-center gap-s-3">
-      <Button {...args} variant="primary">
-        Primary
-      </Button>
-      <Button {...args} variant="secondary">
-        Secondary
-      </Button>
-      <Button {...args} variant="ember">
-        Ember
-      </Button>
-      <Button {...args} variant="ghost">
-        Ghost
-      </Button>
-      <Button {...args} variant="critical">
-        Critical
-      </Button>
-    </div>
-  ),
-};
-
-export const DensityCompare: Story = {
-  parameters: { layout: "padded" },
-  render: () => (
-    <div className="grid grid-cols-2 gap-s-12">
-      <div className="flex flex-col gap-s-3">
-        <span className="font-mono text-mono-sm uppercase tracking-eyebrow text-l-ink-dim">
-          {`density="compact"`}
-        </span>
-        <div className="flex flex-wrap items-center gap-s-2">
-          <Button variant="primary">Run replay</Button>
-          <Button variant="secondary">
-            Search
-            <Kbd>⌘</Kbd>
-            <Kbd>K</Kbd>
-          </Button>
-          <Button variant="ghost">All sources</Button>
-        </div>
-      </div>
-      <div className="flex flex-col gap-s-3">
-        <span className="font-mono text-mono-sm uppercase tracking-eyebrow text-ink-dim">
-          {`density="brand"`}
-        </span>
-        <div className="flex flex-wrap items-center gap-s-2">
-          <Button density="brand" variant="primary">
-            Run replay
-          </Button>
-          <Button density="brand" variant="secondary">
-            Search
-          </Button>
-          <Button density="brand" variant="ghost">
-            All sources
-          </Button>
-        </div>
-      </div>
-    </div>
-  ),
-};
-
-// Legacy alias kept for back-compat
-export const AllVariants: Story = CompactVariants;
-export const Ember: Story = {
-  args: { density: "brand", variant: "ember", children: "Ember" },
 };

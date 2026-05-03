@@ -266,11 +266,11 @@ export function DatasetPicker({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>{trigger}</PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent
         side="top"
         align="end"
-        className="w-[300px] overflow-hidden rounded-l border-hairline bg-l-surface-bar p-0"
+        className="w-[300px] overflow-hidden rounded-md border-hairline bg-l-surface-bar p-0"
       >
         <Header
           formActive={formActive}
@@ -339,7 +339,7 @@ function Header({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="-ml-[2px] inline-flex h-[20px] w-[20px] items-center justify-center rounded-l-sm text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink"
+          className="-ml-[2px] inline-flex h-[20px] w-[20px] items-center justify-center rounded-xs text-l-ink-dim transition-colors hover:bg-l-wash-3 hover:text-l-ink"
         >
           <ChevronLeft size={11} strokeWidth={1.75} aria-hidden />
         </button>
@@ -351,14 +351,14 @@ function Header({
         <GitBranch size={10} strokeWidth={1.75} aria-hidden />
         <span className="truncate max-w-[120px]">{summaryLabel}</span>
         <span
-          className="rounded-l-sm bg-l-wash-3 px-[4px] py-px font-mono text-[10px] tabular-nums text-l-ink-dim"
+          className="rounded-xs bg-l-wash-3 px-[4px] py-px font-mono text-[10px] tabular-nums text-l-ink-dim"
           title={`${count} ${count === 1 ? "event" : "events"}`}
         >
           {count}
         </span>
         {synthesized ? (
           <span
-            className="rounded-l-sm bg-l-wash-3 px-[4px] py-px font-sans text-[9.5px] uppercase tracking-tactical text-l-ink-dim"
+            className="rounded-xs bg-l-wash-3 px-[4px] py-px font-sans text-[9.5px] uppercase tracking-tactical text-l-ink-dim"
             title="Trace of one — synthesized from event id"
           >
             solo
@@ -391,7 +391,6 @@ function DatasetList({
       <div className="border-b border-hairline px-[8px] py-[8px]">
         <Input
           search
-          density="compact"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search datasets…"
@@ -439,7 +438,7 @@ function DatasetList({
                   </div>
                   {isMember ? (
                     <span
-                      className="inline-flex shrink-0 items-center gap-[4px] rounded-l-sm bg-event-green/12 px-[6px] py-[2px] font-sans text-[10px] uppercase tracking-tactical text-event-green"
+                      className="inline-flex shrink-0 items-center gap-[4px] rounded-xs bg-event-green/12 px-[6px] py-[2px] font-sans text-[10px] uppercase tracking-tactical text-event-green"
                       title="This trace is already in this dataset"
                     >
                       <Check size={9} strokeWidth={2.25} aria-hidden />
@@ -517,7 +516,7 @@ function DatasetForm({
     >
       <div className="flex flex-col gap-[10px] px-[10px] py-[10px]">
         {mode === "existing" && existingDataset ? (
-          <div className="flex items-center gap-[10px] rounded-l-sm bg-l-wash-3 px-[8px] py-[8px]">
+          <div className="flex items-center gap-[10px] rounded-xs bg-l-wash-3 px-[8px] py-[8px]">
             <DatasetTile purpose={existingDataset.purpose} />
             <div className="flex min-w-0 flex-col gap-[1px]">
               <span className="truncate font-sans text-[12.5px] font-medium text-l-ink">
@@ -532,7 +531,6 @@ function DatasetForm({
           <>
             <FormField label="Name">
               <Input
-                density="compact"
                 value={newName}
                 onChange={(e) => onNewNameChange(e.target.value)}
                 placeholder="e.g. Support · Edge cases"
@@ -542,7 +540,6 @@ function DatasetForm({
             </FormField>
             <FormField label="Description">
               <Textarea
-                density="compact"
                 rows={2}
                 value={newDescription}
                 onChange={(e) => onNewDescriptionChange(e.target.value)}
@@ -551,7 +548,6 @@ function DatasetForm({
             </FormField>
             <FormField label="Purpose">
               <NativeSelect
-                density="compact"
                 value={newPurpose}
                 onChange={(e) =>
                   onNewPurposeChange(e.target.value as DatasetPurpose)
@@ -570,7 +566,6 @@ function DatasetForm({
         <div className="grid grid-cols-2 gap-[8px]">
           <FormField label="Split">
             <NativeSelect
-              density="compact"
               value={split}
               onChange={(e) =>
                 onSplitChange(e.target.value as "" | DatasetSplit)
@@ -585,7 +580,6 @@ function DatasetForm({
           </FormField>
           <FormField label="Notes">
             <Input
-              density="compact"
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}
               placeholder="Optional"
@@ -649,13 +643,13 @@ function FooterButton({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        "inline-flex h-[24px] items-center justify-center gap-[6px] rounded-l border px-[10px]",
+        "inline-flex h-[24px] items-center justify-center gap-[6px] rounded-md border px-[10px]",
         "font-sans text-[12px] font-medium leading-none",
         "transition-colors duration-fast",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page",
         "disabled:cursor-not-allowed disabled:opacity-40",
         tone === "primary"
-          ? "border-transparent bg-ember text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] hover:bg-[#e85520]"
+          ? "border-transparent bg-ember text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] hover:bg-ember-hover"
           : "border-transparent text-l-ink-lo hover:bg-l-wash-3 hover:text-l-ink",
       )}
     >
@@ -695,7 +689,7 @@ function DatasetTile({ purpose }: { purpose: DatasetPurpose | undefined }) {
   return (
     <span
       className={cx(
-        "inline-flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-l-sm",
+        "inline-flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-xs",
         meta ? meta.tile : "bg-l-wash-3",
         meta ? meta.ink : "text-l-ink-dim",
       )}

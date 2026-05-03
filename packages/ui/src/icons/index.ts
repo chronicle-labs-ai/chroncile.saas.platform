@@ -9,10 +9,12 @@ export {
   BRAND_ICON_IDS,
   CompanyLogo,
   LOGO_DEV_PUBLISHABLE_KEY_ENV,
+  MONOCHROME_DARK_MARK_BRANDS,
   getBrandIconDomain,
   getBrandIconId,
   getLogoDevPublishableKey,
   getLogoDevUrl,
+  isMonochromeDarkMarkBrand,
   normalizeBrandIconName,
 } from "./brand-icons";
 export type {

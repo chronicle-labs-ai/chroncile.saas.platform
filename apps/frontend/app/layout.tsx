@@ -1,7 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "ui";
+import { ThemeProvider, themeScript } from "ui";
 import "./globals.css";
+// Boneyard bone registry — populated at design time by
+// `yarn workspace ui bones:build`. Importing here makes every
+// `<Skeleton name="...">` in the tree resolve its pre-captured layout
+// without each consumer wiring it up. Empty stub when no bones have
+// been captured yet, so this is a safe no-op import.
+import "ui/bones/registry";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,13 +54,39 @@ export const metadata: Metadata = {
   },
 };
 
+/*
+ * `themeColor` reads from the surface token via the inline
+ * theme script writing `data-theme` before paint, so iOS Safari's
+ * status bar matches the active theme on first frame.
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#08090a" },
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    /*
+     * `data-theme="dark"` matches the ThemeProvider's `defaultTheme`
+     * so SSR markup and the inline `themeScript` agree. The script
+     * (rendered before <body>) flips this to the user's stored
+     * preference before first paint — no theme flash on refresh.
+     * `suppressHydrationWarning` is required because the script
+     * mutates `data-theme` before React hydrates.
+     */
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+          suppressHydrationWarning
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}
       >

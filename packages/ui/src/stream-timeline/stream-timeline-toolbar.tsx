@@ -164,7 +164,7 @@ export function StreamTimelineToolbar({
         <>
           <Divider />
           <span
-            className="inline-flex h-[22px] items-center gap-[5px] rounded-l border border-event-violet/30 bg-[rgba(139,92,246,0.08)] px-[7px] font-sans text-[11.5px] text-event-violet"
+            className="inline-flex h-[22px] items-center gap-[5px] rounded-md border border-event-violet/30 bg-[rgba(139,92,246,0.08)] px-[7px] font-sans text-[11.5px] text-event-violet"
             data-trace-chip
           >
             <GitBranch size={10} strokeWidth={1.75} aria-hidden />
@@ -179,7 +179,7 @@ export function StreamTimelineToolbar({
                 type="button"
                 onClick={onClearActiveTrace}
                 aria-label="Clear active trace"
-                className="ml-[2px] inline-flex h-[14px] w-[14px] items-center justify-center rounded-l-sm text-event-violet/70 transition-colors hover:bg-event-violet/15 hover:text-event-violet"
+                className="ml-[2px] inline-flex h-[14px] w-[14px] items-center justify-center rounded-xs text-event-violet/70 transition-colors hover:bg-event-violet/15 hover:text-event-violet"
               >
                 <X size={10} strokeWidth={1.75} aria-hidden />
               </button>
@@ -233,7 +233,7 @@ function PlayerButton({
       aria-pressed={ariaPressed}
       data-active={active || undefined}
       className={cx(
-        "inline-flex h-[24px] items-center gap-[5px] rounded-l border px-[8px]",
+        "inline-flex h-[24px] items-center gap-[5px] rounded-md border px-[8px]",
         "font-sans text-[12px] font-medium leading-none",
         "transition-colors duration-fast",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page",
@@ -275,7 +275,7 @@ function SegmentedToggle<T extends string>({
     <div
       role="group"
       aria-label="Group by"
-      className="inline-flex h-[24px] items-center rounded-l border border-l-border bg-l-surface p-[1px]"
+      className="inline-flex h-[24px] items-center rounded-md border border-hairline-strong bg-l-surface p-[1px]"
     >
       {options.map((opt) => {
         const active = opt.value === value;
@@ -286,7 +286,7 @@ function SegmentedToggle<T extends string>({
             onClick={() => onChange(opt.value)}
             aria-pressed={active}
             className={cx(
-              "inline-flex h-[20px] items-center gap-[4px] rounded-l-sm px-[7px]",
+              "inline-flex h-[20px] items-center gap-[4px] rounded-xs px-[7px]",
               "font-sans text-[11.5px] font-medium leading-none",
               "transition-colors duration-fast",
               active

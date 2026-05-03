@@ -67,6 +67,8 @@ export function AgentRunsTable({
   className,
 }: AgentRunsTableProps) {
   const [query, setQuery] = React.useState("");
+  // Defer the heavy filter pass so typing stays responsive on large run sets.
+  const deferredQuery = React.useDeferredValue(query);
   const [statusFilters, setStatusFilters] = React.useState<AgentRunStatus[]>([]);
   const [versionFilters, setVersionFilters] = React.useState<string[]>([]);
 
@@ -80,7 +82,7 @@ export function AgentRunsTable({
     );
 
   const filtered = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     return runs.filter((run) => {
       if (statusFilters.length > 0 && !statusFilters.includes(run.status)) {
         return false;
@@ -95,15 +97,16 @@ export function AgentRunsTable({
       } ${run.trace?.environment ?? ""}`;
       return haystack.toLowerCase().includes(q);
     });
-  }, [runs, query, statusFilters, versionFilters]);
+  }, [runs, deferredQuery, statusFilters, versionFilters]);
 
   return (
     <div className={cx("flex flex-col gap-3", className)}>
       {hideHeader ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-[2px] border border-l-border-faint bg-l-wash-1 px-3 py-2">
           <Input
-            density="compact"
+            type="search"
             search
+            aria-label="Search runs"
             placeholder="Search runs"
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
@@ -113,7 +116,6 @@ export function AgentRunsTable({
             {STATUS_FILTERS.map((s) => (
               <Chip
                 key={s}
-                density="compact"
                 active={statusFilters.includes(s)}
                 onClick={() => toggleStatus(s)}
                 icon={
@@ -132,7 +134,6 @@ export function AgentRunsTable({
               {versions.map((v) => (
                 <Chip
                   key={v.artifact.version}
-                  density="compact"
                   active={versionFilters.includes(v.artifact.version)}
                   onClick={() => toggleVersion(v.artifact.version)}
                 >
@@ -141,13 +142,13 @@ export function AgentRunsTable({
               ))}
             </div>
           ) : null}
-          <span className="ml-auto font-sans text-[11px] text-l-ink-dim">
+          <span className="ml-auto font-sans text-[11px] tabular-nums text-l-ink-dim">
             {filtered.length} of {runs.length}
           </span>
         </div>
       )}
 
-      <div className="rounded-[4px] border border-l-border bg-l-surface-raised">
+      <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
         {!hideHeader && density === "default" ? (
           <div
             className={cx(
@@ -161,7 +162,7 @@ export function AgentRunsTable({
             <span>Version</span>
             <span>Op</span>
             <span className="text-right">Duration</span>
-            <span>Tokens</span>
+            <span className="text-right">Tokens</span>
             <span className="text-right">User · Env</span>
           </div>
         ) : null}

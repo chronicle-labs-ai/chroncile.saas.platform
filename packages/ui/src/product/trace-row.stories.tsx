@@ -15,7 +15,7 @@ type Story = StoryObj<typeof TraceRow>;
 
 export const Default: Story = {
   render: () => (
-    <div className="w-[920px] border border-l-border bg-l-surface">
+    <div className="w-[920px] border border-hairline-strong bg-l-surface">
       <TraceRow
         id="CHR-1284"
         priority="urgent"
@@ -84,7 +84,7 @@ export const Lane: Story = {
         },
       ];
       return (
-        <div className="w-[920px] border border-l-border bg-l-surface">
+        <div className="w-[920px] border border-hairline-strong bg-l-surface">
           <GroupHead>
             <Status kind="inprogress" />
             <span>In progress</span>

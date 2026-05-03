@@ -66,13 +66,34 @@ export function ThemeProvider({
     }
   }, [attachToRoot]);
 
-  // Apply to <html> whenever state changes.
+  // Apply to <html> whenever state changes. Wraps the `data-theme`
+  // swap with a transient `data-theme-changing` flag so the global
+  // `transition: none` guard in `styles/globals.css` suppresses the
+  // cross-theme color bleed. Without it, every element with a
+  // `transition: background-color`/`color`/`border-color` would
+  // animate between dark and light — visible as a 200-300ms wash.
   React.useEffect(() => {
     if (!attachToRoot || typeof document === "undefined") return;
-    document.documentElement.setAttribute("data-theme", theme);
+    const root = document.documentElement;
+    root.setAttribute("data-theme-changing", "");
+    root.setAttribute("data-theme", theme);
     window.dispatchEvent(
       new CustomEvent("chron:themechange", { detail: { theme } })
     );
+    // Two RAFs: one to flush the `data-theme` paint, one more so the
+    // browser commits the suppressed-transition frame before we lift
+    // the guard. Cleared on unmount to avoid leaking the attribute.
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        root.removeAttribute("data-theme-changing");
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+      root.removeAttribute("data-theme-changing");
+    };
   }, [attachToRoot, theme]);
 
   // Cross-tab sync.

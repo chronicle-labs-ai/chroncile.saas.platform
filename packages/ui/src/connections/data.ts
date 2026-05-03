@@ -57,6 +57,23 @@ export interface Connection {
   expiresAt?: string;
   /** Populated when `health === "error"`; raw payload string for inspector. */
   errorPayload?: string;
+  /**
+   * ISO timestamp of the last manual "Test connection" run. Surfaces in
+   * the Overview summary so customers can tell whether a green badge
+   * came from a real probe or from buffered ingest. Optional — older
+   * connections that pre-date the field render a `—` cell.
+   */
+  lastTestedAt?: string;
+  /**
+   * Outcome of the last `Test connection` run. `pending` means the
+   * test is in flight; the row's button stays in a wait state.
+   */
+  lastTestStatus?: "ok" | "fail" | "pending";
+  /**
+   * Previous-period (24h) event count, used to compute a trend delta
+   * on the card view ("+12% vs prev 24h"). Optional.
+   */
+  prevEventsLast24h?: number;
 }
 
 /* ── Backfill history ──────────────────────────────────────── */
@@ -129,9 +146,12 @@ export const connectionsSeed: readonly Connection[] = [
     connectedAt: "2026-01-12T18:04:00Z",
     lastEventAt: "2026-05-01T13:02:14Z",
     eventsLast24h: 5_412,
+    prevEventsLast24h: 4_820,
     scopes: ["read_conversations", "read_users", "write_tags"],
     ownerEmail: "ops@chronicle.io",
     spark: sparkSeed(240),
+    lastTestedAt: "2026-04-30T19:14:00Z",
+    lastTestStatus: "ok",
   },
   {
     id: "conn_shopify_01",
@@ -141,9 +161,12 @@ export const connectionsSeed: readonly Connection[] = [
     connectedAt: "2026-01-12T18:09:00Z",
     lastEventAt: "2026-05-01T13:02:01Z",
     eventsLast24h: 3_104,
+    prevEventsLast24h: 3_540,
     scopes: ["read_orders", "read_customers", "read_products"],
     ownerEmail: "ops@chronicle.io",
     spark: sparkSeed(160),
+    lastTestedAt: "2026-04-29T12:00:00Z",
+    lastTestStatus: "ok",
   },
   {
     id: "conn_stripe_01",
@@ -153,9 +176,12 @@ export const connectionsSeed: readonly Connection[] = [
     connectedAt: "2026-01-12T18:21:00Z",
     lastEventAt: "2026-05-01T13:01:48Z",
     eventsLast24h: 1_982,
+    prevEventsLast24h: 1_812,
     scopes: ["charge.read", "customer.read", "subscription.read"],
     ownerEmail: "billing@chronicle.io",
     spark: sparkSeed(110),
+    lastTestedAt: "2026-04-15T09:21:00Z",
+    lastTestStatus: "ok",
   },
   {
     id: "conn_slack_01",

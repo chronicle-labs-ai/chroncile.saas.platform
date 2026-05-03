@@ -43,7 +43,6 @@ export function AgentEmpty({
         actions={
           onClearFilters ? (
             <Button
-              density="compact"
               variant="secondary"
               size="sm"
               onPress={onClearFilters}
@@ -81,7 +80,6 @@ export function AgentEmpty({
       actions={
         onLearnMore ? (
           <Button
-            density="compact"
             variant="secondary"
             size="sm"
             onPress={onLearnMore}

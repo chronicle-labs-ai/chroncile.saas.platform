@@ -12,7 +12,7 @@ const meta: Meta<typeof AgentDetailPage> = {
     (Story) => (
       <ProductChromeFrame padding="none">
         <div className="flex h-screen flex-col bg-l-surface p-4">
-          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-l-border bg-l-surface-raised">
+          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-hairline-strong bg-l-surface-raised">
             <Story />
           </div>
         </div>

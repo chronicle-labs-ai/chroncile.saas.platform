@@ -1,92 +1,104 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  panelHeaderTitleVariants,
-  ShadcnPanel,
-  ShadcnPanelContent,
-  ShadcnPanelHeader,
-  type ShadcnPanelProps,
-} from "./shadcn";
+import { cn } from "../utils/cn";
 
-export interface PanelProps extends Omit<ShadcnPanelProps, "density"> {
+export const panelVariants = cva("relative overflow-hidden border rounded-md", {
+  variants: {
+    elevated: {
+      true: "border-hairline-strong bg-surface-02",
+      false: "border-hairline bg-surface-01",
+    },
+    active: {
+      true: "before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-ember",
+    },
+  },
+  defaultVariants: {
+    elevated: false,
+  },
+});
+
+export const panelHeaderVariants = cva(
+  "flex items-center justify-between border-b border-hairline bg-surface-02 gap-[8px] px-[12px] py-[8px]"
+);
+
+export const panelHeaderTitleVariants = cva(
+  "font-sans text-[12px] font-medium tracking-normal text-l-ink-lo"
+);
+
+export const panelContentVariants = cva("p-[12px]");
+
+export interface PanelProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof panelVariants> {
   elevated?: boolean;
   /**
    * When true, the panel paints the ember-tinted selected row treatment
    * along its left edge. Use sparingly — this is the "one hot surface".
    */
   active?: boolean;
-  /** Force a density flavor. */
-  density?: "compact" | "brand";
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 export function Panel({
-  elevated = false,
-  active = false,
-  density: densityProp,
+  active,
   className,
-  children,
+  elevated = false,
+  ref,
   ...props
 }: PanelProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
-    <ShadcnPanel
-      active={active}
-      className={className}
-      density={density}
-      elevated={elevated}
+    <div
+      ref={ref}
+      className={cn(panelVariants({ active, elevated }), className)}
       {...props}
-    >
-      {children}
-    </ShadcnPanel>
+    />
   );
 }
 
-export interface PanelHeaderProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "title"
-> {
+export interface PanelHeaderProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title?: React.ReactNode;
   actions?: React.ReactNode;
-  density?: "compact" | "brand";
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 export function PanelHeader({
   title,
   actions,
-  density: densityProp,
   className,
   children,
+  ref,
   ...props
 }: PanelHeaderProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
-    <ShadcnPanelHeader className={className} density={density} {...props}>
+    <div
+      ref={ref}
+      className={cn(panelHeaderVariants(), className)}
+      {...props}
+    >
       {title ? (
-        <span className={panelHeaderTitleVariants({ density })}>{title}</span>
+        <span className={panelHeaderTitleVariants()}>{title}</span>
       ) : null}
       {children}
       {actions ? (
-        <div className={density === "compact" ? "ml-auto flex items-center gap-[6px]" : "ml-auto flex items-center gap-s-2"}>{actions}</div>
+        <div className="ml-auto flex items-center gap-[6px]">{actions}</div>
       ) : null}
-    </ShadcnPanelHeader>
+    </div>
   );
 }
 
-export interface PanelContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  density?: "compact" | "brand";
+export interface PanelContentProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export function PanelContent({
-  density: densityProp,
-  className,
-  children,
-  ...props
-}: PanelContentProps) {
-  const density = useResolvedChromeDensity(densityProp);
+export function PanelContent({ className, ref, ...props }: PanelContentProps) {
   return (
-    <ShadcnPanelContent className={className} density={density} {...props}>
-      {children}
-    </ShadcnPanelContent>
+    <div
+      ref={ref}
+      className={cn(panelContentVariants(), className)}
+      {...props}
+    />
   );
 }

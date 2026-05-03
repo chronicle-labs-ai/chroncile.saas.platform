@@ -106,7 +106,7 @@ export function EmailTemplateRegistryCard({
   return (
     <div
       className={cx(
-        "rounded-l border border-l-border bg-l-surface px-s-4 py-s-3",
+        "rounded-md border border-hairline-strong bg-l-surface px-s-4 py-s-3",
         className
       )}
       {...props}

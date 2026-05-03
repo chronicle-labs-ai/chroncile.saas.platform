@@ -10,7 +10,7 @@ const meta: Meta<typeof AgentRunRow> = {
   decorators: [
     (Story) => (
       <ProductChromeFrame padding="md" maxWidth="900px">
-        <div className="rounded-[4px] border border-l-border bg-l-surface-raised">
+        <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
           <Story />
         </div>
       </ProductChromeFrame>
