@@ -16,7 +16,14 @@ import { type ConnectionHealth } from "./data";
 export interface ConnectionHealthBadgeProps
   extends React.HTMLAttributes<HTMLSpanElement> {
   health: ConnectionHealth;
-  /** Pulse the dot. Defaults to true for "live" / "testing" / "error". */
+  /**
+   * Pulse the dot. Defaults to `true` only for `live` — color already
+   * conveys `error` / `testing`, and pulsing every errored row in a list
+   * means up to N indefinite animations on the same surface (Emil rule:
+   * "users see it 100+ times daily → don't animate"). Pass `pulse={true}`
+   * explicitly when you want the badge to draw attention in isolated
+   * surfaces (toolbars, hero strips).
+   */
   pulse?: boolean;
   /** Hide the trailing label, render only the dot. */
   iconOnly?: boolean;
@@ -50,11 +57,7 @@ const HEALTH_TONE: Record<ConnectionHealth, string> = {
   disconnected: "text-ink-dim",
 };
 
-const DEFAULT_PULSE: ReadonlyArray<ConnectionHealth> = [
-  "live",
-  "testing",
-  "error",
-];
+const DEFAULT_PULSE: ReadonlyArray<ConnectionHealth> = ["live"];
 
 export function ConnectionHealthBadge({
   health,

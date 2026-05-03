@@ -175,7 +175,7 @@ function ResendTemplateCard({
 
   return (
     <div className="max-w-5xl space-y-s-4">
-      <div className="rounded-l border border-l-border bg-l-surface-raised p-s-4">
+      <div className="rounded-md border border-hairline-strong bg-l-surface-raised p-s-4">
         <div className="mb-s-3 flex flex-wrap items-center justify-between gap-s-3">
           <div>
             <div className="font-sans text-sm font-medium text-l-ink">
@@ -208,7 +208,7 @@ function ResendTemplateCard({
           onDelete={onOpenResend}
         />
 
-        <div className="mt-s-3 grid gap-s-3 rounded-l border border-l-border bg-l-surface px-s-3 py-s-3 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="mt-s-3 grid gap-s-3 rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-3 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
               Linked Resend Template ID
@@ -247,7 +247,6 @@ function ResendTemplateDetailsModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Linked Resend Template"
-      density="compact"
       className="max-w-2xl"
       actions={
         <>
@@ -268,7 +267,7 @@ function ResendTemplateDetailsModal({
     >
       <div className="space-y-s-4">
         <div className="grid gap-s-3 md:grid-cols-2">
-          <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+          <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
               Template ID
             </div>
@@ -276,7 +275,7 @@ function ResendTemplateDetailsModal({
               {linkedResendTemplate.id}
             </div>
           </div>
-          <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+          <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
               Alias
             </div>
@@ -284,7 +283,7 @@ function ResendTemplateDetailsModal({
               {linkedResendTemplate.alias}
             </div>
           </div>
-          <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+          <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
               Status
             </div>
@@ -292,7 +291,7 @@ function ResendTemplateDetailsModal({
               {linkedResendTemplate.status}
             </div>
           </div>
-          <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+          <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
             <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
               Updated
             </div>
@@ -302,7 +301,7 @@ function ResendTemplateDetailsModal({
           </div>
         </div>
 
-        <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+        <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
           <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
             Variables expected by Resend
           </div>
@@ -313,7 +312,7 @@ function ResendTemplateDetailsModal({
           </div>
         </div>
 
-        <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+        <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
           <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
             Dashboard URL
           </div>
@@ -345,7 +344,6 @@ function SendTestModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Send Resend Template Test"
-      density="compact"
       className="max-w-2xl"
       actions={
         <>
@@ -359,11 +357,11 @@ function SendTestModal({
       }
     >
       <div className="space-y-s-4">
-        <div className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+        <div className="rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
           <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
             API request
           </div>
-          <pre className="mt-s-2 overflow-x-auto rounded-l bg-[#0c0f13] p-s-3 font-mono text-[11px] leading-relaxed text-l-ink-dim">
+          <pre className="mt-s-2 overflow-x-auto rounded-md bg-[#0c0f13] p-s-3 font-mono text-[11px] leading-relaxed text-l-ink-dim">
             {`POST /api/email-templates/resend/${linkedResendTemplate.id}/send-test
 {
   "to": "${recipient}",
@@ -414,7 +412,7 @@ function SendTestModal({
         </div>
 
         {status === "sent" ? (
-          <div className="rounded-l border border-event-green/30 bg-event-green/10 px-s-3 py-s-2 text-xs text-event-green">
+          <div className="rounded-md border border-event-green/30 bg-event-green/10 px-s-3 py-s-2 text-xs text-event-green">
             Test send queued through{" "}
             <span className="font-mono">{linkedResendTemplate.id}</span> to{" "}
             {recipient}.

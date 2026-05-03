@@ -84,7 +84,7 @@ export function BacktestQuickCheckDrawer({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-l border border-hairline bg-surface-01 shadow-panel"
+        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-md border border-hairline bg-surface-01 shadow-panel"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal
@@ -106,7 +106,7 @@ export function BacktestQuickCheckDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="grid size-7 place-items-center rounded-l border border-hairline text-ink-lo transition-colors hover:border-hairline-strong hover:text-ink-hi"
+            className="grid size-7 place-items-center rounded-md border border-hairline text-ink-lo transition-colors hover:border-hairline-strong hover:text-ink-hi"
             aria-label="Close"
           >
             <X className="size-3.5" strokeWidth={1.6} />
@@ -115,7 +115,7 @@ export function BacktestQuickCheckDrawer({
 
         <div className="grid flex-1 gap-5 p-5 sm:grid-cols-[1.2fr_1fr]">
           {/* Cell grid */}
-          <div className="rounded-l border border-hairline bg-surface-02 p-3">
+          <div className="rounded-md border border-hairline bg-surface-02 p-3">
             <div className="grid grid-cols-6 gap-1.5">
               {Array.from({ length: N_CELLS }).map((_, i) => {
                 const cell = i < done ? palette[i]! : "pending";
@@ -123,7 +123,7 @@ export function BacktestQuickCheckDrawer({
                   <span
                     key={i}
                     aria-hidden
-                    className={cx("aspect-square rounded-l-sm", CELL_BG[cell])}
+                    className={cx("aspect-square rounded-xs", CELL_BG[cell])}
                   />
                 );
               })}
@@ -139,7 +139,7 @@ export function BacktestQuickCheckDrawer({
               />
             </div>
             {/* Metrics grid */}
-            <div className="grid grid-cols-2 gap-3 rounded-l border border-hairline bg-surface-02 p-3">
+            <div className="grid grid-cols-2 gap-3 rounded-md border border-hairline bg-surface-02 p-3">
               <Metric label="PASS" value={pass} tone="good" />
               <Metric label={multi ? "DIVERGE" : "REGRESS"} value={regr} tone="bad" />
               <Metric label="FAIL" value={fail} tone="bad" />
@@ -149,7 +149,7 @@ export function BacktestQuickCheckDrawer({
             {state === "done" ? (
               <div
                 className={cx(
-                  "rounded-l border p-3",
+                  "rounded-md border p-3",
                   regr === 0
                     ? "border-event-green/30 bg-event-green/[0.06]"
                     : "border-ember/30 bg-ember/[0.06]",
@@ -184,12 +184,11 @@ export function BacktestQuickCheckDrawer({
             <div className="mt-auto flex items-center justify-end gap-2 border-t border-hairline pt-3">
               {state === "done" ? (
                 <>
-                  <Button variant="ghost" density="compact" onClick={onClose}>
+                  <Button variant="ghost" onClick={onClose}>
                     edit recipe
                   </Button>
                   <Button
                     variant="ember"
-                    density="compact"
                     leadingIcon={<Play className="size-3.5" fill="currentColor" />}
                     onClick={onLaunch}
                   >

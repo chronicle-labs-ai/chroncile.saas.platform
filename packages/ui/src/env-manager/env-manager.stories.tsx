@@ -268,7 +268,7 @@ function EnvSidebar({
   active?: "environments" | "new" | "templates" | "developers" | "email";
 }) {
   return (
-    <Sidebar density="product" variant="static">
+    <Sidebar variant="static">
       <Sidebar.Header>
         <Brand />
       </Sidebar.Header>
@@ -328,7 +328,7 @@ function BranchIcon() {
 
 function EnvironmentDashboardCard({ env }: { env: MockEnvironment }) {
   return (
-    <div className="flex cursor-pointer flex-col gap-s-3 rounded-l border border-l-border bg-l-surface-raised transition-colors hover:border-l-border-strong hover:bg-l-surface-hover">
+    <div className="flex cursor-pointer flex-col gap-s-3 rounded-md border border-hairline-strong bg-l-surface-raised transition-colors hover:border-l-border-strong hover:bg-l-surface-hover">
       <div className="flex items-center justify-between gap-s-3 border-b border-l-border-faint px-s-4 py-s-3">
         <div className="flex min-w-0 items-center gap-s-2">
           <EnvBadge variant={env.type}>{env.typeLabel}</EnvBadge>
@@ -448,7 +448,7 @@ function NewEnvironmentPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-l border border-l-border bg-l-surface-raised">
+    <div className="overflow-hidden rounded-md border border-hairline-strong bg-l-surface-raised">
       <div className="flex items-center justify-between gap-s-3 border-b border-l-border-faint px-s-4 py-s-3">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
           {title}
@@ -465,7 +465,7 @@ function BranchSelectMock() {
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-s-3 rounded-l border border-l-border bg-l-surface px-s-3 py-[10px] text-left transition-colors hover:border-l-border-strong"
+      className="flex w-full items-center gap-s-3 rounded-md border border-hairline-strong bg-l-surface px-s-3 py-[10px] text-left transition-colors hover:border-l-border-strong"
     >
       <BranchIcon />
       <div className="flex min-w-0 flex-1 items-center gap-s-2">
@@ -506,10 +506,10 @@ function RadioChoice({
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-start gap-s-3 rounded-l border p-s-3 transition-colors ${
+      className={`flex cursor-pointer items-start gap-s-3 rounded-md border p-s-3 transition-colors ${
         selected
           ? "border-[var(--l-accent)] bg-[var(--l-accent-muted)]"
-          : "border-l-border hover:border-l-border-strong"
+          : "border-hairline-strong hover:border-l-border-strong"
       }`}
     >
       <input
@@ -768,7 +768,7 @@ function DevelopersSurface() {
                         </div>
                       </td>
                       <td className="py-s-3 pr-s-4">
-                        <code className="rounded-l bg-l-surface px-[6px] py-[2px] font-mono text-[10px] text-l-ink-lo">
+                        <code className="rounded-md bg-l-surface px-[6px] py-[2px] font-mono text-[10px] text-l-ink-lo">
                           make dev-all DEV_USER={dev.name}
                         </code>
                       </td>
@@ -792,13 +792,13 @@ function DevelopersSurface() {
                 <li>Reserve the domain in ngrok dashboard</li>
                 <li>
                   Add Google OAuth redirect URI:{" "}
-                  <code className="rounded-l bg-l-surface px-[4px] py-[2px] font-mono text-[10px]">
+                  <code className="rounded-md bg-l-surface px-[4px] py-[2px] font-mono text-[10px]">
                     https://DOMAIN/api/auth/callback/google
                   </code>
                 </li>
                 <li>
                   Run:{" "}
-                  <code className="rounded-l bg-l-surface px-[4px] py-[2px] font-mono text-[10px]">
+                  <code className="rounded-md bg-l-surface px-[4px] py-[2px] font-mono text-[10px]">
                     make dev-all DEV_USER=name
                   </code>
                 </li>
@@ -847,7 +847,6 @@ function EmailActionModal({
         isOpen
         onClose={onClose}
         title="Register Email Template Key"
-        density="compact"
         actions={
           <>
             <Button size="sm" onClick={onClose}>
@@ -904,7 +903,6 @@ function EmailActionModal({
         isOpen
         onClose={onClose}
         title={resend?.name ?? action.template.name}
-        density="compact"
         className="max-w-3xl"
         actions={
           <Button size="sm" onClick={onClose}>
@@ -912,7 +910,7 @@ function EmailActionModal({
           </Button>
         }
       >
-        <div className="overflow-hidden rounded-l border border-l-border bg-white text-[#1a140a]">
+        <div className="overflow-hidden rounded-md border border-hairline-strong bg-white text-[#1a140a]">
           <div className="border-b border-black/10 px-s-6 py-s-5">
             <div className="text-xs uppercase tracking-[0.12em] text-black/45">
               Chronicle Labs
@@ -942,7 +940,6 @@ function EmailActionModal({
         isOpen
         onClose={onClose}
         title="Send Test Email"
-        density="compact"
         actions={
           <>
             <Button size="sm" onClick={onClose}>
@@ -959,7 +956,7 @@ function EmailActionModal({
         }
       >
         <div className="space-y-s-4">
-          <div className="flex items-center gap-s-2 rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+          <div className="flex items-center gap-s-2 rounded-md border border-hairline-strong bg-l-surface px-s-3 py-s-2">
             <ProductChip
               tone={
                 action.resendTemplate?.status === "published"
@@ -1025,7 +1022,6 @@ function EmailActionModal({
       onClose={onClose}
       title="Delete Template Key"
       variant="danger"
-      density="compact"
       actions={
         <>
           <Button size="sm" onClick={onClose}>
@@ -1150,7 +1146,7 @@ function DashboardSurface() {
             title="Ephemeral Environments"
             environments={ephemeralEnvs}
             empty={
-              <div className="rounded-l border border-dashed border-l-border bg-l-surface-raised">
+              <div className="rounded-md border border-dashed border-hairline-strong bg-l-surface-raised">
                 <div className="px-s-5 py-s-8 text-center">
                   <p className="mb-s-3 text-sm text-l-ink-lo">
                     No ephemeral environments running

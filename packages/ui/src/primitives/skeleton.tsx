@@ -1,23 +1,24 @@
-"use client";
-
 import * as React from "react";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  ShadcnSkeleton,
-  type ShadcnSkeletonProps,
-} from "./shadcn";
+import { cva, type VariantProps } from "class-variance-authority";
 
-export type SkeletonDensity = "compact" | "brand";
+import { cn } from "../utils/cn";
 
-export interface SkeletonProps extends Omit<ShadcnSkeletonProps, "density"> {
-  density?: SkeletonDensity;
+export const skeletonVariants = cva(
+  "animate-chron-pulse rounded-md bg-l-wash-3"
+);
+
+export interface SkeletonProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof skeletonVariants> {
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export function Skeleton({
-  density: densityProp,
-  className,
-  ...props
-}: SkeletonProps) {
-  const density = useResolvedChromeDensity(densityProp);
-  return <ShadcnSkeleton className={className} density={density} {...props} />;
+export function Skeleton({ className, ref, ...props }: SkeletonProps) {
+  return (
+    <div
+      ref={ref}
+      className={cn(skeletonVariants(), className)}
+      {...props}
+    />
+  );
 }

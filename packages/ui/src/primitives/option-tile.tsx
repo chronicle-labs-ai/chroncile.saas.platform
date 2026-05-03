@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 export interface OptionTileProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   label: React.ReactNode;
@@ -22,7 +22,7 @@ export function OptionTile({
     <button
       type={type}
       data-selected={isSelected || undefined}
-      className={cx(
+      className={cn(
         "grid w-full grid-cols-[16px_1fr_auto] items-center gap-[14px] rounded-sm border bg-surface-00 px-[14px] py-s-3 text-left",
         "transition-colors duration-fast ease-out",
         "hover:border-hairline-strong hover:bg-surface-02",
@@ -36,7 +36,7 @@ export function OptionTile({
     >
       <span
         aria-hidden
-        className={cx(
+        className={cn(
           "relative h-[14px] w-[14px] rounded-full border",
           isSelected ? "border-ember" : "border-hairline-strong"
         )}

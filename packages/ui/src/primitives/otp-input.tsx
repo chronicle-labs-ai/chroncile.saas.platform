@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { otpCellVariants, otpRowVariants } from "./shadcn";
+import { cva } from "class-variance-authority";
 
 /*
  * OTPInput — N-cell numeric one-time-passcode input. Paste-aware
@@ -14,16 +13,52 @@ import { otpCellVariants, otpRowVariants } from "./shadcn";
  * Controlled: pass `value` (string of digits, length ≤ `length`)
  * and `onChange(next)`. Uncontrolled: omit both — `defaultValue`
  * seeds the cells.
- *
- * Brand-density visual treatment matches `<Input density="brand"
- * variant="auth">` — large mono cells, hairline border, ember focus,
- * red on `error`, green on `success`.
  */
 
-export interface OTPInputProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "onChange" | "defaultValue"
-> {
+export const otpRowVariants = cva("flex gap-[6px]", {
+  variants: {
+    codeGrid: {
+      true: "gap-s-3",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    codeGrid: false,
+  },
+});
+
+export const otpCellVariants = cva(
+  "text-center border outline-none transition-[border-color,box-shadow,background-color] duration-fast ease-out disabled:opacity-40 disabled:cursor-not-allowed h-[36px] w-[32px] rounded-md bg-l-surface-input caret-ember font-sans font-medium text-[16px] text-l-ink border-hairline-strong hover:border-l-border-strong focus:border-[rgba(216,67,10,0.5)] focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)]",
+  {
+    variants: {
+      state: {
+        idle: "",
+        filled: "",
+        error:
+          "border-event-red focus:border-event-red focus:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]",
+        success:
+          "border-[rgba(74,222,128,0.45)] focus:border-event-green focus:shadow-[0_0_0_3px_rgba(74,222,128,0.18)]",
+      },
+      codeGrid: {
+        true: "h-[64px] w-[52px] text-[26px] caret-[3px] rounded-md bg-transparent focus:caret-ember focus:shadow-[0_0_0_3px_rgba(216,67,10,0.16)]",
+        false: "",
+      },
+    },
+    compoundVariants: [
+      { state: "filled", className: "bg-l-surface-raised-2" },
+    ],
+    defaultVariants: {
+      codeGrid: false,
+      state: "idle",
+    },
+  }
+);
+
+export interface OTPInputProps
+  extends Omit<
+    React.HTMLAttributes<HTMLDivElement>,
+    "onChange" | "defaultValue"
+  > {
   /** Number of cells. Defaults to 6. */
   length?: number;
   /** Controlled string of digits (length ≤ `length`). */
@@ -48,9 +83,6 @@ export interface OTPInputProps extends Omit<
    * thicker ember caret. Behaviour is identical to the default style.
    */
   codeGridStyle?: boolean;
-  /** Force a density flavor. Defaults to whichever the surrounding
-   * `ChromeStyleProvider` resolves to. */
-  density?: "compact" | "brand";
   /** Aria label for the group. Defaults to "One-time passcode". */
   "aria-label"?: string;
 }
@@ -71,12 +103,10 @@ export function OTPInput({
   success = false,
   disabled = false,
   codeGridStyle = false,
-  density: densityProp,
   className,
   "aria-label": ariaLabel = "One-time passcode",
   ...rest
 }: OTPInputProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const isControlled = valueProp !== undefined;
   const [internal, setInternal] = React.useState<string>(() =>
     (defaultValue ?? "").replace(/\D/g, "").slice(0, length)
@@ -121,10 +151,8 @@ export function OTPInput({
 
   const handleChange = (i: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
-    // Multi-char (paste/auto-fill into a single cell) — handled by paste,
-    // but defensively accept the last digit only here.
     const digit = v.replace(/\D/g, "").slice(-1);
-    if (!digit && v.length > 0) return; // non-digit
+    if (!digit && v.length > 0) return;
     setCellAt(i, digit);
     if (digit && i < length - 1) refs.current[i + 1]?.focus();
   };
@@ -161,8 +189,6 @@ export function OTPInput({
     if (!text) return;
     e.preventDefault();
     const digits = text.slice(0, length);
-    const joined = digits.padEnd(value.length, "").slice(0, length);
-    // Paste replaces from cell 0 — matches every browser autofill quirk.
     if (!isControlled) setInternal(digits);
     onChange?.(digits);
     const lastIdx = Math.min(digits.length, length - 1);
@@ -170,8 +196,6 @@ export function OTPInput({
       refs.current[lastIdx]?.focus();
       refs.current[lastIdx]?.select();
     });
-    // Suppress unused — `joined` is for clarity only
-    void joined;
   };
 
   return (
@@ -179,14 +203,12 @@ export function OTPInput({
       role="group"
       aria-label={ariaLabel}
       className={otpRowVariants({
-        density,
         codeGrid: codeGridStyle,
         className,
       })}
       onPaste={handlePaste}
       data-state={error ? "error" : success ? "success" : "idle"}
       data-style={codeGridStyle ? "code-grid" : "default"}
-      data-density={density}
       {...rest}
     >
       {cells.map((digit, i) => {
@@ -211,7 +233,6 @@ export function OTPInput({
             onBlur={() => setFocusedIdx((cur) => (cur === i ? null : cur))}
             aria-label={`Digit ${i + 1} of ${length}`}
             className={otpCellVariants({
-              density,
               state: error
                 ? "error"
                 : success

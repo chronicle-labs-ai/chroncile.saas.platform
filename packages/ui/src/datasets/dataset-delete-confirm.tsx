@@ -89,7 +89,7 @@ export function DatasetDeleteConfirm({
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="flex flex-col gap-3">
-          <div className="rounded-[3px] border border-l-border bg-l-surface-input px-3 py-2 font-sans text-[12.5px] text-l-ink">
+          <div className="rounded-[3px] border border-hairline-strong bg-l-surface-input px-3 py-2 font-sans text-[12.5px] text-l-ink">
             <div className="font-medium">{dataset.name}</div>
             <div className="mt-0.5 font-mono text-[11px] text-l-ink-dim">
               {formatNumber(dataset.traceCount)}{" "}
@@ -106,7 +106,6 @@ export function DatasetDeleteConfirm({
                 Type the dataset name to confirm
               </span>
               <Input
-                density="compact"
                 autoFocus
                 value={typed}
                 onChange={(e) => setTyped(e.currentTarget.value)}
@@ -123,12 +122,11 @@ export function DatasetDeleteConfirm({
         </DialogBody>
         <DialogFooter>
           <DialogClose asChild>
-            <Button density="compact" variant="ghost" size="sm">
+            <Button variant="ghost" size="sm">
               Cancel
             </Button>
           </DialogClose>
           <Button
-            density="compact"
             variant="critical"
             size="sm"
             isLoading={pending}

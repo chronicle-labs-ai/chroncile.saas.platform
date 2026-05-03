@@ -55,7 +55,7 @@ export function AgentVersionTimeline({
   return (
     <ol
       className={cx(
-        "relative rounded-[4px] border border-l-border bg-l-surface-raised",
+        "relative rounded-[4px] border border-hairline-strong bg-l-surface-raised",
         className,
       )}
     >
@@ -82,10 +82,10 @@ export function AgentVersionTimeline({
             />
             <span
               className={cx(
-                "relative z-10 mt-3 flex size-4 items-center justify-center rounded-pill border bg-l-surface-raised",
+                "relative z-raised mt-3 flex size-4 items-center justify-center rounded-pill border bg-l-surface-raised",
                 v.status === "current"
                   ? "border-ember text-ember"
-                  : "border-l-border text-l-ink-dim",
+                  : "border-hairline-strong text-l-ink-dim",
               )}
             >
               <GitCommitVertical className="size-2.5" strokeWidth={2} />
@@ -99,7 +99,7 @@ export function AgentVersionTimeline({
             className={cx(
               "flex flex-1 flex-col gap-1.5 border-b border-l-border-faint px-3 py-3 text-left",
               "last:border-b-0",
-              "hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40",
+              "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
               selectedVersion === v.artifact.version &&
                 "bg-l-surface-selected",
             )}

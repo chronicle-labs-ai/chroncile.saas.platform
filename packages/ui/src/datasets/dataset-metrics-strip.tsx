@@ -113,7 +113,7 @@ interface TileProps {
 
 function Tile({ label, value, sub }: TileProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-[4px] border border-l-border bg-l-surface-raised px-3 py-2.5">
+    <div className="flex flex-col gap-1 rounded-[4px] border border-hairline-strong bg-l-surface-raised px-3 py-2.5">
       <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim">
         {label}
       </span>

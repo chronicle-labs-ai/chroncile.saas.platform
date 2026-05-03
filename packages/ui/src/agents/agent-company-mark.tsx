@@ -149,6 +149,11 @@ export function AgentCompanyMark({
       data-tone={tone}
       aria-hidden
       className={cx(
+        // Purely decorative: the brand mark is a visual flourish and never
+        // a semantic affordance. Disable text selection and pointer capture
+        // so the tile can sit on top of clickable wrappers without
+        // intercepting taps or being draggable.
+        "pointer-events-none select-none",
         "inline-flex shrink-0 items-center justify-center",
         TILE_TONE_CLASS[tone],
         tileClassName,

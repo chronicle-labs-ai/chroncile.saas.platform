@@ -66,7 +66,7 @@ function TemplateTableShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-visible rounded-l border border-l-border bg-l-surface-raised">
+    <div className="overflow-visible rounded-md border border-l-border bg-l-surface-raised">
       <div className="flex items-center justify-between gap-s-3 border-b border-l-border-faint px-s-4 py-s-3">
         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
           {title}
@@ -285,7 +285,6 @@ export function EmailTemplatesPage() {
                   : "Preview"
           }
           variant={emailAction?.kind === "delete" ? "danger" : "default"}
-          density="compact"
           className={emailAction?.kind === "preview" ? "max-w-3xl" : undefined}
           actions={
             emailAction?.kind === "delete" ? (
@@ -337,7 +336,7 @@ export function EmailTemplatesPage() {
             </div>
           ) : emailAction?.kind === "send" ? (
             <div className="space-y-s-4">
-              <div className="flex items-center gap-s-2 rounded-l border border-l-border bg-l-surface px-s-3 py-s-2">
+              <div className="flex items-center gap-s-2 rounded-md border border-l-border bg-l-surface px-s-3 py-s-2">
                 <ProductChip
                   tone={
                     emailAction.resendTemplate?.status === "published"
@@ -389,7 +388,7 @@ export function EmailTemplatesPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-l border border-l-border bg-white text-[#1a140a]">
+            <div className="overflow-hidden rounded-md border border-l-border bg-white text-[#1a140a]">
               <div className="border-b border-black/10 px-s-6 py-s-5">
                 <div className="text-xs uppercase tracking-[0.12em] text-black/45">
                   Chronicle Labs
@@ -539,7 +538,7 @@ export function EmailTemplatesPage() {
                     </div>
                     <div className="grid gap-s-2">
                       {envsError ? (
-                        <div className="flex items-center justify-between gap-s-3 rounded-l border border-event-red/30 bg-event-red/10 px-s-3 py-s-2">
+                        <div className="flex items-center justify-between gap-s-3 rounded-md border border-event-red/30 bg-event-red/10 px-s-3 py-s-2">
                           <p className="text-xs text-event-red">
                             {apiErrorMessage(
                               envsError,
@@ -556,14 +555,14 @@ export function EmailTemplatesPage() {
                           </Button>
                         </div>
                       ) : registerEnvironments.length === 0 ? (
-                        <p className="rounded-l border border-l-border bg-l-surface px-s-3 py-s-2 text-xs text-l-ink-dim">
+                        <p className="rounded-md border border-l-border bg-l-surface px-s-3 py-s-2 text-xs text-l-ink-dim">
                           No prod, staging, or dev environments available.
                         </p>
                       ) : (
                         registerEnvironments.map((environment) => (
                           <label
                             key={environment.id}
-                            className="flex items-center justify-between gap-s-3 rounded-l border border-l-border bg-l-surface px-s-3 py-s-2 text-xs text-l-ink transition-colors hover:border-l-border-strong"
+                            className="flex items-center justify-between gap-s-3 rounded-md border border-l-border bg-l-surface px-s-3 py-s-2 text-xs text-l-ink transition-colors hover:border-l-border-strong"
                           >
                             <span>
                               <span className="block font-medium">
@@ -611,7 +610,7 @@ export function EmailTemplatesPage() {
         </div>
 
         {pageError ? (
-          <div className="rounded-l border border-event-red/30 bg-event-red/10 px-s-4 py-s-3 text-sm text-event-red">
+          <div className="rounded-md border border-event-red/30 bg-event-red/10 px-s-4 py-s-3 text-sm text-event-red">
             {pageError}
           </div>
         ) : null}

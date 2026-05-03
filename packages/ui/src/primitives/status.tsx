@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 /**
  * Status — Linear's small status circle.
@@ -44,7 +44,7 @@ export function Status({
       role="img"
       aria-label={ariaLabel ?? `status: ${kind}`}
       data-kind={kind}
-      className={cx("relative inline-flex shrink-0 rounded-pill", className)}
+      className={cn("relative inline-flex shrink-0 rounded-pill", className)}
       style={{
         width: size,
         height: size,

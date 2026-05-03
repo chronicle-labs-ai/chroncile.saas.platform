@@ -60,7 +60,6 @@ export function ConnectionsToolbar({
     >
       <div className="flex min-w-[220px] flex-1 items-center gap-2">
         <Input
-          density="compact"
           search
           placeholder={
             totalCount != null
@@ -80,7 +79,6 @@ export function ConnectionsToolbar({
             <Chip
               key={h}
               active={active}
-              density="compact"
               onClick={() => onHealthToggle(h)}
               icon={<ConnectionHealthBadge health={h} iconOnly />}
             >
@@ -123,7 +121,6 @@ export function ConnectionsToolbar({
         </div>
         {!hideAdd ? (
           <Button
-            density="compact"
             variant="primary"
             size="sm"
             onPress={onAdd}

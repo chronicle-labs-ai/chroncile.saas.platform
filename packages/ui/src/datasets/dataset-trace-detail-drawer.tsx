@@ -1,11 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { Trash2 } from "lucide-react";
+import {
+  Activity,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Database,
+  Fingerprint,
+  GitBranch,
+  Hash,
+  Layers as LayersIcon,
+  Tag,
+  Trash2,
+  User,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
-import { Drawer } from "../primitives/drawer";
 import {
   Dialog,
   DialogBody,
@@ -18,11 +33,12 @@ import {
 } from "../primitives/dialog";
 import { Textarea } from "../primitives/textarea";
 import { CompanyLogo } from "../icons";
+import { CopyButton } from "../primitives/copy-button";
 import {
-  StreamTimelineViewer,
-  type StreamPlaybackState,
-  type StreamTimelineEvent,
-} from "../stream-timeline";
+  sourceColor,
+  sourceTintedBackground,
+} from "../stream-timeline/source-color";
+import type { StreamTimelineEvent } from "../stream-timeline";
 import { formatNumber, formatStableDateTime } from "../connections/time";
 
 import { DatasetSplitChip } from "./dataset-split-chip";
@@ -31,31 +47,66 @@ import type {
   DatasetCluster,
   DatasetSnapshot,
   RemoveTraceFromDatasetHandler,
+  TraceStatus,
   TraceSummary,
 } from "./types";
 
 /*
- * DatasetTraceDetailDrawer — overlay drawer for inspecting one trace
- * inside a dataset and (optionally) removing it from the dataset.
+ * DatasetTraceDetailDrawer — inline trace inspector mounted beside
+ * the dataset canvas. Visual model mirrors the timeline tab's
+ * `StreamEventDetail` so the canvas's right rail reads as one
+ * unified inspector regardless of which lens fired the selection:
  *
- * Wraps `Drawer` with `density="compact"` and renders a stripped-down
- * `StreamTimelineViewer` filtered to events on this trace. The
- * Remove-from-dataset action surfaces a destructive confirm sub-dialog
- * with an optional reason field.
+ *   1. Header — compact 40 px chrome: source breadcrumb + position
+ *      stepper through the trace's events + copy id + close.
+ *   2. Trace strip — when the trace has 2+ events, a navigable list
+ *      sits above the details (matches `StreamEventDetail`'s
+ *      `<TraceStrip>`).
+ *   3. Details — Linear-style label/value rows for trace metadata
+ *      (cluster, split, status, source, events, duration, started,
+ *      added by, dataset).
+ *   4. Footer — "Open in timeline" + "Remove from dataset" actions
+ *      when the matching handlers are wired.
+ *
+ * The chrome is the same `<DetailHeader>` + `<Section>` +
+ * `<DetailRow>` + `<TraceStrip>` shape as `StreamEventDetail`; only
+ * the populated fields differ.
  */
+
+const DEFAULT_INSPECTOR_WIDTH = 440;
+
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+const traceItemTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
 
 export interface DatasetTraceDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   /** Snapshot the trace lives in. Drives event lookup + dataset chip. */
   snapshot: DatasetSnapshot;
-  /** Trace to inspect. When null/undefined, the drawer renders nothing. */
+  /** Trace to inspect. When null/undefined, the panel collapses
+   *  closed but keeps the last trace mounted for the duration of
+   *  the slide-out animation. */
   trace: TraceSummary | null;
   /** Remove handler. When omitted, the Remove button is hidden. */
   onRemoveTrace?: RemoveTraceFromDatasetHandler;
   /** Optional secondary CTA — e.g. "Open in timeline" — that lets the
    *  parent navigate from the drawer to the full timeline tab. */
   onJumpToTimeline?: (traceId: string) => void;
+  /** Inspector width in pixels. Defaults to {@link DEFAULT_INSPECTOR_WIDTH}. */
+  width?: number;
   className?: string;
 }
 
@@ -66,11 +117,27 @@ export function DatasetTraceDetailDrawer({
   trace,
   onRemoveTrace,
   onJumpToTimeline,
+  width = DEFAULT_INSPECTOR_WIDTH,
   className,
 }: DatasetTraceDetailDrawerProps) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [reason, setReason] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  /* Active event within the trace strip. Lets the user step through
+     events without leaving the drawer. Defaults to the first event;
+     resets when the underlying trace changes. */
+  const [activeEventId, setActiveEventId] = React.useState<string | null>(
+    null,
+  );
+
+  const [stickyTrace, setStickyTrace] = React.useState<TraceSummary | null>(
+    trace,
+  );
+  React.useEffect(() => {
+    if (trace) setStickyTrace(trace);
+  }, [trace]);
+
+  const visible = isOpen && trace !== null;
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -80,23 +147,66 @@ export function DatasetTraceDetailDrawer({
     }
   }, [isOpen]);
 
-  if (!trace) return null;
+  /* Esc-to-close, scoped to when the panel is showing so we don't
+     swallow the key for other consumers. Skip when the confirm
+     sub-dialog is open — Radix handles Escape there. */
+  React.useEffect(() => {
+    if (!visible || confirmOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible, confirmOpen, onClose]);
 
-  const cluster = trace.clusterId
-    ? snapshot.clusters.find((c) => c.id === trace.clusterId) ?? null
+  const renderTrace = trace ?? stickyTrace;
+  const cluster = renderTrace?.clusterId
+    ? snapshot.clusters.find((c) => c.id === renderTrace.clusterId) ?? null
     : null;
 
-  const traceEvents = (snapshot.events ?? []).filter(
-    (e) => e.traceId === trace.traceId,
-  );
+  const traceEvents = React.useMemo<readonly StreamTimelineEvent[]>(() => {
+    if (!renderTrace) return [];
+    return (snapshot.events ?? []).filter(
+      (e) => e.traceId === renderTrace.traceId,
+    );
+  }, [snapshot.events, renderTrace]);
+
+  /* Reset / clamp `activeEventId` when the trace changes or the
+     active event vanishes (e.g. filter narrows it out). */
+  React.useEffect(() => {
+    if (traceEvents.length === 0) {
+      setActiveEventId(null);
+      return;
+    }
+    if (
+      activeEventId &&
+      traceEvents.some((e) => e.id === activeEventId)
+    ) {
+      return;
+    }
+    setActiveEventId(traceEvents[0]!.id);
+  }, [traceEvents, activeEventId]);
+
+  const activeIndex = activeEventId
+    ? traceEvents.findIndex((e) => e.id === activeEventId)
+    : -1;
+  const activeEvent =
+    activeIndex >= 0 ? traceEvents[activeIndex] ?? null : null;
+  const prevEvent =
+    activeIndex > 0 ? traceEvents[activeIndex - 1] ?? null : null;
+  const nextEvent =
+    activeIndex >= 0 && activeIndex < traceEvents.length - 1
+      ? traceEvents[activeIndex + 1] ?? null
+      : null;
+  const hasEvents = traceEvents.length > 0;
 
   const handleRemove = async () => {
-    if (!onRemoveTrace) return;
+    if (!onRemoveTrace || !renderTrace) return;
     setPending(true);
     try {
       await onRemoveTrace({
         datasetId: snapshot.dataset.id,
-        traceId: trace.traceId,
+        traceId: renderTrace.traceId,
         reason: reason.trim() || undefined,
       });
       setConfirmOpen(false);
@@ -106,337 +216,654 @@ export function DatasetTraceDetailDrawer({
     }
   };
 
+  const sourceTint = renderTrace
+    ? sourceTintedBackground(sourceColor(renderTrace.primarySource), 22)
+    : "transparent";
+
+  const showFooterActions = !!(onJumpToTimeline || onRemoveTrace);
+
   return (
-    <Drawer
-      density="compact"
-      isOpen={isOpen}
-      onClose={onClose}
-      placement="right"
-      size="lg"
-      className={className}
-      title={<DrawerTitle trace={trace} cluster={cluster} />}
-      actions={
-        <div className="flex w-full items-center justify-between gap-2">
-          {onJumpToTimeline ? (
-            <Button
-              density="compact"
-              variant="ghost"
-              size="sm"
-              onPress={() => onJumpToTimeline(trace.traceId)}
-            >
-              Open in timeline
-            </Button>
-          ) : (
-            <span />
-          )}
-          {onRemoveTrace ? (
-            <Button
-              density="compact"
-              variant="critical"
-              size="sm"
-              onPress={() => setConfirmOpen(true)}
-              leadingIcon={<Trash2 className="size-3.5" strokeWidth={1.75} />}
-            >
-              Remove from dataset
-            </Button>
-          ) : null}
-        </div>
-      }
+    <aside
+      aria-label="Trace detail"
+      aria-hidden={!visible}
+      data-state={visible ? "open" : "closed"}
+      className={cx(
+        "shrink-0 self-stretch overflow-hidden border-l border-hairline bg-l-surface-bar",
+        "transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none",
+        visible ? "opacity-100" : "pointer-events-none opacity-0",
+        className,
+      )}
+      style={{ width: visible ? width : 0 }}
     >
-      <div className="flex flex-col gap-3 pb-2">
-        <SummaryStrip trace={trace} cluster={cluster} datasetName={snapshot.dataset.name} />
+      {/* Inner pane is a fixed width so children don't reflow as the
+         outer width animates. */}
+      <div className="flex h-full flex-col bg-l-surface-bar text-l-ink" style={{ width }}>
+        {renderTrace ? (
+          <>
+            <DetailHeader
+              onClose={onClose}
+              title={renderTrace.label}
+              breadcrumb={
+                <>
+                  <CompanyLogo
+                    name={renderTrace.primarySource}
+                    size={12}
+                    radius={2}
+                    fallbackBackground={sourceTint}
+                    fallbackColor="var(--c-ink-hi)"
+                    aria-hidden
+                  />
+                  <span className="font-sans text-[11.5px] text-l-ink-lo">
+                    {cluster?.label ?? renderTrace.primarySource}
+                  </span>
+                </>
+              }
+              position={
+                hasEvents
+                  ? `${Math.max(activeIndex, 0) + 1} / ${traceEvents.length}`
+                  : null
+              }
+              prevEvent={prevEvent ?? null}
+              nextEvent={nextEvent ?? null}
+              onPrev={prevEvent ? () => setActiveEventId(prevEvent.id) : undefined}
+              onNext={nextEvent ? () => setActiveEventId(nextEvent.id) : undefined}
+              copyId={renderTrace.traceId}
+            />
 
-        {trace.note ? (
-          <p className="rounded-[3px] border border-l-border bg-l-surface-input px-3 py-2 font-sans text-[12px] leading-snug text-l-ink-lo">
-            <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-l-ink-dim">
-              note
-            </span>
-            <br />
-            {trace.note}
-          </p>
-        ) : null}
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+              {hasEvents ? (
+                <TraceStrip
+                  events={traceEvents}
+                  activeId={activeEventId}
+                  traceLabel={cluster?.label ?? renderTrace.label}
+                  onSelect={(e) => setActiveEventId(e.id)}
+                />
+              ) : null}
 
-        <section className="flex flex-col gap-1.5">
-          <SectionHeading>Events on this trace</SectionHeading>
-          {traceEvents.length === 0 ? (
-            <div className="rounded-[3px] border border-l-border bg-l-surface-input px-3 py-3 font-mono text-[11px] text-l-ink-dim">
-              No events were captured for this trace yet.
+              {renderTrace.note ? (
+                <Section eyebrow="Note">
+                  <p className="rounded-[3px] border border-hairline bg-l-surface px-2.5 py-2 font-sans text-[12.5px] leading-snug text-l-ink-lo">
+                    {renderTrace.note}
+                  </p>
+                </Section>
+              ) : null}
+
+              <Section eyebrow="Details">
+                <DetailRow
+                  label="Dataset"
+                  icon={<Database size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    <span className="truncate text-l-ink">
+                      {snapshot.dataset.name}
+                    </span>
+                  }
+                />
+                <DetailRow
+                  label="Cluster"
+                  icon={<LayersIcon size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    cluster ? (
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          aria-hidden
+                          className="size-1.5 shrink-0 rounded-pill"
+                          style={{ background: cluster.color }}
+                        />
+                        <span className="truncate">{cluster.label}</span>
+                      </span>
+                    ) : (
+                      <span className="text-l-ink-dim">Unclustered</span>
+                    )
+                  }
+                />
+                <DetailRow
+                  label="Split"
+                  icon={<GitBranch size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    renderTrace.split ? (
+                      <DatasetSplitChip split={renderTrace.split} compact />
+                    ) : (
+                      <span className="text-l-ink-dim">—</span>
+                    )
+                  }
+                />
+                <DetailRow
+                  label="Status"
+                  icon={
+                    <StatusIcon
+                      status={renderTrace.status}
+                      size={12}
+                    />
+                  }
+                  value={
+                    <span className={statusToneClass(renderTrace.status)}>
+                      {statusLabel(renderTrace.status)}
+                    </span>
+                  }
+                />
+                <DetailRow
+                  label="Source"
+                  icon={
+                    <CompanyLogo
+                      name={renderTrace.primarySource}
+                      size={14}
+                      radius={3}
+                      fallbackBackground={sourceTint}
+                      fallbackColor="var(--c-ink-hi)"
+                      aria-hidden
+                    />
+                  }
+                  value={renderTrace.primarySource}
+                />
+                <DetailRow
+                  label="Events"
+                  icon={<Activity size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    <span className="font-mono tabular-nums text-l-ink">
+                      {formatNumber(renderTrace.eventCount)}
+                    </span>
+                  }
+                />
+                <DetailRow
+                  label="Duration"
+                  icon={<Clock size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    <span className="font-mono tabular-nums text-l-ink">
+                      {formatTraceDuration(renderTrace.durationMs)}
+                    </span>
+                  }
+                />
+                <DetailRow
+                  label="Started"
+                  icon={<Calendar size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    <span className="font-mono text-[12px] tabular-nums">
+                      {formatStableDateTime(renderTrace.startedAt)}
+                    </span>
+                  }
+                />
+                {renderTrace.addedBy ? (
+                  <DetailRow
+                    label="Added by"
+                    icon={<User size={12} strokeWidth={1.75} aria-hidden />}
+                    value={renderTrace.addedBy}
+                  />
+                ) : null}
+                <DetailRow
+                  label="Trace ID"
+                  icon={<Hash size={12} strokeWidth={1.75} aria-hidden />}
+                  value={
+                    <span className="inline-flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="truncate font-mono text-[12px] text-l-ink-lo">
+                        {renderTrace.traceId}
+                      </span>
+                      <CopyButton text={renderTrace.traceId} />
+                    </span>
+                  }
+                />
+              </Section>
+
+              {activeEvent ? (
+                <Section eyebrow="Active event">
+                  <DetailRow
+                    label="Type"
+                    icon={
+                      <Tag size={12} strokeWidth={1.75} aria-hidden />
+                    }
+                    value={
+                      <span className="truncate font-mono text-[12px] text-l-ink">
+                        {activeEvent.type}
+                      </span>
+                    }
+                  />
+                  <DetailRow
+                    label="Time"
+                    icon={
+                      <Calendar size={12} strokeWidth={1.75} aria-hidden />
+                    }
+                    value={
+                      <span className="font-mono text-[12px] tabular-nums">
+                        {dateTimeFormatter.format(
+                          new Date(activeEvent.occurredAt).getTime(),
+                        )}
+                      </span>
+                    }
+                  />
+                  {activeEvent.actor ? (
+                    <DetailRow
+                      label="Actor"
+                      icon={<User size={12} strokeWidth={1.75} aria-hidden />}
+                      value={activeEvent.actor}
+                    />
+                  ) : null}
+                  {activeEvent.correlationKey ? (
+                    <DetailRow
+                      label="Correlation"
+                      icon={
+                        <Fingerprint
+                          size={12}
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                      }
+                      value={
+                        <span className="truncate font-mono text-[12px]">
+                          {activeEvent.correlationKey}
+                        </span>
+                      }
+                    />
+                  ) : null}
+                </Section>
+              ) : null}
             </div>
-          ) : (
-            <TraceTimelinePane trace={trace} traceEvents={traceEvents} />
-          )}
-        </section>
+
+            {showFooterActions ? (
+              <footer className="flex shrink-0 items-center gap-2 border-t border-hairline bg-l-surface px-3 py-2">
+                {onJumpToTimeline ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => onJumpToTimeline(renderTrace.traceId)}
+                  >
+                    Open in timeline
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                {onRemoveTrace ? (
+                  <Button
+                    variant="critical"
+                    size="sm"
+                    className="ml-auto"
+                    onPress={() => setConfirmOpen(true)}
+                    leadingIcon={
+                      <Trash2 className="size-3.5" strokeWidth={1.75} />
+                    }
+                  >
+                    Remove from dataset
+                  </Button>
+                ) : null}
+              </footer>
+            ) : null}
+          </>
+        ) : null}
       </div>
 
-      {/* Remove confirm sub-dialog */}
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="w-[380px] max-w-[92vw]">
-          <DialogHeader>
-            <DialogTitle>Remove trace from dataset</DialogTitle>
-            <DialogDescription>
-              The trace stays in the timeline; only its membership in{" "}
-              <span className="text-l-ink">{snapshot.dataset.name}</span> is
-              removed.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogBody className="flex flex-col gap-3">
-            <div className="rounded-[3px] border border-l-border bg-l-surface-input px-3 py-2 font-sans text-[12px] text-l-ink">
-              <div className="font-medium">{trace.label}</div>
-              <div className="mt-0.5 font-mono text-[11px] text-l-ink-dim">
-                {trace.traceId} · {formatNumber(trace.eventCount)} events
+      {/* Remove confirm sub-dialog. */}
+      {renderTrace ? (
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent className="w-[380px] max-w-[92vw]">
+            <DialogHeader>
+              <DialogTitle>Remove trace from dataset</DialogTitle>
+              <DialogDescription>
+                The trace stays in the timeline; only its membership in{" "}
+                <span className="text-l-ink">{snapshot.dataset.name}</span> is
+                removed.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogBody className="flex flex-col gap-3">
+              <div className="rounded-[3px] border border-hairline-strong bg-l-surface-input px-3 py-2 font-sans text-[12px] text-l-ink">
+                <div className="font-medium">{renderTrace.label}</div>
+                <div className="mt-0.5 font-mono text-[11px] text-l-ink-dim">
+                  {renderTrace.traceId} ·{" "}
+                  {formatNumber(renderTrace.eventCount)} events
+                </div>
               </div>
-            </div>
-            <label className="flex flex-col gap-1.5">
-              <span className="font-sans text-[11px] font-medium text-l-ink-lo">
-                Reason (optional)
-              </span>
-              <Textarea
-                density="compact"
-                rows={2}
-                value={reason}
-                onChange={(e) => setReason(e.currentTarget.value)}
-                placeholder="Duplicate of trace_xyz"
-              />
-            </label>
-          </DialogBody>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button density="compact" variant="ghost" size="sm">
-                Cancel
+              <label className="flex flex-col gap-1.5">
+                <span className="font-sans text-[11px] font-medium text-l-ink-lo">
+                  Reason (optional)
+                </span>
+                <Textarea
+                  rows={2}
+                  value={reason}
+                  onChange={(e) => setReason(e.currentTarget.value)}
+                  placeholder="Duplicate of trace_xyz"
+                />
+              </label>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="ghost" size="sm">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
+                variant="critical"
+                size="sm"
+                isLoading={pending}
+                onPress={handleRemove}
+              >
+                Remove trace
               </Button>
-            </DialogClose>
-            <Button
-              density="compact"
-              variant="critical"
-              size="sm"
-              isLoading={pending}
-              onPress={handleRemove}
-            >
-              Remove trace
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Drawer>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </aside>
   );
 }
 
-/* ── Subcomponents ────────────────────────────────────────── */
+/* ── Header ───────────────────────────────────────────────── *
+ * Mirrors `stream-event-detail.tsx`'s `<DetailHeader>` chrome —
+ * compact 40 px row with a breadcrumb on top and a title + nav +
+ * close on the bottom row. Close button bumps to 44 × 44 on
+ * coarse pointers per Emil's touch-first principle.
+ */
 
-interface TraceTimelinePaneProps {
-  trace: TraceSummary;
-  traceEvents: readonly StreamTimelineEvent[];
+interface DetailHeaderProps {
+  title?: React.ReactNode;
+  breadcrumb?: React.ReactNode;
+  position?: string | null;
+  prevEvent?: StreamTimelineEvent | null;
+  nextEvent?: StreamTimelineEvent | null;
+  onPrev?: () => void;
+  onNext?: () => void;
+  copyId?: string;
+  onClose?: () => void;
+}
+
+function DetailHeader({
+  title,
+  breadcrumb,
+  position,
+  prevEvent,
+  nextEvent,
+  onPrev,
+  onNext,
+  copyId,
+  onClose,
+}: DetailHeaderProps) {
+  return (
+    <header className="flex shrink-0 flex-col border-b border-hairline px-4 py-2.5">
+      <div className="flex items-center gap-1.5">
+        {breadcrumb ? (
+          <div className="flex min-w-0 items-center gap-1.5">{breadcrumb}</div>
+        ) : null}
+        {position ? (
+          <span className="font-mono text-[10.5px] tabular-nums text-l-ink-dim">
+            · {position}
+          </span>
+        ) : null}
+        <div className="ml-auto flex items-center gap-0.5">
+          {prevEvent !== undefined || nextEvent !== undefined ? (
+            <div className="mr-0.5 inline-flex items-center rounded-md border border-hairline bg-l-surface">
+              <HeaderIconButton
+                icon={
+                  <ChevronLeft size={11} strokeWidth={1.75} aria-hidden />
+                }
+                disabled={!prevEvent}
+                onClick={onPrev}
+                ariaLabel="Previous event"
+              />
+              <HeaderIconButton
+                icon={
+                  <ChevronRight size={11} strokeWidth={1.75} aria-hidden />
+                }
+                disabled={!nextEvent}
+                onClick={onNext}
+                ariaLabel="Next event"
+              />
+            </div>
+          ) : null}
+          {copyId ? <CopyButton text={copyId} /> : null}
+          {onClose ? (
+            <HeaderIconButton
+              icon={<X size={11} strokeWidth={1.75} aria-hidden />}
+              onClick={onClose}
+              ariaLabel="Close detail panel"
+            />
+          ) : null}
+        </div>
+      </div>
+      {title ? (
+        <p className="mt-1.5 truncate font-sans text-[14px] font-medium text-l-ink">
+          {title}
+        </p>
+      ) : null}
+    </header>
+  );
+}
+
+function HeaderIconButton({
+  icon,
+  disabled,
+  onClick,
+  ariaLabel,
+}: {
+  icon: React.ReactNode;
+  disabled?: boolean;
+  onClick?: () => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className={cx(
+        "inline-flex h-[22px] w-[22px] items-center justify-center rounded-xs",
+        "touch-manipulation [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9",
+        "text-l-ink-dim transition-colors duration-fast ease-out motion-reduce:transition-none",
+        "hover:bg-l-wash-3 hover:text-l-ink",
+        "disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-l-ink-dim",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember",
+      )}
+    >
+      {icon}
+    </button>
+  );
+}
+
+/* ── Section + DetailRow ──────────────────────────────────── */
+
+function Section({
+  eyebrow,
+  actions,
+  children,
+}: {
+  eyebrow: React.ReactNode;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col border-b border-hairline px-3 py-3 last:border-b-0">
+      <div className="mb-1.5 flex items-center px-1">
+        <span className="font-sans text-[11.5px] font-medium text-l-ink-dim">
+          {eyebrow}
+        </span>
+        <div className="ml-auto flex items-center gap-1">{actions}</div>
+      </div>
+      <div className="flex flex-col">{children}</div>
+    </section>
+  );
+}
+
+function DetailRow({
+  label,
+  icon,
+  value,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="group flex min-h-[28px] items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-l-wash-3">
+      <span className="w-[88px] shrink-0 font-sans text-[12px] font-medium text-l-ink-dim">
+        {label}
+      </span>
+      <span className="flex min-w-0 flex-1 items-center gap-2 font-sans text-[12px] text-l-ink">
+        {icon ? (
+          <span className="inline-flex h-[14px] w-[14px] shrink-0 items-center justify-center text-l-ink-dim">
+            {icon}
+          </span>
+        ) : null}
+        <span className="min-w-0 flex-1 truncate">{value}</span>
+      </span>
+    </div>
+  );
+}
+
+/* ── Trace strip ──────────────────────────────────────────── */
+
+interface TraceStripProps {
+  events: readonly StreamTimelineEvent[];
+  activeId: string | null;
+  traceLabel: string | null;
+  onSelect?: (event: StreamTimelineEvent) => void;
 }
 
 /**
- * TraceTimelinePane — single-trace inspector embed that mirrors the
- * full Timeline tab styling: same `StreamTimelineViewer`, same
- * Linear-density chrome, but with the toolbar's group-by toggle
- * suppressed (a single trace has no topic/trace ambiguity), the
- * filter rail off (also no value with one trace), and the playhead
- * docked to the trace's first event.
- *
- * The pane carries its own `selectedEventId` state so the user can
- * click between events on the trace without affecting the dataset's
- * outer selection.
+ * Compact trace navigator. Identical visual to `StreamEventDetail`'s
+ * `<TraceStrip>` so a builder switching between the timeline tab's
+ * inspector and the dataset's outer trace inspector sees the same
+ * affordance for stepping through events on a trace.
  */
-function TraceTimelinePane({ trace, traceEvents }: TraceTimelinePaneProps) {
-  const [playback, setPlayback] = React.useState<StreamPlaybackState>("paused");
-  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
-    () => traceEvents[0]?.id ?? null,
-  );
+function TraceStrip({
+  events,
+  activeId,
+  traceLabel,
+  onSelect,
+}: TraceStripProps) {
+  const listRef = React.useRef<HTMLOListElement | null>(null);
 
-  const { initialCenterMs, initialHalfWidthMs } = React.useMemo(() => {
-    if (traceEvents.length === 0) {
-      return {
-        initialCenterMs: Date.now(),
-        initialHalfWidthMs: 60_000,
-      };
-    }
-    const ts = traceEvents
-      .map((e) => new Date(e.occurredAt).getTime())
-      .sort((a, b) => a - b);
-    const first = ts[0]!;
-    const last = ts[ts.length - 1]!;
-    const span = Math.max(last - first, 5_000);
-    return {
-      initialCenterMs: first + span / 2,
-      // 30% padding on either side so the first/last marks aren't
-      // glued to the canvas edge.
-      initialHalfWidthMs: Math.max(span * 0.65, 30_000),
-    };
-  }, [traceEvents]);
+  React.useEffect(() => {
+    const list = listRef.current;
+    if (!list || !activeId) return;
+    const active = list.querySelector<HTMLElement>(
+      `[data-trace-event-id="${cssEscape(activeId)}"]`,
+    );
+    active?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeId]);
 
   return (
-    <div className="flex h-[420px] min-h-0 flex-col rounded-[3px] border border-l-border bg-l-surface-raised">
-      <StreamTimelineViewer
-        events={traceEvents}
-        playback={playback}
-        selectedEventId={selectedEventId}
-        onPlaybackChange={setPlayback}
-        onSelect={(e) => setSelectedEventId(e.eventId)}
-        initialCenterMs={initialCenterMs}
-        initialHalfWidthMs={initialHalfWidthMs}
-        toolbarLeading={
-          <span className="font-mono text-[10.5px] text-l-ink-dim">
-            Trace · {trace.label}
-          </span>
-        }
-        groupBy="trace"
-        showFilters={false}
-        showDetailPanel={false}
-        showConnectors
-        rowHeight={26}
-        className="flex-1"
-      />
-    </div>
-  );
-}
-
-function DrawerTitle({
-  trace,
-  cluster,
-}: {
-  trace: TraceSummary;
-  cluster: DatasetCluster | null;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-2.5">
-      <span
-        className="flex size-7 shrink-0 items-center justify-center rounded-[3px] border border-l-border-faint bg-l-surface-input"
-        aria-hidden
-      >
-        <CompanyLogo
-          name={trace.primarySource}
-          size={14}
-          radius={2}
-          fallbackBackground="transparent"
-          fallbackColor="var(--l-ink-dim)"
+    <section className="flex flex-col border-b border-hairline px-3 py-3">
+      <div className="mb-1.5 flex items-center gap-1.5 px-1">
+        <GitBranch
+          size={11}
+          strokeWidth={1.75}
+          className="text-event-violet"
+          aria-hidden
         />
-      </span>
-      <div className="flex min-w-0 flex-col gap-[1px]">
-        <span className="truncate font-sans text-[14px] font-medium text-l-ink">
-          {trace.label}
+        <span className="truncate font-sans text-[11.5px] font-medium text-l-ink-dim">
+          {traceLabel ?? "Trace"}
         </span>
-        <span className="flex items-center gap-1.5 truncate font-mono text-[10.5px] text-l-ink-dim">
-          {cluster ? (
-            <>
-              <span
-                aria-hidden
-                className="size-1.5 rounded-pill"
-                style={{ background: cluster.color }}
-              />
-              <span className="truncate">{cluster.label}</span>
-              <span aria-hidden>·</span>
-            </>
-          ) : null}
-          <span className="truncate">{trace.traceId}</span>
+        <span className="ml-auto font-mono text-[10.5px] tabular-nums text-l-ink-dim">
+          {events.length} {events.length === 1 ? "event" : "events"}
         </span>
       </div>
-    </div>
+      <ol
+        ref={listRef}
+        className="relative ml-2.5 mr-0.5 max-h-[180px] overflow-y-auto border-l border-hairline pb-0.5"
+      >
+        {events.map((e, idx) => {
+          const isActive = e.id === activeId;
+          const tint = sourceTintedBackground(sourceColor(e.source), 22);
+          return (
+            <li
+              key={e.id}
+              data-trace-event-id={e.id}
+              className="relative -ml-px"
+            >
+              <span
+                aria-hidden
+                className={cx(
+                  "absolute left-[-3px] top-2.5 inline-block size-1.5 rounded-pill",
+                  isActive
+                    ? "bg-ember ring-1 ring-ember/30 ring-offset-1 ring-offset-l-surface-bar"
+                    : "bg-event-violet/60",
+                )}
+              />
+              <button
+                type="button"
+                onClick={() => onSelect?.(e)}
+                className={cx(
+                  "flex w-full items-center gap-1.5 rounded-xs py-[3px] pl-3 pr-1.5 text-left",
+                  "transition-colors duration-fast ease-out motion-reduce:transition-none",
+                  "hover:bg-l-wash-3 focus-visible:bg-l-wash-3 focus-visible:outline-none",
+                  isActive ? "bg-l-wash-3" : null,
+                )}
+              >
+                <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-l-ink-dim">
+                  {traceItemTimeFormatter.format(
+                    new Date(e.occurredAt).getTime(),
+                  )}
+                </span>
+                <CompanyLogo
+                  name={e.source}
+                  size={12}
+                  radius={2}
+                  fallbackBackground={tint}
+                  fallbackColor="var(--c-ink-hi)"
+                  className="shrink-0"
+                  aria-hidden
+                />
+                <span
+                  className={cx(
+                    "min-w-0 truncate font-sans text-[12px]",
+                    isActive ? "text-l-ink" : "text-l-ink-lo",
+                  )}
+                >
+                  {e.type}
+                </span>
+                <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-l-ink-dim">
+                  {idx + 1}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 
-function SummaryStrip({
-  trace,
-  cluster,
-  datasetName,
-}: {
-  trace: TraceSummary;
-  cluster: DatasetCluster | null;
-  datasetName: string;
-}) {
+/* ── Helpers ─────────────────────────────────────────────── */
+
+function cssEscape(value: string): string {
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+    return CSS.escape(value);
+  }
+  return value.replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`);
+}
+
+const STATUS_ICON: Record<TraceStatus, LucideIcon> = {
+  ok: Activity,
+  warn: Activity,
+  error: Activity,
+};
+
+function StatusIcon({ status, size }: { status: TraceStatus; size: number }) {
+  const Icon = STATUS_ICON[status];
   return (
-    <dl
-      className={cx(
-        "grid grid-cols-2 gap-2 sm:grid-cols-4",
-        "rounded-[3px] border border-l-border bg-l-surface-raised p-2.5",
-      )}
-    >
-      <Cell label="Dataset">
-        <span className="truncate text-l-ink">{datasetName}</span>
-      </Cell>
-      <Cell label="Cluster">
-        {cluster ? (
-          <span className="flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="size-1.5 rounded-pill"
-              style={{ background: cluster.color }}
-            />
-            <span className="truncate">{cluster.label}</span>
-          </span>
-        ) : (
-          <span className="text-l-ink-dim">—</span>
-        )}
-      </Cell>
-      <Cell label="Events">
-        <span className="font-mono">{formatNumber(trace.eventCount)}</span>
-      </Cell>
-      <Cell label="Duration">
-        <span className="font-mono">{formatTraceDuration(trace.durationMs)}</span>
-      </Cell>
-      <Cell label="Status">
-        <StatusInline status={trace.status} />
-      </Cell>
-      <Cell label="Split">
-        {trace.split ? (
-          <DatasetSplitChip split={trace.split} compact />
-        ) : (
-          <span className="text-l-ink-dim">—</span>
-        )}
-      </Cell>
-      <Cell label="Started">
-        <span className="font-mono text-[10.5px]">
-          {formatStableDateTime(trace.startedAt)}
-        </span>
-      </Cell>
-      <Cell label="Added by">
-        <span className="font-mono text-[11px]">
-          {trace.addedBy ?? "—"}
-        </span>
-      </Cell>
-    </dl>
+    <Icon
+      size={size}
+      strokeWidth={1.75}
+      className={statusToneClass(status)}
+      aria-hidden
+    />
   );
 }
 
-function Cell({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-[2px] min-w-0">
-      <dt className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-l-ink-dim">
-        {label}
-      </dt>
-      <dd className="truncate font-sans text-[12px] text-l-ink">{children}</dd>
-    </div>
-  );
+function statusToneClass(status: TraceStatus): string {
+  switch (status) {
+    case "ok":
+      return "text-l-status-done";
+    case "warn":
+      return "text-l-status-inprogress";
+    case "error":
+      return "text-l-p-urgent";
+  }
 }
 
-function StatusInline({ status }: { status: TraceSummary["status"] }) {
-  const meta = {
-    ok: { label: "OK", color: "bg-l-status-done", text: "text-l-status-done" },
-    warn: {
-      label: "Warn",
-      color: "bg-l-status-inprogress",
-      text: "text-l-status-inprogress",
-    },
-    error: {
-      label: "Error",
-      color: "bg-l-p-urgent",
-      text: "text-l-p-urgent",
-    },
-  }[status];
-  return (
-    <span className={cx("inline-flex items-center gap-1.5 font-medium", meta.text)}>
-      <span aria-hidden className={cx("size-1.5 rounded-pill", meta.color)} />
-      {meta.label}
-    </span>
-  );
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="font-sans text-[11px] font-medium uppercase tracking-[0.08em] text-l-ink-dim">
-      {children}
-    </h3>
-  );
+function statusLabel(status: TraceStatus): string {
+  switch (status) {
+    case "ok":
+      return "OK";
+    case "warn":
+      return "Warn";
+    case "error":
+      return "Error";
+  }
 }

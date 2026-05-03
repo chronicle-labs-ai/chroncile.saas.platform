@@ -10,8 +10,14 @@ import { cn } from "../utils/cn";
  * Form wiring is explicit through native `id`, `aria-describedby`, and
  * `aria-invalid` props.
  */
+/*
+ * Touch zoom guard: iOS Safari zooms the viewport when a focused input
+ * has a font-size below 16px. We keep desktop density (`text-[13px]` /
+ * `h-[28px]`) but bump to 16px / 36px on coarse pointers so iPad and
+ * iPhone don't zoom.
+ */
 export const inputVariants = cva(
-  "w-full border outline-none transition-[border-color,box-shadow,background-color] duration-fast ease-out h-[28px] rounded-md border-hairline-strong bg-l-surface-input px-[10px] font-sans text-[13px] text-l-ink placeholder:text-l-ink-dim hover:border-l-border-strong focus:border-[rgba(216,67,10,0.5)] focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] data-[invalid=true]:border-event-red focus:data-[invalid=true]:border-event-red disabled:cursor-not-allowed disabled:opacity-50",
+  "w-full border outline-none transition-[border-color,box-shadow,background-color] duration-fast ease-out h-[28px] [@media(pointer:coarse)]:h-9 rounded-md border-hairline-strong bg-l-surface-input px-[10px] font-sans text-[13px] [@media(pointer:coarse)]:text-[16px] text-l-ink placeholder:text-l-ink-dim hover:border-l-border-strong focus:border-[rgba(216,67,10,0.5)] focus:shadow-[0_0_0_3px_rgba(216,67,10,0.12)] data-[invalid=true]:border-event-red focus:data-[invalid=true]:border-event-red disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {

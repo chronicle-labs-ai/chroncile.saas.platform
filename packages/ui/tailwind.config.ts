@@ -386,6 +386,20 @@ const preset: Config = {
         fast: "var(--dur-fast)",
         DEFAULT: "var(--dur)",
         slow: "var(--dur-slow)",
+        enter: "var(--dur-enter)",
+        exit: "var(--dur-exit)",
+      },
+
+      zIndex: {
+        // Mirror of the `--z-*` token scale in tokens.css.
+        base: "var(--z-base)",
+        raised: "var(--z-raised)",
+        sticky: "var(--z-sticky)",
+        overlay: "var(--z-overlay)",
+        modal: "var(--z-modal)",
+        popover: "var(--z-popover)",
+        tooltip: "var(--z-tooltip)",
+        toast: "var(--z-toast)",
       },
 
       animation: {
@@ -401,6 +415,17 @@ const preset: Config = {
     },
   },
   plugins: [animate],
+  /*
+   * `hoverOnlyWhenSupported` rewrites every `hover:` utility to be wrapped
+   * in `@media (hover: hover) and (pointer: fine)`. Without it, every
+   * `hover:bg-…` on a row/card/chip "sticks" highlighted after a tap on
+   * iOS/iPadOS because Mobile Safari fires `:hover` on tap. See Emil's
+   * touch-accessibility rules — hover is an enhancement, not a primary
+   * affordance, and must not double as a tap-feedback surface.
+   */
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
 };
 
 export default preset;

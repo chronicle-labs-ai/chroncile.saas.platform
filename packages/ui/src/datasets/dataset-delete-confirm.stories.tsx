@@ -44,7 +44,7 @@ export const EmptyDataset: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <div className="flex flex-col gap-3">
-        <Button density="compact" variant="primary" onPress={() => setOpen(true)}>
+        <Button variant="primary" onPress={() => setOpen(true)}>
           Open delete dialog
         </Button>
         <DatasetDeleteConfirm
@@ -63,7 +63,7 @@ export const WithTraces: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <div className="flex flex-col gap-3">
-        <Button density="compact" variant="primary" onPress={() => setOpen(true)}>
+        <Button variant="primary" onPress={() => setOpen(true)}>
           Open delete dialog
         </Button>
         <DatasetDeleteConfirm

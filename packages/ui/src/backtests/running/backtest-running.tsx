@@ -88,7 +88,7 @@ export function BacktestRunning({
   return (
     <div className={cx("mx-auto flex w-full max-w-[1280px] flex-col gap-4 px-6 py-6", className)}>
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-l border border-hairline bg-surface-01 px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-hairline bg-surface-01 px-4 py-3">
         <div className="flex flex-wrap items-baseline gap-3">
           <span className="inline-flex items-center gap-1.5 text-event-green">
             <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-event-green" />
@@ -104,7 +104,6 @@ export function BacktestRunning({
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
-            density="compact"
             leadingIcon={
               paused ? (
                 <Play className="size-3.5" fill="currentColor" />
@@ -118,7 +117,6 @@ export function BacktestRunning({
           </Button>
           <Button
             variant="ghost"
-            density="compact"
             leadingIcon={<X className="size-3.5" strokeWidth={1.6} />}
             onClick={onAbort}
           >
@@ -126,7 +124,6 @@ export function BacktestRunning({
           </Button>
           <Button
             variant="ember"
-            density="compact"
             trailingIcon={<SkipForward className="size-3.5" strokeWidth={1.6} />}
             onClick={onFinish}
           >
@@ -136,7 +133,7 @@ export function BacktestRunning({
       </header>
 
       {/* Progress + gauges */}
-      <section className="grid gap-3 rounded-l border border-hairline bg-surface-01 p-4 lg:grid-cols-[1.4fr_1fr]">
+      <section className="grid gap-3 rounded-md border border-hairline bg-surface-01 p-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="flex flex-col gap-3">
           <div className="flex items-baseline gap-2">
             <span className="font-display text-display-sm font-light tracking-tight text-ink-hi">
@@ -217,7 +214,7 @@ export function BacktestRunning({
 
       {/* Live feed + divergence preview */}
       <section className="grid gap-3 lg:grid-cols-[1.6fr_1fr]">
-        <div className="flex min-h-0 flex-col rounded-l border border-hairline bg-surface-01">
+        <div className="flex min-h-0 flex-col rounded-md border border-hairline bg-surface-01">
           <header className="flex items-center justify-between border-b border-hairline px-3 py-2">
             <Eyebrow className="text-ink-dim">LIVE TRACE FEED</Eyebrow>
             <span className="inline-flex items-center gap-1.5 text-body-sm text-ink-lo">
@@ -228,7 +225,7 @@ export function BacktestRunning({
           <LiveFeedTable feed={liveFeed} candidateById={candidateById} />
         </div>
 
-        <div className="flex flex-col gap-2 rounded-l border border-hairline bg-surface-01">
+        <div className="flex flex-col gap-2 rounded-md border border-hairline bg-surface-01">
           <header className="flex items-center justify-between border-b border-hairline px-3 py-2">
             <Eyebrow className="text-ember">EARLY DIVERGENCES</Eyebrow>
             <span className="text-body-sm text-ink-lo">
@@ -285,7 +282,7 @@ function Gauge({
   };
   const sparkTone = tone === "violet" ? "ember" : (tone as "green" | "amber" | "red");
   return (
-    <div className="rounded-l border border-hairline bg-surface-02 p-3">
+    <div className="rounded-md border border-hairline bg-surface-02 p-3">
       <Eyebrow className="text-ink-dim">{label}</Eyebrow>
       <div className={cx("mt-1 font-display text-title-sm font-light", toneClass[tone])}>
         {value}
@@ -330,13 +327,13 @@ function CandidateRunRow({
       };
 
   return (
-    <div className="flex flex-col gap-2 rounded-l border border-hairline bg-surface-01 p-3">
+    <div className="flex flex-col gap-2 rounded-md border border-hairline bg-surface-01 p-3">
       <div className="flex items-center gap-2">
         <CandidateHueDot hue={agent.hue} size="sm" />
         <span className="flex-1 text-body-sm text-ink-hi">{agent.label}</span>
         <span
           className={cx(
-            "rounded-l-sm px-1.5 py-0.5 font-mono text-mono-sm uppercase tracking-tactical",
+            "rounded-xs px-1.5 py-0.5 font-mono text-mono-sm uppercase tracking-tactical",
             isBaseline
               ? "bg-surface-03 text-ink-lo"
               : "bg-ember/15 text-ember",

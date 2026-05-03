@@ -7,6 +7,7 @@ import {
   WorkspaceSetup,
   type ProvisioningStep,
   type WorkspaceSetupCaptureValue,
+  type WorkspaceSetupFieldErrors,
   type WorkspaceSetupSub,
 } from "ui/auth";
 import {
@@ -78,6 +79,51 @@ interface WorkspaceSetupClientProps {
   firstName?: string | null;
 }
 
+/*
+ * Map server error codes onto either an inline field error or a
+ * top-level banner. The backend currently returns flat snake_case
+ * codes via `{ error }`; this routes the known ones to the right
+ * surface so the user sees the message next to the offending input
+ * (Emil's "colocate errors" rule). Unknown codes fall through to
+ * the banner so we never lose visibility of a server failure.
+ */
+function routeWorkspaceError(code: string): {
+  field?: WorkspaceSetupFieldErrors;
+  banner?: string;
+} {
+  switch (code) {
+    case "slug_taken":
+    case "slug_already_in_use":
+    case "org_slug_conflict":
+    case "duplicate_slug":
+      return {
+        field: { slug: "That slug is already in use. Try another." },
+      };
+    case "invalid_slug":
+      return {
+        field: {
+          slug: "Lowercase letters, numbers, and hyphens only.",
+        },
+      };
+    case "org_name_already_exists":
+    case "name_taken":
+    case "duplicate_org_name":
+      return {
+        field: { orgName: "That workspace name is already in use." },
+      };
+    case "invalid_org_name":
+      return { field: { orgName: "Pick a name between 2 and 60 characters." } };
+    case "workos_unreachable":
+    case "auth_unreachable":
+      return {
+        banner:
+          "We couldn't reach the auth provider. Try again — your input is preserved.",
+      };
+    default:
+      return { banner: code.replaceAll("_", " ") };
+  }
+}
+
 export function WorkspaceSetupClient({
   email,
   firstName,
@@ -85,6 +131,7 @@ export function WorkspaceSetupClient({
   const router = useRouter();
   const [flowStep, setFlowStep] = useState<FlowStep>("capture");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<WorkspaceSetupFieldErrors>({});
   const [workspaceName, setWorkspaceName] = useState<string>("");
   const [describe, setDescribe] = useState<DescribeState>({
     mode: "freeform",
@@ -114,6 +161,7 @@ export function WorkspaceSetupClient({
 
   async function submit(value: WorkspaceSetupCaptureValue) {
     setError(null);
+    setFieldErrors({});
     setWorkspaceName(value.orgName);
     setFlowStep("running");
 
@@ -135,11 +183,11 @@ export function WorkspaceSetupClient({
       setWorkspaceName(data?.workspace?.name ?? value.orgName);
       setFlowStep("success");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message.replaceAll("_", " ")
-          : "Workspace provisioning failed",
-      );
+      const code =
+        err instanceof Error ? err.message : "workspace_provisioning_failed";
+      const routed = routeWorkspaceError(code);
+      setFieldErrors(routed.field ?? {});
+      setError(routed.banner ?? null);
       setFlowStep("capture");
     }
   }
@@ -202,7 +250,6 @@ export function WorkspaceSetupClient({
           if (id !== "billing") setFlowStep(id);
         }}
         align="center"
-        chromeStyle="product"
       >
         {body}
       </OnboardingShell>
@@ -218,12 +265,12 @@ export function WorkspaceSetupClient({
         currentIndex: 0,
       }}
       align="center"
-      chromeStyle="product"
     >
       <WorkspaceSetup
         sub={workspaceSub}
         email={email}
         error={error}
+        fieldErrors={fieldErrors}
         isSubmitting={workspaceSub === "running"}
         steps={workspaceSub === "success" ? DONE_STEPS : RUNNING_STEPS}
         firstName={firstName ?? undefined}

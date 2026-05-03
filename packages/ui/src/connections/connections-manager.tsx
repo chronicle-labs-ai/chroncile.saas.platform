@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { Plus } from "lucide-react";
 
 import { cx } from "../utils/cx";
+import { Button } from "../primitives/button";
+import { ConfirmModal } from "../primitives/modal";
 import { type ConnectorCheck, StateError, StateReauth, StateTesting } from "../connectors";
 import { getSource } from "../onboarding/data";
 import { ConnectionRow } from "./connection-row";
@@ -71,6 +74,8 @@ export interface ConnectionsManagerProps {
   onRunBackfill?: (id: string) => void;
   onAdd?: (next: Connection) => void;
   onChange?: (next: readonly Connection[]) => void;
+  /** Optional callback for the Activity tab's "Open full activity log" link. */
+  onOpenActivityLog?: (id: string) => void;
   className?: string;
 }
 
@@ -106,6 +111,7 @@ export function ConnectionsManager({
   onRunBackfill,
   onAdd,
   onChange,
+  onOpenActivityLog,
   className,
 }: ConnectionsManagerProps) {
   const [list, setList] = React.useState<Connection[]>(() => [
@@ -127,6 +133,14 @@ export function ConnectionsManager({
     React.useState<ConnectionDetailTab>("overview");
   const [addOpen, setAddOpen] = React.useState(false);
   const [edge, setEdge] = React.useState<EdgeState | null>(null);
+  /*
+   * Disconnect is destructive (events buffer upstream until reconnect).
+   * We always route through `ConfirmModal` instead of triggering on the
+   * first click — Emil rule: destructive actions require confirmation.
+   */
+  const [confirmDisconnect, setConfirmDisconnect] = React.useState<
+    string | null
+  >(null);
 
   const propagate = React.useCallback(
     (next: Connection[]) => {
@@ -178,11 +192,17 @@ export function ConnectionsManager({
     setEdge({ kind: "testing", id, checks: TESTING_CHECKS });
     onTest?.(id);
   };
+  const requestDisconnect = (id: string) => {
+    setConfirmDisconnect(id);
+  };
   const handleDisconnect = (id: string) => {
     propagate(list.filter((c) => c.id !== id));
     if (selectedId === id) setSelectedId(null);
     onDisconnect?.(id);
   };
+  const confirmConn = confirmDisconnect
+    ? list.find((c) => c.id === confirmDisconnect) ?? null
+    : null;
 
   const handleOpenError = (id: string) => {
     setEdge({ kind: "error", id });
@@ -312,7 +332,7 @@ export function ConnectionsManager({
                     setSelectedId(id);
                     setDrawerTab("scopes");
                   }}
-                  onDisconnect={handleDisconnect}
+                  onDisconnect={requestDisconnect}
                 />
               ))}
             </div>
@@ -339,7 +359,7 @@ export function ConnectionsManager({
                     setSelectedId(id);
                     setDrawerTab("scopes");
                   }}
-                  onDisconnect={handleDisconnect}
+                  onDisconnect={requestDisconnect}
                 />
               ))}
             </div>
@@ -368,11 +388,39 @@ export function ConnectionsManager({
               : handleReauth(selected.id)
           }
           onTest={() => handleTest(selected.id)}
-          onDisconnect={() => handleDisconnect(selected.id)}
+          onDisconnect={() => requestDisconnect(selected.id)}
           onRotateSecret={() => handleRotateSecret(selected.id)}
           onRunBackfill={() => handleRunBackfill(selected.id)}
+          onOpenActivityLog={
+            onOpenActivityLog
+              ? () => onOpenActivityLog(selected.id)
+              : undefined
+          }
         />
       ) : null}
+
+      {/* Destructive confirm */}
+      <ConfirmModal
+        isOpen={!!confirmConn}
+        onClose={() => setConfirmDisconnect(null)}
+        onConfirm={() => {
+          if (confirmConn) handleDisconnect(confirmConn.id);
+          setConfirmDisconnect(null);
+        }}
+        title={
+          confirmConn
+            ? `Disconnect ${confirmConn.name}?`
+            : "Disconnect connection?"
+        }
+        message={
+          confirmConn
+            ? `New events from ${getSource(confirmConn.source)?.name ?? confirmConn.name} will buffer upstream until you reconnect. Existing scopes (${confirmConn.scopes.length}) will be revoked. This can't be undone from this screen.`
+            : ""
+        }
+        confirmText="Disconnect"
+        cancelText="Cancel"
+        variant="danger"
+      />
 
       {/* Add picker */}
       <AddConnectionPicker
@@ -445,20 +493,27 @@ function Header({
           Connections.
         </h1>
         <p className="mt-2 max-w-2xl text-[12.5px] leading-5 text-ink-dim">
-          {count === 0
-            ? "Authorize a source to start streaming events into Chronicle."
-            : `${liveCount} of ${count} sources live · stream + backfill, per-source.`}
+          {count === 0 ? (
+            "Authorize a source to start streaming events into Chronicle."
+          ) : (
+            <>
+              <span className="tabular-nums">{liveCount}</span> of{" "}
+              <span className="tabular-nums">{count}</span> sources live —
+              streaming live + historical backfills, per source.
+            </>
+          )}
         </p>
       </div>
       {hideAdd ? null : (
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-1 rounded-[2px] border border-ember/35 bg-[rgba(216,67,10,0.06)] px-3 py-1.5 font-mono text-mono uppercase tracking-tactical text-ember transition-colors duration-fast hover:bg-[rgba(216,67,10,0.12)]"
+          <Button
+            variant="primary"
+            size="sm"
+            onPress={onAdd}
+            leadingIcon={<Plus className="size-3.5" strokeWidth={1.75} />}
           >
-            + Add connection
-          </button>
+            Add connection
+          </Button>
         </div>
       )}
     </header>

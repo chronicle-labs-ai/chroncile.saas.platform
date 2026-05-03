@@ -852,7 +852,7 @@ export function StreamTimelineViewer({
   return (
     <div
       className={cx(
-        "flex overflow-hidden rounded-l border border-hairline bg-page text-ink",
+        "flex overflow-hidden rounded-md border border-hairline bg-page text-ink",
         className,
       )}
     >

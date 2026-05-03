@@ -65,7 +65,7 @@ export function DatasetCard({
       data-active={isActive || undefined}
       data-purpose={purpose ?? undefined}
       className={cx(
-        "group relative flex flex-col gap-3 rounded-[4px] border border-l-border bg-l-surface-raised p-3.5",
+        "group relative flex flex-col gap-3 rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3.5",
         "transition-colors duration-fast",
         onOpen
           ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
@@ -113,7 +113,6 @@ export function DatasetCard({
         <div onClick={(e) => e.stopPropagation()}>
           {actionsSlot ?? (
             <Button
-              density="compact"
               variant="icon"
               size="sm"
               aria-label={`Actions for ${dataset.name}`}

@@ -65,7 +65,7 @@ export const States: Story = {
 export const InFilterBar: Story = {
   parameters: { layout: "padded" },
   render: () => (
-    <div className="flex items-center gap-s-2 border-y border-l-border bg-l-surface-bar px-s-3 py-[6px]">
+    <div className="flex items-center gap-s-2 border-y border-hairline-strong bg-l-surface-bar px-s-3 py-[6px]">
       <span className="font-mono text-[10.5px] uppercase tracking-eyebrow text-l-ink-dim px-[4px]">
         Filter
       </span>

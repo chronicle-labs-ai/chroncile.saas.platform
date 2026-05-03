@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 export interface KvGridItem {
   label: React.ReactNode;
@@ -20,13 +20,13 @@ export function KvGrid({
 }: KvGridProps) {
   return (
     <dl
-      className={cx("grid gap-x-[18px] gap-y-s-2 font-mono text-xs", className)}
+      className={cn("grid gap-x-[18px] gap-y-s-2 font-mono text-xs", className)}
       {...props}
     >
       {items.map((item, index) => (
         <div key={index} className="grid grid-cols-[auto_1fr] gap-x-[18px]">
           <dt
-            className={cx(
+            className={cn(
               "text-[10px] uppercase tracking-[0.08em] text-ink-dim",
               labelWidthClassName
             )}

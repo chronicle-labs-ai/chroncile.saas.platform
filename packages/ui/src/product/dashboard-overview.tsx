@@ -373,7 +373,7 @@ function DashboardHero({ data }: { data: DashboardOverviewData }) {
         <span className="font-mono text-[8.5px] uppercase tracking-[0.14em] text-ink-dim">
           {data.range}
         </span>
-        <Button density="compact" variant="primary" size="sm" className="rounded-sm">
+        <Button variant="primary" size="sm" className="rounded-sm">
           Run backtest
         </Button>
       </div>

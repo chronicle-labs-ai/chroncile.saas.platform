@@ -39,7 +39,7 @@ const Bolt = () => (
 
 export const Empty: Story = {
   render: () => (
-    <div className="border-b border-l-border bg-l-surface-bar px-s-3 h-[40px] w-[1100px] flex items-center">
+    <div className="border-b border-hairline-strong bg-l-surface-bar px-s-3 h-[40px] w-[1100px] flex items-center">
       <FilterBar>
         <FilterBar.AddFilter />
         <FilterBar.Divider />
@@ -53,7 +53,7 @@ export const Empty: Story = {
 
 export const WithFilters: Story = {
   render: () => (
-    <div className="border-b border-l-border bg-l-surface-bar px-s-3 h-[40px] w-[1100px] flex items-center">
+    <div className="border-b border-hairline-strong bg-l-surface-bar px-s-3 h-[40px] w-[1100px] flex items-center">
       <FilterBar>
         <FilterPill
           icon={<Triangle />}

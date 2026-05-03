@@ -35,7 +35,8 @@ const styles = tv({
       "focus-visible:outline focus-visible:outline-1 " +
       "focus-visible:outline-ember",
     close:
-      "flex items-center pl-s-2 pr-s-3 text-ink-dim outline-none " +
+      "relative flex items-center pl-s-2 pr-s-3 text-ink-dim outline-none " +
+      "before:absolute before:-inset-y-2 before:inset-x-0 before:content-[''] " +
       "transition-colors duration-fast ease-out " +
       "hover:text-ink-hi hover:bg-surface-03 " +
       "focus-visible:outline focus-visible:outline-1 " +
@@ -95,7 +96,7 @@ export function DataTableFilterPill<TRow>({
             {renderValueSummary(column, filter, slots.placeholder())}
           </button>
         </PopoverTrigger>
-        <PopoverContent side="bottom" align="start">
+        <PopoverContent side="bottom" align="start" className="w-[300px]">
           <ValueEditor
             column={column}
             filter={filter}

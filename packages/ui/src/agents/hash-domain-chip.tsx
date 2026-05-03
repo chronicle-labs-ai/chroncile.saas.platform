@@ -52,12 +52,15 @@ export function HashDomainChip({
         "inline-flex items-center gap-1 rounded-pill font-mono tracking-[0.02em]",
         size === "sm" && "h-5 px-1.5 text-[10.5px]",
         size === "md" && "h-6 px-2 text-[11px]",
+        // Touch hit area: chips are 20-24px on desktop; expand to 44px on coarse pointers.
+        interactive &&
+          "[@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:px-3 touch-manipulation",
         inline
           ? "border-0 bg-transparent text-l-ink-lo"
           : "border border-l-border-faint bg-l-surface-input text-l-ink-lo",
         active && "border-ember/55 bg-ember/12 text-ember",
         interactive
-          ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
+          ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ember"
           : null,
         className,
       )}

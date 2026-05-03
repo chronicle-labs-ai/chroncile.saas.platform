@@ -194,7 +194,6 @@ export function BacktestDataBuilder({
                 <div className="mt-auto flex flex-col gap-1 border-t border-divider pt-2">
                   <Eyebrow className="text-ink-dim">SAVE AS</Eyebrow>
                   <Input
-                    density="compact"
                     placeholder="e.g. refund-regressions-v3"
                     value={data.savedAs ?? ""}
                     onChange={(e) =>
@@ -438,7 +437,6 @@ function ProdBrowser({ onAdd }: { onAdd: (source: BacktestDataSource) => void })
         </Mono>
         <Button
           variant="primary"
-          density="compact"
           size="sm"
           leadingIcon={<Plus className="size-3" strokeWidth={1.8} />}
           onClick={addToTray}
@@ -611,7 +609,6 @@ function ScenarioGen({
         </Mono>
         <Button
           variant="primary"
-          density="compact"
           size="sm"
           leadingIcon={<Sparkles className="size-3" strokeWidth={1.6} />}
           onClick={addAll}

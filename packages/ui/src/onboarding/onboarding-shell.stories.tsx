@@ -13,6 +13,14 @@ import {
   type SignInValue,
   type SignUpEmailValue,
 } from "../auth";
+import {
+  AuthDisplay,
+  AuthLede,
+  StepFoot,
+} from "../auth/_internal";
+import { Button } from "../primitives/button";
+import { Eyebrow } from "../primitives/eyebrow";
+import { ArrowLeftIcon, ArrowRightIcon } from "../icons/glyphs";
 import { OnboardingShell, type OnboardingStepId } from "./onboarding-shell";
 import { StepBilling, type BillingState } from "./step-billing";
 import { StepConnect, type ConnectState } from "./step-connect";
@@ -20,6 +28,7 @@ import { StepDescribe, type DescribeState } from "./step-describe";
 import { StepDone } from "./step-done";
 import { StepMiddleware } from "./step-middleware";
 import { StepStream } from "./step-stream";
+import { LIGHT_PARAMS, MOBILE_PARAMS } from "./_story-helpers";
 
 const meta: Meta<typeof OnboardingShell> = {
   title: "Onboarding/OnboardingShell",
@@ -40,6 +49,40 @@ export const Default: Story = {
   ),
 };
 
+/*
+ * Mounts a realistic Eyebrow + Display + Lede + StepFoot trio so the
+ * shell's vertical rhythm reads correctly in autodocs — without it,
+ * reviewers can't gauge how a real step lays out inside the column.
+ */
+export const WithPlaceholder: Story = {
+  render: () => (
+    <OnboardingShell currentStep="describe">
+      <div className="flex flex-col">
+        <Eyebrow>Step 01</Eyebrow>
+        <AuthDisplay>
+          Describe your <em>agent</em>.
+        </AuthDisplay>
+        <AuthLede>
+          The shell paints the topbar + ambient backdrop. Drop a `Step*`
+          component into this column to wire up the real flow.
+        </AuthLede>
+        <StepFoot
+          back={
+            <Button variant="ghost" leadingIcon={<ArrowLeftIcon />}>
+              Back
+            </Button>
+          }
+          next={
+            <Button variant="ember" trailingIcon={<ArrowRightIcon />}>
+              Continue
+            </Button>
+          }
+        />
+      </div>
+    </OnboardingShell>
+  ),
+};
+
 export const StepperJump: Story = {
   render: () => {
     const [step, setStep] = React.useState<OnboardingStepId>("connect");
@@ -51,6 +94,42 @@ export const StepperJump: Story = {
       </OnboardingShell>
     );
   },
+};
+
+export const Mobile: Story = {
+  parameters: { layout: "fullscreen", ...MOBILE_PARAMS },
+  render: () => (
+    <OnboardingShell currentStep="connect">
+      <div className="flex flex-col">
+        <Eyebrow>Step 02</Eyebrow>
+        <AuthDisplay>
+          Connect your <em>data</em>.
+        </AuthDisplay>
+        <AuthLede>
+          On a 390 px viewport the topbar collapses the step counter and the
+          column hits the gutter — the layout still reads.
+        </AuthLede>
+      </div>
+    </OnboardingShell>
+  ),
+};
+
+export const LightTheme: Story = {
+  parameters: { layout: "fullscreen", ...LIGHT_PARAMS },
+  render: () => (
+    <OnboardingShell currentStep="describe">
+      <div className="flex flex-col">
+        <Eyebrow>Step 01</Eyebrow>
+        <AuthDisplay>
+          Describe your <em>agent</em>.
+        </AuthDisplay>
+        <AuthLede>
+          Light theme swaps the glass scene for a warm cream surface; the
+          ember accent + pip stepper carry through.
+        </AuthLede>
+      </div>
+    </OnboardingShell>
+  ),
 };
 
 /* ─────────────────── Full flow story ─────────────────── */

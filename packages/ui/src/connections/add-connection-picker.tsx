@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { ChevronRight } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Modal } from "../primitives/modal";
 import { Input } from "../primitives/input";
+import { StatusDot } from "../primitives/status-dot";
 import { CompanyLogo } from "../icons";
 import {
   ConnectShared,
@@ -78,8 +80,13 @@ export function AddConnectionPicker({
   onConnected,
 }: AddConnectionPickerProps) {
   const [query, setQuery] = React.useState("");
+  /*
+   * Open the first two categories by default so first paint shows actual
+   * source tiles instead of ~13 collapsed accordion rows. Later rounds of
+   * filtering/searching let users open the rest.
+   */
   const [openCats, setOpenCats] = React.useState<Set<SourceCategory>>(
-    new Set(),
+    () => new Set(CAT_ORDER.slice(0, 2)),
   );
   const [picking, setPicking] = React.useState<SourceId | null>(null);
   const connected = new Set(connectedIds);
@@ -140,12 +147,10 @@ export function AddConnectionPicker({
         isOpen={isOpen && picking == null}
         onClose={onClose}
         title="Add a connection"
-        density="compact"
         classNames={{ modal: "max-w-[640px]" }}
       >
         <div className="flex flex-col gap-3">
           <Input
-            density="compact"
             search
             placeholder={`Search ${sources.length} sources`}
             value={query}
@@ -167,21 +172,21 @@ export function AddConnectionPicker({
                   <button
                     type="button"
                     onClick={() => toggleCat(cat)}
+                    aria-expanded={isOpen}
                     className="flex w-full items-center gap-2 py-[2px] text-left"
                   >
-                    <span
+                    <ChevronRight
+                      strokeWidth={1.75}
                       className={cx(
-                        "inline-block w-3 font-mono text-mono-sm text-ink-dim transition-transform duration-fast",
+                        "size-3.5 shrink-0 text-ink-dim transition-transform duration-fast",
                         isOpen ? "rotate-90" : "rotate-0",
                       )}
                       aria-hidden
-                    >
-                      ›
-                    </span>
+                    />
                     <span className="flex-1 font-sans text-[13.5px] text-ink-hi">
                       {cat}
                     </span>
-                    <span className="font-mono text-mono-sm text-ink-dim">
+                    <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
                       {items.length}
                     </span>
                   </button>
@@ -253,8 +258,9 @@ function SourceTile({ source, alreadyConnected, onPick }: SourceTileProps) {
             {source.name}
           </span>
           {alreadyConnected ? (
-            <span className="font-mono text-mono-sm uppercase tracking-tactical text-event-green">
-              ● connected
+            <span className="inline-flex items-center gap-[6px] font-mono text-mono-sm uppercase tracking-tactical text-event-green">
+              <StatusDot variant="green" />
+              connected
             </span>
           ) : null}
         </div>

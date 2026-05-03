@@ -76,7 +76,7 @@ const AddFilter = React.forwardRef<HTMLButtonElement, AddFilterProps>(
         type="button"
         data-slot="filter-bar-add"
         className={cx(
-          "inline-flex h-[22px] items-center gap-[4px] rounded-l border border-dashed border-l-border bg-transparent px-[8px]",
+          "inline-flex h-[22px] items-center gap-[4px] rounded-md border border-dashed border-hairline-strong bg-transparent px-[8px]",
           "font-sans text-[11.5px] text-l-ink-lo",
           "hover:bg-l-wash-3 hover:border-l-border-strong hover:text-l-ink",
           "transition-colors duration-fast",
@@ -124,7 +124,7 @@ const Display = React.forwardRef<HTMLButtonElement, DisplayProps>(
         type="button"
         data-slot="filter-bar-display"
         className={cx(
-          "inline-flex h-[26px] items-center gap-[6px] rounded-l border border-l-border bg-transparent px-[10px]",
+          "inline-flex h-[26px] items-center gap-[6px] rounded-md border border-hairline-strong bg-transparent px-[10px]",
           "font-sans text-[12px] font-medium text-l-ink-lo",
           "hover:bg-l-wash-3 hover:text-l-ink hover:border-l-border-strong",
           "transition-colors duration-fast relative",
@@ -156,7 +156,7 @@ const Clear = React.forwardRef<HTMLButtonElement, ClearProps>(function Clear(
       type="button"
       data-slot="filter-bar-clear"
       className={cx(
-        "inline-flex h-[22px] items-center px-[8px] rounded-l text-[11.5px] text-l-ink-dim",
+        "inline-flex h-[22px] items-center px-[8px] rounded-md text-[11.5px] text-l-ink-dim",
         "hover:bg-l-wash-3 hover:text-l-ink transition-colors duration-fast",
         className
       )}

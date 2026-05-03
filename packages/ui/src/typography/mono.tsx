@@ -27,9 +27,10 @@ const tones: Record<MonoTone, string> = {
 };
 
 /**
- * Mono — Geist Mono for time, topics, tool calls, IDs — every piece of
- * machine evidence. Pairs with Display for the "serif for judgement,
- * mono for evidence" principle.
+ * Mono — Berkeley Mono (IBM Plex Mono substitute) for time, topics,
+ * tool calls, IDs — every piece of machine evidence. Pairs with
+ * Display (Kalice) for the "serif for judgement, mono for evidence"
+ * principle.
  */
 export function Mono({
   as: Tag = "span",

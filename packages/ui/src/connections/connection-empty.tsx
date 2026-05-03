@@ -57,7 +57,6 @@ export function ConnectionEmpty({
       actions={
         onAdd ? (
           <Button
-            density="compact"
             variant="primary"
             size="sm"
             onPress={onAdd}

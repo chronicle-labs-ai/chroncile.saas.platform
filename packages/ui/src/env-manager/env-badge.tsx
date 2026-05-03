@@ -42,7 +42,7 @@ export function EnvBadge({
   return (
     <span
       className={cx(
-        "inline-flex h-[18px] items-center gap-[5px] rounded-l border border-l-border bg-l-surface-raised px-[7px] font-sans text-[11px] font-medium leading-none",
+        "inline-flex h-[18px] items-center gap-[5px] rounded-md border border-hairline-strong bg-l-surface-raised px-[7px] font-sans text-[11px] font-medium leading-none",
         variantClass[variant],
         className
       )}

@@ -1,6 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  ConfirmModal,
+  Eyebrow,
+  FormField,
+  Input,
+  Modal,
+  NativeSelect,
+} from "ui";
 
 interface Member {
   id: string;
@@ -62,6 +71,18 @@ function errorMessage(error: string | undefined): string {
   }
 }
 
+/*
+ * Pending intent for the destructive ConfirmModal. Stored as
+ * discriminated union so the same modal renders the right copy
+ * for each of the three reachable states (remove member, leave
+ * workspace, revoke invitation) without duplicating the markup.
+ */
+type PendingAction =
+  | { kind: "remove"; member: Member }
+  | { kind: "leave"; member: Member }
+  | { kind: "revoke"; invitation: Invitation }
+  | null;
+
 export interface TeamSettingsClientProps {
   orgName?: string | null;
   orgSlug?: string | null;
@@ -80,6 +101,9 @@ export function TeamSettingsClient({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteEmailError, setInviteEmailError] = useState<string | null>(null);
+
+  const [pending, setPending] = useState<PendingAction>(null);
 
   const refreshMembers = useCallback(async () => {
     try {
@@ -137,12 +161,26 @@ export function TeamSettingsClient({
 
   const submitInvite = async () => {
     setInviteError(null);
+    setInviteEmailError(null);
+    const email = inviteEmail.trim();
+    if (!email) {
+      setInviteEmailError("Enter the teammate's email");
+      return;
+    }
+    /*
+     * Cheap regex — server is the source of truth, this just spares
+     * one round-trip for obvious mistakes.
+     */
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setInviteEmailError("That email doesn't look right");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/org/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail, roleSlug: inviteRole }),
+        body: JSON.stringify({ email, roleSlug: inviteRole }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -179,9 +217,7 @@ export function TeamSettingsClient({
     }
   };
 
-  const removeMember = async (membership: Member) => {
-    const verb = membership.isSelf ? "leave this workspace" : `remove ${fullName(membership)}`;
-    if (!confirm(`Are you sure you want to ${verb}?`)) return;
+  const performRemove = async (membership: Member) => {
     setBusy(true);
     try {
       const res = await fetch(`/api/org/members/${membership.id}`, {
@@ -198,6 +234,23 @@ export function TeamSettingsClient({
       await refreshMembers();
     } finally {
       setBusy(false);
+      setPending(null);
+    }
+  };
+
+  const performRevoke = async (id: string) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/org/invitations/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setError("Failed to revoke invitation.");
+        return;
+      }
+      setError(null);
+      await refreshInvitations();
+    } finally {
+      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -207,22 +260,6 @@ export function TeamSettingsClient({
       const res = await fetch(`/api/org/invitations/${id}/resend`, { method: "POST" });
       if (!res.ok) {
         setError("Failed to resend invitation.");
-        return;
-      }
-      setError(null);
-      await refreshInvitations();
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const revokeInvite = async (id: string) => {
-    if (!confirm("Revoke this invitation?")) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/org/invitations/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        setError("Failed to revoke invitation.");
         return;
       }
       setError(null);
@@ -243,115 +280,215 @@ export function TeamSettingsClient({
     [members],
   );
 
+  const closeInvite = () => {
+    if (busy) return;
+    setShowInvite(false);
+    setInviteError(null);
+    setInviteEmailError(null);
+  };
+
+  /*
+   * Confirm copy is centralised so each branch reads the same way
+   * across title / message / button label.
+   */
+  const confirmCopy = (() => {
+    if (!pending) {
+      return {
+        title: "",
+        message: "",
+        confirmText: "Confirm",
+        variant: "default" as const,
+      };
+    }
+    if (pending.kind === "leave") {
+      return {
+        title: "Leave this workspace?",
+        message: (
+          <>
+            You&rsquo;ll lose access to {orgName ?? "this workspace"} immediately.
+            An admin will need to invite you back.
+          </>
+        ),
+        confirmText: "Leave workspace",
+        variant: "danger" as const,
+      };
+    }
+    if (pending.kind === "remove") {
+      return {
+        title: `Remove ${fullName(pending.member)}?`,
+        message: (
+          <>
+            They&rsquo;ll lose access to {orgName ?? "this workspace"} immediately.
+          </>
+        ),
+        confirmText: "Remove member",
+        variant: "danger" as const,
+      };
+    }
+    return {
+      title: "Revoke this invitation?",
+      message: (
+        <>
+          The link sent to{" "}
+          <span className="font-mono text-ink-hi">{pending.invitation.email}</span>{" "}
+          will stop working. They can be invited again later.
+        </>
+      ),
+      confirmText: "Revoke invitation",
+      variant: "danger" as const,
+    };
+  })();
+
+  const performPending = () => {
+    if (!pending) return;
+    if (pending.kind === "revoke") {
+      performRevoke(pending.invitation.id);
+    } else {
+      performRemove(pending.member);
+    }
+  };
+
   return (
-    <div className="space-y-10">
-      <header className="flex items-start justify-between gap-6">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-neutral-500">
-            Workspace
-          </div>
-          <div className="mt-1 flex items-baseline gap-3">
-            <h1 className="text-xl font-semibold text-neutral-100">
+    <div className="space-y-s-10">
+      <header className="flex flex-wrap items-start justify-between gap-s-4">
+        <div className="min-w-0">
+          <Eyebrow>Workspace</Eyebrow>
+          <div className="mt-s-1 flex items-baseline gap-s-3">
+            <h1 className="font-sans text-title font-medium tracking-tight text-ink-hi">
               {orgName ?? "—"}
             </h1>
             {orgSlug ? (
-              <span className="font-mono text-xs text-neutral-500">
+              <span className="font-mono text-mono text-ink-dim tabular-nums">
                 /{orgSlug}
               </span>
             ) : null}
           </div>
-          <p className="mt-2 text-sm text-neutral-400">
+          <p className="mt-s-2 text-body-sm text-ink-lo">
             Manage who can access this workspace.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowInvite(true)}
-          className="rounded-md bg-orange-600 px-4 py-2 text-sm text-white hover:bg-orange-500"
+        <Button
+          variant="primary"
+          size="md"
+          onPress={() => setShowInvite(true)}
+          leadingIcon={
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.75}
+              className="h-4 w-4"
+            >
+              <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+            </svg>
+          }
         >
-          + Invite member
-        </button>
+          Invite member
+        </Button>
       </header>
 
       {error ? (
         <div
           role="alert"
-          className="rounded-md border border-red-700/40 bg-red-700/10 px-3 py-2 text-sm text-red-300"
+          className="rounded-md border border-event-red/30 bg-event-red/10 px-s-3 py-s-2 text-body-sm text-event-red"
         >
           {error}
         </div>
       ) : null}
 
       <section>
-        <h2 className="mb-3 text-sm font-medium text-neutral-300">Members</h2>
-        <div className="overflow-hidden rounded-md border border-neutral-800">
-          <table className="min-w-full divide-y divide-neutral-800 text-sm">
-            <thead className="bg-neutral-900 text-neutral-400">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">Member</th>
-                <th className="px-4 py-2 text-left font-medium">Role</th>
-                <th className="px-4 py-2 text-left font-medium">Status</th>
-                <th className="px-4 py-2 text-left font-medium">Actions</th>
+        <h2 className="mb-s-3 font-sans text-body-sm font-medium text-ink-hi">
+          Members
+        </h2>
+        <div className="overflow-hidden rounded-md border border-hairline-strong bg-surface-01">
+          <table className="min-w-full divide-y divide-hairline text-body-sm">
+            <thead className="bg-surface-02">
+              <tr className="text-left text-ink-dim">
+                <th className="px-s-4 py-s-2 font-medium">Member</th>
+                <th className="px-s-4 py-s-2 font-medium">Role</th>
+                <th className="px-s-4 py-s-2 font-medium">Status</th>
+                <th className="px-s-4 py-s-2 font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800">
+            <tbody className="divide-y divide-hairline">
               {sortedMembers === null ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-neutral-500">
+                  <td colSpan={4} className="px-s-4 py-s-3 text-ink-dim">
                     Loading…
                   </td>
                 </tr>
               ) : sortedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-neutral-500">
+                  <td colSpan={4} className="px-s-4 py-s-3 text-ink-dim">
                     No members in this workspace.
                   </td>
                 </tr>
               ) : (
                 sortedMembers.map((m) => (
-                  <tr key={m.id} className="bg-neutral-950">
-                    <td className="px-4 py-3 align-top">
-                      <div className="text-neutral-100">{fullName(m)}</div>
+                  <tr key={m.id}>
+                    <td className="px-s-4 py-s-3 align-top">
+                      <div className="text-ink-hi">{fullName(m)}</div>
                       {m.email && fullName(m) !== m.email ? (
-                        <div className="text-xs text-neutral-500">{m.email}</div>
+                        <div className="text-mono text-ink-dim">{m.email}</div>
                       ) : null}
-                      <div className="mt-1 flex gap-1">
+                      <div className="mt-s-1 flex flex-wrap gap-s-1">
                         {m.isOwner ? (
-                          <span className="inline-block rounded-full border border-orange-500/40 bg-orange-500/10 px-2 py-[1px] text-xs uppercase tracking-wide text-orange-300">
+                          <span className="inline-flex items-center rounded-pill border border-ember/40 bg-ember/10 px-s-2 py-[1px] font-mono text-mono-sm uppercase tracking-eyebrow text-ember">
                             owner
                           </span>
                         ) : null}
                         {m.isSelf ? (
-                          <span className="inline-block rounded-full border border-neutral-700 px-2 py-[1px] text-xs uppercase tracking-wide text-neutral-400">
+                          <span className="inline-flex items-center rounded-pill border border-hairline-strong px-s-2 py-[1px] font-mono text-mono-sm uppercase tracking-eyebrow text-ink-dim">
                             you
                           </span>
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <select
+                    <td className="px-s-4 py-s-3 align-middle">
+                      <NativeSelect
+                        aria-label={`Role for ${fullName(m)}`}
                         disabled={busy || m.isOwner}
                         value={m.role?.slug ?? "member"}
                         onChange={(e) => updateRole(m, e.target.value)}
-                        className="rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100 disabled:opacity-50"
+                        className="w-[120px]"
                       >
                         {ROLE_OPTIONS.map((opt) => (
                           <option key={opt.value} value={opt.value}>
                             {opt.label}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </td>
-                    <td className="px-4 py-3 text-neutral-300">{m.status}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        disabled={busy || m.isOwner}
-                        onClick={() => removeMember(m)}
-                        className="text-red-400 hover:underline disabled:opacity-50"
+                    <td className="px-s-4 py-s-3 align-middle text-ink">
+                      <span
+                        className={
+                          m.status === "active"
+                            ? "text-ink"
+                            : "text-ink-dim"
+                        }
+                      >
+                        {m.status}
+                      </span>
+                    </td>
+                    <td className="px-s-4 py-s-3 align-middle text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isDisabled={busy || m.isOwner}
+                        onPress={() =>
+                          setPending(
+                            m.isSelf
+                              ? { kind: "leave", member: m }
+                              : { kind: "remove", member: m },
+                          )
+                        }
+                        className="text-event-red hover:bg-event-red/10 hover:text-event-red"
                       >
                         {m.isSelf ? "Leave" : "Remove"}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -362,59 +499,66 @@ export function TeamSettingsClient({
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-medium text-neutral-300">
+        <h2 className="mb-s-3 font-sans text-body-sm font-medium text-ink-hi">
           Pending invitations
         </h2>
-        <div className="overflow-hidden rounded-md border border-neutral-800">
-          <table className="min-w-full divide-y divide-neutral-800 text-sm">
-            <thead className="bg-neutral-900 text-neutral-400">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">Email</th>
-                <th className="px-4 py-2 text-left font-medium">State</th>
-                <th className="px-4 py-2 text-left font-medium">Expires</th>
-                <th className="px-4 py-2 text-left font-medium">Actions</th>
+        <div className="overflow-hidden rounded-md border border-hairline-strong bg-surface-01">
+          <table className="min-w-full divide-y divide-hairline text-body-sm">
+            <thead className="bg-surface-02">
+              <tr className="text-left text-ink-dim">
+                <th className="px-s-4 py-s-2 font-medium">Email</th>
+                <th className="px-s-4 py-s-2 font-medium">State</th>
+                <th className="px-s-4 py-s-2 font-medium">Expires</th>
+                <th className="px-s-4 py-s-2 font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800">
+            <tbody className="divide-y divide-hairline">
               {invitations === null ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-neutral-500">
+                  <td colSpan={4} className="px-s-4 py-s-3 text-ink-dim">
                     Loading…
                   </td>
                 </tr>
               ) : invitations.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-neutral-500">
+                  <td colSpan={4} className="px-s-4 py-s-3 text-ink-dim">
                     No pending invitations.
                   </td>
                 </tr>
               ) : (
                 invitations.map((inv) => (
-                  <tr key={inv.id} className="bg-neutral-950">
-                    <td className="px-4 py-3 text-neutral-100">{inv.email}</td>
-                    <td className="px-4 py-3 text-neutral-300">{inv.state}</td>
-                    <td className="px-4 py-3 text-neutral-400">
+                  <tr key={inv.id}>
+                    <td className="px-s-4 py-s-3 text-ink-hi">{inv.email}</td>
+                    <td className="px-s-4 py-s-3 text-ink">{inv.state}</td>
+                    <td className="px-s-4 py-s-3 tabular-nums text-ink-dim">
                       {new Date(inv.expiresAt).toLocaleDateString()}
                     </td>
-                    <td className="space-x-3 px-4 py-3">
-                      {inv.state === "pending" ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => resendInvite(inv.id)}
-                          className="text-neutral-200 hover:underline"
+                    <td className="px-s-4 py-s-3 text-right">
+                      <div className="inline-flex items-center gap-s-1">
+                        {inv.state === "pending" ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            isDisabled={busy}
+                            onPress={() => resendInvite(inv.id)}
+                          >
+                            Resend
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          isDisabled={busy}
+                          onPress={() =>
+                            setPending({ kind: "revoke", invitation: inv })
+                          }
+                          className="text-event-red hover:bg-event-red/10 hover:text-event-red"
                         >
-                          Resend
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => revokeInvite(inv.id)}
-                        className="text-red-400 hover:underline"
-                      >
-                        Revoke
-                      </button>
+                          Revoke
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -424,74 +568,113 @@ export function TeamSettingsClient({
         </div>
       </section>
 
-      {showInvite ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => !busy && setShowInvite(false)}
+      <Modal
+        isOpen={showInvite}
+        onClose={closeInvite}
+        title="Invite a teammate"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              isDisabled={busy}
+              onPress={closeInvite}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              form="invite-form"
+              isLoading={busy}
+              isDisabled={!inviteEmail.trim()}
+            >
+              {busy ? "Sending…" : "Send invitation"}
+            </Button>
+          </>
+        }
+      >
+        {/*
+         * `<form>` lets the browser submit on Enter from any input
+         * and gives Cmd+Enter the same behaviour for free. The
+         * footer's Send button is hoisted out of the form via
+         * `form="invite-form"` so the visual layout (sticky footer
+         * row, separated by a hairline) stays intact.
+         */}
+        <form
+          id="invite-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitInvite();
+          }}
+          className="flex flex-col gap-s-3"
+          noValidate
         >
-          <div
-            className="w-full max-w-md rounded-md border border-neutral-700 bg-neutral-950 p-6"
-            onClick={(e) => e.stopPropagation()}
+          <p className="text-body-sm text-ink-lo">
+            They&rsquo;ll get an email with a 7-day acceptance link.
+          </p>
+          <FormField
+            label="Email"
+            htmlFor="invite-email"
+            error={inviteError ?? inviteEmailError ?? undefined}
           >
-            <h3 className="text-lg font-semibold text-neutral-100">
-              Invite a teammate
-            </h3>
-            <p className="mt-1 text-sm text-neutral-400">
-              They&rsquo;ll get an email with a 7-day acceptance link.
-            </p>
-            <div className="mt-4 space-y-3">
-              <label className="block text-sm">
-                <span className="block text-neutral-300">Email</span>
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="block text-neutral-300">Role</span>
-                <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100"
-                >
-                  {ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            {inviteError ? (
-              <p role="alert" className="mt-3 text-sm text-red-400">
-                {inviteError}
-              </p>
-            ) : null}
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setShowInvite(false)}
-                className="rounded-md border border-neutral-700 px-4 py-2 text-sm hover:border-neutral-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={busy || !inviteEmail.trim()}
-                onClick={submitInvite}
-                className="rounded-md bg-orange-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-              >
-                {busy ? "Sending…" : "Send invitation"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            <Input
+              id="invite-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              spellCheck={false}
+              autoCapitalize="off"
+              value={inviteEmail}
+              onChange={(e) => {
+                setInviteEmail(e.currentTarget.value);
+                if (inviteEmailError) setInviteEmailError(null);
+                if (inviteError) setInviteError(null);
+              }}
+              placeholder="teammate@company.com"
+              invalid={!!inviteEmailError}
+              data-1p-ignore
+              data-lpignore="true"
+              /*
+               * Auto-focusing inside a modal is the right move on
+               * desktop (Emil's rule), but on touch it pops the
+               * keyboard before the user has parsed the dialog. We
+               * gate it on `pointer:fine` via the inline check below.
+               */
+              autoFocus={
+                typeof window !== "undefined" &&
+                window.matchMedia?.("(pointer: fine)").matches
+              }
+            />
+          </FormField>
+          <FormField label="Role" htmlFor="invite-role">
+            <NativeSelect
+              id="invite-role"
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.currentTarget.value)}
+            >
+              {ROLE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </NativeSelect>
+          </FormField>
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={pending !== null}
+        onClose={() => {
+          if (busy) return;
+          setPending(null);
+        }}
+        onConfirm={performPending}
+        title={confirmCopy.title}
+        message={confirmCopy.message}
+        confirmText={confirmCopy.confirmText}
+        variant={confirmCopy.variant}
+        isLoading={busy}
+      />
     </div>
   );
 }

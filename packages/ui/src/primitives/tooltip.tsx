@@ -12,13 +12,35 @@
 
 import * as React from "react";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
+import { cva } from "class-variance-authority";
 
 import { cn } from "../utils/cn";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { tooltipArrowVariants, tooltipVariants } from "./shadcn";
+
+/*
+ * Radix Tooltip emits `data-state="delayed-open" | "instant-open" | "closed"`
+ * on `Content`, plus `data-side="…"`. We match on state presence (`open` /
+ * `closed`) using attribute wildcards.
+ */
+export const tooltipVariants = cva(
+  "z-50 border bg-surface-02 shadow-card outline-none " +
+    "data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 " +
+    "data-[state=instant-open]:animate-in data-[state=instant-open]:fade-in-0 data-[state=instant-open]:zoom-in-95 " +
+    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 " +
+    "data-[side=bottom]:slide-in-from-top-2 " +
+    "data-[side=left]:slide-in-from-right-2 " +
+    "data-[side=right]:slide-in-from-left-2 " +
+    "data-[side=top]:slide-in-from-bottom-2 rounded-md border-hairline-strong px-[8px] py-[4px] font-sans text-[12px] font-medium text-l-ink"
+);
+
+export const tooltipArrowVariants = cva(
+  "fill-surface-02 stroke-hairline-strong"
+);
 
 export interface TooltipProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "children"> {
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>,
+    "children"
+  > {
   children: React.ReactElement;
   content: React.ReactNode;
   placement?: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>["side"];
@@ -30,7 +52,6 @@ export interface TooltipProps
   /** Milliseconds before the tooltip appears. */
   delay?: number;
   closeDelay?: number;
-  density?: "compact" | "brand";
 }
 
 export function Tooltip({
@@ -43,10 +64,8 @@ export function Tooltip({
   className,
   classNames,
   delay,
-  density: densityProp,
   ...rest
 }: TooltipProps) {
-  const density = useResolvedChromeDensity(densityProp);
   const resolvedSide = placement ?? side;
   return (
     <TooltipPrimitive.Provider delayDuration={delay}>
@@ -56,13 +75,15 @@ export function Tooltip({
           <TooltipPrimitive.Content
             side={resolvedSide}
             align={align}
-            className={cn(tooltipVariants({ density }), classNames?.tooltip, className)}
+            className={cn(tooltipVariants(), classNames?.tooltip, className)}
           >
             {showArrow ? (
               <TooltipPrimitive.Arrow asChild>
                 <svg
                   viewBox="0 0 8 8"
-                  className={tooltipArrowVariants({ className: classNames?.arrow })}
+                  className={tooltipArrowVariants({
+                    className: classNames?.arrow,
+                  })}
                 >
                   <path d="M0 0 L4 4 L8 0" />
                 </svg>

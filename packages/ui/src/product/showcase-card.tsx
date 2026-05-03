@@ -5,11 +5,14 @@ import * as React from "react";
 import { tv } from "../utils/tv";
 
 /**
- * Card — the design-system card with a visual thumb + label foot. Used
- * on the brand index and as a general "clickable tile with preview"
- * primitive. When `href` is provided, renders as a native anchor.
+ * ShowcaseCard — design-system "tile with thumb + label foot" used on
+ * showcase / brand-index pages. When `href` is provided, renders as a
+ * native anchor.
+ *
+ * For the standard shadcn-style content card (Card / CardHeader /
+ * CardContent / CardFooter), reach for `<Card>` from `primitives/`.
  */
-const cardStyles = tv({
+const showcaseCardStyles = tv({
   slots: {
     root:
       "group relative flex min-h-[320px] flex-col overflow-hidden rounded-md " +
@@ -33,7 +36,7 @@ const cardStyles = tv({
   },
 });
 
-export interface CardProps extends Omit<
+export interface ShowcaseCardProps extends Omit<
   React.AnchorHTMLAttributes<HTMLAnchorElement>,
   "title"
 > {
@@ -49,7 +52,7 @@ export interface CardProps extends Omit<
   thumbClassName?: string;
 }
 
-export function Card({
+export function ShowcaseCard({
   thumb,
   num,
   title,
@@ -60,8 +63,8 @@ export function Card({
   thumbClassName,
   children,
   ...props
-}: CardProps) {
-  const slots = cardStyles({});
+}: ShowcaseCardProps) {
+  const slots = showcaseCardStyles({});
   const inner = (
     <>
       {thumb ? (

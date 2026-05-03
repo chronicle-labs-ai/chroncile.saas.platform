@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cx } from "../utils/cx";
+import { cn } from "../utils/cn";
 
 export type SparklineTone = "ember" | "green" | "amber" | "red" | "teal";
 
@@ -40,7 +40,7 @@ export function Sparkline({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label="Metric trend"
-      className={cx("block h-[60px] w-full", className)}
+      className={cn("block h-[60px] w-full", className)}
       {...props}
     >
       <path

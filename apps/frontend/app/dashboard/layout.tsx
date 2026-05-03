@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
-import { AppSidebar, SidebarInset, SidebarProvider, SiteHeader } from "ui";
+import { SidebarInset, SidebarProvider, SiteHeader } from "ui";
 import {
   authWithReason,
   loginErrorCodeFromAuthReason,
 } from "@/server/auth/auth";
 import { DashboardLinkRouterProvider } from "./link-router-provider";
+import { DashboardSidebar } from "./dashboard-sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -32,7 +33,7 @@ export default async function DashboardLayout({
         <SidebarProvider className="flex flex-col">
           <SiteHeader />
           <div className="flex flex-1">
-            <AppSidebar
+            <DashboardSidebar
               user={{
                 name: user.name || user.email || "Chronicle user",
                 email: user.email || "",

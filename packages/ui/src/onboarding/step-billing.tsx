@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Button } from "../primitives/button";
 import { Eyebrow } from "../primitives/eyebrow";
+import { FormField } from "../primitives/form-field";
 import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "../icons/glyphs";
 import {
   AuthDisplay,
@@ -10,7 +11,6 @@ import {
   SelectableCard,
   StepFoot,
 } from "../auth/_internal";
-import { cx } from "../utils/cx";
 
 /*
  * StepBilling — fifth onboarding step. Three plan cards
@@ -73,7 +73,7 @@ const PLANS: {
       "90-day retention",
       "Backfill up to 1y",
     ],
-    badge: "Most teams start here",
+    badge: "Most popular",
   },
   {
     id: "scale",
@@ -138,8 +138,13 @@ export function StepBilling({
           : "Start free, upgrade when your traffic warrants it. Cancel any time."}
       </AuthLede>
 
-      {/* Plan cards */}
-      <div className="cg-fade-up cg-fade-up-2 mt-s-8 grid grid-cols-3 gap-s-3">
+      {/*
+       * Plan cards stack on narrow screens so the price + cadence
+       * row stays legible — at the 520px shell column three columns
+       * crammed each card to ~165px, forcing the badge to overlap
+       * the price and cropping the four-line limits list.
+       */}
+      <div className="cg-fade-up cg-fade-up-2 mt-s-8 grid grid-cols-1 gap-s-3 sm:grid-cols-3">
         {PLANS.map((p) => {
           const active = value.plan === p.id;
           return (
@@ -160,7 +165,7 @@ export function StepBilling({
                 {p.name}
               </span>
               <div className="flex items-baseline gap-[6px]">
-                <span className="font-display text-display-sm font-medium tracking-tight text-ink-hi">
+                <span className="font-display text-display-sm font-medium tracking-tight tabular-nums text-ink-hi">
                   {p.price}
                 </span>
                 <span className="font-mono text-mono-sm text-ink-dim">
@@ -207,38 +212,51 @@ export function StepBilling({
             </div>
 
             <CardField
+              id="onb-card-num"
               label="Card number"
               value={card.num}
               placeholder="4242 4242 4242 4242"
+              inputMode="numeric"
+              autoComplete="cc-number"
               onChange={(v) => setCard({ num: formatCardNum(v) })}
               right={<CardBrandGlyph num={card.num} />}
             />
             <div className="grid grid-cols-2 gap-s-2">
               <CardField
+                id="onb-card-exp"
                 label="Expiry"
                 value={card.exp}
                 placeholder="MM/YY"
+                inputMode="numeric"
+                autoComplete="cc-exp"
                 onChange={(v) => setCard({ exp: formatExp(v) })}
               />
               <CardField
+                id="onb-card-cvc"
                 label="CVC"
                 value={card.cvc}
                 placeholder="•••"
+                inputMode="numeric"
+                autoComplete="cc-csc"
                 onChange={(v) =>
                   setCard({ cvc: v.replace(/\D/g, "").slice(0, 4) })
                 }
               />
             </div>
             <CardField
+              id="onb-card-name"
               label="Name on card"
               value={card.name}
               placeholder="Ada Lovelace"
+              autoComplete="cc-name"
               onChange={(v) => setCard({ name: v })}
             />
             <CardField
+              id="onb-billing-email"
               label="Billing email"
               value={value.billingEmail}
               placeholder="billing@yourcompany.com"
+              autoComplete="email"
               onChange={(v) => onChange({ ...value, billingEmail: v })}
               hint="Receipts and invoices go here."
             />
@@ -255,9 +273,11 @@ export function StepBilling({
               call to size your throughput, retention, and compliance needs.
             </p>
             <CardField
+              id="onb-scale-email"
               label="Work email"
               value={value.billingEmail}
               placeholder="you@yourcompany.com"
+              autoComplete="email"
               onChange={(v) => onChange({ ...value, billingEmail: v })}
             />
           </div>
@@ -293,47 +313,68 @@ export function StepBilling({
   );
 }
 
+/*
+ * `CardField` is the billing-step's auth-styled input. It wraps an
+ * input + optional right-side slot (e.g. brand glyph) inside a single
+ * focus surface. The hover/focus state is handled by `:focus-within`
+ * + `:hover` on the wrapper rather than a `useState(focused)` so it
+ * stays in sync if the input remounts mid-stroke.
+ *
+ * Composes with `FormField tone="auth"` for the label + hint slot —
+ * matches the structured-mode fields in `step-describe`.
+ */
 function CardField({
+  id,
   label,
   value,
   onChange,
   placeholder,
   hint,
   right,
+  inputMode,
+  autoComplete,
 }: {
+  id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   hint?: string;
   right?: React.ReactNode;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
 }) {
-  const [focused, setFocused] = React.useState(false);
+  const hintId = hint ? `${id}-hint` : undefined;
   return (
-    <label className="flex flex-col gap-[6px]">
-      <span className="font-mono text-mono uppercase tracking-tactical text-ink-dim">
-        {label}
-      </span>
+    <FormField
+      tone="auth"
+      htmlFor={id}
+      label={label}
+      labelClassName="font-mono text-mono uppercase tracking-tactical text-ink-dim"
+      description={hint}
+      descriptionClassName="font-mono text-mono-sm text-ink-dim"
+    >
       <div
-        className={cx(
-          "flex items-center gap-s-2 rounded-sm border bg-surface-02 px-s-3 py-s-2 transition-colors duration-fast",
-          focused ? "border-hairline-strong" : "border-hairline"
-        )}
+        className={
+          "flex items-center gap-s-2 rounded-sm border border-hairline " +
+          "bg-surface-02 px-s-3 py-s-2 transition-colors duration-fast " +
+          "hover:border-hairline-strong " +
+          "focus-within:border-ink-hi"
+        }
       >
         <input
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           placeholder={placeholder}
-          className="flex-1 bg-transparent font-mono text-mono-lg text-ink-hi outline-none placeholder:text-ink-faint"
+          inputMode={inputMode}
+          autoComplete={autoComplete}
+          aria-describedby={hintId}
+          className="flex-1 bg-transparent font-mono text-mono-lg tabular-nums text-ink-hi outline-none placeholder:text-ink-faint"
         />
         {right}
       </div>
-      {hint ? (
-        <span className="font-mono text-mono-sm text-ink-dim">{hint}</span>
-      ) : null}
-    </label>
+    </FormField>
   );
 }
 

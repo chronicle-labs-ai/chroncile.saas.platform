@@ -66,7 +66,7 @@ export function DatasetClusterCard({
     <Collapsible
       defaultOpen={defaultOpen}
       className={cx(
-        "rounded-[4px] border border-l-border bg-l-surface-raised",
+        "rounded-[4px] border border-hairline-strong bg-l-surface-raised",
         className,
       )}
     >

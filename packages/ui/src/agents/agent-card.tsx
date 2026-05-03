@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Bot, MoreHorizontal } from "lucide-react";
+import { AlertTriangle, Bot, Check, MoreHorizontal, X } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
@@ -46,34 +46,36 @@ export function AgentCard({
       : successPct >= 80
         ? "text-event-amber"
         : "text-event-red";
+  const successLabel =
+    successPct >= 95 ? "healthy" : successPct >= 80 ? "warning" : "failing";
+  const SuccessIcon =
+    successPct >= 95 ? Check : successPct >= 80 ? AlertTriangle : X;
 
   return (
     <div
-      role={onOpen ? "button" : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      onKeyDown={
-        onOpen
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpen(agent.name);
-              }
-            }
-          : undefined
-      }
-      onClick={onOpen ? () => onOpen(agent.name) : undefined}
       data-active={isActive || undefined}
       className={cx(
-        "group relative flex flex-col gap-3 rounded-[4px] border border-l-border bg-l-surface-raised p-3.5",
+        "group relative isolate flex flex-col gap-3 rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3.5",
         "transition-colors duration-fast",
-        onOpen
-          ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
-          : null,
         isActive ? "border-ember/45 bg-l-surface-selected" : null,
         className,
       )}
     >
-      <div className="flex items-start gap-3">
+      {onOpen ? (
+        <button
+          type="button"
+          aria-label={`Open agent ${agent.name}`}
+          onClick={() => onOpen(agent.name)}
+          className={cx(
+            "absolute inset-0 z-0 cursor-pointer rounded-[3px]",
+            "transition-colors duration-fast",
+            "hover:bg-l-surface-hover",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
+          )}
+        />
+      ) : null}
+
+      <div className="pointer-events-none relative flex items-start gap-3">
         <AgentIdentityTile model={agent.model} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
@@ -97,10 +99,9 @@ export function AgentCard({
           </span>
         </div>
 
-        <div onClick={(e) => e.stopPropagation()}>
+        <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
           {actionsSlot ?? (
             <Button
-              density="compact"
               variant="icon"
               size="sm"
               aria-label={`Actions for ${agent.name}`}
@@ -112,12 +113,12 @@ export function AgentCard({
       </div>
 
       {agent.description ? (
-        <p className="line-clamp-2 font-sans text-[12px] leading-snug text-l-ink-lo">
+        <p className="pointer-events-none relative line-clamp-2 font-sans text-[12px] leading-snug text-l-ink-lo">
           {agent.description}
         </p>
       ) : null}
 
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className="pointer-events-none relative grid grid-cols-3 gap-2">
         <Stat
           label="Versions"
           value={formatNumber(agent.versionCount)}
@@ -126,9 +127,19 @@ export function AgentCard({
         <Stat
           label="Success"
           value={
-            <span className={successTone}>
-              {agent.totalRuns === 0 ? "—" : `${successPct}%`}
-            </span>
+            agent.totalRuns === 0 ? (
+              <span className={successTone}>—</span>
+            ) : (
+              <span className={cx("inline-flex items-center gap-1", successTone)}>
+                <SuccessIcon
+                  className="size-3.5 shrink-0"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                {`${successPct}%`}
+                <span className="sr-only">{` (${successLabel})`}</span>
+              </span>
+            )
           }
           sub={
             agent.totalRuns === 0
@@ -151,7 +162,7 @@ export function AgentCard({
         />
       </dl>
 
-      <div className="mt-auto flex items-center justify-between gap-2 text-[11px] text-l-ink-dim">
+      <div className="pointer-events-none relative mt-auto flex items-center justify-between gap-2 text-[11px] text-l-ink-dim">
         <span className="flex flex-1 items-center gap-1.5 overflow-hidden">
           {agent.lastDriftAt ? (
             <>
@@ -190,11 +201,11 @@ function Stat({
       <dt className="font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim">
         {label}
       </dt>
-      <dd className="font-sans text-[14px] font-medium leading-tight text-l-ink">
+      <dd className="font-sans text-[14px] font-medium leading-tight tabular-nums text-l-ink">
         {value}
       </dd>
       {sub ? (
-        <span className="truncate font-mono text-[10px] text-l-ink-dim">
+        <span className="truncate font-mono text-[10px] tabular-nums text-l-ink-dim">
           {sub}
         </span>
       ) : null}

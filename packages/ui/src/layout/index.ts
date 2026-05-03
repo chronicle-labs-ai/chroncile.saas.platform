@@ -66,6 +66,7 @@ export type {
   AppSidebarProps,
   DashboardShellUser,
   DashboardShellWorkspace,
+  NavMainItem,
 } from "./dashboard-sidebar-shell";
 
 export {

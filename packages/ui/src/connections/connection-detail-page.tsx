@@ -51,7 +51,6 @@ export function ConnectionDetailPage({
           </div>
           {onBack ? (
             <Button
-              density="compact"
               variant="ghost"
               size="sm"
               onPress={onBack}

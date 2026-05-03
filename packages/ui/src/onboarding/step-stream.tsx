@@ -2,11 +2,20 @@
 
 import * as React from "react";
 import { Button } from "../primitives/button";
-import { Label } from "../primitives/label";
 import { Eyebrow } from "../primitives/eyebrow";
-import { ArrowLeftIcon, ArrowRightIcon } from "../icons/glyphs";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  PauseIcon,
+  PlayIcon,
+} from "../icons/glyphs";
 import { CompanyLogo } from "../icons";
-import { AuthDisplay, AuthLede, StepFoot } from "../auth/_internal";
+import {
+  AuthDisplay,
+  AuthLede,
+  StatusChip,
+  StepFoot,
+} from "../auth/_internal";
 import { DEMO_EVENTS, getSource, type DemoEvent, type SourceId } from "./data";
 
 /*
@@ -145,17 +154,27 @@ export function StepStream({
       </AuthLede>
 
       <div className="cg-fade-up cg-fade-up-2 mt-s-6 flex items-center gap-s-3 justify-between">
+        {/*
+         * Min-width matches the longer "Resume" label so the button
+         * width stays stable when the user toggles state — keeps the
+         * row from jumping mid-interaction (Emil's no-layout-shift).
+         */}
         <Button
           variant="secondary"
           size="sm"
+          className="min-w-[96px]"
           onPress={() => setPaused((p) => !p)}
+          leadingIcon={paused ? <PlayIcon /> : <PauseIcon />}
         >
-          {paused ? "▶ Resume" : "❚❚ Pause"}
+          {paused ? "Resume" : "Pause"}
         </Button>
-        <Label color="green" density="compact">
+        {/*
+         * `tabular-nums` is set on StatusChip so the row count
+         * doesn't jitter as it crosses 1- → 2-digit territory.
+         */}
+        <StatusChip tone={paused ? "amber" : "green"} dot>
           {paused ? "Paused" : "Live"} · {rows.length} events
-        </Label>
-   
+        </StatusChip>
       </div>
 
       <div
@@ -172,7 +191,7 @@ export function StepStream({
               key={row.id}
               className="cg-slide-in flex items-center gap-s-3 border-b border-hairline px-s-4 py-s-2 last:border-b-0"
             >
-              <span className="w-[60px] font-mono text-mono-sm text-ink-dim">
+              <span className="w-[60px] font-mono text-mono-sm tabular-nums text-ink-dim">
                 {row.t.toTimeString().slice(0, 8)}
               </span>
               <span className="flex">

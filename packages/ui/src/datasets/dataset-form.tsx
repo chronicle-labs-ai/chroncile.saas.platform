@@ -90,7 +90,6 @@ export function DatasetForm({
       >
         <Input
           ref={nameRef}
-          density="compact"
           autoFocus
           value={values.name}
           onChange={(e) => onChange({ ...values, name: e.currentTarget.value })}
@@ -110,7 +109,6 @@ export function DatasetForm({
         helper="Optional. A line about how this dataset will be used."
       >
         <Textarea
-          density="compact"
           rows={3}
           value={values.description}
           onChange={(e) =>
@@ -122,7 +120,6 @@ export function DatasetForm({
 
       <Field label="Purpose" helper="Drives the colored badge and routing.">
         <RadioGroup
-          density="compact"
           value={values.purpose ?? undefined}
           onValueChange={handlePurposeChange}
           className="grid grid-cols-2 gap-2"
@@ -134,7 +131,7 @@ export function DatasetForm({
               <label
                 key={purpose}
                 className={cx(
-                  "flex cursor-pointer items-center gap-2.5 rounded-[3px] border border-l-border bg-l-surface-input px-2.5 py-2",
+                  "flex cursor-pointer items-center gap-2.5 rounded-[3px] border border-hairline-strong bg-l-surface-input px-2.5 py-2",
                   "hover:border-l-border-strong",
                   values.purpose === purpose
                     ? "border-l-border-strong bg-l-surface-hover"
@@ -168,7 +165,6 @@ export function DatasetForm({
         helper="Comma- or newline-separated. Tags help filter the dataset list."
       >
         <Input
-          density="compact"
           value={values.tagsInput}
           onChange={(e) =>
             onChange({ ...values, tagsInput: e.currentTarget.value })

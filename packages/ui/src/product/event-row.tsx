@@ -101,7 +101,6 @@ export function EventRow({
     <div
       className={eventRow({ density, selected, className })}
       data-selected={selected || undefined}
-      data-density={density}
       {...props}
     >
       <span

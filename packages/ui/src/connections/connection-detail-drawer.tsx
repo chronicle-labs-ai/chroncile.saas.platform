@@ -75,7 +75,6 @@ export function ConnectionDetailDrawer({
       onClose={onClose}
       size={size}
       placement="right"
-      density="compact"
       title={headerNode}
     >
       <ConnectionDetailBody

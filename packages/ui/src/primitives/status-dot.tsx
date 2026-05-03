@@ -1,17 +1,27 @@
 import * as React from "react";
-import {
-  ShadcnStatusDot,
-  type ShadcnStatusDotProps,
-} from "./shadcn";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
 
 /**
  * StatusDot — the colored dot used inline in status labels, nav items,
  * and event rails. New tokens use the event palette; legacy names map on.
  *
- * Fill + halo colors still live in an inline `style` so consumers can mix
+ * Fill + halo colors live in an inline `style` so consumers can mix
  * in their own without us having to expose Tailwind classes for every
  * rgba halo value. Token names come from `tokens.css`.
  */
+export const statusDotVariants = cva(
+  "inline-block h-[8px] w-[8px] shrink-0 rounded-full",
+  {
+    variants: {
+      pulse: {
+        true: "animate-chron-pulse",
+      },
+    },
+  }
+);
+
 export type StatusDotVariant =
   | "ember"
   | "teal"
@@ -21,18 +31,19 @@ export type StatusDotVariant =
   | "pink"
   | "violet"
   | "red"
-  | "offline"
-  | "critical"
-  | "caution"
-  | "nominal"
-  | "data";
+  | "offline";
 
 export interface StatusDotProps
-  extends Omit<ShadcnStatusDotProps, "pulse"> {
+  extends Omit<
+    React.HTMLAttributes<HTMLSpanElement>,
+    "color"
+  >,
+    Omit<VariantProps<typeof statusDotVariants>, "pulse"> {
   variant?: StatusDotVariant;
   pulse?: boolean;
   /** Renders the halo ring used on the event stream selected row. */
   halo?: boolean;
+  ref?: React.Ref<HTMLSpanElement>;
 }
 
 const palette: Record<StatusDotVariant, { fill: string; halo: string }> = {
@@ -45,10 +56,6 @@ const palette: Record<StatusDotVariant, { fill: string; halo: string }> = {
   violet: { fill: "var(--c-event-violet)", halo: "rgba(139,92,246,0.12)" },
   red: { fill: "var(--c-event-red)", halo: "rgba(239,68,68,0.12)" },
   offline: { fill: "var(--c-ink-faint)", halo: "rgba(255,255,255,0)" },
-  critical: { fill: "var(--c-event-red)", halo: "rgba(239,68,68,0.12)" },
-  caution: { fill: "var(--c-event-amber)", halo: "rgba(251,191,36,0.12)" },
-  nominal: { fill: "var(--c-event-green)", halo: "rgba(74,222,128,0.12)" },
-  data: { fill: "var(--c-event-teal)", halo: "rgba(45,212,191,0.12)" },
 };
 
 export function StatusDot({
@@ -57,14 +64,15 @@ export function StatusDot({
   halo = false,
   className,
   style,
+  ref,
   ...props
 }: StatusDotProps) {
   const v = palette[variant];
   return (
-    <ShadcnStatusDot
+    <span
+      ref={ref}
       aria-hidden
-      className={className}
-      pulse={pulse}
+      className={cn(statusDotVariants({ pulse }), className)}
       data-variant={variant}
       style={{
         background: v.fill,

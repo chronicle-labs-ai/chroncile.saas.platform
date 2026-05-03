@@ -40,7 +40,37 @@ export const Default: Story = {
       <SidebarProvider className="flex flex-col">
         <SiteHeader />
         <div className="flex flex-1">
-          <AppSidebar user={user} workspace={workspace} />
+          <AppSidebar
+            user={user}
+            workspace={workspace}
+            // Drives the active-rail demo: Overview is the live route.
+            currentPath="/dashboard"
+          />
+          <SidebarInset>
+            <DashboardSkeleton />
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    </div>
+  ),
+};
+
+export const ActiveSubItem: Story = {
+  render: () => (
+    <div className="[--header-height:3.5rem]">
+      <SidebarProvider className="flex flex-col">
+        <SiteHeader />
+        <div className="flex flex-1">
+          <AppSidebar
+            user={user}
+            workspace={workspace}
+            // Drilled into a sub-route — the parent rail stays lit while
+            // the active child gets its own quieter rail. Selection
+            // language is signalled by colour + rail, never by font
+            // weight, so toggling between siblings causes zero layout
+            // shift.
+            currentPath="/dashboard/datasets"
+          />
           <SidebarInset>
             <DashboardSkeleton />
           </SidebarInset>

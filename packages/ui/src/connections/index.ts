@@ -15,11 +15,14 @@ export type { ConnectionsManagerProps } from "./connections-manager";
 export { ConnectionHealthBadge } from "./connection-health-badge";
 export type { ConnectionHealthBadgeProps } from "./connection-health-badge";
 
-export { ConnectionRow } from "./connection-row";
+export { ConnectionRow, CONNECTION_ROW_GRID_TEMPLATE } from "./connection-row";
 export type { ConnectionRowProps } from "./connection-row";
 
 export { ConnectionCard } from "./connection-card";
 export type { ConnectionCardProps } from "./connection-card";
+
+export { ConnectionActionsMenu } from "./connection-actions-menu";
+export type { ConnectionActionsMenuProps } from "./connection-actions-menu";
 
 export { ConnectionsToolbar } from "./connections-toolbar";
 export type {

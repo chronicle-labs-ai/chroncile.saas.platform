@@ -5,11 +5,7 @@ const meta: Meta<typeof Input> = {
   title: "Primitives/Input",
   component: Input,
   parameters: { layout: "padded" },
-  argTypes: {
-    density: { control: "radio", options: ["compact", "brand"] },
-  },
   args: {
-    density: "compact",
     placeholder: "topic:support.* OR shopify.order.*",
   },
 };
@@ -42,23 +38,11 @@ export const Invalid: Story = {
   ),
 };
 
-export const DensityCompare: Story = {
-  render: () => (
-    <div className="grid grid-cols-2 gap-s-8">
-      <div className="flex flex-col gap-s-2">
-        <span className="font-mono text-mono-sm uppercase tracking-eyebrow text-l-ink-dim">
-          {`density="compact"`}
-        </span>
-        <Input placeholder="Filter by topic or trace_id" />
-        <Input search placeholder="Search events…" />
-      </div>
-      <div className="flex flex-col gap-s-2">
-        <span className="font-mono text-mono-sm uppercase tracking-eyebrow text-ink-dim">
-          {`density="brand"`}
-        </span>
-        <Input density="brand" placeholder="topic:support.*" />
-        <Input density="brand" search placeholder="Search events…" />
-      </div>
+export const Auth: Story = {
+  args: { variant: "auth", placeholder: "you@chronicle.io" },
+  render: (args) => (
+    <div className="w-[420px]">
+      <Input {...args} />
     </div>
   ),
 };

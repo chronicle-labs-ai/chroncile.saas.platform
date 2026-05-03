@@ -1,5 +1,24 @@
 "use client";
 
+/*
+ * Dashboard sidebar shell — Chronicle's product chrome.
+ *
+ * The shell is intentionally quiet:
+ *   - The sidebar shares the page surface (`tone="canvas"`); a
+ *     hairline rule on the inside edge separates it from the
+ *     content room. No bg lift, no heavy borders.
+ *   - The workspace switcher is a 28-pixel chip + two refined text
+ *     lines. The previous filled-ember tile carried too much weight
+ *     for a control users tap once a session.
+ *   - Active state is derived from `currentPath` (passed in by a
+ *     thin client wrapper that reads `usePathname()`), so the rail
+ *     in the underlying primitive always reflects the actual route
+ *     instead of a hardcoded flag on a single item.
+ *   - The site-header toggle has a 44 × 44 invisible hit area, an
+ *     `aria-pressed` mirror of the sidebar's open state, and
+ *     `touch-action: manipulation` to suppress iOS double-tap zoom.
+ */
+
 import * as React from "react";
 import {
   BadgeCheck,
@@ -26,8 +45,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Avatar } from "../primitives/avatar";
-import { Button } from "../primitives/button";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  deriveInitials,
+} from "../primitives/avatar";
 import { Logo } from "../primitives/logo";
 import {
   Collapsible,
@@ -80,11 +103,12 @@ const defaultData = {
       title: "Overview",
       url: "/dashboard",
       icon: PanelsTopLeft,
-      isActive: true,
+      // Exact match — Overview is the bare /dashboard, not a prefix.
+      match: "exact" as const,
     },
     {
       title: "Signals",
-      url: "#",
+      url: "/dashboard/signals",
       icon: Activity,
       items: [
         { title: "Connections", url: "/dashboard/connections" },
@@ -93,7 +117,7 @@ const defaultData = {
     },
     {
       title: "Validation",
-      url: "#",
+      url: "/dashboard/validation",
       icon: CircleCheckBig,
       items: [
         { title: "Datasets", url: "/dashboard/datasets" },
@@ -108,29 +132,57 @@ const defaultData = {
   ],
 };
 
+/**
+ * `pathname` matcher. Returns true when:
+ *   - `match === "exact"` and the pathnames are identical, OR
+ *   - `match === "prefix"` (default) and `pathname` begins with `target`
+ *     followed by either nothing or a `/`. The trailing-segment guard
+ *     keeps `/dashboard/agents-archive` from lighting up the
+ *     "Agents" link.
+ */
+function isActivePath(
+  pathname: string | undefined,
+  target: string,
+  match: "exact" | "prefix" = "prefix",
+): boolean {
+  if (!pathname || !target || target === "#") return false;
+  if (match === "exact") return pathname === target;
+  if (pathname === target) return true;
+  return pathname.startsWith(`${target}/`);
+}
+
 const menuContentClassName =
   "w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg";
 const menuIdentityClassName =
-  "flex items-center gap-2 px-1 py-1.5 text-left text-sm";
+  "flex items-center gap-2 px-1 py-1.5 text-left text-[13px]";
 const menuItemClassName =
-  "flex items-center gap-2 rounded-sm px-2 py-1.5 font-sans text-sm leading-none";
+  "flex items-center gap-2 rounded-sm px-2 py-1.5 font-sans text-[13px] leading-none";
 
 export interface AppSidebarProps
   extends React.ComponentPropsWithoutRef<typeof Sidebar> {
   user: DashboardShellUser;
   workspace?: DashboardShellWorkspace;
   signOutHref?: string;
+  /**
+   * Current pathname (typically the result of `usePathname()`). Used
+   * to derive which nav item is active. Pass it from a client
+   * wrapper — `AppSidebar` lives in the framework-agnostic `ui`
+   * package and can't import `next/navigation` directly.
+   */
+  currentPath?: string;
 }
 
 export function AppSidebar({
   user,
   workspace,
   signOutHref = "/api/auth/sign-out",
+  currentPath,
   className,
   ...props
 }: AppSidebarProps) {
   return (
     <Sidebar
+      tone="canvas"
       {...props}
       className={[
         "top-[var(--header-height)] h-[calc(100svh-var(--header-height))]",
@@ -143,7 +195,7 @@ export function AppSidebar({
         <WorkspaceMenu workspace={workspace} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={defaultData.navMain} />
+        <NavMain items={defaultData.navMain} currentPath={currentPath} />
         <NavSecondary items={defaultData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
@@ -162,46 +214,56 @@ function WorkspaceMenu({
   const nextTheme = theme === "light" ? "dark" : "light";
   const navigate = useNavigate();
 
+  /*
+   * Workspace identity row.
+   *
+   * The chip is a 28-pixel rounded square that picks up an inset
+   * hairline shadow instead of a real border — Emil prefers this
+   * for finer chrome because it doesn't double-pixel against
+   * adjacent strokes. The pulse-ember dot in the corner reads as
+   * a quiet "live workspace" signal without resorting to a
+   * full-tile coloured background.
+   */
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger>
             <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="default"
+              aria-label="Workspace menu"
+              className="h-10 gap-2.5 data-[state=open]:bg-[var(--c-row-hover)] data-[state=open]:text-foreground"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Command className="size-4" strokeWidth={1.75} />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
+              <WorkspaceChip />
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-[13px] font-medium text-foreground">
                   {workspace?.name || "Chronicle"}
                 </span>
-                <span className="truncate text-xs">
+                <span className="truncate text-[11px] font-normal text-l-ink-dim">
                   {workspace?.plan || "Workspace"}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" strokeWidth={1.75} />
+              <ChevronsUpDown
+                aria-hidden
+                className="ml-auto size-3.5 shrink-0 text-l-ink-dim"
+                strokeWidth={1.75}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className={menuContentClassName}
-            density="compact"
             side="right"
             align="start"
             sideOffset={4}
           >
             <DropdownMenuSection className="p-0">
               <div className={menuIdentityClassName}>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" strokeWidth={1.75} />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
+                <WorkspaceChip />
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate text-[13px] font-medium text-foreground">
                     {workspace?.name || "Chronicle"}
                   </span>
-                  <span className="truncate text-xs">
+                  <span className="truncate text-[11px] text-l-ink-dim">
                     {workspace?.plan || "Workspace"}
                   </span>
                 </div>
@@ -235,56 +297,136 @@ function WorkspaceMenu({
   );
 }
 
+/**
+ * The workspace identity chip used by `WorkspaceMenu`. Hoisted so the
+ * trigger and the dropdown identity row render the exact same node —
+ * any future change (badge, status dot, monogram override) only has
+ * to land in one place.
+ */
+function WorkspaceChip() {
+  return (
+    <div
+      aria-hidden
+      className="relative flex aspect-square size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--c-surface-02)] text-foreground shadow-[inset_0_0_0_1px_var(--c-hairline-strong)]"
+    >
+      <Logo
+        variant="icon"
+        theme="auto"
+        className="h-3.5 w-3.5 opacity-90"
+        aria-hidden
+      />
+      {/* Tiny ember pip in the corner — quiet "active workspace" signal */}
+      <span
+        aria-hidden
+        className="absolute bottom-1 right-1 size-1 rounded-full bg-ember"
+      />
+    </div>
+  );
+}
+
+export interface NavMainItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  match?: "exact" | "prefix";
+  isActive?: boolean;
+  items?: { title: string; url: string }[];
+}
+
 export function NavMain({
   items,
+  currentPath,
 }: {
-  items: {
-    title: string;
-    url: string;
-    icon: LucideIcon;
-    isActive?: boolean;
-    items?: { title: string; url: string }[];
-  }[];
+  items: NavMainItem[];
+  currentPath?: string;
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>Workspace</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <RouterLink href={item.url}>
-                  <item.icon className="size-4" strokeWidth={1.75} />
-                  <span>{item.title}</span>
-                </RouterLink>
-              </SidebarMenuButton>
-              {item.items?.length ? (
-                <>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="data-[state=open]:rotate-90">
-                      <ChevronRight />
-                      <span className="sr-only">Toggle</span>
-                    </SidebarMenuAction>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <RouterLink href={subItem.url}>
-                              <span>{subItem.title}</span>
-                            </RouterLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </>
-              ) : null}
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
+        {items.map((item) => {
+          // Resolve active state from the live route.
+          //   - The parent row is active when the path matches its own
+          //     URL (exact or prefix per the item's `match`), OR when
+          //     any of its children is active. The latter keeps the
+          //     parent rail visible while the user drills into a
+          //     subitem like "Datasets".
+          //   - Each child uses an exact match to avoid flashing two
+          //     rails when navigating between siblings.
+          const childIsActive = item.items?.some((sub) =>
+            isActivePath(currentPath, sub.url, "exact"),
+          );
+          const selfActive = isActivePath(
+            currentPath,
+            item.url,
+            item.match ?? "prefix",
+          );
+          const parentActive =
+            (selfActive || childIsActive) ?? item.isActive ?? false;
+
+          return (
+            <Collapsible
+              key={item.title}
+              asChild
+              defaultOpen={parentActive || childIsActive}
+            >
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={parentActive}
+                  tooltip={item.title}
+                >
+                  <RouterLink href={item.url}>
+                    <item.icon
+                      aria-hidden
+                      className="size-4"
+                      strokeWidth={1.75}
+                    />
+                    <span>{item.title}</span>
+                  </RouterLink>
+                </SidebarMenuButton>
+                {item.items?.length ? (
+                  <>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuAction
+                        aria-label={`Toggle ${item.title} subnav`}
+                        className="data-[state=open]:rotate-90"
+                      >
+                        <ChevronRight aria-hidden strokeWidth={1.75} />
+                      </SidebarMenuAction>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items.map((subItem) => {
+                          const active = isActivePath(
+                            currentPath,
+                            subItem.url,
+                            "exact",
+                          );
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={active}
+                              >
+                                <RouterLink
+                                  href={subItem.url}
+                                  aria-current={active ? "page" : undefined}
+                                >
+                                  <span>{subItem.title}</span>
+                                </RouterLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </>
+                ) : null}
+              </SidebarMenuItem>
+            </Collapsible>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );
@@ -363,7 +505,11 @@ export function NavSecondary({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild size="sm">
                 <RouterLink href={item.url}>
-                  <item.icon className="size-4" strokeWidth={1.75} />
+                  <item.icon
+                    aria-hidden
+                    className="size-4"
+                    strokeWidth={1.75}
+                  />
                   <span>{item.title}</span>
                 </RouterLink>
               </SidebarMenuButton>
@@ -390,62 +536,86 @@ export function NavUser({
         <DropdownMenu>
           <DropdownMenuTrigger>
             <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="default"
+              aria-label="Account menu"
+              className="h-10 gap-2.5 data-[state=open]:bg-[var(--c-row-hover)] data-[state=open]:text-foreground"
             >
-              <Avatar
-                className="h-8 w-8 rounded-lg"
-                src={user.avatar}
-                name={user.name}
-                alt={user.name}
-              />
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <Avatar size="sm" shape="square">
+                {user.avatar ? (
+                  <AvatarImage src={user.avatar} alt="" />
+                ) : null}
+                <AvatarFallback>{deriveInitials(user.name)}</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-[13px] font-medium text-foreground">
+                  {user.name}
+                </span>
+                <span className="truncate text-[11px] font-normal text-l-ink-dim">
+                  {user.email}
+                </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" strokeWidth={1.75} />
+              <ChevronsUpDown
+                aria-hidden
+                className="ml-auto size-3.5 shrink-0 text-l-ink-dim"
+                strokeWidth={1.75}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className={menuContentClassName}
-            density="compact"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
             <DropdownMenuSection className="p-0">
               <div className={menuIdentityClassName}>
-                <Avatar
-                  className="h-8 w-8 rounded-lg"
-                  src={user.avatar}
-                  name={user.name}
-                  alt={user.name}
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                <Avatar size="sm" shape="square">
+                  {user.avatar ? (
+                    <AvatarImage src={user.avatar} alt="" />
+                  ) : null}
+                  <AvatarFallback>{deriveInitials(user.name)}</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate text-[13px] font-medium text-foreground">
+                    {user.name}
+                  </span>
+                  <span className="truncate text-[11px] text-l-ink-dim">
+                    {user.email}
+                  </span>
                 </div>
               </div>
             </DropdownMenuSection>
             <DropdownMenuSeparator />
             <DropdownMenuSection>
               <DropdownMenuItem className={menuItemClassName}>
-                <Sparkles className="size-4" strokeWidth={1.75} />
+                <Sparkles
+                  aria-hidden
+                  className="size-4"
+                  strokeWidth={1.75}
+                />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuSection>
             <DropdownMenuSeparator />
             <DropdownMenuSection>
               <DropdownMenuItem className={menuItemClassName}>
-                <BadgeCheck className="size-4" strokeWidth={1.75} />
+                <BadgeCheck
+                  aria-hidden
+                  className="size-4"
+                  strokeWidth={1.75}
+                />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem className={menuItemClassName}>
-                <CreditCard className="size-4" strokeWidth={1.75} />
+                <CreditCard
+                  aria-hidden
+                  className="size-4"
+                  strokeWidth={1.75}
+                />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem className={menuItemClassName}>
-                <Bell className="size-4" strokeWidth={1.75} />
+                <Bell aria-hidden className="size-4" strokeWidth={1.75} />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuSection>
@@ -454,7 +624,7 @@ export function NavUser({
               className={menuItemClassName}
               onAction={() => (window.location.href = signOutHref)}
             >
-              <LogOut className="size-4" strokeWidth={1.75} />
+              <LogOut aria-hidden className="size-4" strokeWidth={1.75} />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -464,56 +634,94 @@ export function NavUser({
   );
 }
 
-export function SearchForm({ className, ...props }: React.ComponentProps<"form">) {
+export function SearchForm({
+  className,
+  ...props
+}: React.ComponentProps<"form">) {
   return (
-    <form className={className} {...props}>
+    <form className={className} {...props} role="search">
       <div className="relative">
         <label htmlFor="dashboard-search" className="sr-only">
           Search
         </label>
         <SidebarInput
           id="dashboard-search"
-          placeholder="Type to search..."
+          name="q"
+          type="search"
+          placeholder="Search…"
+          autoComplete="off"
           className="h-8 pl-7"
         />
-        <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 select-none text-l-ink-dim"
+          strokeWidth={1.75}
+        />
       </div>
     </form>
   );
 }
 
 export function SiteHeader() {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, open, isMobile, openMobile } = useSidebar();
+  const expanded = isMobile ? openMobile : open;
 
   return (
-    <header className="sticky top-0 z-50 flex w-full items-center border-b border-border bg-background">
+    <header
+      data-slot="site-header"
+      className={[
+        "sticky top-0 z-sticky flex w-full items-center bg-page",
+        // Inset hairline keeps the seam crisp without doubling against
+        // nearby strokes (the sidebar's right edge, breadcrumb dividers).
+        "shadow-[inset_0_-1px_0_0_var(--c-hairline)]",
+      ].join(" ")}
+    >
       <div className="flex h-[var(--header-height)] w-full items-center gap-2 px-4">
-        <Button
-          className="h-8 w-8"
-          variant="icon"
-          size="sm"
+        {/*
+         * Toggle button — visual is 32 × 32 to match the rest of the
+         * chrome density, but the `::after` pseudo extends the hit
+         * area to the iOS-recommended 44 × 44. `aria-pressed`
+         * mirrors the actual sidebar state so screen readers
+         * announce "expanded" / "collapsed" without us having to
+         * fork the icon.
+         */}
+        <button
+          type="button"
           onClick={toggleSidebar}
           aria-label="Toggle sidebar"
+          aria-pressed={expanded}
+          className={[
+            "relative inline-flex h-8 w-8 items-center justify-center rounded-md text-l-ink-lo touch-manipulation",
+            "transition-colors duration-[150ms] ease-out motion-reduce:transition-none",
+            "hover:bg-[var(--c-row-hover)] hover:text-foreground",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-l-ink-dim",
+            "after:absolute after:inset-[-6px] after:content-['']",
+          ].join(" ")}
         >
-          <SidebarIcon className="size-4" strokeWidth={1.75} />
-        </Button>
-        <div className="mr-2 h-4 w-px shrink-0 bg-border" />
+          <SidebarIcon aria-hidden className="size-4" strokeWidth={1.75} />
+        </button>
+
+        <div
+          aria-hidden
+          className="mr-2 h-4 w-px shrink-0 bg-hairline"
+        />
+
         <nav aria-label="Breadcrumb" className="hidden sm:block">
-          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
+          <ol className="flex items-center gap-2 text-[13px] text-l-ink-dim">
             <li>
               <RouterLink
                 href="/dashboard"
                 aria-label="Chronicle Labs"
-                className="flex items-center transition-colors hover:text-foreground"
+                className="flex items-center text-l-ink-lo transition-colors duration-[150ms] ease-out hover:text-foreground motion-reduce:transition-none"
               >
-              <Logo
-                variant="wordmark"
-                theme="auto"
-                className="h-5 w-auto"
-              />
+                <Logo
+                  variant="wordmark"
+                  theme="auto"
+                  className="h-5 w-auto"
+                />
               </RouterLink>
             </li>
-            <li aria-hidden className="text-muted-foreground/70">
+            <li aria-hidden className="text-l-ink-dim/70 select-none">
               /
             </li>
             <li className="font-medium text-foreground" aria-current="page">
@@ -521,6 +729,7 @@ export function SiteHeader() {
             </li>
           </ol>
         </nav>
+
         <SearchForm className="w-full sm:ml-auto sm:w-auto" />
       </div>
     </header>

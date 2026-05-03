@@ -334,7 +334,7 @@ function TimelineShell() {
         nav={
           <Sidebar variant="static" width="md">
             <Sidebar.Header>
-              <span className="flex h-[22px] w-[22px] items-center justify-center rounded-l-sm bg-ember font-display text-[12px] font-semibold text-white">
+              <span className="flex h-[22px] w-[22px] items-center justify-center rounded-xs bg-ember font-display text-[12px] font-semibold text-white">
                 C
               </span>
               <span className="ml-s-2 text-[13px] font-medium text-l-ink">
@@ -410,7 +410,6 @@ function TimelineShell() {
       >
         <div className="flex h-full min-h-0 flex-col">
           <Minimap
-            density="compact"
             bars={minimapBars}
             window={win}
             onWindowChange={setWin}
@@ -481,7 +480,7 @@ function TraceDetail({
             type="button"
             aria-label="Close detail"
             onClick={onClose}
-            className="ml-auto rounded-l px-[6px] py-[2px] text-l-ink-dim hover:bg-l-wash-3 hover:text-l-ink"
+            className="ml-auto rounded-md px-[6px] py-[2px] text-l-ink-dim hover:bg-l-wash-3 hover:text-l-ink"
           >
             ×
           </button>

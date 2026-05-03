@@ -69,7 +69,6 @@ export function DatasetsToolbar({
     >
       <div className="flex min-w-[220px] flex-1 items-center gap-2">
         <Input
-          density="compact"
           search
           placeholder={
             totalCount != null
@@ -90,7 +89,6 @@ export function DatasetsToolbar({
             <Chip
               key={purpose}
               active={active}
-              density="compact"
               onClick={() => onPurposeToggle(purpose)}
               icon={
                 <span
@@ -106,7 +104,7 @@ export function DatasetsToolbar({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="inline-flex overflow-hidden rounded-[2px] border border-l-border">
+        <div className="inline-flex overflow-hidden rounded-[2px] border border-hairline-strong">
           <button
             type="button"
             aria-label="List view"
@@ -128,7 +126,7 @@ export function DatasetsToolbar({
             data-active={view === "grid" || undefined}
             onClick={() => onViewChange("grid")}
             className={cx(
-              "flex h-7 w-7 items-center justify-center border-l border-l-border text-l-ink-dim",
+              "flex h-7 w-7 items-center justify-center border-l border-hairline-strong text-l-ink-dim",
               "hover:bg-l-surface-hover",
               "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
             )}
@@ -138,7 +136,6 @@ export function DatasetsToolbar({
         </div>
         {hideAdd ? null : (
           <Button
-            density="compact"
             variant="primary"
             size="sm"
             onPress={onCreate}

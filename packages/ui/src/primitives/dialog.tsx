@@ -12,7 +12,7 @@ import {
   modalOverlayVariants,
   modalTitleVariants,
   modalVariants,
-} from "./shadcn";
+} from "./modal";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -40,7 +40,7 @@ function DialogContent({
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        className={cn(modalVariants({ density: "compact" }), className)}
+        className={cn(modalVariants(), className)}
         {...props}
       >
         {children}
@@ -54,13 +54,7 @@ function DialogHeader({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={modalHeaderVariants({
-        density: "compact",
-        className,
-      })}
-      {...props}
-    />
+    <div className={modalHeaderVariants({ className })} {...props} />
   );
 }
 
@@ -69,13 +63,7 @@ function DialogFooter({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={modalActionsVariants({
-        density: "compact",
-        className,
-      })}
-      {...props}
-    />
+    <div className={modalActionsVariants({ className })} {...props} />
   );
 }
 
@@ -84,13 +72,7 @@ function DialogBody({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={modalBodyVariants({
-        density: "compact",
-        className,
-      })}
-      {...props}
-    />
+    <div className={modalBodyVariants({ className })} {...props} />
   );
 }
 
@@ -100,11 +82,7 @@ function DialogTitle({
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
-      className={modalTitleVariants({
-        density: "compact",
-        variant: "default",
-        className,
-      })}
+      className={modalTitleVariants({ variant: "default", className })}
       {...props}
     />
   );
@@ -128,10 +106,7 @@ function DialogXClose({
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>) {
   return (
     <DialogPrimitive.Close
-      className={modalCloseVariants({
-        density: "compact",
-        className,
-      })}
+      className={modalCloseVariants({ className })}
       aria-label="Close dialog"
       {...props}
     >

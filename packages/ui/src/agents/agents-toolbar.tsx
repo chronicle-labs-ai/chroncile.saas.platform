@@ -78,8 +78,9 @@ export function AgentsToolbar({
     >
       <div className="flex min-w-[220px] flex-1 items-center gap-2">
         <Input
-          density="compact"
+          type="search"
           search
+          aria-label="Search agents"
           placeholder={
             totalCount != null
               ? `Search ${totalCount} agents`
@@ -99,7 +100,6 @@ export function AgentsToolbar({
             <Chip
               key={health}
               active={active}
-              density="compact"
               onClick={() => onHealthToggle(health)}
               icon={
                 <span aria-hidden className={cx("size-1.5 rounded-pill", meta.dot)} />
@@ -112,7 +112,7 @@ export function AgentsToolbar({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="inline-flex overflow-hidden rounded-[2px] border border-l-border">
+        <div className="inline-flex overflow-hidden rounded-[2px] border border-hairline-strong">
           <button
             type="button"
             aria-label="List view"
@@ -120,7 +120,7 @@ export function AgentsToolbar({
             data-active={view === "list" || undefined}
             onClick={() => onViewChange("list")}
             className={cx(
-              "flex h-7 w-7 items-center justify-center text-l-ink-dim",
+              "flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center text-l-ink-dim touch-manipulation",
               "hover:bg-l-surface-hover",
               "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
             )}
@@ -134,7 +134,7 @@ export function AgentsToolbar({
             data-active={view === "grid" || undefined}
             onClick={() => onViewChange("grid")}
             className={cx(
-              "flex h-7 w-7 items-center justify-center border-l border-l-border text-l-ink-dim",
+              "flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center border-l border-hairline-strong text-l-ink-dim touch-manipulation",
               "hover:bg-l-surface-hover",
               "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
             )}
@@ -144,7 +144,6 @@ export function AgentsToolbar({
         </div>
         {onOpenHashSearch ? (
           <Button
-            density="compact"
             variant="secondary"
             size="sm"
             onPress={onOpenHashSearch}

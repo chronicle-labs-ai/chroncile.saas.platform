@@ -7,8 +7,6 @@
 
 @import "./fonts.css";
 @import "./tokens.css";
-@import "./linear.css";
-@import "./chrome.css";
 @import "./glass.css";
 @import "./auth.css";
 @import "./connectors.css";
@@ -94,24 +92,30 @@
 
 /* ============================================================
    SCROLLBAR — thin, hairline-colored
+   Opt-in via `.chron-scrollbar` on small scrollable surfaces
+   (code blocks, drawers, inspectors). The page scrollbar stays
+   the OS default — replacing the document scrollbar globally
+   breaks platform conventions and clashes with extensions / OS
+   accent colors. See Emil's UI-polish guidance.
    ============================================================ */
 
-.chron-scrollbar::-webkit-scrollbar,
-*::-webkit-scrollbar {
+.chron-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-*::-webkit-scrollbar-track {
+.chron-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-*::-webkit-scrollbar-thumb {
+.chron-scrollbar::-webkit-scrollbar-thumb {
   background: var(--c-hairline-strong);
   border-radius: 0;
 }
-*::-webkit-scrollbar-thumb:hover {
-  background: var(--c-ink-dim);
+@media (hover: hover) and (pointer: fine) {
+  .chron-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--c-ink-dim);
+  }
 }
-* {
+.chron-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--c-hairline-strong) transparent;
 }
@@ -131,16 +135,40 @@
 
 /* ============================================================
    REDUCED MOTION
+   Per Emil: every animation needs `prefers-reduced-motion`
+   support, but resort to `!important` only when there's no
+   other way. We override `animation` and `transition` with a
+   high-specificity attribute selector so component-level
+   styles still win when they explicitly opt-out (e.g. crucial
+   feedback transitions). No `!important` cascade arms race.
    ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
-  *,
+  *:where(:not([data-motion="essential"])),
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+    animation-iteration-count: 1;
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+    scroll-behavior: auto;
   }
+}
+
+/* ============================================================
+   THEME-CHANGE TRANSITION GUARD
+   When `data-theme` flips, every transitioning property would
+   animate from its old colour to its new one — producing a
+   noticeable cross-theme bleed across the whole tree. The
+   ThemeProvider toggles this attribute around the change so
+   the swap is instant. Restored on the next animation frame.
+   ============================================================ */
+
+html[data-theme-changing] *,
+html[data-theme-changing] *::before,
+html[data-theme-changing] *::after {
+  transition: none !important;
 }
 
 /* ============================================================

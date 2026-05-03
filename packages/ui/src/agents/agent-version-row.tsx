@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeftRight, GitCommitVertical } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeftRight,
+  Check,
+  GitCommitVertical,
+  X,
+} from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
@@ -52,51 +58,57 @@ export function AgentVersionRow({
       : successPct >= 80
         ? "text-event-amber"
         : "text-event-red";
+  const successLabel =
+    successPct >= 95 ? "healthy" : successPct >= 80 ? "warning" : "failing";
+  const SuccessIcon =
+    successPct >= 95 ? Check : successPct >= 80 ? AlertTriangle : X;
 
   return (
     <div
-      role={onOpen ? "button" : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      onKeyDown={
-        onOpen
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpen(artifact.version);
-              }
-            }
-          : undefined
-      }
-      onClick={onOpen ? () => onOpen(artifact.version) : undefined}
       data-active={isActive || undefined}
       className={cx(
-        "group relative grid items-center gap-3 px-4",
+        "group relative isolate grid items-center gap-3 px-4",
         "grid-cols-[28px_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(0,1fr)_72px_72px_88px]",
         "h-12 border-b border-l-border-faint last:border-b-0 first:rounded-t-[4px] last:rounded-b-[4px]",
         "font-sans text-[13px] text-l-ink",
-        onOpen
-          ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
-          : null,
         isActive
-          ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-ember"
+          ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:z-10 before:w-[2px] before:bg-ember"
           : null,
         className,
       )}
     >
+      {onOpen ? (
+        <button
+          type="button"
+          aria-label={`Open version ${artifact.version}`}
+          onClick={() => onOpen(artifact.version)}
+          className={cx(
+            "absolute inset-0 z-0 cursor-pointer",
+            "first:rounded-t-[3px] last:rounded-b-[3px]",
+            "transition-colors duration-fast",
+            "hover:bg-l-surface-hover",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
+          )}
+        />
+      ) : null}
+
       <span
         aria-hidden
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[3px] bg-l-surface-input text-l-ink-dim"
+        className="pointer-events-none relative flex h-6 w-6 shrink-0 items-center justify-center rounded-[3px] bg-l-surface-input text-l-ink-dim"
       >
         <GitCommitVertical className="size-3.5" strokeWidth={1.6} />
       </span>
 
-      <div className="flex min-w-0 flex-col gap-[1px]">
+      <div className="pointer-events-none relative flex min-w-0 flex-col gap-[1px]">
         <span className="flex items-center gap-2">
           <AgentVersionBadge
             version={artifact.version}
             status={version.status}
           />
-          <AgentConfigHashChip hash={artifact.configHash} tone="subtle" />
+          {/* Hash chip contains a copy button, re-enable pointer events for it. */}
+          <span className="pointer-events-auto">
+            <AgentConfigHashChip hash={artifact.configHash} tone="subtle" />
+          </span>
         </span>
         <span className="truncate font-mono text-[10.5px] text-l-ink-dim">
           {artifact.provenance.publishedBy ? (
@@ -127,7 +139,7 @@ export function AgentVersionRow({
         </span>
       </div>
 
-      <span className="flex min-w-0 flex-col gap-[1px]">
+      <span className="pointer-events-none relative flex min-w-0 flex-col gap-[1px]">
         <AgentModelLabel model={artifact.model} size="xs" />
         {version.resolvedModelIds.length > 0 ? (
           <span className="truncate font-mono text-[10px] text-l-ink-dim">
@@ -139,7 +151,7 @@ export function AgentVersionRow({
         ) : null}
       </span>
 
-      <span className="flex min-w-0 items-center gap-1.5 truncate font-sans text-[12px] text-l-ink-dim">
+      <span className="pointer-events-none relative flex min-w-0 items-center gap-1.5 truncate font-sans text-[12px] text-l-ink-dim">
         {artifact.tools.length === 0
           ? "no tools"
           : `${artifact.tools.length} tool${artifact.tools.length === 1 ? "" : "s"}`}
@@ -151,26 +163,38 @@ export function AgentVersionRow({
         ) : null}
       </span>
 
-      <span className="text-right font-sans text-[12px] text-l-ink-lo">
+      <span className="pointer-events-none relative text-right font-sans text-[12px] tabular-nums text-l-ink-lo">
         {formatNumber(version.runCount)}
         <span className="ml-1 text-l-ink-dim">runs</span>
       </span>
 
       <span
         className={cx(
-          "text-right font-sans text-[12px]",
+          "pointer-events-none relative inline-flex items-center justify-end gap-1 text-right font-sans text-[12px] tabular-nums",
           version.runCount === 0 ? "text-l-ink-dim" : successTone,
         )}
       >
-        {version.runCount === 0 ? "—" : `${successPct}%`}
+        {version.runCount === 0 ? (
+          "—"
+        ) : (
+          <>
+            <SuccessIcon
+              className="size-3 shrink-0"
+              strokeWidth={2}
+              aria-hidden
+            />
+            {`${successPct}%`}
+            <span className="sr-only">{` (${successLabel})`}</span>
+          </>
+        )}
       </span>
 
       <span
-        className="flex items-center justify-end"
+        className="pointer-events-auto relative flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
       >
         {hideCompare ? (
-          <span className="font-sans text-[11px] text-l-ink-dim">
+          <span className="pointer-events-none font-sans text-[11px] text-l-ink-dim">
             <RelativeTime
               iso={artifact.provenance.createdAt}
               fallback="—"
@@ -178,7 +202,6 @@ export function AgentVersionRow({
           </span>
         ) : (
           <Button
-            density="compact"
             variant="ghost"
             size="sm"
             onPress={() => onCompare?.(artifact.version)}

@@ -34,11 +34,11 @@ export const Default: Story = {
     const [updated, setUpdated] = React.useState<Dataset | null>(null);
     return (
       <div className="flex flex-col gap-3">
-        <Button density="compact" variant="primary" onPress={() => setOpen(true)}>
+        <Button variant="primary" onPress={() => setOpen(true)}>
           Open edit dialog
         </Button>
         {updated ? (
-          <pre className="max-w-md overflow-x-auto rounded-[3px] border border-l-border bg-l-surface-raised p-3 font-mono text-[11px] text-l-ink-lo">
+          <pre className="max-w-md overflow-x-auto rounded-[3px] border border-hairline-strong bg-l-surface-raised p-3 font-mono text-[11px] text-l-ink-lo">
             {JSON.stringify(updated, null, 2)}
           </pre>
         ) : null}

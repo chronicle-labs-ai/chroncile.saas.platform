@@ -16,12 +16,14 @@ import type { ColumnType, FilterOperator } from "./types";
 const styles = tv({
   slots: {
     trigger:
-      "inline-flex h-full items-center gap-s-1 px-s-2 font-mono text-mono-sm " +
+      "group inline-flex h-full items-center gap-s-1 px-s-2 font-mono text-mono-sm " +
       "text-ink-lo outline-none transition-colors duration-fast ease-out " +
       "hover:text-ink-hi hover:bg-surface-03 " +
       "focus-visible:outline focus-visible:outline-1 " +
       "focus-visible:outline-ember",
-    caret: "h-3 w-3 shrink-0 opacity-60",
+    caret:
+      "h-3 w-3 shrink-0 opacity-60 transition-transform duration-fast ease-out " +
+      "group-data-[state=open]:rotate-180",
   },
 });
 

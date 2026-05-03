@@ -130,7 +130,7 @@ const kanbanColumns: Array<[string, string[]]> = [
 
 export const ActionBarExample: Story = {
   render: () => (
-    <div className="relative h-[220px] rounded-md border border-l-border bg-l-surface p-s-6">
+    <div className="relative h-[220px] rounded-md border border-hairline-strong bg-l-surface p-s-6">
       <p className="text-sm text-l-ink-dim">
         Select rows in a grid to reveal contextual actions.
       </p>
@@ -169,7 +169,7 @@ export const CarouselExample: Story = {
           {["Replay timeline", "Trace inspector", "Metric rollup"].map(
             (title, index) => (
               <Carousel.Item key={title}>
-                <div className="flex h-[220px] items-end rounded-lg border border-l-border bg-l-surface-raised p-s-5">
+                <div className="flex h-[220px] items-end rounded-lg border border-hairline-strong bg-l-surface-raised p-s-5">
                   <div>
                     <div className="text-xs uppercase tracking-eyebrow text-l-ink-dim">
                       Slide {index + 1}
@@ -237,7 +237,7 @@ export const FileTreeExample: Story = {
 
 export const FloatingTocExample: Story = {
   render: () => (
-    <div className="flex h-[260px] items-center justify-center rounded-md border border-l-border bg-l-surface">
+    <div className="flex h-[260px] items-center justify-center rounded-md border border-hairline-strong bg-l-surface">
       <FloatingToc items={tocItems} activeId="traces" />
     </div>
   ),
@@ -248,7 +248,7 @@ export const HoverCardExample: Story = {
     <div className="flex h-[220px] items-center justify-center">
       <HoverCard defaultOpen>
         <HoverCard.Trigger>
-          <button className="rounded-l bg-l-wash-3 px-s-3 py-s-2 text-l-ink">
+          <button className="rounded-md bg-l-wash-3 px-s-3 py-s-2 text-l-ink">
             Northstar Labs
           </button>
         </HoverCard.Trigger>
@@ -348,7 +348,7 @@ export const ListViewExample: Story = {
       {(item) => (
         <>
           <ListView.ItemContent>
-            <div className="h-8 w-8 rounded-l bg-l-wash-3" />
+            <div className="h-8 w-8 rounded-md bg-l-wash-3" />
             <div>
               <ListView.Title>{item.customer}</ListView.Title>
               <ListView.Description>

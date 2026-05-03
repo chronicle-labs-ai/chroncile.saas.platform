@@ -3,9 +3,14 @@
 import * as React from "react";
 import { Button } from "../primitives/button";
 import { Eyebrow } from "../primitives/eyebrow";
-import { ArrowRightIcon } from "../icons/glyphs";
+import { ArrowRightIcon, RestartIcon } from "../icons/glyphs";
 import { CompanyLogo } from "../icons";
-import { AuthDisplay, AuthLede, StepFoot } from "../auth/_internal";
+import {
+  AuthDisplay,
+  AuthLede,
+  StatusChip,
+  StepFoot,
+} from "../auth/_internal";
 import { getSource, type SourceId } from "./data";
 
 /*
@@ -74,10 +79,9 @@ export function StepDone({
               <span className="flex-1 font-sans text-[13.5px] text-ink-hi">
                 {s.name}
               </span>
-              <span className="inline-flex items-center gap-[4px] font-mono text-mono-sm uppercase tracking-tactical text-event-green">
-                <span className="h-[5px] w-[5px] rounded-pill bg-event-green" />
+              <StatusChip tone="green" dot>
                 LIVE
-              </span>
+              </StatusChip>
             </div>
           ))}
         </div>
@@ -85,8 +89,12 @@ export function StepDone({
 
       <StepFoot
         back={
-          <Button variant="ghost" onPress={onRestart}>
-            ↺ Start over
+          <Button
+            variant="ghost"
+            onPress={onRestart}
+            leadingIcon={<RestartIcon />}
+          >
+            Start over
           </Button>
         }
         next={

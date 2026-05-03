@@ -131,7 +131,6 @@ export function DatasetRow({
       >
         {actionsSlot ?? (
           <Button
-            density="compact"
             variant="icon"
             size="sm"
             aria-label={`Actions for ${dataset.name}`}

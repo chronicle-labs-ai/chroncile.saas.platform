@@ -13,6 +13,7 @@ import {
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
+import { Chip } from "../primitives/chip";
 import { Tabs, TabList, Tab, TabPanel } from "../primitives/tabs";
 import { CompanyLogo } from "../icons";
 import { InlineAlert } from "../auth/_internal";
@@ -106,6 +107,13 @@ export interface ConnectionDetailBodyProps {
   onReauth?: () => void;
   onTest?: () => void;
   onDisconnect?: () => void;
+  /**
+   * Optional handler for the "Open full activity log" affordance in the
+   * Activity tab. Omit to hide the link entirely — the previous
+   * `href="#"` placeholder hijacked the back-stack and scrolled the page
+   * to the top on click.
+   */
+  onOpenActivityLog?: () => void;
   /** Hide the inner header chrome (used when the parent renders its own). */
   hideHeader?: boolean;
   className?: string;
@@ -127,6 +135,7 @@ export function ConnectionDetailBody({
   onReauth,
   onTest,
   onDisconnect,
+  onOpenActivityLog,
   hideHeader,
   className,
 }: ConnectionDetailBodyProps) {
@@ -140,7 +149,6 @@ export function ConnectionDetailBody({
       {hideHeader ? null : <DetailHeader connection={connection} />}
 
       <Tabs
-        density="compact"
         value={tab ?? "overview"}
         onValueChange={(next) => onTabChange?.(next as ConnectionDetailTab)}
         className="flex flex-col gap-3"
@@ -176,7 +184,7 @@ export function ConnectionDetailBody({
           ) : null}
           {isPaused ? (
             <InlineAlert tone="info">
-              Stream paused. Resume to resume ingestion immediately.
+              Stream paused — new events buffer upstream until you resume.
             </InlineAlert>
           ) : null}
 
@@ -185,7 +193,6 @@ export function ConnectionDetailBody({
           <div className="flex flex-wrap items-center gap-2">
             {isPaused ? (
               <Button
-                density="compact"
                 size="sm"
                 variant="primary"
                 leadingIcon={<Play className="size-3.5" strokeWidth={1.75} />}
@@ -196,7 +203,6 @@ export function ConnectionDetailBody({
               </Button>
             ) : (
               <Button
-                density="compact"
                 size="sm"
                 variant="secondary"
                 leadingIcon={<Pause className="size-3.5" strokeWidth={1.75} />}
@@ -207,7 +213,6 @@ export function ConnectionDetailBody({
               </Button>
             )}
             <Button
-              density="compact"
               size="sm"
               variant={isExpired || isErrored ? "primary" : "secondary"}
               leadingIcon={
@@ -219,7 +224,6 @@ export function ConnectionDetailBody({
               Re-authorize
             </Button>
             <Button
-              density="compact"
               size="sm"
               variant="secondary"
               leadingIcon={<Activity className="size-3.5" strokeWidth={1.75} />}
@@ -230,7 +234,6 @@ export function ConnectionDetailBody({
             </Button>
             <span className="ml-auto" />
             <Button
-              density="compact"
               size="sm"
               variant="critical"
               leadingIcon={<Trash2 className="size-3.5" strokeWidth={1.75} />}
@@ -268,6 +271,7 @@ export function ConnectionDetailBody({
           <ActivitySection
             deliveries={deliveries}
             errorPayload={connection.errorPayload}
+            onOpenActivityLog={onOpenActivityLog}
           />
         </TabPanel>
 
@@ -340,7 +344,9 @@ function SummaryGrid({ connection }: { connection: Connection }) {
           <dt className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             {it.label}
           </dt>
-          <dd className="font-sans text-[13.5px] text-ink-hi">{it.value}</dd>
+          <dd className="font-sans text-[13.5px] tabular-nums text-ink-hi">
+            {it.value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -503,10 +509,10 @@ function BackfillsSection({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
-          {backfills.length} run{backfills.length === 1 ? "" : "s"}
+          <span className="tabular-nums">{backfills.length}</span> run
+          {backfills.length === 1 ? "" : "s"}
         </span>
         <Button
-          density="compact"
           size="sm"
           variant="primary"
           onPress={onRunBackfill}
@@ -532,7 +538,7 @@ function BackfillsSection({
               <span className="truncate font-mono text-mono-sm text-ink-lo">
                 {bf.windowDays}d · {bf.entities.join(", ") || "—"}
               </span>
-              <span className="font-mono text-mono-sm text-ink-lo">
+              <span className="font-mono text-mono-sm tabular-nums text-ink-lo">
                 {formatNumber(bf.estEvents)} events
               </span>
               <span
@@ -560,9 +566,11 @@ function BackfillsSection({
 function ActivitySection({
   deliveries,
   errorPayload,
+  onOpenActivityLog,
 }: {
   deliveries: readonly ConnectionDelivery[];
   errorPayload?: string;
+  onOpenActivityLog?: () => void;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -577,7 +585,7 @@ function ActivitySection({
           <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             Recent deliveries
           </span>
-          <span className="font-mono text-mono-sm text-ink-dim">
+          <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
             {deliveries.length}
           </span>
         </div>
@@ -600,13 +608,16 @@ function ActivitySection({
         )}
       </div>
 
-      <a
-        href="#"
-        className="inline-flex items-center gap-1 font-mono text-mono-sm text-ember hover:underline"
-      >
-        Open full activity log
-        <ExternalLink className="size-3" strokeWidth={1.75} />
-      </a>
+      {onOpenActivityLog ? (
+        <button
+          type="button"
+          onClick={onOpenActivityLog}
+          className="inline-flex w-fit items-center gap-1 rounded-xs font-mono text-mono-sm text-ember focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember hover:underline"
+        >
+          Open full activity log
+          <ExternalLink className="size-3" strokeWidth={1.75} />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -641,7 +652,8 @@ function EventsSection({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
-          {enabledCount} of {events.length} enabled
+          <span className="tabular-nums">{enabledCount}</span> of{" "}
+          <span className="tabular-nums">{events.length}</span> enabled
         </span>
       </div>
       {Array.from(grouped.entries()).map(([object, items]) => (
@@ -651,21 +663,15 @@ function EventsSection({
           </span>
           <div className="flex flex-wrap gap-1.5">
             {items.map((e) => (
-              <button
+              <Chip
                 key={e.id}
-                type="button"
-                onClick={() => onToggleEvent?.(e.id, !e.enabled)}
+                active={e.enabled}
                 aria-pressed={e.enabled}
-                data-active={e.enabled || undefined}
-                className={cx(
-                  "rounded-[2px] border px-2 py-1 font-mono text-mono-sm transition-colors duration-fast",
-                  e.enabled
-                    ? "border-ember/35 bg-[rgba(216,67,10,0.06)] text-ink-hi"
-                    : "border-divider bg-[rgba(255,255,255,0.012)] text-ink-dim hover:bg-[rgba(255,255,255,0.025)]",
-                )}
+                onClick={() => onToggleEvent?.(e.id, !e.enabled)}
+                className="font-mono"
               >
                 {e.id}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>

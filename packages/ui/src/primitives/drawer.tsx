@@ -49,7 +49,7 @@ import { cn } from "../utils/cn";
  */
 
 export const drawerOverlayVariants = cva(
-  "fixed inset-0 z-50 flex bg-black/60 " +
+  "fixed inset-0 z-overlay flex bg-black/60 " +
     "data-[state=open]:animate-in data-[state=open]:fade-in-0 " +
     "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
   {

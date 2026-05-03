@@ -79,13 +79,13 @@ export function ProductMultiSelect({
   return (
     <div
       className={cx(
-        "overflow-hidden rounded-l border border-l-border bg-l-surface",
+        "overflow-hidden rounded-md border border-hairline-strong bg-l-surface",
         className
       )}
       {...props}
     >
       {searchable ? (
-        <div className="border-b border-l-border px-s-2 py-s-2">
+        <div className="border-b border-hairline-strong px-s-2 py-s-2">
           <Input
             search
             value={query}
@@ -105,7 +105,7 @@ export function ProductMultiSelect({
           sections.map(([section, items]) => (
             <div key={String(section || "default")}>
               {section ? (
-                <div className="border-t border-l-border px-s-2 py-[6px] first:border-t-0 font-sans text-[11px] font-medium text-l-ink-dim">
+                <div className="border-t border-hairline-strong px-s-2 py-[6px] first:border-t-0 font-sans text-[11px] font-medium text-l-ink-dim">
                   {section}
                 </div>
               ) : null}
@@ -130,7 +130,7 @@ export function ProductMultiSelect({
                   >
                     <span
                       className={cx(
-                        "relative flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-l-sm border",
+                        "relative flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-xs border",
                         isSelected
                           ? "border-[var(--l-accent)] bg-[var(--l-accent)]"
                           : "border-l-border-strong bg-transparent"
@@ -183,14 +183,14 @@ export function ProductMultiSelect({
         )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-l-border px-s-3 py-s-2 font-mono text-[10px] text-l-ink-dim">
+      <div className="flex items-center justify-between border-t border-hairline-strong px-s-3 py-s-2 font-mono text-[10px] text-l-ink-dim">
         <span>
           {selected.length} of {options.length} selected
         </span>
         {selected.length > 0 ? (
           <button
             type="button"
-            className="rounded-l px-[6px] py-[3px] text-l-ink-dim hover:bg-l-wash-3 hover:text-l-ink"
+            className="rounded-md px-[6px] py-[3px] text-l-ink-dim hover:bg-l-wash-3 hover:text-l-ink"
             onClick={() => commit([])}
           >
             {clearLabel}

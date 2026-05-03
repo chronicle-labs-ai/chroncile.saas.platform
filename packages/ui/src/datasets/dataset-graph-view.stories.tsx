@@ -28,7 +28,7 @@ const meta: Meta<typeof DatasetGraphView> = {
   decorators: [
     (Story) => (
       <ProductChromeFrame padding="md">
-        <div className="h-[680px] w-full overflow-hidden rounded-[4px] border border-l-border">
+        <div className="h-[680px] w-full overflow-hidden rounded-[4px] border border-hairline-strong">
           <Story />
         </div>
       </ProductChromeFrame>

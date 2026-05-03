@@ -138,7 +138,7 @@ const carouselStyles = tv({
     item: "min-w-0 shrink-0 basis-full snap-start",
     nav:
       "absolute top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-pill " +
-      "border border-l-border bg-l-surface-raised text-l-ink-lo shadow-l-pop transition " +
+      "border border-hairline-strong bg-l-surface-raised text-l-ink-lo shadow-l-pop transition " +
       "hover:text-l-ink disabled:pointer-events-none disabled:opacity-35",
     previous: "left-s-2",
     next: "right-s-2",
@@ -146,7 +146,7 @@ const carouselStyles = tv({
     dot: "h-2 w-2 rounded-pill bg-l-border transition-[width,background-color] data-[selected=true]:w-5 data-[selected=true]:bg-ember",
     thumbnails: "mt-s-3 flex items-center justify-center gap-s-2",
     thumbnail:
-      "h-14 w-14 overflow-hidden rounded-md border border-l-border bg-l-surface-raised opacity-75 transition " +
+      "h-14 w-14 overflow-hidden rounded-md border border-hairline-strong bg-l-surface-raised opacity-75 transition " +
       "hover:opacity-100 data-[selected=true]:border-ember data-[selected=true]:opacity-100 data-[selected=true]:shadow-[0_0_0_2px_rgba(216,67,10,0.22)]",
   },
   variants: {
@@ -446,11 +446,11 @@ export interface DataGridProps<T> extends Omit<
 
 const dataGridStyles = tv({
   slots: {
-    root: "w-full overflow-hidden rounded-md border border-l-border bg-l-surface",
+    root: "w-full overflow-hidden rounded-md border border-hairline-strong bg-l-surface",
     scroller: "w-full overflow-auto",
     table: "w-full min-w-full border-separate border-spacing-0 text-left",
     headerCell:
-      "sticky top-0 z-10 border-b border-l-border bg-l-surface-bar px-[12px] py-[9px] " +
+      "sticky top-0 z-10 border-b border-hairline-strong bg-l-surface-bar px-[12px] py-[9px] " +
       "font-sans text-[12px] font-medium text-l-ink-dim",
     headerButton:
       "inline-flex items-center gap-[6px] text-left outline-none hover:text-l-ink",
@@ -670,9 +670,9 @@ export interface FileTreeProps extends Omit<DivProps, "children"> {
 
 const fileTreeStyles = tv({
   slots: {
-    root: "file-tree flex flex-col gap-[2px] rounded-md border border-l-border bg-l-surface p-[6px] outline-none",
+    root: "file-tree flex flex-col gap-[2px] rounded-md border border-hairline-strong bg-l-surface p-[6px] outline-none",
     item:
-      "group flex w-full items-center gap-[6px] rounded-l px-[8px] py-[6px] text-left font-sans text-l-ink outline-none " +
+      "group flex w-full items-center gap-[6px] rounded-md px-[8px] py-[6px] text-left font-sans text-l-ink outline-none " +
       "transition-colors hover:bg-l-surface-hover focus-visible:ring-1 focus-visible:ring-ember",
     chevron:
       "flex h-4 w-4 items-center justify-center text-l-ink-dim transition-transform",
@@ -838,9 +838,9 @@ const floatingTocStyles = tv({
       "floating-toc__trigger flex flex-col gap-[8px] rounded-md p-s-2 outline-none focus-visible:ring-1 focus-visible:ring-ember",
     bar: "h-[2px] rounded-pill bg-l-border transition-[width,background-color] data-[active=true]:bg-ember",
     content:
-      "absolute top-0 z-20 min-w-[220px] rounded-md border border-l-border bg-l-surface-raised p-s-2 shadow-l-pop",
+      "absolute top-0 z-20 min-w-[220px] rounded-md border border-hairline-strong bg-l-surface-raised p-s-2 shadow-l-pop",
     item:
-      "block w-full rounded-l px-s-2 py-[6px] text-left font-sans text-[13px] text-l-ink-lo hover:bg-l-surface-hover " +
+      "block w-full rounded-md px-s-2 py-[6px] text-left font-sans text-[13px] text-l-ink-lo hover:bg-l-surface-hover " +
       "data-[active=true]:text-l-ink data-[active=true]:font-medium",
   },
 });
@@ -937,9 +937,9 @@ const hoverCardStyles = tv({
   slots: {
     trigger: "inline-flex",
     content:
-      "absolute z-30 min-w-[240px] rounded-md border border-l-border bg-l-surface-raised p-s-3 text-l-ink shadow-l-pop",
+      "absolute z-30 min-w-[240px] rounded-md border border-hairline-strong bg-l-surface-raised p-s-3 text-l-ink shadow-l-pop",
     arrow:
-      "absolute h-3 w-3 rotate-45 border-l border-t border-l-border bg-l-surface-raised",
+      "absolute h-3 w-3 rotate-45 border-l border-t border-hairline-strong bg-l-surface-raised",
   },
 });
 
@@ -1062,7 +1062,7 @@ export const HoverCard = Object.assign(HoverCardRoot, {
 const itemCardStyles = tv({
   slots: {
     root: "item-card flex items-center gap-s-3 rounded-md px-s-3 py-s-3 text-l-ink transition-colors",
-    icon: "item-card__icon flex h-9 w-9 shrink-0 items-center justify-center rounded-l bg-l-wash-3 text-l-ink-lo",
+    icon: "item-card__icon flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-l-wash-3 text-l-ink-lo",
     content: "item-card__content min-w-0 flex-1",
     title:
       "item-card__title block truncate font-sans text-[13px] font-medium text-l-ink",
@@ -1077,7 +1077,7 @@ const itemCardStyles = tv({
       },
       secondary: { root: "bg-l-wash-2" },
       tertiary: { root: "bg-l-wash-1" },
-      outline: { root: "border border-l-border bg-transparent" },
+      outline: { root: "border border-hairline-strong bg-transparent" },
       transparent: { root: "bg-transparent" },
     },
     pressable: {
@@ -1143,7 +1143,7 @@ const itemCardGroupStyles = tv({
       },
       secondary: { root: "bg-l-wash-2 p-s-2" },
       tertiary: { root: "bg-l-wash-1 p-s-2" },
-      outline: { root: "border border-l-border bg-transparent p-s-2" },
+      outline: { root: "border border-hairline-strong bg-transparent p-s-2" },
       transparent: { root: "bg-transparent" },
     },
     layout: {
@@ -1206,10 +1206,10 @@ export const ItemCardGroup = Object.assign(ItemCardGroupRoot, {
 
 const kpiStyles = tv({
   slots: {
-    root: "kpi relative flex min-w-0 flex-col gap-s-3 rounded-md border border-l-border bg-l-surface-raised p-s-4",
+    root: "kpi relative flex min-w-0 flex-col gap-s-3 rounded-md border border-hairline-strong bg-l-surface-raised p-s-4",
     header: "kpi__header flex items-start gap-s-3",
     content: "kpi__content grid grid-cols-[1fr_auto] items-end gap-s-3",
-    icon: "kpi__icon flex h-9 w-9 items-center justify-center rounded-l bg-l-wash-3",
+    icon: "kpi__icon flex h-9 w-9 items-center justify-center rounded-md bg-l-wash-3",
     actions: "kpi__actions absolute right-s-3 top-s-3",
     title: "kpi__title font-sans text-[12px] font-medium text-l-ink-dim",
     value:
@@ -1383,7 +1383,7 @@ export const KPI = Object.assign(KPIRoot, {
 
 const kpiGroupStyles = tv({
   slots: {
-    root: "kpi-group rounded-md border border-l-border bg-l-surface p-s-2",
+    root: "kpi-group rounded-md border border-hairline-strong bg-l-surface p-s-2",
     separator: "kpi-group__separator bg-l-border",
   },
   variants: {
@@ -1438,7 +1438,7 @@ const listViewStyles = tv({
   slots: {
     root: "list-view w-full rounded-md outline-none",
     item:
-      "list-view__item flex items-center gap-s-3 rounded-l px-s-3 py-s-3 text-l-ink outline-none transition-colors " +
+      "list-view__item flex items-center gap-s-3 rounded-md px-s-3 py-s-3 text-l-ink outline-none transition-colors " +
       "hover:bg-l-surface-hover data-[selected=true]:bg-l-surface-selected",
     content: "list-view__item-content min-w-0 flex flex-1 items-center gap-s-3",
     title:
@@ -1567,7 +1567,7 @@ const kanbanStyles = tv({
     cardList: "kanban__card-list flex flex-col gap-s-2",
     card: "kanban__card rounded-md bg-l-surface-raised p-s-3 text-sm text-l-ink shadow-[inset_0_0_0_1px_var(--l-border)] hover:bg-l-surface-hover",
     empty:
-      "kanban__empty rounded-md border border-dashed border-l-border p-s-4 text-center text-sm text-l-ink-dim",
+      "kanban__empty rounded-md border border-dashed border-hairline-strong p-s-4 text-center text-sm text-l-ink-dim",
   },
   variants: {
     size: {
@@ -1655,13 +1655,13 @@ export const Kanban = Object.assign(KanbanRoot, {
 
 const widgetStyles = tv({
   slots: {
-    root: "widget rounded-lg border border-l-border bg-l-wash-2 p-s-3",
+    root: "widget rounded-lg border border-hairline-strong bg-l-wash-2 p-s-3",
     header: "widget__header mb-s-3 flex items-start justify-between gap-s-3",
     title: "widget__title font-sans text-sm font-semibold text-l-ink",
     description:
       "widget__description mt-1 font-sans text-[12px] text-l-ink-dim",
     content:
-      "widget__content rounded-md border border-l-border bg-l-surface-raised p-s-4 shadow-sm",
+      "widget__content rounded-md border border-hairline-strong bg-l-surface-raised p-s-4 shadow-sm",
     footer: "widget__footer mt-s-3 font-sans text-[12px] text-l-ink-dim",
     legend: "widget__legend flex flex-wrap items-center gap-s-3",
     legendItem:

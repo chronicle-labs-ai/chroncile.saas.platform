@@ -249,6 +249,22 @@
   --dur-fast: 120ms;
   --dur: 220ms;
   --dur-slow: 480ms;
+  /* Asymmetric drawer / modal motion — exits should feel like
+     departure, not entrance-in-reverse. */
+  --dur-enter: 240ms;
+  --dur-exit: 180ms;
+
+  /* ── Z-index scale ──────────────────────────────────────────
+     One canonical scale for layered surfaces. Replace any
+     ad-hoc `z-50` / `z-9999` with the appropriate token below. */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 100;
+  --z-overlay: 200;       /* full-screen overlays / backdrops */
+  --z-modal: 210;         /* dialogs, drawers (above overlay) */
+  --z-popover: 220;       /* dropdowns, comboboxes, autocompletes */
+  --z-tooltip: 230;       /* tooltips render above everything else */
+  --z-toast: 240;         /* toast / snackbar takes the very top */
 
   /* ── Shadows — Chronicle (brand surfaces) ────────────────── */
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset,

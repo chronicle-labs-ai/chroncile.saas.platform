@@ -46,6 +46,6 @@ function Harness({
 export const Default: Story = { render: () => <Harness /> };
 
 export const HeaderlessOverview: Story = {
-  render: () => <Harness density="compact" hideHeader />,
+  render: () => <Harness hideHeader />,
 };
 

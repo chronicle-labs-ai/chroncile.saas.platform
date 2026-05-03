@@ -83,7 +83,7 @@ function GroupHeadRoot({
       tabIndex={onToggle ? 0 : undefined}
       className={cx(
         "sticky top-0 z-[5] flex h-[36px] items-center gap-[10px] px-s-4",
-        "border-b border-l-border bg-l-surface-bar",
+        "border-b border-hairline-strong bg-l-surface-bar",
         "text-[12.5px] font-medium text-l-ink",
         onToggle ? "cursor-pointer hover:bg-l-wash-3" : null,
         "transition-colors duration-fast",

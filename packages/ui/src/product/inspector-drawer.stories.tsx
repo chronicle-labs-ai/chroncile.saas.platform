@@ -19,7 +19,7 @@ export const Open: Story = {
     function Demo() {
       const [open, setOpen] = React.useState(true);
       return (
-        <div className="relative h-[560px] w-[1000px] overflow-hidden border border-l-border bg-l-surface">
+        <div className="relative h-[560px] w-[1000px] overflow-hidden border border-hairline-strong bg-l-surface">
           <div className="flex h-full items-center justify-center text-l-ink-lo">
             <Button onClick={() => setOpen((o) => !o)}>Toggle inspector</Button>
           </div>

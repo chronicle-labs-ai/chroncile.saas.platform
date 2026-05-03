@@ -2,12 +2,18 @@
 
 import * as React from "react";
 import { Button } from "../primitives/button";
+import { Checkbox } from "../primitives/checkbox";
 import { Eyebrow } from "../primitives/eyebrow";
 import { Input } from "../primitives/input";
-import { Modal } from "../primitives/modal";
-import { ArrowLeftIcon, ArrowRightIcon } from "../icons/glyphs";
+import { ConfirmModal, Modal } from "../primitives/modal";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChevronRightIcon,
+  MoreHorizontalIcon,
+} from "../icons/glyphs";
 import { CompanyLogo } from "../icons";
-import { AuthDisplay, AuthLede } from "../auth/_internal";
+import { AuthDisplay, AuthLede, StatusChip } from "../auth/_internal";
 import { cx } from "../utils/cx";
 import {
   SOURCES,
@@ -116,6 +122,17 @@ export function StepConnect({
     null
   );
   const [expandedRow, setExpandedRow] = React.useState<SourceId | null>(null);
+  /*
+   * Exit-sandbox is destructive (wipes connected sources + backfills),
+   * so we route it through a confirm dialog instead of letting a
+   * mis-tap clear the demo state.
+   */
+  const [sandboxExitOpen, setSandboxExitOpen] = React.useState(false);
+  /*
+   * Stable id per category collapsible — used to wire `aria-controls`
+   * on the toggle button to the panel it expands.
+   */
+  const catPanelId = React.useId();
 
   /* ── Sandbox auto-connect ─────────────────────────────── */
   const initRef = React.useRef(false);
@@ -279,30 +296,40 @@ export function StepConnect({
       {/* Sandbox banner */}
       {value.sandbox ? (
         <div className="cg-fade-up cg-fade-up-1 mt-s-4 flex items-center gap-s-3 rounded-sm border border-ember/40 bg-ember/[0.04] px-s-3 py-s-2">
-          <span className="font-mono text-mono-sm uppercase tracking-tactical text-ember">
-            SANDBOX
-          </span>
+          <StatusChip tone="ember">SANDBOX</StatusChip>
           <span className="font-mono text-mono text-ink-lo flex-1">
             Sample events from Intercom, Shopify and Stripe.
           </span>
           <Button
             variant="ghost"
             size="sm"
-            onPress={() => {
-              onChange({
-                ...value,
-                sandbox: false,
-                intendedSources: [],
-                connected: [],
-                backfills: {},
-              });
-              initRef.current = false;
-            }}
+            onPress={() => setSandboxExitOpen(true)}
           >
-            Exit
+            Exit sandbox
           </Button>
         </div>
       ) : null}
+
+      <ConfirmModal
+        isOpen={sandboxExitOpen}
+        onClose={() => setSandboxExitOpen(false)}
+        onConfirm={() => {
+          onChange({
+            ...value,
+            sandbox: false,
+            intendedSources: [],
+            connected: [],
+            backfills: {},
+          });
+          initRef.current = false;
+          setSandboxExitOpen(false);
+        }}
+        title="Exit sandbox?"
+        message="The sample sources and any in-flight backfills will be cleared. You'll start with a clean catalog so you can connect real data."
+        confirmText="Exit sandbox"
+        cancelText="Keep exploring"
+        variant="danger"
+      />
 
       {/* Detected shelf */}
       {detectedSources.length > 0 ? (
@@ -353,9 +380,13 @@ export function StepConnect({
             }
             count={sources.length - detectedSources.length}
           />
-          <div className="w-[240px]">
+          {/*
+           * Cap on wider screens but let the input shrink on narrow
+           * shells so the section header keeps room for its label
+           * and count.
+           */}
+          <div className="w-full max-w-[240px] flex-1 sm:flex-none">
             <Input
-              density="compact"
               search
               placeholder={`Search ${sources.length} sources`}
               value={query}
@@ -379,36 +410,43 @@ export function StepConnect({
             const numCatConnected = items.filter((s) =>
               value.connected.includes(s.id)
             ).length;
+            const panelId = `${catPanelId}-${cat}`;
             return (
               <div key={cat} className="border-t border-hairline py-s-2">
                 <button
                   type="button"
                   onClick={() => toggleCat(cat)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
                   className="flex w-full items-center gap-s-2 py-[2px] text-left"
                 >
                   <span
                     className={cx(
-                      "inline-block w-[12px] font-mono text-mono-sm text-ink-dim transition-transform duration-fast",
+                      "inline-flex h-[12px] w-[12px] items-center justify-center text-ink-dim",
+                      "transition-transform duration-fast",
                       isOpen ? "rotate-90" : "rotate-0"
                     )}
                     aria-hidden
                   >
-                    ›
+                    <ChevronRightIcon size={10} />
                   </span>
                   <span className="flex-1 font-sans text-[13.5px] text-ink-hi">
                     {cat}
                   </span>
-                  <span className="font-mono text-mono-sm text-ink-dim">
+                  <span className="inline-flex items-center gap-s-2 font-mono text-mono-sm tabular-nums text-ink-dim">
                     {anyConnected ? (
-                      <span className="mr-s-2 text-event-green">
-                        ● {numCatConnected} connected
-                      </span>
+                      <StatusChip tone="green" dot>
+                        {numCatConnected} connected
+                      </StatusChip>
                     ) : null}
-                    {items.length}
+                    <span>{items.length}</span>
                   </span>
                 </button>
                 {isOpen ? (
-                  <div className="mt-s-2 grid grid-cols-2 gap-s-2 pl-s-5">
+                  <div
+                    id={panelId}
+                    className="mt-s-2 grid grid-cols-2 gap-s-2 pl-s-5"
+                  >
                     {items.map((s) => (
                       <SourceTile
                         key={s.id}
@@ -451,21 +489,19 @@ export function StepConnect({
       <div className="cg-step-foot flex-col items-stretch gap-s-3">
         {numConnected > 0 ? (
           <div className="flex flex-wrap items-center gap-s-3 rounded-sm border border-hairline bg-surface-01 px-s-3 py-s-2">
-            <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
-              READY
-            </span>
-            <span className="inline-flex items-center gap-[6px] font-mono text-mono text-ink-hi">
+            <StatusChip tone="dim">READY</StatusChip>
+            <span className="inline-flex items-center gap-[6px] font-mono text-mono tabular-nums text-ink-hi">
               <span className="h-[6px] w-[6px] rounded-pill bg-event-green" />
               {numConnected} source{numConnected === 1 ? "" : "s"} live
             </span>
             {numRunning > 0 ? (
-              <span className="inline-flex items-center gap-[6px] font-mono text-mono text-ink-lo">
+              <span className="inline-flex items-center gap-[6px] font-mono text-mono tabular-nums text-ink-lo">
                 <span className="cg-pulse-ember h-[6px] w-[6px] rounded-pill bg-ember" />
                 {numRunning} backfilling
               </span>
             ) : null}
             {totalQueued > 0 ? (
-              <span className="ml-auto font-mono text-mono text-ink-dim">
+              <span className="ml-auto font-mono text-mono tabular-nums text-ink-dim">
                 ~{totalQueued.toLocaleString()} events queued
               </span>
             ) : null}
@@ -485,7 +521,9 @@ export function StepConnect({
             isDisabled={numConnected === 0}
             trailingIcon={<ArrowRightIcon />}
           >
-            Continue {numConnected > 0 ? `· ${numConnected}` : ""}
+            <span className="tabular-nums">
+              Continue {numConnected > 0 ? `· ${numConnected}` : ""}
+            </span>
           </Button>
         </div>
       </div>
@@ -515,7 +553,9 @@ function SectionHeader({
         {label}
       </span>
       {count != null ? (
-        <span className="font-mono text-mono-sm text-ink-dim">{count}</span>
+        <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
+          {count}
+        </span>
       ) : null}
     </div>
   );
@@ -574,25 +614,22 @@ function SourceRow({
               {source.name}
             </span>
             {wasIntended && !isConnected ? (
-              <span className="font-mono text-mono-sm uppercase tracking-tactical text-ember">
-                DETECTED
-              </span>
+              <StatusChip tone="ember">DETECTED</StatusChip>
             ) : null}
             {isConnected ? (
-              <span className="inline-flex items-center gap-[4px] font-mono text-mono-sm uppercase tracking-tactical text-event-green">
-                <span className="h-[5px] w-[5px] rounded-pill bg-event-green" />
+              <StatusChip tone="green" dot>
                 LIVE
-              </span>
+              </StatusChip>
             ) : null}
             {isConnected && running ? (
-              <span className="font-mono text-mono-sm uppercase tracking-tactical text-ember">
+              <StatusChip tone="ember">
                 BACKFILLING {Math.round((backfill!.progress ?? 0) * 100)}%
-              </span>
+              </StatusChip>
             ) : null}
             {isConnected && bfDone ? (
-              <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+              <StatusChip tone="dim">
                 {(backfill!.estEvents ?? 0).toLocaleString()} historical events
-              </span>
+              </StatusChip>
             ) : null}
           </div>
           <span className="font-mono text-mono-sm text-ink-dim">
@@ -607,9 +644,9 @@ function SourceRow({
                 size="sm"
                 onPress={onToggleExpand}
                 aria-label="More options"
-              >
-                ⋯
-              </Button>
+                aria-expanded={expanded}
+                leadingIcon={<MoreHorizontalIcon />}
+              />
             ) : null}
             <Button variant="ghost" size="sm" onPress={onDisconnect}>
               Disconnect
@@ -630,11 +667,17 @@ function SourceRow({
         )}
       </div>
 
-      {/* Running progress strip */}
+      {/*
+       * Running progress strip — the parent updates `backfill.progress`
+       * on a 500 ms interval. Layering an additional CSS width
+       * transition over that produces a perceptible double-easing
+       * jitter; we let the interval drive the width directly so the
+       * bar moves in clean discrete steps that read as smooth motion.
+       */}
       {isConnected && hasBf && running ? (
         <div className="h-[2px] overflow-hidden border-t border-hairline bg-surface-02">
           <div
-            className="h-full bg-ember transition-[width] duration-500 ease-linear"
+            className="h-full bg-ember"
             style={{ width: `${(backfill!.progress ?? 0) * 100}%` }}
           />
         </div>
@@ -645,7 +688,7 @@ function SourceRow({
         <div className="flex items-center gap-s-3 border-t border-hairline pl-[60px] pr-s-3 py-s-2">
           {bfDone ? (
             <>
-              <span className="flex-1 font-mono text-mono-sm text-ink-dim">
+              <span className="flex-1 font-mono text-mono-sm tabular-nums text-ink-dim">
                 Last {backfill!.windowDays}d imported ·{" "}
                 {(backfill!.estEvents ?? 0).toLocaleString()} events
               </span>
@@ -656,16 +699,21 @@ function SourceRow({
           ) : null}
           {!backfill ? (
             <>
-              <span className="flex-1 font-mono text-mono-sm text-ink-dim">
+              <span className="flex-1 font-mono text-mono-sm tabular-nums text-ink-dim">
                 History available — last {source.backfill?.maxDays}d
               </span>
-              <Button variant="ember" size="sm" onPress={onStartBackfill}>
-                Backfill →
+              <Button
+                variant="ember"
+                size="sm"
+                onPress={onStartBackfill}
+                trailingIcon={<ArrowRightIcon />}
+              >
+                Backfill
               </Button>
             </>
           ) : null}
           {running ? (
-            <span className="flex-1 font-mono text-mono-sm text-ink-dim">
+            <span className="flex-1 font-mono text-mono-sm tabular-nums text-ink-dim">
               Importing…{" "}
               {Math.round(
                 (backfill!.progress ?? 0) * (backfill!.estEvents ?? 1000)
@@ -721,13 +769,12 @@ function SourceTile({
             {source.name}
           </span>
           {isConnected ? (
-            <span className="h-[5px] w-[5px] shrink-0 rounded-pill bg-event-green" />
+            <span
+              aria-hidden
+              className="h-[5px] w-[5px] shrink-0 rounded-pill bg-event-green"
+            />
           ) : null}
-          {running ? (
-            <span className="font-mono text-mono-sm uppercase tracking-tactical text-ember">
-              SYNC
-            </span>
-          ) : null}
+          {running ? <StatusChip tone="ember">SYNC</StatusChip> : null}
         </div>
         <span className="truncate font-mono text-mono-sm text-ink-dim">
           {source.blurb}
@@ -831,17 +878,19 @@ export function BackfillConfig({
   return (
     <div className="flex flex-col gap-s-4">
       <label className="flex items-center gap-s-3 rounded-sm border border-hairline bg-surface-02 px-s-3 py-s-2">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => onToggleEnabled(e.target.checked)}
-          className="h-4 w-4 accent-ember"
+        <Checkbox
+          size="md"
+          isSelected={enabled}
+          onChange={onToggleEnabled}
+          aria-label="Run a historical backfill"
         />
         <span className="flex-1 font-sans text-[13px] text-ink">
           Backfill the last{" "}
-          <b className="text-ink-hi font-medium">{windowDays} days</b>
+          <b className="text-ink-hi font-medium tabular-nums">
+            {windowDays} days
+          </b>
         </span>
-        <span className="font-mono text-mono-sm text-ink-dim">
+        <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
           ~{estEvents.toLocaleString()} events
         </span>
       </label>
@@ -875,16 +924,16 @@ export function BackfillConfig({
                   key={e.id}
                   className="flex cursor-pointer items-center gap-s-2 rounded-sm border border-hairline bg-surface-02 px-s-3 py-s-2"
                 >
-                  <input
-                    type="checkbox"
-                    checked={entities.includes(e.id)}
+                  <Checkbox
+                    size="md"
+                    isSelected={entities.includes(e.id)}
                     onChange={() => toggleEntity(e.id)}
-                    className="h-4 w-4 accent-ember"
+                    aria-label={`Include ${e.label}`}
                   />
                   <span className="flex-1 font-sans text-[13px] text-ink">
                     {e.label}
                   </span>
-                  <span className="font-mono text-mono-sm text-ink-dim">
+                  <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
                     ~{e.est}/day
                   </span>
                 </label>
@@ -968,7 +1017,9 @@ function BackfillModal({
             }
             isDisabled={bfEntities.length === 0}
           >
-            Start backfill · {estEvents.toLocaleString()} events
+            <span className="tabular-nums">
+              Start backfill · {estEvents.toLocaleString()} events
+            </span>
           </Button>
         </>
       }

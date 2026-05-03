@@ -4,7 +4,29 @@ import * as React from "react";
 
 import { cn } from "../utils/cn";
 
-const SIDEBAR_WIDTH = "16rem";
+/*
+ * Sidebar primitives — Chronicle's quiet take on the shadcn sidebar.
+ *
+ * Design intent (Emil's principles applied):
+ *   - The sidebar shares the page surface (`tone="canvas"`) so the
+ *     dashboard reads as one room with a hairline rule between
+ *     navigation and content. The legacy raised tone (`tone="raised"`)
+ *     stays the default to avoid regressing existing consumers.
+ *   - Active state is signalled by a 2 px ember rail + soft selection
+ *     wash + lifted ink, never by a font-weight change. Idle and
+ *     active items use the same `font-medium` weight, so toggling
+ *     selection causes zero layout shift.
+ *   - Hover effects only apply on devices that actually support hover
+ *     (Tailwind's `hover:` is wrapped in `(hover: hover)` via
+ *     `hoverOnlyWhenSupported` in the workspace tailwind config).
+ *   - Interactive controls carry `touch-manipulation` to suppress the
+ *     iOS 300 ms double-tap delay and use a neutral focus ring; per
+ *     Emil, focus outlines should not be brand-coloured.
+ *   - Width transitions use a token-driven ease-out curve. Reduced
+ *     motion is honoured by the global guard in `globals.css`.
+ */
+
+const SIDEBAR_WIDTH = "15rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 
 type SidebarContextValue = {
@@ -95,7 +117,7 @@ export function SidebarProvider({
           } as React.CSSProperties
         }
         className={cn(
-          "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar text-foreground",
+          "group/sidebar-wrapper flex min-h-svh w-full text-foreground isolate has-[[data-variant=inset]]:bg-sidebar",
           className,
         )}
         {...props}
@@ -111,13 +133,22 @@ export interface SidebarProps extends React.ComponentPropsWithoutRef<"aside"> {
   variant?: "sidebar" | "floating" | "inset" | "fixed" | "static";
   collapsible?: "offcanvas" | "icon" | "none";
   width?: "sm" | "md" | "product" | "lg";
-  density?: "compact" | "brand" | "product";
+  /**
+   * Surface tone.
+   *   - `raised` (default) — `bg-sidebar` (`--c-surface-01`); the legacy
+   *     shadcn-style behaviour. Reads as a slightly lifted slab.
+   *   - `canvas` — shares the page surface (`--c-surface-00`). The
+   *     sidebar and main content live on the same plane, separated
+   *     by a hairline divider only. Quieter, Linear/Vercel-style.
+   */
+  tone?: "raised" | "canvas";
 }
 
 function SidebarRoot({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
+  tone = "raised",
   className,
   children,
   ...props
@@ -126,6 +157,31 @@ function SidebarRoot({
   const open = context?.isMobile ? context.openMobile : (context?.open ?? true);
   const staticVariant = variant === "static";
 
+  /*
+   * Tone surface:
+   *   - canvas: the sidebar shares the page surface. Separation comes
+   *     from a single hairline divider on the inside edge, never a
+   *     filled border, so the seam reads as a 1 px rule on standard
+   *     displays and 0.5 px on retina (the underlying token already
+   *     accounts for that).
+   *   - raised: the legacy `bg-sidebar` slab + `border-sidebar-border`.
+   *     Kept so existing surfaces (env-manager, primitive stories)
+   *     don't regress.
+   */
+  const surfaceClass =
+    tone === "canvas"
+      ? "bg-page text-foreground"
+      : "bg-sidebar text-sidebar-foreground";
+
+  // Side-divider as inset shadow keeps the divider crisp without the
+  // double-pixel feel of a real border, and lets the bg blend cleanly.
+  const dividerClass =
+    tone === "canvas"
+      ? side === "right"
+        ? "shadow-[inset_1px_0_0_0_var(--c-hairline)]"
+        : "shadow-[inset_-1px_0_0_0_var(--c-hairline)]"
+      : "";
+
   if (staticVariant || collapsible === "none") {
     return (
       <aside
@@ -133,10 +189,16 @@ function SidebarRoot({
         data-state={open ? "expanded" : "collapsed"}
         data-side={side}
         data-variant={variant}
+        data-tone={tone}
         data-collapsible={open ? "" : collapsible}
         className={cn(
-          "group/sidebar peer flex h-full w-[var(--sidebar-width)] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
-          side === "right" && "border-l border-r-0",
+          "group/sidebar peer flex h-full w-[var(--sidebar-width)] shrink-0 flex-col",
+          surfaceClass,
+          dividerClass,
+          // Only paint a real border when we're staying with the raised tone;
+          // canvas tone uses the inset shadow above instead.
+          tone === "raised" && "border-r border-sidebar-border",
+          tone === "raised" && side === "right" && "border-l border-r-0",
           className,
         )}
         {...props}
@@ -152,15 +214,17 @@ function SidebarRoot({
       data-state={open ? "expanded" : "collapsed"}
       data-side={side}
       data-variant={variant}
+      data-tone={tone}
       data-collapsible={open ? "" : collapsible}
       className={cn(
-        "group/sidebar peer hidden text-sidebar-foreground md:block",
+        "group/sidebar peer hidden md:block",
+        tone === "canvas" ? "text-foreground" : "text-sidebar-foreground",
         className,
       )}
     >
       <div
         className={cn(
-          "relative w-[var(--sidebar-width)] bg-transparent transition-[width] duration-200 ease-linear",
+          "relative w-[var(--sidebar-width)] bg-transparent transition-[width] duration-[220ms] ease-out motion-reduce:transition-none",
           "group-data-[collapsible=offcanvas]/sidebar:w-0",
           "group-data-[side=right]/sidebar:rotate-180",
           variant === "floating" || variant === "inset"
@@ -170,13 +234,18 @@ function SidebarRoot({
       />
       <aside
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-[var(--sidebar-width)] transition-[left,right,width] duration-200 ease-linear md:flex",
+          "fixed inset-y-0 z-sticky hidden h-svh w-[var(--sidebar-width)] transition-[left,right,width] duration-[220ms] ease-out motion-reduce:transition-none md:flex",
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]/sidebar:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]/sidebar:right-[calc(var(--sidebar-width)*-1)]",
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]/sidebar:w-[calc(var(--sidebar-width-icon)+1rem+2px)]"
-            : "group-data-[collapsible=icon]/sidebar:w-[var(--sidebar-width-icon)] group-data-[side=left]/sidebar:border-r group-data-[side=right]/sidebar:border-l",
+            : "group-data-[collapsible=icon]/sidebar:w-[var(--sidebar-width-icon)]",
+          // Real border only on raised tone.
+          variant !== "floating" &&
+            variant !== "inset" &&
+            tone === "raised" &&
+            "group-data-[side=left]/sidebar:border-r group-data-[side=right]/sidebar:border-l",
           className,
         )}
         {...props}
@@ -184,7 +253,9 @@ function SidebarRoot({
         <div
           data-sidebar="sidebar"
           className={cn(
-            "flex h-full w-full flex-col bg-sidebar text-sidebar-foreground",
+            "flex h-full w-full flex-col",
+            surfaceClass,
+            dividerClass,
             "group-data-[variant=floating]/sidebar:rounded-lg group-data-[variant=floating]/sidebar:border group-data-[variant=floating]/sidebar:border-sidebar-border group-data-[variant=floating]/sidebar:shadow",
           )}
         >
@@ -233,7 +304,7 @@ export function SidebarContent({
     <div
       data-slot="sidebar-content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]/sidebar:overflow-hidden",
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto chron-scrollbar group-data-[collapsible=icon]/sidebar:overflow-hidden",
         className,
       )}
       {...props}
@@ -251,7 +322,8 @@ export function SidebarFooter({
       data-slot="sidebar-footer"
       className={cn(
         "flex flex-col gap-2 p-2",
-        padded && "border-t border-sidebar-border",
+        padded &&
+          "border-t border-hairline group-data-[tone=canvas]/sidebar:border-hairline group-data-[tone=raised]/sidebar:border-sidebar-border",
         className,
       )}
       {...props}
@@ -276,12 +348,15 @@ export function SidebarGroupLabel({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  // Eyebrow-style: uppercase mono microcaps, dim ink, generous tracking.
+  // The label is structural; it should never compete with nav items.
   return (
     <div
       data-slot="sidebar-group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2",
-        "group-data-[collapsible=icon]/sidebar:-mt-8 group-data-[collapsible=icon]/sidebar:opacity-0",
+        "flex h-7 shrink-0 items-center px-2 font-mono text-[10px] font-medium uppercase tracking-[0.08em] leading-none text-l-ink-dim",
+        "transition-[margin,opacity] duration-[150ms] ease-out motion-reduce:transition-none",
+        "group-data-[collapsible=icon]/sidebar:-mt-7 group-data-[collapsible=icon]/sidebar:opacity-0",
         className,
       )}
       {...props}
@@ -345,17 +420,54 @@ export function SidebarMenuButton({
   children,
   ...props
 }: SidebarMenuButtonProps) {
+  /*
+   * Idle / hover / active language:
+   *   - All three states share the same `font-medium` weight, so
+   *     toggling selection causes zero layout shift (Emil's
+   *     "no font weight change on selected" rule).
+   *   - Idle ink is one step dimmer than active so the eye lands on
+   *     the chosen page first.
+   *   - Active state: a 2 px ember rail at the inner edge + soft
+   *     `--c-row-selected` wash + lifted ink. The rail is rendered
+   *     by a `::before` pseudo so it never participates in the flex
+   *     measurement of the row.
+   *   - Hover wash uses the page-wide `--c-row-hover` token. The
+   *     `hover:` variant is wrapped in `(hover: hover) and (pointer:
+   *     fine)` by the workspace tailwind config, so touch devices
+   *     never see a stale pressed state.
+   *   - Transitions are explicit (colors + opacity) and short
+   *     (150 ms ease-out). The collapse-to-icon transition keeps
+   *     `width/padding` on its own track.
+   *   - Focus ring is a neutral hairline; brand-coloured outlines
+   *     clash with the surrounding chrome.
+   */
   const classes = cn(
-    "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm outline-none ring-sidebar-ring",
-    "transition-[width,height,padding,color,background-color] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+    "peer/menu-button group/menu-button relative isolate flex w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left font-medium outline-none touch-manipulation",
+    // Idle / hover / focus / active colour states
+    "text-l-ink-lo [&>svg]:text-l-ink-dim",
+    "hover:bg-[var(--c-row-hover)] hover:text-foreground hover:[&>svg]:text-foreground",
+    "focus-visible:ring-1 focus-visible:ring-l-ink-dim focus-visible:ring-offset-0",
+    "active:bg-[var(--c-row-selected)] active:text-foreground",
+    // Selected state: rail + wash + ink lift, no weight change
+    "data-[active=true]:bg-[var(--c-row-selected)] data-[active=true]:text-foreground data-[active=true]:[&>svg]:text-foreground",
+    "before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-ember before:opacity-0 before:transition-opacity before:duration-[150ms] before:ease-out motion-reduce:before:transition-none",
+    "data-[active=true]:before:opacity-100",
+    // Disabled
     "disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+    // Trailing space when an action sits beside the row
     "group-has-[[data-sidebar=menu-action]]/menu-item:pr-8",
-    "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
-    "group-data-[collapsible=icon]/sidebar:!size-8 group-data-[collapsible=icon]/sidebar:!p-2",
-    "[&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-    size === "sm" && "h-7 text-xs",
-    size === "default" && "h-8",
-    size === "lg" && "h-12 text-sm group-data-[collapsible=icon]/sidebar:!p-0",
+    // Collapsed (icon-only) sizing override
+    "group-data-[collapsible=icon]/sidebar:!size-8 group-data-[collapsible=icon]/sidebar:!p-2 group-data-[collapsible=icon]/sidebar:before:hidden",
+    // Children rules
+    "[&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-colors [&>svg]:duration-[150ms] [&>svg]:ease-out",
+    // Transition surface stays minimal — width/padding only here for the
+    // collapse animation; colours have their own short ease-out.
+    "transition-[width,height,padding,color,background-color] duration-[150ms] ease-out motion-reduce:transition-none",
+    // Size variants
+    size === "sm" && "h-7 text-[12px]",
+    size === "default" && "h-8 text-[13px]",
+    size === "lg" &&
+      "h-12 text-[13px] group-data-[collapsible=icon]/sidebar:!p-0",
     className,
   );
 
@@ -390,12 +502,23 @@ export function SidebarMenuAction({
   children,
   ...props
 }: SidebarMenuActionProps) {
+  /*
+   * Trailing action (chevron / "more" dots): a 20 × 20 visual that
+   * the parent menu-item reserves padding for. The pseudo `::after`
+   * extends the hit area to ~36 px on all viewports so it remains
+   * easy to tap without enlarging the visual. Per Emil, hover only
+   * surfaces on devices that support it (handled by the workspace
+   * tailwind config), and `transition: transform` is replaced by an
+   * explicit colour/opacity transition so we never trip the
+   * "transition: all" anti-pattern.
+   */
   const classes = cn(
-    "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform",
-    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground",
-    "after:absolute after:-inset-2 after:md:hidden group-data-[collapsible=icon]/sidebar:hidden [&>svg]:size-4 [&>svg]:shrink-0",
+    "absolute right-1 top-1/2 -translate-y-1/2 flex aspect-square w-6 items-center justify-center rounded-md p-0 text-l-ink-dim outline-none touch-manipulation",
+    "transition-[color,background-color,opacity,transform] duration-[150ms] ease-out motion-reduce:transition-none",
+    "hover:bg-[var(--c-row-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-l-ink-dim peer-hover/menu-button:text-foreground",
+    "after:absolute after:-inset-2 after:content-[''] group-data-[collapsible=icon]/sidebar:hidden [&>svg]:size-4 [&>svg]:shrink-0",
     showOnHover &&
-      "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
+      "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-foreground md:opacity-0",
     className,
   );
 
@@ -419,11 +542,16 @@ export function SidebarMenuSub({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"ul">) {
+  /*
+   * Submenu list — softer than the legacy heavy left-rule.
+   * Indent communicates hierarchy; we don't need a vertical rule.
+   * The active item's own ember rail provides enough visual anchor.
+   */
   return (
     <ul
       data-slot="sidebar-menu-sub"
       className={cn(
-        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
+        "ml-7 mt-0.5 flex min-w-0 flex-col gap-0.5 py-0.5 pr-2",
         "group-data-[collapsible=icon]/sidebar:hidden",
         className,
       )}
@@ -436,7 +564,13 @@ export function SidebarMenuSubItem({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"li">) {
-  return <li data-slot="sidebar-menu-sub-item" className={className} {...props} />;
+  return (
+    <li
+      data-slot="sidebar-menu-sub-item"
+      className={cn("relative", className)}
+      {...props}
+    />
+  );
 }
 
 export interface SidebarMenuSubButtonProps
@@ -454,13 +588,26 @@ export function SidebarMenuSubButton({
   children,
   ...props
 }: SidebarMenuSubButtonProps) {
+  /*
+   * Sub-button — same Emil language as the parent button (consistent
+   * weight, neutral focus, ember rail on active, soft selection
+   * wash) but at a quieter type scale and a slightly smaller rail
+   * so children read as subordinate without resorting to italics
+   * or weight changes.
+   */
   const classes = cn(
-    "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground/80 outline-none ring-sidebar-ring",
-    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground",
-    "aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-    "group-data-[collapsible=icon]/sidebar:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-    size === "sm" && "text-xs",
-    size === "md" && "text-sm",
+    "relative isolate flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 font-medium text-l-ink-lo outline-none touch-manipulation",
+    "transition-colors duration-[150ms] ease-out motion-reduce:transition-none",
+    "hover:bg-[var(--c-row-hover)] hover:text-foreground",
+    "focus-visible:ring-1 focus-visible:ring-l-ink-dim",
+    "active:bg-[var(--c-row-selected)] active:text-foreground",
+    "aria-disabled:pointer-events-none aria-disabled:opacity-50",
+    "data-[active=true]:bg-[var(--c-row-selected)] data-[active=true]:text-foreground",
+    "before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-3 before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-ember before:opacity-0 before:transition-opacity before:duration-[150ms] before:ease-out motion-reduce:before:transition-none",
+    "data-[active=true]:before:opacity-100",
+    "group-data-[collapsible=icon]/sidebar:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-l-ink-dim",
+    size === "sm" && "text-[12px]",
+    size === "md" && "text-[12px]",
     className,
   );
 
@@ -486,9 +633,15 @@ export function SidebarInput({
   return (
     <input
       data-slot="sidebar-input"
+      // Inputs must be at least 16 px on iOS to prevent the page-zoom
+      // jump on focus; we ship 13 px on desktop and bump to 16 px on
+      // narrow viewports via the responsive variant below.
       className={cn(
-        "flex h-8 w-full rounded-md border border-sidebar-border bg-background px-2 text-sm outline-none shadow-none",
-        "placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+        "flex h-8 w-full rounded-md border border-hairline bg-l-surface-input px-2 text-[13px] outline-none shadow-none touch-manipulation",
+        "placeholder:text-l-ink-dim",
+        "transition-[border-color,background-color,box-shadow] duration-[150ms] ease-out motion-reduce:transition-none",
+        "focus-visible:border-l-ink-dim focus-visible:ring-1 focus-visible:ring-l-ink-dim",
+        "max-md:text-[16px]",
         className,
       )}
       {...props}
@@ -546,7 +699,9 @@ export function SidebarNavItem({
       {icon}
       <span className="truncate">{children}</span>
       {status ? (
-        <span className="ml-auto rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+        // Trailing badge — quieter than the legacy ember-tinted chip.
+        // Tabular nums so changing counters never shift the row.
+        <span className="ml-auto rounded-sm bg-l-wash-3 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.06em] tabular-nums text-l-ink-dim">
           {status}
         </span>
       ) : null}
@@ -592,21 +747,23 @@ export function SidebarStatus({
     data: "text-event-teal",
     caution: "text-event-amber",
     critical: "text-event-red",
-    ember: "text-primary",
-    neutral: "text-muted-foreground",
+    ember: "text-ember",
+    neutral: "text-l-ink-dim",
   }[tone ?? "neutral"];
 
   return (
     <div
       data-slot="sidebar-status"
       className={cn(
-        "flex items-center justify-between border-y border-border px-4 py-2 text-xs text-muted-foreground",
+        "flex items-center justify-between border-y border-hairline px-4 py-2 font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim",
         className,
       )}
       {...props}
     >
       <span className={toneClass}>{label}</span>
-      {trailing ? <span>{trailing}</span> : null}
+      {trailing ? (
+        <span className="tabular-nums text-l-ink-dim">{trailing}</span>
+      ) : null}
     </div>
   );
 }
@@ -623,15 +780,23 @@ export function SidebarMeta({
   return (
     <div
       data-slot="sidebar-meta"
-      className={cn("border-t border-border p-4 text-xs text-muted-foreground", className)}
+      className={cn(
+        "border-t border-hairline p-4 text-[12px] text-l-ink-dim",
+        className,
+      )}
       {...props}
     >
-      {title ? <div className="mb-2 font-medium">{title}</div> : null}
+      {title ? (
+        <div className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-l-ink-dim">
+          {title}
+        </div>
+      ) : null}
       <div className="space-y-1">
         {rows.map((row, index) => (
           <div key={index} className="flex justify-between gap-3">
             <span>{row.label}</span>
-            <span className="text-foreground">{row.value}</span>
+            {/* tabular-nums prevents column drift when values change live */}
+            <span className="tabular-nums text-foreground">{row.value}</span>
           </div>
         ))}
       </div>
@@ -658,19 +823,26 @@ export function SidebarUserCard({
   return (
     <div
       data-slot="sidebar-user-card"
-      className={cn("flex items-center justify-between gap-2 p-2 text-sm", className)}
+      className={cn(
+        "flex items-center justify-between gap-2 p-2 text-[13px]",
+        className,
+      )}
       {...props}
     >
       <div className="min-w-0">
-        <p className="truncate font-medium">{name ?? initials ?? "User"}</p>
-        {email ? <p className="truncate text-xs text-muted-foreground">{email}</p> : null}
+        <p className="truncate font-medium text-foreground">
+          {name ?? initials ?? "User"}
+        </p>
+        {email ? (
+          <p className="truncate text-[12px] text-l-ink-dim">{email}</p>
+        ) : null}
       </div>
       {trailing ??
         (onSignOut ? (
           <button
             type="button"
             onClick={onSignOut}
-            className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="rounded-md px-2 py-1 text-[12px] text-l-ink-dim transition-colors duration-[150ms] ease-out touch-manipulation hover:bg-[var(--c-row-hover)] hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-l-ink-dim motion-reduce:transition-none"
           >
             Sign out
           </button>

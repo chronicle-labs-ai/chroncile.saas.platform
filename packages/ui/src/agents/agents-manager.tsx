@@ -165,7 +165,7 @@ export function AgentsManager({
             agentName={selectedSnapshot.summary.name}
             onBack={() => setSelectedName(null)}
           />
-          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-l-border bg-l-surface-raised">
+          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-hairline-strong bg-l-surface-raised">
             {renderDetail ? (
               renderDetail(selectedSnapshot, helpers)
             ) : (
@@ -208,7 +208,7 @@ export function AgentsManager({
                   }}
                 />
               ) : view === "list" ? (
-                <div className="rounded-[4px] border border-l-border bg-l-surface-raised">
+                <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
                   {filtered.map((agent) => (
                     <AgentRow
                       key={agent.name}

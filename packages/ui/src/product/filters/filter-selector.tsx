@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "../../primitives/popover";
 import { tv } from "../../utils/tv";
+import { useIsCoarsePointer } from "../../utils/use-is-coarse-pointer";
 
 import { FilterOperatorMenu } from "./filter-operator";
 import { coerceValueForOperator } from "./use-data-table-filters";
@@ -27,7 +28,7 @@ import { TextEditor } from "./value-editors/text";
 
 const styles = tv({
   slots: {
-    root: "flex w-[280px] flex-col gap-s-2 p-s-2",
+    root: "flex w-full flex-col gap-s-2 p-s-2",
     list: "max-h-[320px] overflow-auto outline-none",
     item:
       "flex cursor-pointer select-none items-center gap-s-3 rounded-xs px-s-2 py-s-2 " +
@@ -45,11 +46,12 @@ const styles = tv({
 
 const draftStyles = tv({
   slots: {
-    root: "flex flex-col min-w-[260px]",
+    root: "flex w-full flex-col",
     header: "flex items-center gap-s-2 border-b border-hairline px-s-2 py-s-2",
     back:
-      "inline-flex h-[24px] w-[24px] items-center justify-center rounded-xs " +
-      "text-ink-dim outline-none transition-colors duration-fast ease-out " +
+      "relative inline-flex h-[24px] w-[24px] items-center justify-center rounded-xs " +
+      "before:absolute before:-inset-2 before:content-['']" +
+      " text-ink-dim outline-none transition-colors duration-fast ease-out " +
       "hover:bg-surface-03 hover:text-ink-hi " +
       "focus-visible:outline focus-visible:outline-1 " +
       "focus-visible:outline-ember",
@@ -129,56 +131,73 @@ export function FilterSelector<TRow>({
           {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent side="bottom" align="start">
-        {draft === null ? (
-          <ColumnPicker
-            columns={columns}
-            disabledIds={disabledIds}
-            onPick={(col) => {
-              const operator = defaultOperatorFor(col.type);
-              const nextDraft: Draft<TRow> = {
-                column: col,
-                operator,
-                value: defaultValueFor(col.type, operator),
-              };
-              if (col.type === "option") {
-                // Options commit on single click inside the draft view.
-                setDraft(nextDraft);
-              } else {
-                setDraft(nextDraft);
+      <PopoverContent
+        side="bottom"
+        align="start"
+        className="w-[300px]"
+        onEscapeKeyDown={(e) => {
+          if (draft !== null) {
+            e.preventDefault();
+            reset();
+          }
+        }}
+      >
+        <div
+          key={draft === null ? "picker" : "draft"}
+          className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-150 motion-safe:ease-out"
+        >
+          {draft === null ? (
+            <ColumnPicker
+              columns={columns}
+              disabledIds={disabledIds}
+              onPick={(col) => {
+                const operator = defaultOperatorFor(col.type);
+                const nextDraft: Draft<TRow> = {
+                  column: col,
+                  operator,
+                  value: defaultValueFor(col.type, operator),
+                };
+                if (col.type === "option") {
+                  // Options commit on single click inside the draft view.
+                  setDraft(nextDraft);
+                } else {
+                  setDraft(nextDraft);
+                }
+              }}
+            />
+          ) : (
+            <DraftView
+              draft={draft}
+              onBack={reset}
+              onChangeOperator={(op) =>
+                setDraft((d) =>
+                  d
+                    ? {
+                        ...d,
+                        operator: op,
+                        value: coerceValueForOperator(
+                          d.column.type,
+                          d.operator,
+                          op,
+                          d.value
+                        ),
+                      }
+                    : d
+                )
               }
-            }}
-          />
-        ) : (
-          <DraftView
-            draft={draft}
-            onBack={reset}
-            onChangeOperator={(op) =>
-              setDraft((d) =>
-                d
-                  ? {
-                      ...d,
-                      operator: op,
-                      value: coerceValueForOperator(
-                        d.column.type,
-                        d.operator,
-                        op,
-                        d.value
-                      ),
-                    }
-                  : d
-              )
-            }
-            onChangeValue={(v) => setDraft((d) => (d ? { ...d, value: v } : d))}
-            onCommit={(overrideValue) =>
-              commit(
-                overrideValue !== undefined
-                  ? { value: overrideValue }
-                  : undefined
-              )
-            }
-          />
-        )}
+              onChangeValue={(v) =>
+                setDraft((d) => (d ? { ...d, value: v } : d))
+              }
+              onCommit={(overrideValue) =>
+                commit(
+                  overrideValue !== undefined
+                    ? { value: overrideValue }
+                    : undefined
+                )
+              }
+            />
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -194,6 +213,7 @@ function ColumnPicker<TRow>({
   onPick: (column: ColumnConfig<TRow>) => void;
 }) {
   const [query, setQuery] = React.useState("");
+  const coarsePointer = useIsCoarsePointer();
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return columns;
@@ -211,9 +231,12 @@ function ColumnPicker<TRow>({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search columns\u2026"
-        autoFocus
+        autoFocus={!coarsePointer}
         aria-label="Search columns"
       />
+      <div role="status" aria-live="polite" className="sr-only">
+        {filtered.length} {filtered.length === 1 ? "column" : "columns"}
+      </div>
       <div
         className={slots.list()}
         role="listbox"

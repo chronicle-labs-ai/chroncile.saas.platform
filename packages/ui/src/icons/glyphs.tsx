@@ -201,6 +201,79 @@ export const AlertIcon = ({ size = 14, className, ...rest }: IconProps) => (
   </svg>
 );
 
+/* ── Disclosure + overflow ─────────────────────────────────── */
+
+/**
+ * Right-pointing chevron used for collapsible disclosure rows. Pair
+ * with a CSS rotate when the section opens (transition the wrapper,
+ * not the SVG, so motion stays consistent across consumers).
+ */
+export const ChevronRightIcon = ({
+  size = 12,
+  className,
+  ...rest
+}: IconProps) => (
+  <svg viewBox="0 0 12 12" {...baseProps(size, className, rest)}>
+    <path
+      d="M4.5 2.5L8 6L4.5 9.5"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/** Three-dot horizontal "more options" affordance. */
+export const MoreHorizontalIcon = ({
+  size = 14,
+  className,
+  ...rest
+}: IconProps) => (
+  <svg viewBox="0 0 16 16" {...baseProps(size, className, rest)}>
+    <circle cx="3.5" cy="8" r="1.2" fill="currentColor" />
+    <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+    <circle cx="12.5" cy="8" r="1.2" fill="currentColor" />
+  </svg>
+);
+
+/* ── Transport (play / pause) ──────────────────────────────── */
+
+export const PlayIcon = ({ size = 12, className, ...rest }: IconProps) => (
+  <svg viewBox="0 0 12 12" {...baseProps(size, className, rest)}>
+    <path d="M3.5 2.5L9.5 6L3.5 9.5z" fill="currentColor" />
+  </svg>
+);
+
+export const PauseIcon = ({ size = 12, className, ...rest }: IconProps) => (
+  <svg viewBox="0 0 12 12" {...baseProps(size, className, rest)}>
+    <rect x="3" y="2.5" width="2.2" height="7" rx="0.4" fill="currentColor" />
+    <rect x="6.8" y="2.5" width="2.2" height="7" rx="0.4" fill="currentColor" />
+  </svg>
+);
+
+/* ── Restart / cycle ───────────────────────────────────────── */
+
+export const RestartIcon = ({ size = 12, className, ...rest }: IconProps) => (
+  <svg viewBox="0 0 12 12" {...baseProps(size, className, rest)}>
+    <path
+      d="M2.5 6a3.5 3.5 0 1 0 1.1-2.55"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path
+      d="M2 1.5V4h2.5"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
 /* ── Copy state (clipboard) ────────────────────────────────── */
 
 export const CopyIcon = ({ size = 16, className, ...rest }: IconProps) => (

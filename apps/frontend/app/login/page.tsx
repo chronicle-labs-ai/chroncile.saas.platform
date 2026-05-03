@@ -234,7 +234,7 @@ function LoginPageInner() {
   };
 
   return (
-    <AuthShell topbar={{}} align="center" chromeStyle="product">
+    <AuthShell topbar={{}} align="center">
       <SignIn
         onSubmit={handleSubmit}
         onForgot={() => router.push("/forgot-password")}

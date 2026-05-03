@@ -1,37 +1,25 @@
 "use client";
 
 import * as React from "react";
-import {
-  MoreHorizontal,
-  Pause,
-  Play,
-  RefreshCw,
-  Settings,
-  Activity,
-  Trash2,
-} from "lucide-react";
 
 import { cx } from "../utils/cx";
-import { Button } from "../primitives/button";
 import { Sparkline } from "../primitives/sparkline";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSection,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../primitives/dropdown-menu";
 import { CompanyLogo } from "../icons";
 import { getSource } from "../onboarding/data";
+import { ConnectionActionsMenu } from "./connection-actions-menu";
 import { ConnectionHealthBadge } from "./connection-health-badge";
 import { type Connection } from "./data";
 import { formatNumber } from "./time";
 
 /*
- * ConnectionCard — square tile variant for the dashboard's grid
- * view. Same data + actions as `ConnectionRow`, just laid out
- * vertically with a larger sparkline strip at the bottom.
+ * ConnectionCard — square tile variant for the dashboard's grid view.
+ * Same data + actions as `ConnectionRow`, just laid out vertically with
+ * a larger sparkline strip at the bottom.
+ *
+ * Activation pattern: same stretched-link approach as `ConnectionRow`.
+ * A real `<button>` is positioned absolutely behind the card contents
+ * and owns `onOpen`; the actions menu sits in front via `relative
+ * z-[1]` so its own click events still flow.
  */
 
 export interface ConnectionCardProps {
@@ -72,42 +60,31 @@ export function ConnectionCard({
   className,
 }: ConnectionCardProps) {
   const src = getSource(connection.source);
-  const isPaused = connection.health === "paused";
-  const isErrored = connection.health === "error";
-  const isExpired = connection.health === "expired";
-  const showResume = isPaused && !!onResume;
-  const showPause = !isPaused && !!onPause;
-  const showReauth = (isExpired || isErrored) && !!onReauth;
+  const titleId = React.useId();
 
   return (
     <div
-      role={onOpen ? "button" : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      onKeyDown={
-        onOpen
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpen(connection.id);
-              }
-            }
-          : undefined
-      }
-      onClick={onOpen ? () => onOpen(connection.id) : undefined}
       data-active={isActive || undefined}
       className={cx(
-        "group relative flex flex-col gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] p-4",
+        "group relative isolate flex flex-col gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] p-4",
         "transition-colors duration-fast",
         onOpen
-          ? "cursor-pointer hover:bg-[rgba(255,255,255,0.025)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
+          ? "hover:bg-[rgba(255,255,255,0.025)] focus-within:bg-[rgba(255,255,255,0.025)]"
           : null,
-        isActive
-          ? "border-ember/35 bg-[rgba(216,67,10,0.045)]"
-          : null,
+        isActive ? "border-ember/35 bg-[rgba(216,67,10,0.045)]" : null,
         className,
       )}
     >
-      <div className="flex items-start gap-3">
+      {onOpen ? (
+        <button
+          type="button"
+          aria-labelledby={titleId}
+          onClick={() => onOpen(connection.id)}
+          className="absolute inset-0 z-0 cursor-pointer rounded-[2px] outline-none focus-visible:ring-1 focus-visible:ring-ember/50"
+        />
+      ) : null}
+
+      <div className="relative z-[1] flex items-start gap-3">
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-hairline bg-surface-02"
           aria-hidden
@@ -122,7 +99,10 @@ export function ConnectionCard({
         </span>
 
         <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-          <span className="truncate font-sans text-[14px] text-ink-hi">
+          <span
+            id={titleId}
+            className="truncate font-sans text-[14px] text-ink-hi"
+          >
             {connection.name}
           </span>
           <span className="truncate font-mono text-mono-sm text-ink-dim">
@@ -130,76 +110,27 @@ export function ConnectionCard({
           </span>
         </div>
 
-        <div onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button
-                variant="icon"
-                size="sm"
-                aria-label={`Actions for ${connection.name}`}
-              >
-                <MoreHorizontal className="size-4" strokeWidth={1.75} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent density="compact" align="end">
-              <DropdownMenuSection>
-                {showResume ? (
-                  <DropdownMenuItem onAction={() => onResume?.(connection.id)}>
-                    <Play className="size-4" strokeWidth={1.75} />
-                    Resume
-                  </DropdownMenuItem>
-                ) : null}
-                {showPause ? (
-                  <DropdownMenuItem onAction={() => onPause?.(connection.id)}>
-                    <Pause className="size-4" strokeWidth={1.75} />
-                    Pause
-                  </DropdownMenuItem>
-                ) : null}
-                {showReauth ? (
-                  <DropdownMenuItem onAction={() => onReauth?.(connection.id)}>
-                    <RefreshCw className="size-4" strokeWidth={1.75} />
-                    Re-authorize
-                  </DropdownMenuItem>
-                ) : null}
-                {onTest ? (
-                  <DropdownMenuItem onAction={() => onTest?.(connection.id)}>
-                    <Activity className="size-4" strokeWidth={1.75} />
-                    Test connection
-                  </DropdownMenuItem>
-                ) : null}
-                {onSettings ? (
-                  <DropdownMenuItem onAction={() => onSettings?.(connection.id)}>
-                    <Settings className="size-4" strokeWidth={1.75} />
-                    Settings
-                  </DropdownMenuItem>
-                ) : null}
-              </DropdownMenuSection>
-              {onDisconnect ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    danger
-                    onAction={() => onDisconnect?.(connection.id)}
-                  >
-                    <Trash2 className="size-4" strokeWidth={1.75} />
-                    Disconnect
-                  </DropdownMenuItem>
-                </>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <ConnectionActionsMenu
+          connection={connection}
+          onPause={onPause}
+          onResume={onResume}
+          onReauth={onReauth}
+          onTest={onTest}
+          onSettings={onSettings}
+          onDisconnect={onDisconnect}
+        />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="relative z-[1] flex items-center justify-between">
         <ConnectionHealthBadge health={connection.health} size="sm" />
-        <span className="font-mono text-mono-sm text-ink-dim">
-          {connection.scopes.length} {connection.scopes.length === 1 ? "scope" : "scopes"}
+        <span className="font-mono text-mono-sm tabular-nums text-ink-dim">
+          {connection.scopes.length}{" "}
+          {connection.scopes.length === 1 ? "scope" : "scopes"}
         </span>
       </div>
 
-      <div className="flex items-baseline justify-between">
-        <span className="font-display text-[22px] leading-none tracking-[-0.03em] text-ink-hi">
+      <div className="relative z-[1] flex items-baseline justify-between">
+        <span className="font-display text-[22px] leading-none tracking-[-0.03em] tabular-nums text-ink-hi">
           {formatNumber(connection.eventsLast24h)}
         </span>
         <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
@@ -207,7 +138,7 @@ export function ConnectionCard({
         </span>
       </div>
 
-      <div className="h-12">
+      <div className="relative z-[1] h-12">
         {connection.spark && connection.spark.length > 0 ? (
           <Sparkline
             values={connection.spark}

@@ -72,7 +72,7 @@ function ResetPasswordPageInner() {
   };
 
   return (
-    <AuthShell topbar={{}} align="center" chromeStyle="product">
+    <AuthShell topbar={{}} align="center">
       <ResetPassword
         value={value}
         onChange={setValue}

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Bot, MoreHorizontal } from "lucide-react";
+import { AlertTriangle, Bot, Check, MoreHorizontal, X } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
@@ -45,40 +45,45 @@ export function AgentRow({
       : successPct >= 80
         ? "text-event-amber"
         : "text-event-red";
+  const successLabel =
+    successPct >= 95 ? "healthy" : successPct >= 80 ? "warning" : "failing";
+  const SuccessIcon =
+    successPct >= 95 ? Check : successPct >= 80 ? AlertTriangle : X;
 
   return (
     <div
-      role={onOpen ? "button" : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      onKeyDown={
-        onOpen
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onOpen(agent.name);
-              }
-            }
-          : undefined
-      }
-      onClick={onOpen ? () => onOpen(agent.name) : undefined}
       data-active={isActive || undefined}
       className={cx(
-        "group relative grid items-center gap-3 px-4",
+        "group relative isolate grid items-center gap-3 px-4",
         "grid-cols-[28px_minmax(0,2fr)_minmax(0,1fr)_72px_72px_64px_minmax(0,0.9fr)_28px]",
         "h-10 border-b border-l-border-faint last:border-b-0 first:rounded-t-[4px] last:rounded-b-[4px]",
         "font-sans text-[13px] text-l-ink",
-        onOpen
-          ? "cursor-pointer hover:bg-l-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
-          : null,
         isActive
-          ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-ember"
+          ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:z-10 before:w-[2px] before:bg-ember"
           : null,
         className,
       )}
     >
-      <RowIdentityTile model={agent.model} />
+      {onOpen ? (
+        <button
+          type="button"
+          aria-label={`Open agent ${agent.name}`}
+          onClick={() => onOpen(agent.name)}
+          className={cx(
+            "absolute inset-0 z-0 cursor-pointer",
+            "first:rounded-t-[3px] last:rounded-b-[3px]",
+            "transition-colors duration-fast",
+            "hover:bg-l-surface-hover",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-2px] focus-visible:outline-ember",
+          )}
+        />
+      ) : null}
 
-      <div className="flex min-w-0 flex-col gap-[1px]">
+      <span className="pointer-events-none relative">
+        <RowIdentityTile model={agent.model} />
+      </span>
+
+      <div className="pointer-events-none relative flex min-w-0 flex-col gap-[1px]">
         <span className="truncate font-sans text-[13px] font-medium text-l-ink">
           {agent.name}
         </span>
@@ -89,15 +94,15 @@ export function AgentRow({
         ) : null}
       </div>
 
-      <span className="flex min-w-0 items-center gap-1.5 truncate">
+      <span className="pointer-events-none relative flex min-w-0 items-center gap-1.5 truncate">
         <AgentFrameworkBadge framework={agent.framework} />
       </span>
 
-      <span className="text-right">
+      <span className="pointer-events-none relative text-right">
         <AgentVersionBadge version={agent.latestVersion} status="current" />
       </span>
 
-      <span className="text-right font-sans text-[12px] text-l-ink-lo">
+      <span className="pointer-events-none relative text-right font-sans text-[12px] tabular-nums text-l-ink-lo">
         {formatNumber(agent.totalRuns)}
         <span className="ml-1 text-l-ink-dim">
           / {formatNumber(agent.versionCount)}v
@@ -106,14 +111,26 @@ export function AgentRow({
 
       <span
         className={cx(
-          "text-right font-sans text-[12px]",
+          "pointer-events-none relative inline-flex items-center justify-end gap-1 text-right font-sans text-[12px] tabular-nums",
           agent.totalRuns === 0 ? "text-l-ink-dim" : successTone,
         )}
       >
-        {agent.totalRuns === 0 ? "—" : `${successPct}%`}
+        {agent.totalRuns === 0 ? (
+          "—"
+        ) : (
+          <>
+            <SuccessIcon
+              className="size-3 shrink-0"
+              strokeWidth={2}
+              aria-hidden
+            />
+            {`${successPct}%`}
+            <span className="sr-only">{` (${successLabel})`}</span>
+          </>
+        )}
       </span>
 
-      <span className="flex min-w-0 items-center gap-1.5 truncate font-sans text-[11px] text-l-ink-dim">
+      <span className="pointer-events-none relative flex min-w-0 items-center gap-1.5 truncate font-sans text-[11px] text-l-ink-dim">
         {agent.lastDriftAt ? (
           <>
             <AlertTriangle
@@ -133,12 +150,11 @@ export function AgentRow({
       </span>
 
       <div
-        className="flex items-center justify-end"
+        className="pointer-events-auto relative flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
       >
         {actionsSlot ?? (
           <Button
-            density="compact"
             variant="icon"
             size="sm"
             aria-label={`Actions for ${agent.name}`}

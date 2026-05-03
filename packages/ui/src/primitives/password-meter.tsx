@@ -1,17 +1,42 @@
 "use client";
 
 import * as React from "react";
+import { cva } from "class-variance-authority";
+
 import { CheckIcon } from "../icons/glyphs";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  passwordMeterBarVariants,
-  passwordMeterBarsVariants,
-  passwordMeterMetaVariants,
-  passwordMeterRootVariants,
-  passwordMeterRuleCheckVariants,
-  passwordMeterRuleVariants,
-  passwordMeterRulesVariants,
-} from "./shadcn";
+
+export const passwordMeterRootVariants = cva("flex flex-col gap-[6px]");
+
+export const passwordMeterBarsVariants = cva("flex gap-[4px]");
+
+export const passwordMeterBarVariants = cva(
+  "h-[3px] flex-1 transition-colors duration-fast ease-out rounded-pill bg-l-wash-5"
+);
+
+export const passwordMeterMetaVariants = cva(
+  "flex items-center justify-between font-sans text-[12px] font-medium text-l-ink-dim"
+);
+
+export const passwordMeterStrengthVariants = cva("text-l-ink-lo");
+
+export const passwordMeterRulesVariants = cva(
+  "grid grid-cols-2 gap-x-s-3 gap-y-[6px] mt-s-1"
+);
+
+export const passwordMeterRuleVariants = cva(
+  "inline-flex items-center gap-[6px] font-sans text-[12px] text-l-ink-dim"
+);
+
+export const passwordMeterRuleCheckVariants = cva(
+  "inline-flex h-[12px] w-[12px] items-center justify-center text-transparent rounded-pill border border-hairline-strong",
+  {
+    variants: {
+      met: {
+        true: "text-ink-hi border-event-green/60 bg-event-green/15 [&>svg]:text-event-green",
+      },
+    },
+  }
+);
 
 /*
  * scorePassword — heuristic 0..4. The four bars correspond to
@@ -56,14 +81,12 @@ const STRENGTH_TONE: Record<number, string> = {
   4: "text-event-green",
 };
 
-export type PasswordMeterDensity = "compact" | "brand";
-
-export interface PasswordMeterProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface PasswordMeterProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Password value to score. */
   value: string;
   /** Hide the rule list. The bar + label still render. */
   hideRules?: boolean;
-  density?: PasswordMeterDensity;
 }
 
 /**
@@ -73,12 +96,10 @@ export interface PasswordMeterProps extends React.HTMLAttributes<HTMLDivElement>
 export function PasswordMeter({
   value,
   hideRules = false,
-  density: densityProp,
   className,
   ...rest
 }: PasswordMeterProps) {
   const score = scorePassword(value);
-  const density = useResolvedChromeDensity(densityProp);
   const label = STRENGTH_LABELS[score];
 
   const rules = [
@@ -90,7 +111,7 @@ export function PasswordMeter({
 
   return (
     <div
-      className={passwordMeterRootVariants({ density, className })}
+      className={passwordMeterRootVariants({ className })}
       data-score={score}
       role="status"
       aria-label={`Password strength: ${label}`}
@@ -101,13 +122,13 @@ export function PasswordMeter({
           <div
             key={i}
             className={
-              passwordMeterBarVariants({ density }) +
+              passwordMeterBarVariants() +
               (i <= score ? ` ${SCORE_COLORS[score] ?? "bg-ember"}` : "")
             }
           />
         ))}
       </div>
-      <div className={passwordMeterMetaVariants({ density })}>
+      <div className={passwordMeterMetaVariants()}>
         <span>Strength</span>
         <b className={`font-medium ${STRENGTH_TONE[score] ?? ""}`}>{label}</b>
       </div>
@@ -116,12 +137,11 @@ export function PasswordMeter({
           {rules.map((r) => (
             <span
               key={r.txt}
-              className={passwordMeterRuleVariants({ density })}
+              className={passwordMeterRuleVariants()}
               data-met={r.ok || undefined}
             >
               <span
                 className={passwordMeterRuleCheckVariants({
-                  density,
                   met: r.ok || undefined,
                 })}
               >

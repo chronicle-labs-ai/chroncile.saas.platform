@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { cx } from "../utils/cx";
+import { useCopy } from "../utils/use-copy";
 import { Tab, TabList, TabPanel, Tabs } from "../primitives/tabs";
 
 import { AgentActionsMenu } from "./agent-actions-menu";
@@ -37,7 +38,7 @@ import type {
  * (`/dashboard/agents/[name]/versions/[version]`, …) can drive it.
  *
  * Mirrors `DatasetDetailPage` in shape: a thin header, a
- * `<Tabs density="compact">` block, and per-tab content panels that
+ * `<Tabs>` block, and per-tab content panels that
  * render against the snapshot.
  */
 
@@ -169,7 +170,6 @@ export function AgentDetailPage({
       />
 
       <Tabs
-        density="compact"
         value={tab}
         onValueChange={(next) => setTab(next as AgentDetailTab)}
         className="flex flex-1 min-h-0 flex-col"
@@ -296,6 +296,17 @@ function DetailHeader({
 
   const providerMeta = getModelProviderMeta(summary.model.provider);
 
+  // Two independent copy sessions so the feedback label can name what
+  // was actually copied. Both share the same 1.1s reset window so the
+  // affordance feels consistent.
+  const { copy: copyArtifactId, copied: copiedArtifactId } = useCopy();
+  const { copy: copyConfigHash, copied: copiedConfigHash } = useCopy();
+  const feedbackLabel = copiedArtifactId
+    ? "Artifact ID copied"
+    : copiedConfigHash
+      ? "Config hash copied"
+      : "";
+
   return (
     <header className="flex flex-shrink-0 items-start gap-3 border-b border-l-border-faint px-4 py-3">
       {providerMeta ? (
@@ -346,17 +357,41 @@ function DetailHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        <span
+          role="status"
+          aria-live="polite"
+          className={cx(
+            "inline-flex items-center gap-1 font-sans text-[11px] text-event-green transition-opacity duration-fast",
+            feedbackLabel ? "opacity-100" : "opacity-0",
+          )}
+        >
+          {feedbackLabel ? (
+            <>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="size-3"
+                aria-hidden
+              >
+                <path
+                  d="M4.5 12.75l6 6 9-13.5"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {feedbackLabel}
+            </>
+          ) : null}
+        </span>
         <AgentActionsMenu
           agent={summary}
           onCopyArtifactId={(value) => {
-            if (typeof navigator !== "undefined" && navigator.clipboard) {
-              void navigator.clipboard.writeText(value).catch(() => undefined);
-            }
+            void copyArtifactId(value);
           }}
           onCopyConfigHash={(value) => {
-            if (typeof navigator !== "undefined" && navigator.clipboard) {
-              void navigator.clipboard.writeText(value).catch(() => undefined);
-            }
+            void copyConfigHash(value);
           }}
           configHash={current?.artifact.configHash}
           onOpenHashSearch={(artifactId) => onOpenHashSearch?.(artifactId)}
@@ -400,13 +435,12 @@ function OverviewTab({
               No runs recorded yet.
             </div>
           ) : (
-            <div className="rounded-[4px] border border-l-border bg-l-surface-raised">
+            <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
               <AgentRunsTable
                 runs={recentRuns}
                 versions={snapshot.versions}
                 selectedRunId={null}
                 onSelectRun={() => undefined}
-                density="compact"
                 hideHeader
               />
             </div>
@@ -450,7 +484,7 @@ function VersionsTab({
         title="All versions"
         subtitle="Each row is an immutable artifact. configHash never changes once published."
       />
-      <div className="rounded-[4px] border border-l-border bg-l-surface-raised">
+      <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
         {snapshot.versions.map((version, index) => (
           <AgentVersionRow
             key={version.artifact.artifactId}

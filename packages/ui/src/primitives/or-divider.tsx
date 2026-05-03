@@ -1,12 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import {
-  orDividerLabelVariants,
-  orDividerLineVariants,
-  orDividerRootVariants,
-} from "./shadcn";
+import { cva } from "class-variance-authority";
 
 /*
  * OrDivider — labeled hairline used between SSO and email forms:
@@ -18,12 +13,19 @@ import {
  * presentation — no role / aria.
  */
 
-export type OrDividerDensity = "compact" | "brand";
+export const orDividerRootVariants = cva(
+  "flex items-center my-s-2 select-none gap-[10px]"
+);
+
+export const orDividerLineVariants = cva("h-px flex-1 bg-l-border");
+
+export const orDividerLabelVariants = cva(
+  "font-sans text-[12px] font-medium text-l-ink-dim"
+);
 
 export interface OrDividerProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Center label. Defaults to "or continue with email". Pass `null` for a bare hairline. */
   label?: React.ReactNode;
-  density?: OrDividerDensity;
 }
 
 /**
@@ -32,23 +34,20 @@ export interface OrDividerProps extends React.HTMLAttributes<HTMLDivElement> {
  */
 export function OrDivider({
   label = "or continue with email",
-  density: densityProp,
   className,
   ...rest
 }: OrDividerProps) {
-  const density = useResolvedChromeDensity(densityProp);
   return (
     <div
-      className={orDividerRootVariants({ density, className })}
-      data-density={density}
+      className={orDividerRootVariants({ className })}
       aria-hidden
       {...rest}
     >
-      <span className={orDividerLineVariants({ density })} />
+      <span className={orDividerLineVariants()} />
       {label != null ? (
-        <span className={orDividerLabelVariants({ density })}>{label}</span>
+        <span className={orDividerLabelVariants()}>{label}</span>
       ) : null}
-      <span className={orDividerLineVariants({ density })} />
+      <span className={orDividerLineVariants()} />
     </div>
   );
 }

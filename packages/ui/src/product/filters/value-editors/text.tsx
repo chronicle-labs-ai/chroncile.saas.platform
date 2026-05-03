@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { Input } from "../../../primitives/input";
+import { useIsCoarsePointer } from "../../../utils/use-is-coarse-pointer";
 
 export interface TextEditorProps {
   value: string | undefined;
@@ -26,6 +27,7 @@ export function TextEditor({
   onSubmit,
 }: TextEditorProps) {
   const [local, setLocal] = React.useState<string>(value ?? "");
+  const coarsePointer = useIsCoarsePointer();
 
   React.useEffect(() => {
     setLocal(value ?? "");
@@ -43,7 +45,7 @@ export function TextEditor({
   }, [local, value, debounceMs]);
 
   return (
-    <div className="w-[260px] p-s-2">
+    <div className="w-full p-s-2">
       <Input
         value={local}
         onChange={(e) => setLocal(e.target.value)}
@@ -54,8 +56,11 @@ export function TextEditor({
             onSubmit(local);
           }
         }}
+        onBlur={() => {
+          if (local !== (value ?? "")) onChangeRef.current(local);
+        }}
         placeholder={placeholder}
-        autoFocus
+        autoFocus={!coarsePointer}
         aria-label="Filter value"
       />
     </div>

@@ -291,7 +291,6 @@ function SignupPageInner() {
         ),
       }}
       align="center"
-      chromeStyle="product"
     >
       {body}
     </AuthShell>

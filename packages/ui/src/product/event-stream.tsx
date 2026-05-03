@@ -87,7 +87,6 @@ export function EventStream({
   return (
     <div
       className={`${slots.root()}${className ? ` ${className}` : ""}`}
-      data-density={density}
       {...props}
     >
       {daySeparator ? (

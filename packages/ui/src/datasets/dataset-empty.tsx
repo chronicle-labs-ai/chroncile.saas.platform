@@ -40,7 +40,6 @@ export function DatasetEmpty({
         actions={
           onClearFilters ? (
             <Button
-              density="compact"
               variant="secondary"
               size="sm"
               onPress={onClearFilters}
@@ -75,7 +74,6 @@ export function DatasetEmpty({
       actions={
         onCreate ? (
           <Button
-            density="compact"
             variant="primary"
             size="sm"
             onPress={onCreate}

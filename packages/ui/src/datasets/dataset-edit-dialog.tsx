@@ -147,12 +147,11 @@ export function DatasetEditDialog({
         </DialogBody>
         <DialogFooter>
           <DialogClose asChild>
-            <Button density="compact" variant="ghost" size="sm">
+            <Button variant="ghost" size="sm">
               Cancel
             </Button>
           </DialogClose>
           <Button
-            density="compact"
             variant="primary"
             size="sm"
             isLoading={pending}

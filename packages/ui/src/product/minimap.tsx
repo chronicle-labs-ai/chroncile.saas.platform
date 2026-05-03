@@ -222,7 +222,7 @@ function CompactMinimap({
     <div
       data-density="compact"
       className={cx(
-        "flex flex-col gap-[6px] border-b border-l-border bg-l-surface px-s-4 py-[10px]",
+        "flex flex-col gap-[6px] border-b border-hairline-strong bg-l-surface px-s-4 py-[10px]",
         className
       )}
       {...props}
@@ -234,7 +234,7 @@ function CompactMinimap({
       </div>
       <div
         ref={trackRef}
-        className="relative h-[36px] overflow-hidden rounded-l-sm bg-l-wash-1"
+        className="relative h-[36px] overflow-hidden rounded-xs bg-l-wash-1"
       >
         <div className="absolute inset-x-0 bottom-[10px] flex h-[26px] items-end gap-px px-[2px]">
           {bars.map((b, i) => (

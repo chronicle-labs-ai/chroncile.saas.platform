@@ -357,7 +357,7 @@ export function DatasetGraphView({
 
       {/* Overlay legend — top-left */}
       <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-col gap-2">
-        <div className="pointer-events-auto inline-flex flex-wrap items-center gap-2 rounded-[3px] border border-l-border bg-l-surface-raised/95 px-2.5 py-1.5 backdrop-blur">
+        <div className="pointer-events-auto inline-flex flex-wrap items-center gap-2 rounded-[3px] border border-hairline-strong bg-l-surface-raised/95 px-2.5 py-1.5 backdrop-blur">
           {layout.centroids.length === 0 ? (
             <span className="font-mono text-[10.5px] text-l-ink-dim">
               No clusters
@@ -386,7 +386,6 @@ export function DatasetGraphView({
       {/* Zoom controls — top-right */}
       <div className="absolute right-3 top-3 z-[2] flex items-center gap-1">
         <Button
-          density="compact"
           variant="secondary"
           size="sm"
           aria-label="Zoom in"
@@ -395,7 +394,6 @@ export function DatasetGraphView({
           <Plus className="size-3.5" strokeWidth={1.75} />
         </Button>
         <Button
-          density="compact"
           variant="secondary"
           size="sm"
           aria-label="Zoom out"
@@ -404,7 +402,6 @@ export function DatasetGraphView({
           <Minus className="size-3.5" strokeWidth={1.75} />
         </Button>
         <Button
-          density="compact"
           variant="secondary"
           size="sm"
           aria-label="Reset view"
@@ -692,7 +689,7 @@ function HoverInspectCard({ node, pos }: HoverInspectCardProps) {
       }}
       className={cx(
         "pointer-events-none absolute z-[3] flex w-[260px] flex-col gap-2",
-        "rounded-[4px] border border-l-border bg-l-surface-raised/95 p-2.5 backdrop-blur",
+        "rounded-[4px] border border-hairline-strong bg-l-surface-raised/95 p-2.5 backdrop-blur",
         "shadow-[0_8px_24px_rgba(0,0,0,0.45)]",
         "transition-opacity duration-100",
       )}

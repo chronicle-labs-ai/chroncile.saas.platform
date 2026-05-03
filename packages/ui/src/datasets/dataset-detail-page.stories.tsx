@@ -19,7 +19,7 @@ const meta: Meta<typeof DatasetDetailPage> = {
     (Story) => (
       <ProductChromeFrame padding="none">
         <div className="flex h-screen min-h-0 flex-col p-3">
-          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-l-border bg-l-surface-raised">
+          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-hairline-strong bg-l-surface-raised">
             <Story />
           </div>
         </div>
@@ -33,10 +33,10 @@ type Story = StoryObj<typeof DatasetDetailPage>;
 
 function Wrapper({
   snapshot: initial,
-  defaultTab,
+  defaultLens,
 }: {
   snapshot: DatasetSnapshot;
-  defaultTab?: React.ComponentProps<typeof DatasetDetailPage>["defaultTab"];
+  defaultLens?: React.ComponentProps<typeof DatasetDetailPage>["defaultLens"];
 }) {
   return function Component() {
     const [snapshot, setSnapshot] = React.useState(initial);
@@ -51,7 +51,7 @@ function Wrapper({
     return (
       <DatasetDetailPage
         snapshot={snapshot}
-        defaultTab={defaultTab}
+        defaultLens={defaultLens}
         onUpdateDataset={handleUpdate}
         onEditDataset={() => undefined}
         onDeleteDataset={() => undefined}
@@ -62,34 +62,31 @@ function Wrapper({
   };
 }
 
-export const Overview: Story = {
-  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultTab: "overview" }),
+/* The default lens — table view with cluster grouping. */
+export const ListLens: Story = {
+  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultLens: "list" }),
 };
 
-export const TracesTab: Story = {
-  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultTab: "traces" }),
+export const GraphLens: Story = {
+  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultLens: "graph" }),
 };
 
-export const ClustersTab: Story = {
-  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultTab: "clusters" }),
+export const TimelineLens: Story = {
+  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultLens: "timeline" }),
 };
 
-export const GraphTab: Story = {
-  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultTab: "graph" }),
-};
-
-export const TimelineTab: Story = {
-  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultTab: "timeline" }),
+export const CoverageLens: Story = {
+  render: Wrapper({ snapshot: trainingDatasetSnapshot, defaultLens: "coverage" }),
 };
 
 export const EvalSnapshot: Story = {
-  render: Wrapper({ snapshot: evalDatasetSnapshot, defaultTab: "overview" }),
+  render: Wrapper({ snapshot: evalDatasetSnapshot, defaultLens: "list" }),
 };
 
 export const FewTraces: Story = {
-  render: Wrapper({ snapshot: reviewDatasetSnapshot, defaultTab: "traces" }),
+  render: Wrapper({ snapshot: reviewDatasetSnapshot, defaultLens: "list" }),
 };
 
 export const EmptyDataset: Story = {
-  render: Wrapper({ snapshot: emptyDatasetSnapshot, defaultTab: "overview" }),
+  render: Wrapper({ snapshot: emptyDatasetSnapshot, defaultLens: "list" }),
 };

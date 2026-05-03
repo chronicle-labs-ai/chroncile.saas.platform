@@ -10,22 +10,35 @@ import { Toaster } from "../src/primitives/sonner";
 import "./preview.css";
 import "../src/styles/globals.css";
 
-const withProvider: Decorator = (Story) => (
-  // Wrap every story in UIProviders (RAC I18n) + ThemeProvider. No
-  // RouterProvider in stories — navigate is only wired inside apps.
-  // ThemeProvider's attachToRoot={false} keeps the <html data-theme>
-  // attribute driven by the addon-themes decorator below.
-  // <Toaster /> mounts the sonner host once so any story can just call
-  // `toast(...)` without scaffolding (see "Primitives/Sonner").
-  <UIProviders>
-    <ThemeProvider attachToRoot={false} toggleShortcut={null}>
-      <div className="min-h-screen p-s-6 bg-page text-ink">
-        <Story />
-      </div>
-      <Toaster />
-    </ThemeProvider>
-  </UIProviders>
-);
+// Wrap every story in UIProviders (RAC I18n) + ThemeProvider. No
+// RouterProvider in stories — navigate is only wired inside apps.
+// ThemeProvider's attachToRoot={false} keeps the <html data-theme>
+// attribute driven by the addon-themes decorator below.
+// <Toaster /> mounts the sonner host once so any story can just call
+// `toast(...)` without scaffolding (see "Primitives/Sonner").
+//
+// Stories opting into `parameters.layout: "fullscreen"` get the bare
+// Story root so they can paint edge-to-edge — the page surface still
+// reads the `bg-page` token from `preview.css`. Other layouts fall
+// back to a padded container so primitives don't render against the
+// raw canvas chrome.
+const withProvider: Decorator = (Story, context) => {
+  const fullscreen = context.parameters?.layout === "fullscreen";
+  return (
+    <UIProviders>
+      <ThemeProvider attachToRoot={false} toggleShortcut={null}>
+        {fullscreen ? (
+          <Story />
+        ) : (
+          <div className="min-h-screen p-s-6 bg-page text-ink">
+            <Story />
+          </div>
+        )}
+        <Toaster />
+      </ThemeProvider>
+    </UIProviders>
+  );
+};
 
 const preview: Preview = {
   parameters: {
@@ -67,6 +80,7 @@ const preview: Preview = {
           "Env Manager",
           "Product",
           "Admin",
+          "Templates",
         ],
       },
     },

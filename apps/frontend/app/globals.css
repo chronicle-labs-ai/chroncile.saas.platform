@@ -5,13 +5,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * The shared `ui/styles/globals.css` already paints the body using
+ * `var(--c-page)` / `var(--c-ink)` and wires the Geist fonts to
+ * `--font-sans`. We just need to:
+ *   1. Tell the browser its native chrome (form controls, scrollbars,
+ *      autofill background) follows the active `data-theme`, and
+ *   2. Layer `--font-geist-sans` ahead of the design-system stack so
+ *      the Next/font subset is preferred — keeping the rest of the
+ *      stack as a fallback.
+ *
+ * No raw `bg-neutral-950` / `text-neutral-100` — those forced the
+ * app into dark mode even when the ThemeProvider flipped to light.
+ */
 @layer base {
   :root {
     color-scheme: dark;
   }
+  [data-theme="light"] {
+    color-scheme: light;
+  }
 
   body {
-    @apply bg-neutral-950 text-neutral-100;
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-family:
+      var(--font-geist-sans),
+      var(--font-sans),
+      system-ui,
+      sans-serif;
+    /*
+     * Account for iOS notches and Android gesture bars on full-bleed
+     * pages (auth, onboarding) without padding nested layouts twice.
+     */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /*
+   * Anchor scroll-into-view leaves room for the dashboard's sticky
+   * header (`--header-height`). Without it, focused inputs and
+   * `scrollIntoView()` targets land flush with — or under — the bar.
+   */
+  [id] {
+    scroll-margin-top: calc(var(--header-height, 3.5rem) + 8px);
   }
 }

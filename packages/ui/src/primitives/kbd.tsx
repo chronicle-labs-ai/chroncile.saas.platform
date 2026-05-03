@@ -1,35 +1,39 @@
 import * as React from "react";
-import type { VariantProps } from "class-variance-authority";
-import { useResolvedChromeDensity } from "../theme/chrome-style-context";
-import { kbdVariants } from "./shadcn";
+import { cva, type VariantProps } from "class-variance-authority";
 
 /**
  * Kbd — a tiny mono key cap, used inline inside buttons and menu rows.
  *   <span>Search</span> <Kbd>⌘</Kbd><Kbd>K</Kbd>
  *
- * Adapts to the surrounding chrome: under `data-chrome="brand"` it uses
- * the editorial surface stack; under `"product"` it uses the Linear
- * `--l-*` wash. Pair with `<Button>` and the command palette.
+ * Sits on the Linear `--l-*` wash. Pair with `<Button>` and the command
+ * palette.
  */
+export const kbdVariants = cva(
+  "inline-flex items-center justify-center font-mono font-medium bg-l-wash-5 text-l-ink rounded-xs",
+  {
+    variants: {
+      size: {
+        sm: "min-w-[18px] h-[18px] px-[4px] text-[11px] tracking-mono",
+        md: "min-w-[22px] h-[22px] px-[6px] text-[12px] tracking-mono",
+      },
+    },
+    defaultVariants: {
+      size: "sm",
+    },
+  }
+);
+
 type KbdVariantProps = VariantProps<typeof kbdVariants>;
 
 export interface KbdProps
   extends React.HTMLAttributes<HTMLSpanElement>, KbdVariantProps {
   /** Display size. `sm` (default, fits inside buttons) or `md`. */
   size?: "sm" | "md";
-  /** Force a density flavor. Defaults to whichever the surrounding
-   * `ChromeStyleProvider` resolves to. */
-  density?: "compact" | "brand";
 }
 
-export function Kbd({ size, density: densityProp, className, children, ...props }: KbdProps) {
-  const density = useResolvedChromeDensity(densityProp);
+export function Kbd({ size, className, children, ...props }: KbdProps) {
   return (
-    <span
-      className={kbdVariants({ density, size, className })}
-      data-density={density}
-      {...props}
-    >
+    <span className={kbdVariants({ size, className })} {...props}>
       {children}
     </span>
   );

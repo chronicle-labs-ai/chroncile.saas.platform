@@ -29,16 +29,11 @@ export {
   ThemeToggle,
   themeScript,
   THEME_STORAGE_KEY,
-  ChromeStyleProvider,
-  useResolvedChromeDensity,
-  useAuthChromeStyle,
 } from "./theme";
 export type {
   Theme,
   ThemeProviderProps,
   ThemeToggleProps,
-  ChromeStyle,
-  ChromeStyleProviderProps,
 } from "./theme";
 
 // Tokens (TS mirrors)

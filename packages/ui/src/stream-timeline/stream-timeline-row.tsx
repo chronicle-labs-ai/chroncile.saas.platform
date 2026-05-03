@@ -89,7 +89,7 @@ export function StreamTimelineRow({
             onClick={() => onToggleCollapse(node.pathKey)}
             aria-label={collapsed ? `Expand ${node.name}` : `Collapse ${node.name}`}
             aria-expanded={!collapsed}
-            className="inline-flex h-4 w-4 items-center justify-center rounded-l-sm text-ink-dim transition-colors hover:bg-l-surface-hover hover:text-ink-lo"
+            className="inline-flex h-4 w-4 items-center justify-center rounded-xs text-ink-dim transition-colors hover:bg-l-surface-hover hover:text-ink-lo"
           >
             {collapsed ? (
               <ChevronRight className="h-3 w-3" aria-hidden />
@@ -114,7 +114,7 @@ export function StreamTimelineRow({
         ) : (
           <span
             aria-hidden
-            className="inline-block h-2 w-2 shrink-0 rounded-l-sm"
+            className="inline-block h-2 w-2 shrink-0 rounded-xs"
             style={{ background: node.color }}
           />
         )}
@@ -167,7 +167,7 @@ export function StreamTimelineRow({
               }
               data-in-trace={inTrace || undefined}
               className={cx(
-                "absolute top-1/2 -translate-y-1/2 rounded-l-sm transition-[box-shadow,opacity,height]",
+                "absolute top-1/2 -translate-y-1/2 rounded-xs transition-[box-shadow,opacity,height]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember",
                 isSelected ? "ring-2 ring-ember" : undefined,
                 inTrace && !isSelected

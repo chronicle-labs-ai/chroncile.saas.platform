@@ -136,7 +136,7 @@ export function StreamsPanel({
   return (
     <section
       className={cx(
-        "flex flex-col overflow-hidden rounded-l border border-hairline bg-l-surface text-ink",
+        "flex flex-col overflow-hidden rounded-md border border-hairline bg-l-surface text-ink",
         className,
       )}
       aria-label="Streams panel"
@@ -147,7 +147,7 @@ export function StreamsPanel({
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? "Expand streams" : "Collapse streams"}
           aria-expanded={!collapsed}
-          className="inline-flex h-5 w-5 items-center justify-center rounded-l-sm text-ink-dim transition-colors hover:bg-l-surface-hover hover:text-ink-lo"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-xs text-ink-dim transition-colors hover:bg-l-surface-hover hover:text-ink-lo"
         >
           {collapsed ? (
             <ChevronDown className="h-3.5 w-3.5" aria-hidden />
@@ -168,7 +168,6 @@ export function StreamsPanel({
             <Button
               variant="critical"
               size="sm"
-              density="compact"
               leadingIcon={<Square className="fill-current" />}
               onClick={stopRecording}
             >
@@ -179,7 +178,6 @@ export function StreamsPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                density="compact"
                 onClick={cancelSelecting}
               >
                 Cancel
@@ -187,7 +185,6 @@ export function StreamsPanel({
               <Button
                 variant="primary"
                 size="sm"
-                density="compact"
                 leadingIcon={<Circle className="fill-current text-event-red" />}
                 isDisabled={streamsToRecord.size === 0}
                 onClick={startRecording}
@@ -200,7 +197,6 @@ export function StreamsPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                density="compact"
                 leadingIcon={<Trash2 />}
                 onClick={discardRecording}
               >
@@ -209,7 +205,6 @@ export function StreamsPanel({
               <Button
                 variant="primary"
                 size="sm"
-                density="compact"
                 leadingIcon={<Save />}
                 onClick={saveRecording}
               >
@@ -220,7 +215,6 @@ export function StreamsPanel({
             <Button
               variant="primary"
               size="sm"
-              density="compact"
               leadingIcon={<Circle className="fill-current text-event-red" />}
               onClick={startSelecting}
             >
@@ -282,7 +276,6 @@ function StreamRow({
     >
       {selecting ? (
         <Checkbox
-          density="compact"
           isSelected={selected}
           onChange={() => onToggleSelected(stream.id)}
           aria-label={`Record from ${stream.name}`}
@@ -328,21 +321,21 @@ function RecordingStateBadge({
 }) {
   if (state.kind === "Recording") {
     return (
-      <Badge variant="red" density="compact" className="font-mono tabular-nums">
+      <Badge variant="red" className="font-mono tabular-nums">
         REC · {formatElapsed(state.startedAt, now)} · {state.eventCount} evt
       </Badge>
     );
   }
   if (state.kind === "PendingSave") {
     return (
-      <Badge variant="amber" density="compact">
+      <Badge variant="amber">
         Pending save · {state.eventCount} evt
       </Badge>
     );
   }
   if (state.kind === "SelectingStreams") {
     return (
-      <Badge variant="teal" density="compact">
+      <Badge variant="teal">
         Selecting streams
       </Badge>
     );

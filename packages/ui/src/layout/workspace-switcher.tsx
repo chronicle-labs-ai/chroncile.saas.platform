@@ -38,7 +38,13 @@
 import * as React from "react";
 
 import { tv } from "../utils/tv";
-import { Avatar } from "../primitives/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  deriveInitials,
+  type AvatarTone,
+} from "../primitives/avatar";
 
 // ─────────────────────────────────────────────────────────────
 // Public types
@@ -60,8 +66,9 @@ export interface WorkspaceSwitcherEntry {
   avatarUrl?: string | null;
   /** Override initials (otherwise first + last initial). */
   initials?: string;
-  /** Avatar tint. Defaults to `neutral`. */
-  avatarTone?: "neutral" | "ember" | "teal" | "violet";
+  /** Avatar tint. Defaults to `neutral`. Mirrors the full
+   *  `AvatarTone` palette so workspace tints match the Label hues. */
+  avatarTone?: AvatarTone;
   /** Optional grouping key — workspaces with the same `group` cluster. */
   group?: string;
 }
@@ -396,14 +403,14 @@ function WorkspaceSwitcherTrigger({
     >
       {children ?? (
         <>
-          <Avatar
-            size="sm"
-            src={current.avatarUrl}
-            name={current.name}
-            initials={current.initials}
-            tone={current.avatarTone}
-            alt=""
-          />
+          <Avatar size="sm" tone={current.avatarTone}>
+            {current.avatarUrl ? (
+              <AvatarImage src={current.avatarUrl} alt="" />
+            ) : null}
+            <AvatarFallback>
+              {deriveInitials(current.name, current.initials)}
+            </AvatarFallback>
+          </Avatar>
           <span className={slots.identity()}>
             <span className={slots.name()}>{current.name}</span>
             {current.plan ? (
@@ -618,14 +625,14 @@ function WorkspaceSwitcherItem({
         ? children({ workspace, isSelected })
         : (children ?? (
             <>
-              <Avatar
-                size="sm"
-                src={workspace.avatarUrl}
-                name={workspace.name}
-                initials={workspace.initials}
-                tone={workspace.avatarTone}
-                alt=""
-              />
+              <Avatar size="sm" tone={workspace.avatarTone}>
+                {workspace.avatarUrl ? (
+                  <AvatarImage src={workspace.avatarUrl} alt="" />
+                ) : null}
+                <AvatarFallback>
+                  {deriveInitials(workspace.name, workspace.initials)}
+                </AvatarFallback>
+              </Avatar>
               <span className={slots.itemIdentity()}>
                 <span className={slots.itemName()}>{workspace.name}</span>
                 {workspace.plan ? (
