@@ -9,19 +9,27 @@ import { formatNumber, RelativeTime } from "../connections/time";
 
 import { AgentCompanyMark } from "./agent-company-mark";
 import { AgentFrameworkBadge } from "./agent-framework-badge";
-import { AgentModelLabel } from "./agent-model-label";
 import { AgentVersionBadge } from "./agent-version-badge";
 import { getModelProviderMeta } from "./framework-meta";
 import type { AgentModelDescriptor, AgentSummary } from "./types";
 
 /*
- * AgentCard — grid-view tile on the agents manager. Shows the agent
- * identity (name + framework metadata), its latest pinned version, a
- * one-line health summary (success rate, runs in window, last drift),
- * and the model label.
+ * AgentCard — grid-view tile on the agents manager. The rewrite shifts
+ * the card's job from "report KPIs" to "answer what this agent is".
  *
- * Linear-density: no shadow, 1px hairline, 4px radius, ember tint
- * when the row is selected.
+ * Layout (top → bottom):
+ *
+ *   ┌──────────────────────────────────────────────┐
+ *   │  [logo]  agent-name  v1.2.0  [framework] [⋯] │
+ *   │  Purpose line, one short sentence.           │
+ *   │  Persona blurb, line-clamped to two lines.   │
+ *   │  [Refunds] [Order lookup] [+2]               │
+ *   │  ───────────────────────────────────────────  │
+ *   │  92% ok · 1.2k runs · 4m ago · drift ↗       │
+ *   └──────────────────────────────────────────────┘
+ *
+ * No layout shift across hover/active states; tabular-nums on every
+ * number; consistent font weight regardless of selection.
  */
 
 export interface AgentCardProps {
@@ -32,6 +40,8 @@ export interface AgentCardProps {
   className?: string;
 }
 
+const MAX_INLINE_TAGS = 3;
+
 export function AgentCard({
   agent,
   onOpen,
@@ -41,15 +51,23 @@ export function AgentCard({
 }: AgentCardProps) {
   const successPct = Math.round(agent.successRate * 100);
   const successTone =
-    successPct >= 95
-      ? "text-event-green"
-      : successPct >= 80
-        ? "text-event-amber"
-        : "text-event-red";
+    agent.totalRuns === 0
+      ? "text-l-ink-dim"
+      : successPct >= 95
+        ? "text-event-green"
+        : successPct >= 80
+          ? "text-event-amber"
+          : "text-event-red";
   const successLabel =
     successPct >= 95 ? "healthy" : successPct >= 80 ? "warning" : "failing";
   const SuccessIcon =
     successPct >= 95 ? Check : successPct >= 80 ? AlertTriangle : X;
+
+  const tags = agent.capabilityTags ?? [];
+  const inlineTags = tags.slice(0, MAX_INLINE_TAGS);
+  const overflowTags = tags.length - inlineTags.length;
+  const purpose = agent.purpose ?? agent.description;
+  const persona = agent.personaSummary;
 
   return (
     <div
@@ -112,103 +130,81 @@ export function AgentCard({
         </div>
       </div>
 
-      {agent.description ? (
-        <p className="pointer-events-none relative line-clamp-2 font-sans text-[12px] leading-snug text-l-ink-lo">
-          {agent.description}
+      {purpose ? (
+        <p className="pointer-events-none relative line-clamp-2 font-sans text-[13px] leading-snug text-l-ink">
+          {purpose}
         </p>
       ) : null}
 
-      <dl className="pointer-events-none relative grid grid-cols-3 gap-2">
-        <Stat
-          label="Versions"
-          value={formatNumber(agent.versionCount)}
-          sub={`${formatNumber(agent.totalRuns)} runs`}
-        />
-        <Stat
-          label="Success"
-          value={
-            agent.totalRuns === 0 ? (
-              <span className={successTone}>—</span>
+      {persona ? (
+        <p className="pointer-events-none relative line-clamp-2 font-sans text-[12px] leading-snug text-l-ink-lo">
+          {persona}
+        </p>
+      ) : null}
+
+      {inlineTags.length > 0 ? (
+        <ul className="pointer-events-none relative flex flex-wrap items-center gap-1.5">
+          {inlineTags.map((tag) => (
+            <li
+              key={tag}
+              className="inline-flex items-center rounded-[2px] border border-l-border-faint bg-l-wash-1 px-1.5 py-[1px] font-mono text-[10px] tabular-nums text-l-ink-lo"
+            >
+              {tag}
+            </li>
+          ))}
+          {overflowTags > 0 ? (
+            <li className="inline-flex items-center rounded-[2px] border border-dashed border-l-border-faint px-1.5 py-[1px] font-mono text-[10px] tabular-nums text-l-ink-dim">
+              +{overflowTags}
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
+
+      <div className="pointer-events-none relative mt-auto flex items-center justify-between gap-2 border-t border-l-border-faint pt-2.5 font-sans text-[11px] tabular-nums text-l-ink-dim">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={cx("inline-flex items-center gap-1", successTone)}
+          >
+            {agent.totalRuns === 0 ? (
+              <span className="text-l-ink-dim">—</span>
             ) : (
-              <span className={cx("inline-flex items-center gap-1", successTone)}>
+              <>
                 <SuccessIcon
-                  className="size-3.5 shrink-0"
+                  className="size-3 shrink-0"
                   strokeWidth={2}
                   aria-hidden
                 />
-                {`${successPct}%`}
+                <span className="font-medium">{`${successPct}% ok`}</span>
                 <span className="sr-only">{` (${successLabel})`}</span>
-              </span>
-            )
-          }
-          sub={
-            agent.totalRuns === 0
-              ? "no runs yet"
-              : `${formatNumber(
-                  Math.round(agent.successRate * agent.totalRuns),
-                )} ok`
-          }
-        />
-        <Stat
-          label="Last run"
-          value={
-            agent.lastRunAt ? (
-              <RelativeTime iso={agent.lastRunAt} fallback="—" />
-            ) : (
-              "—"
-            )
-          }
-          sub={<AgentModelLabel model={agent.model} size="xs" />}
-        />
-      </dl>
-
-      <div className="pointer-events-none relative mt-auto flex items-center justify-between gap-2 text-[11px] text-l-ink-dim">
-        <span className="flex flex-1 items-center gap-1.5 overflow-hidden">
-          {agent.lastDriftAt ? (
-            <>
-              <AlertTriangle
-                className="size-3 shrink-0 text-event-amber"
-                strokeWidth={1.75}
-              />
-              <span className="truncate font-mono text-event-amber/80">
-                drift detected ·{" "}
-                <RelativeTime iso={agent.lastDriftAt} fallback="—" />
-              </span>
-            </>
+              </>
+            )}
+          </span>
+          <span aria-hidden>·</span>
+          <span>{formatNumber(agent.totalRuns)} runs</span>
+          <span aria-hidden>·</span>
+          {agent.lastRunAt ? (
+            <RelativeTime iso={agent.lastRunAt} fallback="—" />
           ) : (
-            <span className="font-mono">no drift observed</span>
+            <span>no runs yet</span>
           )}
         </span>
-        {agent.owner ? (
-          <span className="font-mono text-l-ink-dim">{agent.owner}</span>
+        {agent.lastDriftAt ? (
+          <span className="flex shrink-0 items-center gap-1 text-event-amber">
+            <AlertTriangle
+              className="size-3 shrink-0"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+            <span>
+              drift · <RelativeTime iso={agent.lastDriftAt} fallback="—" />
+            </span>
+          </span>
+        ) : agent.owner ? (
+          <span className="shrink-0 truncate font-mono text-l-ink-dim">
+            {agent.owner}
+          </span>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-}: {
-  label: React.ReactNode;
-  value: React.ReactNode;
-  sub?: React.ReactNode;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-[2px]">
-      <dt className="font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim">
-        {label}
-      </dt>
-      <dd className="font-sans text-[14px] font-medium leading-tight tabular-nums text-l-ink">
-        {value}
-      </dd>
-      {sub ? (
-        <span className="truncate font-mono text-[10px] tabular-nums text-l-ink-dim">
-          {sub}
-        </span>
-      ) : null}
     </div>
   );
 }

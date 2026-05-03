@@ -11,18 +11,14 @@ import { Input } from "../primitives/input";
 import type { AgentRunStatus } from "./types";
 
 /*
- * AgentsToolbar — controls strip above the agents list/grid.
+ * AgentsToolbar — secondary control strip below the hero + KPI band:
  *
- *   [ search ]   [chip · healthy] [chip · drifting] [chip · errored] …   [list/grid]  [Hashes ↗]
+ *   [ search ]   [ group: Purpose · Framework · Flat ]   [list/grid]  [Hashes ↗]
  *
- * Health chips filter on the manager's roll-up:
- *
- *   - "healthy"   → success rate ≥ 95%
- *   - "drifting"  → resolved-modelId differs from declared modelId
- *   - "errored"   → at least one error in the last 24h
- *
- * Framework is NOT exposed as a primary filter (per the design plan):
- *   it stays on the badge inside each row.
+ * Health filters used to live here as primary chips. They have moved
+ * up to the KPI strip (`AgentsKpiStrip`), where each health bucket
+ * doubles as a click-to-filter tile. Framework grouping replaces the
+ * old framework-as-a-chip pattern.
  */
 
 export type AgentsView = "list" | "grid";
@@ -35,22 +31,27 @@ export const AGENT_HEALTH_FILTERS: readonly AgentHealthFilter[] = [
   "errored",
 ];
 
-const HEALTH_META: Record<
-  AgentHealthFilter,
-  { label: string; dot: string }
-> = {
-  healthy: { label: "Healthy", dot: "bg-event-green" },
-  drifting: { label: "Drifting", dot: "bg-event-amber" },
-  errored: { label: "Recent errors", dot: "bg-event-red" },
+export type AgentsGroupBy = "purpose" | "framework" | "flat";
+
+export const AGENT_GROUP_BY_OPTIONS: readonly AgentsGroupBy[] = [
+  "purpose",
+  "framework",
+  "flat",
+];
+
+const GROUP_BY_LABEL: Record<AgentsGroupBy, string> = {
+  purpose: "Purpose",
+  framework: "Framework",
+  flat: "Flat",
 };
 
 export interface AgentsToolbarProps {
   query: string;
   onQueryChange: (next: string) => void;
-  selectedHealth: readonly AgentHealthFilter[];
-  onHealthToggle: (health: AgentHealthFilter) => void;
   view: AgentsView;
   onViewChange: (next: AgentsView) => void;
+  groupBy: AgentsGroupBy;
+  onGroupByChange: (next: AgentsGroupBy) => void;
   totalCount?: number;
   onOpenHashSearch?: () => void;
   className?: string;
@@ -59,16 +60,14 @@ export interface AgentsToolbarProps {
 export function AgentsToolbar({
   query,
   onQueryChange,
-  selectedHealth,
-  onHealthToggle,
   view,
   onViewChange,
+  groupBy,
+  onGroupByChange,
   totalCount,
   onOpenHashSearch,
   className,
 }: AgentsToolbarProps) {
-  const selectedSet = new Set(selectedHealth);
-
   return (
     <div
       className={cx(
@@ -93,26 +92,29 @@ export function AgentsToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        {AGENT_HEALTH_FILTERS.map((health) => {
-          const meta = HEALTH_META[health];
-          const active = selectedSet.has(health);
-          return (
-            <Chip
-              key={health}
-              active={active}
-              onClick={() => onHealthToggle(health)}
-              icon={
-                <span aria-hidden className={cx("size-1.5 rounded-pill", meta.dot)} />
-              }
-            >
-              {meta.label}
-            </Chip>
-          );
-        })}
+        <span
+          aria-hidden
+          className="font-sans text-[11px] text-l-ink-dim"
+        >
+          Group by
+        </span>
+        {AGENT_GROUP_BY_OPTIONS.map((option) => (
+          <Chip
+            key={option}
+            active={groupBy === option}
+            onClick={() => onGroupByChange(option)}
+          >
+            {GROUP_BY_LABEL[option]}
+          </Chip>
+        ))}
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <div className="inline-flex overflow-hidden rounded-[2px] border border-hairline-strong">
+        <div
+          className="inline-flex overflow-hidden rounded-[2px] border border-hairline-strong"
+          role="group"
+          aria-label="Layout"
+        >
           <button
             type="button"
             aria-label="List view"
@@ -121,6 +123,7 @@ export function AgentsToolbar({
             onClick={() => onViewChange("list")}
             className={cx(
               "flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center text-l-ink-dim touch-manipulation",
+              "transition-colors duration-fast",
               "hover:bg-l-surface-hover",
               "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
             )}
@@ -135,6 +138,7 @@ export function AgentsToolbar({
             onClick={() => onViewChange("grid")}
             className={cx(
               "flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center border-l border-hairline-strong text-l-ink-dim touch-manipulation",
+              "transition-colors duration-fast",
               "hover:bg-l-surface-hover",
               "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
             )}

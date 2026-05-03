@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 
-import { AgentsToolbar, type AgentHealthFilter } from "./agents-toolbar";
+import {
+  AgentsToolbar,
+  type AgentsGroupBy,
+} from "./agents-toolbar";
 import { ProductChromeFrame } from "./_story-frame";
 
 const meta: Meta<typeof AgentsToolbar> = {
@@ -22,19 +25,15 @@ type Story = StoryObj<typeof AgentsToolbar>;
 function ToolbarHarness() {
   const [query, setQuery] = React.useState("");
   const [view, setView] = React.useState<"list" | "grid">("grid");
-  const [health, setHealth] = React.useState<AgentHealthFilter[]>(["healthy"]);
+  const [groupBy, setGroupBy] = React.useState<AgentsGroupBy>("purpose");
   return (
     <AgentsToolbar
       query={query}
       onQueryChange={setQuery}
       view={view}
       onViewChange={setView}
-      selectedHealth={health}
-      onHealthToggle={(h) =>
-        setHealth((cur) =>
-          cur.includes(h) ? cur.filter((x) => x !== h) : [...cur, h],
-        )
-      }
+      groupBy={groupBy}
+      onGroupByChange={setGroupBy}
       totalCount={5}
       onOpenHashSearch={() => undefined}
     />

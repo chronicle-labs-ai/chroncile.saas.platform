@@ -222,6 +222,11 @@ export function DatasetTracesTableRow({
      rows — additive to shadcn's row chrome, not a replacement. */
   const rowClassName = cx(
     "group relative isolate grid items-center",
+    /* Inset the row content from the card edges so cells don't crowd
+       the border. The ember rail stays flush at left:0 because absolute
+       children position against the row's padding-box edge, not its
+       content area. */
+    "px-3",
     "border-b border-border transition-colors data-[state=selected]:bg-muted",
     "font-sans text-sm text-foreground",
     "motion-reduce:transition-none",

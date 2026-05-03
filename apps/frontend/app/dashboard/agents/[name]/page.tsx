@@ -7,6 +7,7 @@ import { use } from "react";
 import {
   AgentDetailPage,
   agentSnapshotsByName,
+  resolveLegacyAgentDetailTab,
   type AgentDetailTab,
 } from "ui";
 
@@ -17,24 +18,20 @@ import {
  * params for tab + version + diff anchors so links shared in Slack /
  * Linear / docs land on the exact view the author intended:
  *
- *   ?tab=overview|versions|diff|runs|tools|drift
- *   ?version=<semver>     selects this version on Versions/Tools/Drift
- *   ?from=<semver>&to=<semver>  pre-anchors the Diff tab
+ *   ?tab=configuration|versions|runs|drift
+ *   ?version=<semver>     selects this version on Versions/Drift
+ *   ?from=<semver>&to=<semver>  pre-anchors the inline Versions diff
  *   ?run=<runId>          opens the run detail drawer
+ *
+ * Legacy values (`overview`, `tools` → `configuration`; `diff` →
+ * `versions`) are mapped through `resolveLegacyAgentDetailTab` so old
+ * links from Slack / Linear / docs continue to land on a sensible
+ * surface after the IA rewrite.
  *
  * The page renders independently of `AgentsManager` so the detail
  * surface can be loaded server-side later without restructuring the
  * client.
  */
-
-const TABS: readonly AgentDetailTab[] = [
-  "overview",
-  "versions",
-  "diff",
-  "runs",
-  "tools",
-  "drift",
-];
 
 interface PageProps {
   params: Promise<{ name: string }>;
@@ -49,9 +46,7 @@ export default function AgentDetailRoute({ params }: PageProps) {
 
   const tabParam = searchParams.get("tab");
   const initialTab: AgentDetailTab =
-    tabParam && (TABS as readonly string[]).includes(tabParam)
-      ? (tabParam as AgentDetailTab)
-      : "overview";
+    resolveLegacyAgentDetailTab(tabParam) ?? "configuration";
 
   const versionParam = searchParams.get("version") ?? undefined;
   const fromParam = searchParams.get("from") ?? undefined;

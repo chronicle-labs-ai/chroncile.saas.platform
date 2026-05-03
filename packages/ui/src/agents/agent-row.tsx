@@ -14,13 +14,16 @@ import { getModelProviderMeta } from "./framework-meta";
 import type { AgentSummary } from "./types";
 
 /*
- * AgentRow — list-view row companion to `AgentCard`. Linear-density
- * grid: 40px tall, 7-column layout for
- * name/framework/version/runs/success/last-run/actions.
+ * AgentRow — list-view row companion to `AgentCard`. Two-line layout
+ * tuned for purpose-led storytelling:
  *
- * Type scale follows Linear's `small/medium` (13px Inter) for the
- * primary label and `micro/regular` (11px) for metadata, sitting on
- * the dark `bg-l-surface-raised` row chrome.
+ *   ──[logo]── name · v1.2.0 · [tag] [tag]   [framework]  v   r%/v   ok%   last  ⋯
+ *             purpose line, truncated.
+ *
+ * Inline capability tags surface up to two storytelling chips next to
+ * the name; the rest collapse into a +N indicator. Persona blurb is
+ * intentionally absent on the row — that lives on the card and the
+ * detail hero.
  */
 
 export interface AgentRowProps {
@@ -30,6 +33,8 @@ export interface AgentRowProps {
   isActive?: boolean;
   className?: string;
 }
+
+const MAX_INLINE_TAGS = 2;
 
 export function AgentRow({
   agent,
@@ -50,13 +55,18 @@ export function AgentRow({
   const SuccessIcon =
     successPct >= 95 ? Check : successPct >= 80 ? AlertTriangle : X;
 
+  const tags = agent.capabilityTags ?? [];
+  const inlineTags = tags.slice(0, MAX_INLINE_TAGS);
+  const overflowTags = tags.length - inlineTags.length;
+  const purpose = agent.purpose ?? agent.description;
+
   return (
     <div
       data-active={isActive || undefined}
       className={cx(
         "group relative isolate grid items-center gap-3 px-4",
-        "grid-cols-[28px_minmax(0,2fr)_minmax(0,1fr)_72px_72px_64px_minmax(0,0.9fr)_28px]",
-        "h-10 border-b border-l-border-faint last:border-b-0 first:rounded-t-[4px] last:rounded-b-[4px]",
+        "grid-cols-[28px_minmax(0,2.4fr)_minmax(0,1fr)_72px_72px_64px_minmax(0,0.9fr)_28px]",
+        "h-[52px] border-b border-l-border-faint last:border-b-0 first:rounded-t-[4px] last:rounded-b-[4px]",
         "font-sans text-[13px] text-l-ink",
         isActive
           ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:z-10 before:w-[2px] before:bg-ember"
@@ -83,13 +93,28 @@ export function AgentRow({
         <RowIdentityTile model={agent.model} />
       </span>
 
-      <div className="pointer-events-none relative flex min-w-0 flex-col gap-[1px]">
-        <span className="truncate font-sans text-[13px] font-medium text-l-ink">
-          {agent.name}
+      <div className="pointer-events-none relative flex min-w-0 flex-col gap-[2px]">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate font-sans text-[13px] font-medium text-l-ink">
+            {agent.name}
+          </span>
+          {inlineTags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center rounded-[2px] border border-l-border-faint bg-l-wash-1 px-1.5 py-[1px] font-mono text-[10px] tabular-nums text-l-ink-lo"
+            >
+              {tag}
+            </span>
+          ))}
+          {overflowTags > 0 ? (
+            <span className="inline-flex items-center rounded-[2px] border border-dashed border-l-border-faint px-1.5 py-[1px] font-mono text-[10px] tabular-nums text-l-ink-dim">
+              +{overflowTags}
+            </span>
+          ) : null}
         </span>
-        {agent.description ? (
+        {purpose ? (
           <span className="truncate font-sans text-[11px] leading-tight text-l-ink-dim">
-            {agent.description}
+            {purpose}
           </span>
         ) : null}
       </div>
@@ -130,7 +155,7 @@ export function AgentRow({
         )}
       </span>
 
-      <span className="pointer-events-none relative flex min-w-0 items-center gap-1.5 truncate font-sans text-[11px] text-l-ink-dim">
+      <span className="pointer-events-none relative flex min-w-0 items-center gap-1.5 truncate font-sans text-[11px] tabular-nums text-l-ink-dim">
         {agent.lastDriftAt ? (
           <>
             <AlertTriangle

@@ -24,10 +24,10 @@ const meta: Meta<typeof AgentDetailPage> = {
 export default meta;
 type Story = StoryObj<typeof AgentDetailPage>;
 
-export const SupportOverview: Story = {
+export const SupportConfiguration: Story = {
   args: {
     snapshot: agentSnapshotsByName["support-agent"]!,
-    defaultTab: "overview",
+    defaultTab: "configuration",
   },
 };
 
@@ -38,24 +38,10 @@ export const SupportVersions: Story = {
   },
 };
 
-export const SupportDiff: Story = {
-  args: {
-    snapshot: agentSnapshotsByName["support-agent"]!,
-    defaultTab: "diff",
-  },
-};
-
 export const SupportRuns: Story = {
   args: {
     snapshot: agentSnapshotsByName["support-agent"]!,
     defaultTab: "runs",
-  },
-};
-
-export const SupportTools: Story = {
-  args: {
-    snapshot: agentSnapshotsByName["support-agent"]!,
-    defaultTab: "tools",
   },
 };
 
@@ -66,9 +52,23 @@ export const SupportDrift: Story = {
   },
 };
 
+export const RefundConfiguration: Story = {
+  args: {
+    snapshot: agentSnapshotsByName["refund-agent"]!,
+    defaultTab: "configuration",
+  },
+};
+
+export const KnowledgeConfiguration: Story = {
+  args: {
+    snapshot: agentSnapshotsByName["knowledge-rag"]!,
+    defaultTab: "configuration",
+  },
+};
+
 export const SingleVersion: Story = {
   args: {
     snapshot: agentSnapshotsByName["research-bot"]!,
-    defaultTab: "overview",
+    defaultTab: "configuration",
   },
 };

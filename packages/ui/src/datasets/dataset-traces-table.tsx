@@ -699,6 +699,8 @@ function ListHeader({
       }}
       className={cx(
         "sticky top-0 z-20 grid items-center h-10 bg-card",
+        /* Match the body row inset so column boundaries align. */
+        "px-3",
         "transition-shadow duration-fast ease-out motion-reduce:transition-none",
         scrolled
           ? "shadow-[0_1px_0_0_var(--border),0_4px_8px_-6px_rgba(0,0,0,0.45)]"
@@ -1113,7 +1115,9 @@ export function DatasetTracesTable({
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
                     style={wrapperStyle}
-                    className="block"
+                    /* Match the data-row `px-3` so the group head's
+                       leading dot lines up with the row content area. */
+                    className="block px-3"
                   >
                     <GroupHead
                       label={item.group.label}
@@ -1134,7 +1138,7 @@ export function DatasetTracesTable({
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
                     style={wrapperStyle}
-                    className="block"
+                    className="block px-3"
                   >
                     <EmptyGroupHint colSpan={colCount} />
                   </tr>

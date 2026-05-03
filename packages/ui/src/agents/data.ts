@@ -12,7 +12,9 @@
 
 import type {
   AgentArtifact,
+  AgentContractPreview,
   AgentDriftEntry,
+  AgentKnowledgeSource,
   AgentManifestDiffRow,
   AgentRun,
   AgentSnapshot,
@@ -20,6 +22,7 @@ import type {
   AgentToolCall,
   AgentVersionStatus,
   AgentVersionSummary,
+  AgentWorkflowGraph,
   HashDomain,
   HashIndexEntry,
 } from "./types";
@@ -100,6 +103,11 @@ interface ArtifactSeed {
   aiSdkVersion?: string;
   frameworkVersion?: string;
   metadata?: Record<string, unknown>;
+  /* ── Storytelling fields (UI-only) ─────────────────────── */
+  inputContractPreview?: AgentContractPreview;
+  outputContractPreview?: AgentContractPreview;
+  knowledgeSources?: readonly AgentKnowledgeSource[];
+  workflowGraphPreview?: AgentWorkflowGraph;
 }
 
 function buildArtifact(seed: ArtifactSeed): AgentArtifact {
@@ -132,6 +140,10 @@ function buildArtifact(seed: ArtifactSeed): AgentArtifact {
       publishedBy: seed.publishedBy,
     },
     configHash: fakeSha256(`config:${artifactId}:${seed.instructions}:${seed.model.label}:${seed.tools.map((t) => t.name).join(",")}`),
+    inputContractPreview: seed.inputContractPreview,
+    outputContractPreview: seed.outputContractPreview,
+    knowledgeSources: seed.knowledgeSources,
+    workflowGraphPreview: seed.workflowGraphPreview,
   };
 }
 
@@ -215,6 +227,328 @@ const ANALYZE_TOOL = {
   },
 } as const;
 
+/* ── Knowledge / contract / workflow seeds ─────────────────── */
+
+const SUPPORT_KNOWLEDGE: readonly AgentKnowledgeSource[] = [
+  {
+    id: "kb.support.policy",
+    label: "Support policy corpus",
+    kind: "doc",
+    sizeLabel: "1.2k articles",
+    href: "/datasets/support-policy",
+  },
+  {
+    id: "kb.support.embeddings",
+    label: "Support topic embeddings",
+    kind: "vector",
+    sizeLabel: "12.4k vectors",
+  },
+];
+
+const REFUND_KNOWLEDGE: readonly AgentKnowledgeSource[] = [
+  {
+    id: "kb.refund.policy",
+    label: "Refund policy",
+    kind: "doc",
+    sizeLabel: "84 articles",
+  },
+  {
+    id: "kb.orders",
+    label: "Order catalog",
+    kind: "table",
+    sizeLabel: "2.1m rows",
+  },
+];
+
+const RESEARCH_KNOWLEDGE: readonly AgentKnowledgeSource[] = [
+  {
+    id: "kb.research.notes",
+    label: "Internal research corpus",
+    kind: "doc",
+    sizeLabel: "640 docs",
+  },
+];
+
+const KNOWLEDGE_RAG_SOURCES: readonly AgentKnowledgeSource[] = [
+  {
+    id: "kb.docs.embeddings",
+    label: "Docs embeddings",
+    kind: "vector",
+    sizeLabel: "48.0k vectors",
+  },
+  {
+    id: "kb.docs.graph",
+    label: "Docs link graph",
+    kind: "graph",
+    sizeLabel: "9.6k edges",
+  },
+];
+
+const SUPPORT_INPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ conversationId, message, customerId? }",
+  example: {
+    conversationId: "conv_42a1",
+    message: "Can you tell me how international shipping works?",
+    customerId: "cust_8810",
+  },
+};
+
+const SUPPORT_OUTPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ reply, citedDocIds[], escalated }",
+  example: {
+    reply:
+      "International orders ship from our EU warehouse and typically arrive in 5–8 business days.",
+    citedDocIds: ["doc_shipping_intl_v3", "doc_eu_warehouse"],
+    escalated: false,
+  },
+};
+
+const REFUND_INPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ orderId, customerMessage }",
+  example: {
+    orderId: "ord_9114",
+    customerMessage:
+      "I never received my package and the carrier marked it delivered.",
+  },
+};
+
+const REFUND_OUTPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary:
+    "{ proposedAmountCents, rationale, requiresApproval: true }",
+  example: {
+    proposedAmountCents: 4900,
+    rationale:
+      "Carrier scan shows 'delivered' but customer reports non-receipt; per policy, full refund is justified.",
+    requiresApproval: true,
+  },
+};
+
+const TRIAGE_INPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ message }",
+  example: { message: "I want to file a chargeback for fraud." },
+};
+
+const TRIAGE_OUTPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ route: 'support' | 'refund' | 'escalations' | 'noop' }",
+  example: { route: "escalations" },
+};
+
+const RESEARCH_INPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ topic, datasetIds }",
+  example: {
+    topic: "Q1 onboarding drop-off causes",
+    datasetIds: ["ds_onboarding_q1", "ds_funnel_v3"],
+  },
+};
+
+const RESEARCH_OUTPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ summary, citedDatasetIds[] }",
+  example: {
+    summary:
+      "Drop-off in onboarding step 3 correlates with the 18s median load time observed across cohorts B and C.",
+    citedDatasetIds: ["ds_onboarding_q1"],
+  },
+};
+
+const KNOWLEDGE_INPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ question }",
+  example: { question: "How do we configure SSO with Okta?" },
+};
+
+const KNOWLEDGE_OUTPUT_PREVIEW: AgentContractPreview = {
+  schemaSummary: "{ answer, citations[] }",
+  example: {
+    answer:
+      "Configure Okta as a SAML 2.0 IdP and pair it with the workspace identifier in Settings → Auth.",
+    citations: [
+      { docId: "doc_sso_okta", anchor: "saml-config" },
+      { docId: "doc_workspace_auth" },
+    ],
+  },
+};
+
+const SUPPORT_GRAPH: AgentWorkflowGraph = {
+  nodes: [
+    { id: "in", kind: "input", label: "Customer message" },
+    { id: "search", kind: "tool", label: "searchDocs", toolName: "searchDocs" },
+    { id: "model", kind: "model", label: "Reason" },
+    { id: "branch", kind: "branch", label: "Refund?" },
+    {
+      id: "esc",
+      kind: "tool",
+      label: "escalateToHuman",
+      toolName: "escalateToHuman",
+    },
+    { id: "out", kind: "output", label: "Reply" },
+  ],
+  edges: [
+    { from: "in", to: "search" },
+    { from: "search", to: "model" },
+    { from: "model", to: "branch" },
+    { from: "branch", to: "esc", label: "yes" },
+    { from: "branch", to: "out", label: "no" },
+    { from: "esc", to: "out" },
+  ],
+};
+
+const REFUND_GRAPH: AgentWorkflowGraph = {
+  nodes: [
+    { id: "in", kind: "input", label: "Refund request" },
+    { id: "fetch", kind: "tool", label: "fetchOrder", toolName: "fetchOrder" },
+    {
+      id: "policy",
+      kind: "tool",
+      label: "searchDocs",
+      toolName: "searchDocs",
+    },
+    {
+      id: "tone",
+      kind: "tool",
+      label: "analyzeSentiment",
+      toolName: "analyzeSentiment",
+    },
+    { id: "model", kind: "model", label: "Decide" },
+    { id: "out", kind: "output", label: "Approval-required draft" },
+  ],
+  edges: [
+    { from: "in", to: "fetch" },
+    { from: "fetch", to: "policy" },
+    { from: "policy", to: "tone" },
+    { from: "tone", to: "model" },
+    { from: "model", to: "out" },
+  ],
+};
+
+const TRIAGE_GRAPH: AgentWorkflowGraph = {
+  nodes: [
+    { id: "in", kind: "input", label: "Inbound message" },
+    { id: "model", kind: "model", label: "Classify" },
+    { id: "branch", kind: "branch", label: "Fraud signal?" },
+    { id: "esc", kind: "output", label: "→ escalations" },
+    { id: "route", kind: "output", label: "→ support / refund / noop" },
+  ],
+  edges: [
+    { from: "in", to: "model" },
+    { from: "model", to: "branch" },
+    { from: "branch", to: "esc", label: "yes" },
+    { from: "branch", to: "route", label: "no" },
+  ],
+};
+
+const RESEARCH_GRAPH: AgentWorkflowGraph = {
+  nodes: [
+    { id: "in", kind: "input", label: "Topic + datasets" },
+    {
+      id: "search",
+      kind: "tool",
+      label: "searchDocs",
+      toolName: "searchDocs",
+    },
+    { id: "model", kind: "model", label: "Summarize" },
+    { id: "out", kind: "output", label: "Cited summary" },
+  ],
+  edges: [
+    { from: "in", to: "search" },
+    { from: "search", to: "model" },
+    { from: "model", to: "out" },
+  ],
+};
+
+const KNOWLEDGE_GRAPH: AgentWorkflowGraph = {
+  nodes: [
+    { id: "in", kind: "input", label: "Question" },
+    {
+      id: "retrieve",
+      kind: "tool",
+      label: "searchDocs",
+      toolName: "searchDocs",
+    },
+    { id: "branch", kind: "branch", label: "Hits ≥ 1?" },
+    { id: "model", kind: "model", label: "Compose" },
+    { id: "refuse", kind: "output", label: "Refuse" },
+    { id: "out", kind: "output", label: "Cited answer" },
+  ],
+  edges: [
+    { from: "in", to: "retrieve" },
+    { from: "retrieve", to: "branch" },
+    { from: "branch", to: "model", label: "yes" },
+    { from: "branch", to: "refuse", label: "no" },
+    { from: "model", to: "out" },
+  ],
+};
+
+/* ── Per-agent summary storytelling ───────────────────────── */
+
+interface SummaryStorytelling {
+  purpose: string;
+  personaSummary: string;
+  capabilityTags: readonly string[];
+  category: string;
+  playgroundUrl?: string;
+  runbookUrl?: string;
+}
+
+const SUMMARY_STORYTELLING: Readonly<Record<string, SummaryStorytelling>> = {
+  "support-agent": {
+    purpose:
+      "Answers customer support questions grounded in the policy corpus.",
+    personaSummary:
+      "Concise, cites its sources, and escalates when refunds enter the picture.",
+    capabilityTags: [
+      "Policy lookup",
+      "Order lookup",
+      "Escalation",
+      "Topic ranking",
+    ],
+    category: "Customer support",
+    playgroundUrl: "/playground/support-agent",
+    runbookUrl: "/runbooks/support-agent",
+  },
+  "refund-agent": {
+    purpose:
+      "Drafts refund decisions with policy citations; reviewer must approve every action.",
+    personaSummary:
+      "Analyst tone — gathers context, cites the policy, never acts without approval.",
+    capabilityTags: [
+      "Order lookup",
+      "Refund draft",
+      "Sentiment-aware",
+      "Approval-gated",
+    ],
+    category: "Trust & Safety",
+    playgroundUrl: "/playground/refund-agent",
+    runbookUrl: "/runbooks/refund-agent",
+  },
+  "triage-router": {
+    purpose:
+      "Routes inbound support traffic to the right downstream agent in a single step.",
+    personaSummary:
+      "Single-token classifier — fast, cheap, biased toward escalations on fraud signals.",
+    capabilityTags: ["Routing", "Single-step", "Fraud escape-hatch"],
+    category: "Operations",
+    runbookUrl: "/runbooks/triage-router",
+  },
+  "research-bot": {
+    purpose:
+      "Drafts research summaries from internal datasets with dataset-id citations.",
+    personaSummary:
+      "Terse research analyst — every claim is anchored to a dataset id.",
+    capabilityTags: ["Summarization", "Dataset lookup", "Cited"],
+    category: "Research & Insights",
+    runbookUrl: "/runbooks/research-bot",
+  },
+  "knowledge-rag": {
+    purpose:
+      "Answers internal knowledge questions grounded in cited documents.",
+    personaSummary:
+      "Strict RAG — refuses to answer when retrieval comes up empty.",
+    capabilityTags: ["RAG", "Cited answers", "Refusal-on-empty"],
+    category: "Knowledge",
+    playgroundUrl: "/playground/knowledge-rag",
+    runbookUrl: "/runbooks/knowledge-rag",
+  },
+};
+
 /* ── Per-agent artifact seeds ──────────────────────────────── */
 
 const HOUR = 60 * 60 * 1000;
@@ -241,6 +575,17 @@ const SUPPORT_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "8b3c1a9",
     aiSdkVersion: "6.0.170",
     metadata: { owner: "support-platform", environment: "demo" },
+    inputContractPreview: SUPPORT_INPUT_PREVIEW,
+    outputContractPreview: SUPPORT_OUTPUT_PREVIEW,
+    knowledgeSources: SUPPORT_KNOWLEDGE,
+    workflowGraphPreview: {
+      nodes: SUPPORT_GRAPH.nodes.filter((n) => n.id !== "esc" && n.id !== "branch"),
+      edges: [
+        { from: "in", to: "search" },
+        { from: "search", to: "model" },
+        { from: "model", to: "out" },
+      ],
+    },
   },
   {
     name: "support-agent",
@@ -266,6 +611,10 @@ const SUPPORT_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "1f44a07",
     aiSdkVersion: "6.0.170",
     metadata: { owner: "support-platform", environment: "demo" },
+    inputContractPreview: SUPPORT_INPUT_PREVIEW,
+    outputContractPreview: SUPPORT_OUTPUT_PREVIEW,
+    knowledgeSources: SUPPORT_KNOWLEDGE,
+    workflowGraphPreview: SUPPORT_GRAPH,
   },
   {
     name: "support-agent",
@@ -292,6 +641,25 @@ const SUPPORT_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "c7e2bd1",
     aiSdkVersion: "6.0.170",
     metadata: { owner: "support-platform", environment: "production" },
+    inputContractPreview: SUPPORT_INPUT_PREVIEW,
+    outputContractPreview: SUPPORT_OUTPUT_PREVIEW,
+    knowledgeSources: SUPPORT_KNOWLEDGE,
+    workflowGraphPreview: {
+      nodes: [
+        ...SUPPORT_GRAPH.nodes,
+        {
+          id: "fetch",
+          kind: "tool",
+          label: "fetchOrder",
+          toolName: "fetchOrder",
+        },
+      ],
+      edges: [
+        ...SUPPORT_GRAPH.edges,
+        { from: "model", to: "fetch", label: "needs order" },
+        { from: "fetch", to: "out" },
+      ],
+    },
   },
 ];
 
@@ -320,6 +688,18 @@ const REFUND_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "2a91c00",
     frameworkVersion: "0.0.21",
     metadata: { owner: "trust-and-safety", environment: "staging" },
+    inputContractPreview: REFUND_INPUT_PREVIEW,
+    outputContractPreview: REFUND_OUTPUT_PREVIEW,
+    knowledgeSources: REFUND_KNOWLEDGE,
+    workflowGraphPreview: {
+      nodes: REFUND_GRAPH.nodes.filter((n) => n.id !== "tone"),
+      edges: [
+        { from: "in", to: "fetch" },
+        { from: "fetch", to: "policy" },
+        { from: "policy", to: "model" },
+        { from: "model", to: "out" },
+      ],
+    },
   },
   {
     name: "refund-agent",
@@ -350,6 +730,10 @@ const REFUND_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "5d77ee2",
     frameworkVersion: "0.0.23",
     metadata: { owner: "trust-and-safety", environment: "staging" },
+    inputContractPreview: REFUND_INPUT_PREVIEW,
+    outputContractPreview: REFUND_OUTPUT_PREVIEW,
+    knowledgeSources: REFUND_KNOWLEDGE,
+    workflowGraphPreview: REFUND_GRAPH,
   },
 ];
 
@@ -373,6 +757,22 @@ const TRIAGE_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "f01ddee",
     frameworkVersion: "0.3.27",
     metadata: { owner: "support-platform", environment: "production" },
+    inputContractPreview: TRIAGE_INPUT_PREVIEW,
+    outputContractPreview: {
+      schemaSummary: "{ route: 'support' | 'refund' | 'noop' }",
+      example: { route: "support" },
+    },
+    workflowGraphPreview: {
+      nodes: [
+        { id: "in", kind: "input", label: "Inbound message" },
+        { id: "model", kind: "model", label: "Classify" },
+        { id: "out", kind: "output", label: "→ route" },
+      ],
+      edges: [
+        { from: "in", to: "model" },
+        { from: "model", to: "out" },
+      ],
+    },
   },
   {
     name: "triage-router",
@@ -393,6 +793,9 @@ const TRIAGE_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "9d1b3a4",
     frameworkVersion: "0.3.29",
     metadata: { owner: "support-platform", environment: "production" },
+    inputContractPreview: TRIAGE_INPUT_PREVIEW,
+    outputContractPreview: TRIAGE_OUTPUT_PREVIEW,
+    workflowGraphPreview: TRIAGE_GRAPH,
   },
 ];
 
@@ -416,6 +819,10 @@ const RESEARCH_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "11ba2c0",
     frameworkVersion: "0.7.1",
     metadata: { owner: "research", environment: "staging" },
+    inputContractPreview: RESEARCH_INPUT_PREVIEW,
+    outputContractPreview: RESEARCH_OUTPUT_PREVIEW,
+    knowledgeSources: RESEARCH_KNOWLEDGE,
+    workflowGraphPreview: RESEARCH_GRAPH,
   },
 ];
 
@@ -439,6 +846,10 @@ const KNOWLEDGE_AGENT_VERSIONS: ArtifactSeed[] = [
     gitSha: "ab33c01",
     frameworkVersion: "0.11.4",
     metadata: { owner: "knowledge", environment: "production" },
+    inputContractPreview: KNOWLEDGE_INPUT_PREVIEW,
+    outputContractPreview: KNOWLEDGE_OUTPUT_PREVIEW,
+    knowledgeSources: KNOWLEDGE_RAG_SOURCES,
+    workflowGraphPreview: KNOWLEDGE_GRAPH,
   },
 ];
 
@@ -788,6 +1199,8 @@ function buildSummary(
     compareSemverDesc(a, b),
   );
 
+  const storytelling = SUMMARY_STORYTELLING[artifact.name];
+
   return {
     name: artifact.name,
     description: artifact.description,
@@ -803,6 +1216,12 @@ function buildSummary(
     owner: (artifact.metadata?.owner as string | undefined) ?? undefined,
     environment:
       (artifact.metadata?.environment as string | undefined) ?? undefined,
+    purpose: storytelling?.purpose,
+    personaSummary: storytelling?.personaSummary,
+    capabilityTags: storytelling?.capabilityTags,
+    category: storytelling?.category,
+    playgroundUrl: storytelling?.playgroundUrl,
+    runbookUrl: storytelling?.runbookUrl,
   };
 }
 

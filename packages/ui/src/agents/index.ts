@@ -24,7 +24,11 @@ export type {
   AgentsManagerDetailHelpers,
 } from "./agents-manager";
 
-export { AgentDetailPage, AGENT_DETAIL_TABS } from "./agent-detail-page";
+export {
+  AgentDetailPage,
+  AGENT_DETAIL_TABS,
+  resolveLegacyAgentDetailTab,
+} from "./agent-detail-page";
 export type {
   AgentDetailPageProps,
   AgentDetailTab,
@@ -40,12 +44,24 @@ export {
 export type { AgentHashIndexPageProps } from "./agent-hash-index-page";
 
 /* ── Manager-level pieces ──────────────────────────────────── */
-export { AgentsToolbar, AGENT_HEALTH_FILTERS, matchesHealthFilter } from "./agents-toolbar";
+export {
+  AgentsToolbar,
+  AGENT_HEALTH_FILTERS,
+  AGENT_GROUP_BY_OPTIONS,
+  matchesHealthFilter,
+} from "./agents-toolbar";
 export type {
   AgentsToolbarProps,
   AgentsView,
+  AgentsGroupBy,
   AgentHealthFilter,
 } from "./agents-toolbar";
+
+export { AgentsKpiStrip, AGENTS_KPI_KEYS } from "./agents-kpi-strip";
+export type {
+  AgentsKpiStripProps,
+  AgentsKpiKey,
+} from "./agents-kpi-strip";
 
 export { AgentCard } from "./agent-card";
 export type { AgentCardProps } from "./agent-card";
@@ -83,6 +99,15 @@ export type { AgentToolsPanelProps } from "./agent-tools-panel";
 
 export { AgentDriftTimeline } from "./agent-drift-timeline";
 export type { AgentDriftTimelineProps } from "./agent-drift-timeline";
+
+export { AgentPulseBar } from "./agent-pulse-bar";
+export type { AgentPulseBarProps } from "./agent-pulse-bar";
+
+export { AgentConfigCanvas } from "./agent-config-canvas";
+export type { AgentConfigCanvasProps } from "./agent-config-canvas";
+
+export { AgentWorkflowGraphPreview } from "./agent-workflow-graph-preview";
+export type { AgentWorkflowGraphPreviewProps } from "./agent-workflow-graph-preview";
 
 /* ── Atoms ─────────────────────────────────────────────────── */
 export { AgentFrameworkBadge } from "./agent-framework-badge";
@@ -129,8 +154,11 @@ export type { FrameworkMeta, ModelProviderMeta } from "./framework-meta";
 /* ── Types ─────────────────────────────────────────────────── */
 export type {
   AgentArtifact,
+  AgentContractPreview,
   AgentDriftEntry,
   AgentFramework,
+  AgentKnowledgeKind,
+  AgentKnowledgeSource,
   AgentManifestDiffRow,
   AgentModelDescriptor,
   AgentPolicy,
@@ -145,6 +173,8 @@ export type {
   AgentToolDefinition,
   AgentVersionStatus,
   AgentVersionSummary,
+  AgentWorkflowGraph,
+  AgentWorkflowNodeKind,
   HashDomain,
   HashIndexEntry,
 } from "./types";

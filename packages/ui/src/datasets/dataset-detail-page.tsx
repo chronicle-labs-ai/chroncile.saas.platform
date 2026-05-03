@@ -19,6 +19,8 @@ import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
 import { Checkbox } from "../primitives/checkbox";
 import { Input } from "../primitives/input";
+import { Kbd } from "../primitives/kbd";
+import { Tooltip } from "../primitives/tooltip";
 import {
   Popover,
   PopoverContent,
@@ -1253,7 +1255,7 @@ export function DatasetDetailPage({
         }}
       />
 
-      <div ref={contentRef} className="flex flex-1 min-h-0 flex-col">
+      <div ref={contentRef} className="relative flex flex-1 min-h-0 flex-col">
         {snapshot.traces.length === 0 ? (
           <div className="flex flex-1 min-h-0 items-center justify-center p-4">
             <DatasetEmpty variant="detail" />
@@ -1287,6 +1289,55 @@ export function DatasetDetailPage({
             onCoverageBucketSelect={applyCoverageBucket}
           />
         )}
+
+        {/* Floating bulk-actions bar — replaces the inline batch strip
+            that used to live in the canvas toolbar. Always mounted so
+            the slide-up + fade-in animation runs symmetrically on
+            close. The container above is `position: relative` so this
+            anchors to the canvas content area, not the viewport — keeps
+            the bar away from the inspector drawer when it opens. */}
+        <BulkActionsFloatingBar
+          selectionCount={selectedIds.length}
+          selectionAggregate={selectionAggregate}
+          clusters={snapshot.clusters}
+          canEdit={!!onUpdateTraces}
+          canRemove={!!onRemoveTraces}
+          onClearSelection={clearSelection}
+          onBulkUpdateCluster={(next) => {
+            if (!onUpdateTraces || selectedIds.length === 0) return;
+            onUpdateTraces({
+              datasetId: snapshot.dataset.id,
+              traceIds: selectedIds,
+              patch: { clusterId: next },
+            });
+          }}
+          onBulkUpdateSplit={(next) => {
+            if (!onUpdateTraces || selectedIds.length === 0) return;
+            onUpdateTraces({
+              datasetId: snapshot.dataset.id,
+              traceIds: selectedIds,
+              patch: { split: next },
+            });
+          }}
+          onBulkUpdateStatus={(next) => {
+            if (!onUpdateTraces || selectedIds.length === 0) return;
+            onUpdateTraces({
+              datasetId: snapshot.dataset.id,
+              traceIds: selectedIds,
+              patch: { status: next },
+            });
+          }}
+          onBulkRemove={async () => {
+            if (!onRemoveTraces || selectedIds.length === 0) return;
+            for (const traceId of selectedIds) {
+              await onRemoveTraces({
+                datasetId: snapshot.dataset.id,
+                traceId,
+              });
+            }
+            clearSelection();
+          }}
+        />
       </div>
       </div>
       </div>
@@ -1618,12 +1669,22 @@ function DatasetCanvasToolbar({
   onBulkUpdateStatus,
   onBulkRemove,
 }: DatasetCanvasToolbarProps) {
-  /* `totalCount` / `filteredCount` are kept on the prop interface
-     for back-compat but the always-visible row count moved into the
-     DataTableFooter strip below the table (matches tablecn). The
-     toolbar's trailing slot now only renders the batch-actions
-     strip when `selectionCount > 0`. */
-  const inBatchMode = selectionCount > 0;
+  /* Bulk actions previously lived in the toolbar's trailing slot.
+     They've moved to the floating `<BulkActionsFloatingBar>` rendered
+     by the canvas page, anchored to the bottom-center of the content
+     area. The `selection*` / `onBulk*` props are still part of this
+     toolbar's interface for back-compat with consumers that haven't
+     migrated yet, but this component no longer renders them. */
+  void selectionAggregate;
+  void selectionCount;
+  void clusters;
+  void canEdit;
+  void canRemove;
+  void onClearSelection;
+  void onBulkUpdateCluster;
+  void onBulkUpdateSplit;
+  void onBulkUpdateStatus;
+  void onBulkRemove;
 
   return (
     <div
@@ -1631,10 +1692,9 @@ function DatasetCanvasToolbar({
       role="toolbar"
       aria-label="Dataset canvas controls"
     >
-      {/* Top row — Chronicle-specific controls (lens picker, shortcuts,
-          batch strip). Kept separate from the tablecn-shaped data-table
-          toolbar below so the canonical tablecn pattern (search +
-          filters left, view options right) is visible at a glance. */}
+      {/* Top row — Chronicle-specific controls (lens picker, keyboard
+          shortcuts launcher). The bulk-action chips moved to a floating
+          bar anchored at the bottom-center of the canvas content. */}
       <div className="flex flex-wrap items-center gap-2">
         <div
           role="tablist"
@@ -1660,28 +1720,6 @@ function DatasetCanvasToolbar({
         >
           <span className="font-mono text-[12px]">?</span>
         </Button>
-
-        {/* Trailing slot — only renders the batch strip when N rows
-           are selected. The always-visible row count lives in the
-           DataTableFooter strip below the table to match tablecn. */}
-        {inBatchMode && selectionAggregate ? (
-          <div className="ml-auto flex min-h-7 flex-wrap items-center gap-2">
-            <BatchActionsStrip
-              count={selectionAggregate.count}
-              clusterValue={selectionAggregate.cluster}
-              splitValue={selectionAggregate.split}
-              statusValue={selectionAggregate.status}
-              clusters={clusters}
-              canEdit={canEdit}
-              canRemove={canRemove}
-              onClear={onClearSelection}
-              onUpdateCluster={onBulkUpdateCluster}
-              onUpdateSplit={onBulkUpdateSplit}
-              onUpdateStatus={onBulkUpdateStatus}
-              onRemove={onBulkRemove}
-            />
-          </div>
-        ) : null}
       </div>
 
       {/* Tablecn-shaped data-table toolbar — search + filter chips on
@@ -1808,6 +1846,228 @@ function BatchActionsStrip({
           </Button>
         </>
       ) : null}
+    </div>
+  );
+}
+
+/* ── Floating bulk-actions bar ────────────────────────────────────
+ *
+ * Replaces the inline `BatchActionsStrip` in the canvas toolbar. The
+ * bar lives at the bottom-center of the canvas content area and slides
+ * up + fades in when `selectionCount > 0`. Always mounted so the exit
+ * animation runs symmetrically when count drops to 0.
+ *
+ * Anchoring:
+ *   - The parent of this component must be `position: relative` so the
+ *     `absolute` positioning here lands inside the canvas content area
+ *     (not the viewport). This keeps the bar visually associated with
+ *     the table and avoids overlapping the inspector drawer or other
+ *     docked surfaces.
+ *
+ * A11y:
+ *   - `role="region"` + `aria-label="Bulk actions"` so screen readers
+ *     announce the toolbar by purpose.
+ *   - `aria-hidden` flips with the open state so the buttons are not
+ *     reachable via tab while the bar is animating out.
+ *   - `Escape` is already wired through `dataset-canvas-keyboard.ts`
+ *     (the `focus.close` handler clears selection when nothing else
+ *     is open), so dismiss-on-Escape works without per-bar listeners.
+ */
+interface BulkActionsFloatingBarProps {
+  selectionCount: number;
+  selectionAggregate: SelectionAggregate | null;
+  clusters: readonly DatasetCluster[];
+  canEdit: boolean;
+  canRemove: boolean;
+  onClearSelection: () => void;
+  onBulkUpdateCluster: (next: string | null) => void;
+  onBulkUpdateSplit: (next: DatasetSplit | null) => void;
+  onBulkUpdateStatus: (next: TraceStatus) => void;
+  onBulkRemove: () => Promise<void> | void;
+}
+
+function BulkActionsFloatingBar({
+  selectionCount,
+  selectionAggregate,
+  clusters,
+  canEdit,
+  canRemove,
+  onClearSelection,
+  onBulkUpdateCluster,
+  onBulkUpdateSplit,
+  onBulkUpdateStatus,
+  onBulkRemove,
+}: BulkActionsFloatingBarProps) {
+  const open = selectionCount > 0 && selectionAggregate !== null;
+
+  /* Keep the last non-null aggregate around so the pickers don't flash
+     to a blank state during the exit animation when the consumer drops
+     `selectionAggregate` to null the moment count hits 0. */
+  const [stickyAggregate, setStickyAggregate] =
+    React.useState<SelectionAggregate | null>(null);
+  React.useEffect(() => {
+    if (selectionAggregate) setStickyAggregate(selectionAggregate);
+  }, [selectionAggregate]);
+  const aggregate = selectionAggregate ?? stickyAggregate;
+
+  const [removePending, setRemovePending] = React.useState(false);
+  const handleRemove = async () => {
+    setRemovePending(true);
+    try {
+      await onBulkRemove();
+    } finally {
+      setRemovePending(false);
+    }
+  };
+
+  const stickyCount = open ? selectionCount : (aggregate?.count ?? selectionCount);
+
+  return (
+    <div
+      role="region"
+      aria-label="Bulk actions"
+      aria-hidden={!open}
+      className={cx(
+        "pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center",
+        "transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none",
+        open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+      )}
+    >
+      {/*
+       * Linear-shaped floating dock:
+       *   - Pill body with backdrop blur so scrolling content beneath
+       *     reads as "below" the bar.
+       *   - Single 28px row inside a 36px frame (`p-1`). Every child is
+       *     `h-7` so the eye doesn't jitter between elements.
+       *   - Custom layered shadow (close + far) instead of `shadow-lg`,
+       *     which is too soft for a dock that should feel deliberate.
+       *   - No vertical separators — the gap rhythm groups items: tight
+       *     `gap-1` between siblings, `gap-2` between logical groups.
+       */}
+      <div
+        className={cx(
+          "pointer-events-auto inline-flex h-9 items-center gap-1 rounded-full p-1",
+          "border border-border bg-popover/95 backdrop-blur-md",
+          "shadow-[0_8px_24px_-12px_rgba(0,0,0,0.45),0_2px_4px_-2px_rgba(0,0,0,0.25)]",
+        )}
+      >
+        {/* Count + Esc kbd. Esc lives outside the aria-live region so
+            screen readers don't re-announce the shortcut on every count
+            change — only the count + "selected" announces. */}
+        <span
+          className="inline-flex h-7 items-center gap-2 pl-2.5 pr-1.5 font-sans text-[12.5px] text-muted-foreground"
+        >
+          <span aria-live="polite">
+            <span className="font-medium tabular-nums text-foreground">
+              {stickyCount}
+            </span>{" "}
+            selected
+          </span>
+          <Kbd>Esc</Kbd>
+        </span>
+
+        <Tooltip content="Clear selection" delay={300}>
+          <button
+            type="button"
+            onClick={onClearSelection}
+            aria-label={`Clear selection of ${stickyCount} ${stickyCount === 1 ? "trace" : "traces"}`}
+            tabIndex={open ? 0 : -1}
+            className={cx(
+              "inline-flex size-7 items-center justify-center rounded-full text-muted-foreground",
+              "[@media(hover:hover)]:hover:bg-muted [@media(hover:hover)]:hover:text-foreground",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+              "transition-colors duration-fast ease-out motion-reduce:transition-none",
+            )}
+          >
+            <X className="size-3.5" strokeWidth={1.75} aria-hidden />
+          </button>
+        </Tooltip>
+
+        {canEdit && aggregate ? (
+          <span className="ml-1 inline-flex items-center gap-1">
+            {clusters.length > 0 ? (
+              /* Span wrappers normalize picker chip height to 28px to
+                 match the dock row, while preserving the chip's own
+                 `[@media(pointer:coarse)]:h-9` touch bump. */
+              <span className="inline-flex [&>button]:h-7 [@media(pointer:coarse)]:[&>button]:h-9">
+                <ClusterPicker
+                  value={aggregate.cluster}
+                  clusters={clusters}
+                  onChange={onBulkUpdateCluster}
+                  variant="chip"
+                />
+              </span>
+            ) : null}
+            <span className="inline-flex [&>button]:h-7 [@media(pointer:coarse)]:[&>button]:h-9">
+              <SplitPicker
+                value={aggregate.split}
+                onChange={onBulkUpdateSplit}
+                variant="chip"
+              />
+            </span>
+            <span className="inline-flex [&>button]:h-7 [@media(pointer:coarse)]:[&>button]:h-9">
+              <StatusPicker
+                value={aggregate.status}
+                onChange={onBulkUpdateStatus}
+                variant="chip"
+              />
+            </span>
+          </span>
+        ) : null}
+
+        {canRemove ? (
+          /*
+           * Ghost-styled destructive: red text + icon on transparent,
+           * subtle red wash on hover. Less startling than a solid red
+           * `<Button variant="critical">` for an always-visible dock.
+           * The `⌫` kbd hint signals the bound keyboard shortcut
+           * (Cmd+Backspace via the canvas keymap).
+           */
+          <button
+            type="button"
+            onClick={() => void handleRemove()}
+            disabled={removePending}
+            tabIndex={open ? 0 : -1}
+            aria-label={`Remove ${stickyCount} selected ${stickyCount === 1 ? "trace" : "traces"}`}
+            className={cx(
+              "ml-1 inline-flex h-7 items-center gap-1.5 rounded-full pl-2 pr-1.5",
+              "font-sans text-[12.5px] font-medium text-event-red",
+              "[@media(hover:hover)]:hover:bg-event-red/10",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-event-red",
+              "transition-colors duration-fast ease-out motion-reduce:transition-none",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+            )}
+          >
+            {removePending ? (
+              <svg
+                aria-hidden
+                viewBox="0 0 24 24"
+                className="size-3.5 animate-spin"
+                fill="none"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="opacity-25"
+                />
+                <path
+                  d="M4 12a8 8 0 018-8"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="opacity-75"
+                />
+              </svg>
+            ) : (
+              <Trash2 className="size-3.5" strokeWidth={1.75} aria-hidden />
+            )}
+            <span>Remove</span>
+            <Kbd>⌫</Kbd>
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

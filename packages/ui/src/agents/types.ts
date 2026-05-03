@@ -111,6 +111,66 @@ export interface AgentModelDescriptor {
   label: string;
 }
 
+/* ── Storytelling projections (UI-only) ────────────────────── */
+
+/**
+ * Compact preview of an input or output contract for the artifact's
+ * Capabilities section. The schema summary is a one-line description
+ * the wrapper can derive from the schema (e.g. "{ query: string }");
+ * the example carries a representative payload rendered as JSON.
+ */
+export interface AgentContractPreview {
+  /** One-line shape summary, rendered above the example. */
+  schemaSummary?: string;
+  /** Representative example payload, rendered as JSON. */
+  example?: unknown;
+}
+
+export type AgentKnowledgeKind = "vector" | "doc" | "table" | "graph";
+
+/**
+ * Knowledge source bound to an artifact at config time. Surfaced in the
+ * Knowledge & Policy section of the configuration canvas.
+ */
+export interface AgentKnowledgeSource {
+  id: string;
+  label: string;
+  kind: AgentKnowledgeKind;
+  /** Optional human-readable size hint, e.g. "12.4k docs", "240 MB". */
+  sizeLabel?: string;
+  /** Optional jump-out link. The dashboard renders this as a chip-out. */
+  href?: string;
+}
+
+export type AgentWorkflowNodeKind =
+  | "input"
+  | "tool"
+  | "model"
+  | "branch"
+  | "output";
+
+/**
+ * Tiny structural preview of an agent's workflow graph rendered next to
+ * the Capabilities section. Five-to-seven nodes max — the graph is a
+ * narrative device, not a debugger.
+ */
+export interface AgentWorkflowGraph {
+  nodes: readonly {
+    id: string;
+    kind: AgentWorkflowNodeKind;
+    label: string;
+    /** Optional tool name reference for tool nodes; lets the UI deep-link
+     *  the node to its tool card. */
+    toolName?: string;
+  }[];
+  edges: readonly {
+    from: string;
+    to: string;
+    /** Optional short label rendered along the edge. */
+    label?: string;
+  }[];
+}
+
 /* ── Artifact (one per name@version) ───────────────────────── */
 
 export interface AgentArtifact {
@@ -137,6 +197,17 @@ export interface AgentArtifact {
     publishedBy?: string;
   };
   configHash: string;
+
+  /* ── Storytelling fields (UI-only, optional) ────────────── */
+
+  /** Compact preview of the input contract this artifact expects. */
+  inputContractPreview?: AgentContractPreview;
+  /** Compact preview of the output contract this artifact emits. */
+  outputContractPreview?: AgentContractPreview;
+  /** Knowledge sources bound to this artifact at config time. */
+  knowledgeSources?: readonly AgentKnowledgeSource[];
+  /** Five-to-seven node graph preview rendered in the Capabilities pane. */
+  workflowGraphPreview?: AgentWorkflowGraph;
 }
 
 /* ── Run + tool call ───────────────────────────────────────── */
@@ -282,6 +353,27 @@ export interface AgentSummary {
   /** Owner / environment label from artifact metadata. */
   owner?: string;
   environment?: string;
+
+  /* ── Storytelling fields (UI-only, optional) ────────────── */
+
+  /** One-sentence answer to "what is this agent for?". The manager
+   *  hero/card leads with this; falls back to `description`. */
+  purpose?: string;
+  /** Short prompt-persona blurb (≤ ~120 chars). Distinct from the
+   *  full instructions — this is the elevator-pitch tone of voice. */
+  personaSummary?: string;
+  /** Up to 5–6 small chips that summarize the agent's capability
+   *  surface ("Refunds", "Order lookup", "Slack escalation"). */
+  capabilityTags?: readonly string[];
+  /** Free-form grouping label used by the manager (e.g. "Customer
+   *  support", "Trust & Safety", "Operations"). When omitted, the
+   *  manager groups under "Uncategorized". */
+  category?: string;
+  /** Jump-out for an interactive playground for this agent. When
+   *  present, the detail hero renders a "Try in Playground" CTA. */
+  playgroundUrl?: string;
+  /** Jump-out for an internal runbook / docs page for this agent. */
+  runbookUrl?: string;
 }
 
 /**
