@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
+import { CopyButton } from "../primitives/copy-button";
 import {
   ConnectionDetailBody,
   type ConnectionDetailBodyProps,
@@ -14,7 +15,9 @@ import {
  * ConnectionDetailPage — full-page layout for the per-connection
  * detail view (e.g. `/dashboard/connections/[id]`). Same content as
  * the drawer, but laid out at page width with a top breadcrumb +
- * back affordance instead of the drawer's slide-in chrome.
+ * back affordance. Renders all 6 tabs by default — the page has the
+ * width to host Backfills tables and event-type chip grids without
+ * the drawer's tab overflow.
  */
 
 export interface ConnectionDetailPageProps extends ConnectionDetailBodyProps {
@@ -31,6 +34,7 @@ export function ConnectionDetailPage({
   onBack,
   chrome,
   className,
+  connection,
   ...rest
 }: ConnectionDetailPageProps) {
   return (
@@ -42,12 +46,19 @@ export function ConnectionDetailPage({
     >
       {chrome ?? (
         <header className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+          <div className="flex min-w-0 items-center gap-2 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
             <span>{workspace}</span>
-            <span>/</span>
+            <span aria-hidden>/</span>
             <span>Connections</span>
-            <span>/</span>
-            <span className="text-ember">{rest.connection.name}</span>
+            <span aria-hidden>/</span>
+            <span className="truncate text-ember">{connection.name}</span>
+            <CopyButton
+              text={connection.id}
+              appearance="text"
+              label="copy id"
+              copiedLabel="copied"
+              aria-label="Copy connection id"
+            />
           </div>
           {onBack ? (
             <Button
@@ -61,8 +72,8 @@ export function ConnectionDetailPage({
           ) : null}
         </header>
       )}
-      <div className="rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] p-5">
-        <ConnectionDetailBody {...rest} />
+      <div className="rounded-[2px] border border-divider bg-wash-micro p-5">
+        <ConnectionDetailBody connection={connection} {...rest} />
       </div>
     </div>
   );

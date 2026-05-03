@@ -83,7 +83,7 @@ export function ClusterPicker({
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <ChipTrigger
           aria-label={cluster ? `Cluster: ${cluster.label}` : "No cluster"}
           variant={variant}
@@ -159,7 +159,7 @@ export function SplitPicker({
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <ChipTrigger
           aria-label={meta ? `Split: ${meta.label}` : "No split assigned"}
           variant={variant}
@@ -239,7 +239,7 @@ export function StatusPicker({
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         {variant === "dot" ? (
           <button
             type="button"

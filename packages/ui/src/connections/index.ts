@@ -34,7 +34,11 @@ export { ConnectionEmpty } from "./connection-empty";
 export type { ConnectionEmptyProps } from "./connection-empty";
 
 /* ── Detail surfaces ─────────────────────────────────────── */
-export { ConnectionDetailBody, CONNECTION_DETAIL_TABS } from "./connection-detail-body";
+export {
+  ConnectionDetailBody,
+  CONNECTION_DETAIL_TABS,
+  CONNECTION_DRAWER_TABS,
+} from "./connection-detail-body";
 export type {
   ConnectionDetailBodyProps,
   ConnectionDetailTab,

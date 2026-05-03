@@ -42,7 +42,8 @@ import type { StreamTimelineEvent } from "../stream-timeline";
 import { formatNumber, formatStableDateTime } from "../connections/time";
 
 import { DatasetSplitChip } from "./dataset-split-chip";
-import { formatTraceDuration } from "./trace-summary-row";
+import { SourceLogoStack } from "./source-logo-stack";
+import { formatTraceDuration } from "./dataset-traces-table-row";
 import type {
   DatasetCluster,
   DatasetSnapshot,
@@ -220,6 +221,24 @@ export function DatasetTraceDetailDrawer({
     ? sourceTintedBackground(sourceColor(renderTrace.primarySource), 22)
     : "transparent";
 
+  /* Per-source event tally driving the "Source breakdown" section.
+     Computed from the snapshot's events filtered to this trace, so
+     callers don't need to pass anything extra. Sorted desc by count
+     so the heaviest source pins to the top. */
+  const sourceCounts = React.useMemo<readonly [string, number][]>(() => {
+    if (traceEvents.length === 0) return [];
+    const counts = new Map<string, number>();
+    for (const e of traceEvents) {
+      counts.set(e.source, (counts.get(e.source) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [traceEvents]);
+
+  const traceSources = renderTrace?.sources ?? [];
+  const hasMultipleSources = traceSources.length >= 2;
+  const showSourceBreakdown =
+    hasMultipleSources && sourceCounts.length >= 2;
+
   const showFooterActions = !!(onJumpToTimeline || onRemoveTrace);
 
   return (
@@ -245,16 +264,23 @@ export function DatasetTraceDetailDrawer({
               title={renderTrace.label}
               breadcrumb={
                 <>
-                  <CompanyLogo
-                    name={renderTrace.primarySource}
+                  <SourceLogoStack
+                    sources={
+                      traceSources.length > 0
+                        ? traceSources
+                        : [renderTrace.primarySource]
+                    }
                     size={12}
                     radius={2}
-                    fallbackBackground={sourceTint}
-                    fallbackColor="var(--c-ink-hi)"
-                    aria-hidden
                   />
-                  <span className="font-sans text-[11.5px] text-l-ink-lo">
+                  <span className="truncate font-sans text-[11.5px] text-l-ink-lo">
                     {cluster?.label ?? renderTrace.primarySource}
+                    {hasMultipleSources && !cluster ? (
+                      <span className="text-l-ink-dim">
+                        {" "}
+                        +{traceSources.length - 1} more
+                      </span>
+                    ) : null}
                   </span>
                 </>
               }
@@ -270,7 +296,7 @@ export function DatasetTraceDetailDrawer({
               copyId={renderTrace.traceId}
             />
 
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <div className="chron-scrollbar-hidden flex min-h-0 flex-1 flex-col overflow-y-auto">
               {hasEvents ? (
                 <TraceStrip
                   events={traceEvents}
@@ -342,18 +368,46 @@ export function DatasetTraceDetailDrawer({
                   }
                 />
                 <DetailRow
-                  label="Source"
+                  label={hasMultipleSources ? "Sources" : "Source"}
                   icon={
-                    <CompanyLogo
-                      name={renderTrace.primarySource}
-                      size={14}
-                      radius={3}
-                      fallbackBackground={sourceTint}
-                      fallbackColor="var(--c-ink-hi)"
-                      aria-hidden
-                    />
+                    hasMultipleSources ? undefined : (
+                      <CompanyLogo
+                        name={renderTrace.primarySource}
+                        size={14}
+                        radius={3}
+                        fallbackBackground={sourceTint}
+                        fallbackColor="var(--c-ink-hi)"
+                        aria-hidden
+                      />
+                    )
                   }
-                  value={renderTrace.primarySource}
+                  value={
+                    hasMultipleSources ? (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <SourceLogoStack
+                          sources={traceSources}
+                          size={14}
+                          radius={3}
+                        />
+                        <span className="min-w-0 truncate">
+                          <span className="text-l-ink">{traceSources[0]}</span>
+                          {traceSources.length > 1 ? (
+                            <span className="text-l-ink-lo">
+                              , {traceSources.slice(1, 3).join(", ")}
+                            </span>
+                          ) : null}
+                          {traceSources.length > 3 ? (
+                            <span className="text-l-ink-dim">
+                              {" "}
+                              +{traceSources.length - 3} more
+                            </span>
+                          ) : null}
+                        </span>
+                      </span>
+                    ) : (
+                      renderTrace.primarySource
+                    )
+                  }
                 />
                 <DetailRow
                   label="Events"
@@ -402,6 +456,10 @@ export function DatasetTraceDetailDrawer({
                   }
                 />
               </Section>
+
+              {showSourceBreakdown ? (
+                <SourceBreakdownSection sourceCounts={sourceCounts} />
+              ) : null}
 
               {activeEvent ? (
                 <Section eyebrow="Active event">
@@ -705,6 +763,70 @@ function DetailRow({
   );
 }
 
+/* ── Source breakdown ────────────────────────────────────── *
+ * One mini-row per distinct source contributing events to the
+ * trace — small CompanyLogo + name + tinted proportional bar +
+ * tabular event count. Lets builders see at a glance which
+ * integrations the trace touched and how much of the trace each
+ * one accounts for, without leaving the inspector for a chart.
+ */
+
+interface SourceBreakdownSectionProps {
+  /** Per-source counts pre-sorted desc by count. */
+  sourceCounts: readonly [string, number][];
+}
+
+function SourceBreakdownSection({ sourceCounts }: SourceBreakdownSectionProps) {
+  const total = sourceCounts.reduce((acc, [, n]) => acc + n, 0);
+  if (total === 0) return null;
+  return (
+    <Section eyebrow="Source breakdown">
+      <ul className="flex flex-col">
+        {sourceCounts.map(([source, count]) => {
+          const ratio = count / total;
+          /* Min 4% so even tiny sources stay perceptible in the bar. */
+          const widthPct = Math.max(4, Math.round(ratio * 100));
+          const tint = sourceTintedBackground(sourceColor(source), 22);
+          return (
+            <li
+              key={source}
+              className="group flex min-h-[28px] items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-l-wash-3"
+            >
+              <CompanyLogo
+                name={source}
+                size={12}
+                radius={2}
+                fallbackBackground={tint}
+                fallbackColor="var(--c-ink-hi)"
+                aria-hidden
+                className="shrink-0"
+              />
+              <span className="min-w-0 flex-1 truncate font-sans text-[12px] text-l-ink">
+                {source}
+              </span>
+              <span
+                aria-hidden
+                className="relative h-[3px] w-[88px] shrink-0 overflow-hidden rounded-pill bg-l-wash-3"
+              >
+                <span
+                  className="absolute inset-y-0 left-0 rounded-pill"
+                  style={{
+                    width: `${widthPct}%`,
+                    background: sourceColor(source),
+                  }}
+                />
+              </span>
+              <span className="w-[36px] shrink-0 text-right font-mono text-[11px] tabular-nums text-l-ink-lo">
+                {formatNumber(count)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
+  );
+}
+
 /* ── Trace strip ──────────────────────────────────────────── */
 
 interface TraceStripProps {
@@ -755,7 +877,7 @@ function TraceStrip({
       </div>
       <ol
         ref={listRef}
-        className="relative ml-2.5 mr-0.5 max-h-[180px] overflow-y-auto border-l border-hairline pb-0.5"
+        className="chron-scrollbar-hidden relative ml-2.5 mr-0.5 max-h-[180px] overflow-y-auto border-l border-hairline pb-0.5"
       >
         {events.map((e, idx) => {
           const isActive = e.id === activeId;

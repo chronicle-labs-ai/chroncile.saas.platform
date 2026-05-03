@@ -161,7 +161,7 @@ export function BacktestRecipe({
 
       <div
         className={cx(
-          "rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)]",
+          "rounded-[2px] border border-divider bg-wash-micro",
           open ? "p-3" : "px-3 py-3",
         )}
       >

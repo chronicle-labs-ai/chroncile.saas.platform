@@ -8,7 +8,7 @@ import { CompanyLogo } from "../icons";
 import { formatNumber, formatStableDateTime } from "../connections/time";
 
 import { DatasetSplitChip } from "./dataset-split-chip";
-import { formatTraceDuration } from "./trace-summary-row";
+import { formatTraceDuration } from "./dataset-traces-table-row";
 import type { DatasetCluster, TraceStatus, TraceSummary } from "./types";
 
 /*

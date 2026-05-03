@@ -3,6 +3,8 @@
 import * as React from "react";
 import {
   Activity,
+  Copy,
+  ExternalLink,
   MoreHorizontal,
   Pause,
   Play,
@@ -20,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../primitives/dropdown-menu";
+import { useCopy } from "../utils/use-copy";
 import { type Connection } from "./data";
 
 /*
@@ -32,6 +35,13 @@ import { type Connection } from "./data";
  *   • paused          → "Resume"
  *   • everything else → "Pause"
  *   • expired/error   → "Re-authorize" surfaced
+ *
+ * Always-on items (independent of state):
+ *   • Copy id          — `connection.id` to clipboard, with a transient
+ *                        "Copied id" confirmation
+ *   • Open in new tab  — when `onOpenInNewTab` is provided, fires a
+ *                        navigation handler so customers can pop the
+ *                        full detail page without losing their place
  *
  * Lives outside the row/card so they don't drift apart and so the menu
  * itself can be unit-tested in isolation.
@@ -46,9 +56,16 @@ export interface ConnectionActionsMenuProps {
   onSettings?: (id: string) => void;
   onDisconnect?: (id: string) => void;
   /**
-   * Wrapper className for the trigger's positioning. The row/card uses
-   * `relative z-[1]` so the trigger sits above the stretched-link
-   * overlay — pass that here.
+   * Optional click handler for the "Open in new tab" item. When omitted,
+   * the item is hidden. Wire to the consumer's router so the underlying
+   * tab opens at the canonical detail page URL.
+   */
+  onOpenInNewTab?: (id: string) => void;
+  /**
+   * Wrapper className for the trigger's positioning. Row/card containers
+   * use a stretched-link activator behind their contents, so the actions
+   * trigger lives in a `pointer-events-auto` zone with `stop propagation`
+   * to keep its clicks out of the parent activator.
    */
   className?: string;
 }
@@ -61,6 +78,7 @@ export function ConnectionActionsMenu({
   onTest,
   onSettings,
   onDisconnect,
+  onOpenInNewTab,
   className,
 }: ConnectionActionsMenuProps) {
   const isPaused = connection.health === "paused";
@@ -69,9 +87,17 @@ export function ConnectionActionsMenu({
   const showResume = isPaused && !!onResume;
   const showPause = !isPaused && !!onPause;
   const showReauth = (isExpired || isErrored) && !!onReauth;
+  const isPending = connection.lastTestStatus === "pending";
+  const { copy, copied } = useCopy();
 
   return (
-    <div className={className} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={className}
+      onClick={(e) => {
+        // Stop the parent stretched-link / row anchor from firing.
+        e.stopPropagation();
+      }}
+    >
       <DropdownMenu>
         <DropdownMenuTrigger>
           <Button
@@ -103,15 +129,37 @@ export function ConnectionActionsMenu({
               </DropdownMenuItem>
             ) : null}
             {onTest ? (
-              <DropdownMenuItem onAction={() => onTest?.(connection.id)}>
+              <DropdownMenuItem
+                onAction={() => onTest?.(connection.id)}
+                disabled={isPending}
+              >
                 <Activity className="size-4" strokeWidth={1.75} />
-                Test connection
+                {isPending ? "Testing\u2026" : "Test connection"}
               </DropdownMenuItem>
             ) : null}
             {onSettings ? (
               <DropdownMenuItem onAction={() => onSettings?.(connection.id)}>
                 <Settings className="size-4" strokeWidth={1.75} />
                 Settings
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuSection>
+          <DropdownMenuSeparator />
+          <DropdownMenuSection>
+            <DropdownMenuItem
+              onAction={() => {
+                void copy(connection.id);
+              }}
+            >
+              <Copy className="size-4" strokeWidth={1.75} />
+              {copied ? "Copied id" : "Copy id"}
+            </DropdownMenuItem>
+            {onOpenInNewTab ? (
+              <DropdownMenuItem
+                onAction={() => onOpenInNewTab(connection.id)}
+              >
+                <ExternalLink className="size-4" strokeWidth={1.75} />
+                Open in new tab
               </DropdownMenuItem>
             ) : null}
           </DropdownMenuSection>

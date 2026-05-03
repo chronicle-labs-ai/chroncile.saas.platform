@@ -94,13 +94,9 @@ export function DashboardPage() {
             <PanelHeader title="Loading environments" />
             <div className="grid grid-cols-1 gap-s-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 3 }, (_, index) => (
-                <Panel key={index}>
-                  <PanelContent className="space-y-3">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-4 w-24" />
-                  </PanelContent>
-                </Panel>
+                <Skeleton key={index} name="env-card" loading>
+                  <span />
+                </Skeleton>
               ))}
             </div>
           </section>

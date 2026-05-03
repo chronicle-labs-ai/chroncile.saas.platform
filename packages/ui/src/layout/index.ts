@@ -71,6 +71,7 @@ export type {
 
 export {
   LinkProvider,
+  RouterLink,
   useLinkComponent,
   useNavigate,
 } from "./link-context";

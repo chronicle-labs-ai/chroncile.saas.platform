@@ -19,7 +19,7 @@ import {
   Input,
   Modal,
   NativeSelect,
-  Skeleton,
+  SkeletonBlock,
   Textarea,
   ProductChip,
 } from "ui";
@@ -651,8 +651,8 @@ export function EmailTemplatesPage() {
               </div>
             ) : keysLoading || resendLoading ? (
               <>
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
+                <SkeletonBlock className="h-28 w-full" />
+                <SkeletonBlock className="h-28 w-full" />
               </>
             ) : (templateKeys?.length ?? 0) === 0 ? (
               <div className="py-s-8 text-center">

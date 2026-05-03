@@ -693,7 +693,7 @@ function DatasetFooter({
           trigger={
             <button
               type="button"
-              className="inline-flex h-[26px] items-center gap-[5px] rounded-md border border-transparent bg-ember px-[10px] font-sans text-[12px] font-medium leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] transition-colors hover:bg-[#e85520] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page"
+              className="inline-flex h-[26px] items-center gap-[5px] rounded-md border border-transparent bg-ember px-[10px] font-sans text-[12px] font-medium leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] transition-colors hover:bg-ember-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember focus-visible:ring-offset-1 focus-visible:ring-offset-page"
             >
               <Database size={11} strokeWidth={1.75} aria-hidden />
               {ctaLabel}

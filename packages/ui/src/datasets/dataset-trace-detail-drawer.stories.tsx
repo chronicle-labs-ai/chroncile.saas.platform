@@ -23,9 +23,22 @@ const meta: Meta<typeof DatasetTraceDetailDrawer> = {
 export default meta;
 type Story = StoryObj<typeof DatasetTraceDetailDrawer>;
 
-const sampleTrace = trainingDatasetSnapshot.traces[0]!;
+/* Default + multi-source seeds.
+ *
+ * Prefer a trace that already touches 3+ source integrations so the
+ * stacked-logo header, "Sources" detail row, and "Source breakdown"
+ * mini-section all light up by default. Falls back to a 2+ source
+ * trace, then to the first trace, so stories never render an
+ * empty inspector even on minimal seeds. */
+const multiSourceTrace =
+  trainingDatasetSnapshot.traces.find((t) => t.sources.length >= 3) ??
+  trainingDatasetSnapshot.traces.find((t) => t.sources.length >= 2) ??
+  trainingDatasetSnapshot.traces[0]!;
+const sampleTrace = multiSourceTrace;
 const otherTrace =
-  trainingDatasetSnapshot.traces[1] ?? trainingDatasetSnapshot.traces[0]!;
+  trainingDatasetSnapshot.traces.find(
+    (t) => t.traceId !== sampleTrace.traceId,
+  ) ?? sampleTrace;
 const traceWithNote = {
   ...sampleTrace,
   note: "Captured during the 2026-04-29 Friday outage; flagged by alerts-bot for review.",
@@ -185,6 +198,84 @@ export const TraceWithoutEvents: Story = {
           }}
           trace={traceWithoutEvents}
           onRemoveTrace={() => undefined}
+        />
+      </ChassisFrame>
+    );
+  },
+};
+
+/* Showcases the multi-source treatment end-to-end: stacked logos in
+ * the header breadcrumb, the "Sources" detail row with comma list +
+ * "+N more" overflow, and the per-source "Source breakdown" mini-
+ * section computed from this trace's events. Picks a 4+ source trace
+ * synthesized from real seed events when the snapshot doesn't ship
+ * one out of the box. */
+export const MultiSourceTrace: Story = {
+  render: function Render() {
+    const baseEvents = trainingDatasetSnapshot.events ?? [];
+    type SeedEvent = (typeof baseEvents)[number];
+    const bySource = new Map<string, SeedEvent[]>();
+    for (const e of baseEvents) {
+      const list = bySource.get(e.source) ?? [];
+      list.push(e);
+      bySource.set(e.source, list);
+    }
+    const topSources = Array.from(bySource.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 4)
+      .map(([s]) => s);
+
+    const traceId = "trace_multi_source_demo";
+    /* Build a fake trace that owns events from each top source so the
+       breakdown section renders 4 distinct rows. Counts decrease by
+       source so the proportional bars all show different widths. */
+    const stitchedEvents = topSources.flatMap((source, sourceIdx) => {
+      const pool = bySource.get(source) ?? [];
+      const take = Math.max(1, 5 - sourceIdx);
+      return pool.slice(0, take).map((e, idx) => ({
+        ...e,
+        id: `${traceId}_${source}_${idx}`,
+        traceId,
+      }));
+    });
+    const stitchedTrace = {
+      ...sampleTrace,
+      traceId,
+      label: `Multi-source · ${topSources[0] ?? "stripe"} → ${
+        topSources[topSources.length - 1] ?? "slack"
+      }`,
+      primarySource: topSources[0] ?? sampleTrace.primarySource,
+      sources: topSources.length > 0 ? topSources : sampleTrace.sources,
+      eventCount: stitchedEvents.length,
+    };
+
+    const stitchedSnapshot = {
+      ...trainingDatasetSnapshot,
+      traces: [
+        stitchedTrace,
+        ...trainingDatasetSnapshot.traces.filter(
+          (t) => t.traceId !== traceId,
+        ),
+      ],
+      events: [
+        ...baseEvents.filter((e) => e.traceId !== traceId),
+        ...stitchedEvents,
+      ],
+    };
+
+    return (
+      <ChassisFrame>
+        <MainPanePlaceholder
+          selectedTraceId={stitchedTrace.traceId}
+          onSelectTrace={() => undefined}
+        />
+        <DatasetTraceDetailDrawer
+          isOpen
+          onClose={() => undefined}
+          snapshot={stitchedSnapshot}
+          trace={stitchedTrace}
+          onRemoveTrace={() => undefined}
+          onJumpToTimeline={() => undefined}
         />
       </ChassisFrame>
     );

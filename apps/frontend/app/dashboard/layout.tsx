@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SidebarInset, SidebarProvider, SiteHeader } from "ui";
+import { SidebarInset, SidebarProvider, SiteHeader, Toaster } from "ui";
 import {
   authWithReason,
   loginErrorCodeFromAuthReason,
@@ -50,6 +50,7 @@ export default async function DashboardLayout({
           </div>
         </SidebarProvider>
       </div>
+      <Toaster />
     </DashboardLinkRouterProvider>
   );
 }

@@ -116,6 +116,7 @@ const preset: Config = {
         },
 
         wash: {
+          micro: "var(--c-wash-micro)",
           "1": "var(--c-wash-1)",
           "2": "var(--c-wash-2)",
           "3": "var(--c-wash-3)",
@@ -125,6 +126,7 @@ const preset: Config = {
         // Primary action color (Chronicle signal). Stays as ember.
         ember: {
           DEFAULT: "var(--c-ember)",
+          hover: "var(--c-ember-hover)",
           deep: "var(--c-ember-deep)",
         },
         // Aux brand accents — kept for the glass-scene recipes and a
@@ -206,6 +208,7 @@ const preset: Config = {
           "surface-bar-2": "var(--c-surface-00)",
           "surface-hover": "var(--c-row-hover)",
           "surface-selected": "var(--c-row-selected)",
+          "wash-micro": "var(--c-wash-micro)",
           "wash-1": "var(--c-wash-1)",
           "wash-2": "var(--c-wash-2)",
           "wash-3": "var(--c-wash-3)",

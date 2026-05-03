@@ -3,6 +3,8 @@ import {
   BrandIcon,
   BRAND_ICON_DOMAINS,
   BRAND_ICON_IDS,
+  CompanyLogo,
+  MONOCHROME_DARK_MARK_BRANDS,
   getLogoDevUrl,
 } from "./brand-icons";
 
@@ -97,6 +99,97 @@ export const RoundedVariants: Story = {
       <BrandIcon {...args} id="snowflake" rounded size={48} />
     </div>
   ),
+};
+
+/*
+ * DarkMarkInversion — proves that monochrome-dark brand marks
+ * (GitHub, Vercel, OpenAI, …) stay readable in dark theme by
+ * flipping black → white via the global CSS rule, while leaving
+ * multi-color logos untouched. Toggle the Storybook theme to see
+ * the inversion engage / disengage.
+ *
+ * The `themeAware={false}` row shows the un-patched render — what
+ * every connection card / row used to look like in dark mode:
+ * black mark on near-black surface, just a faint hairline outline.
+ */
+export const DarkMarkInversion: Story = {
+  parameters: { layout: "padded" },
+  render: () => {
+    const samples = [
+      "github",
+      "openai",
+      "vercel",
+      "cursor",
+      "anthropic",
+      "x",
+      "notion",
+      // Multi-color — should NOT invert. Negative control.
+      "slack",
+      "stripe",
+      "intercom",
+    ];
+
+    const Cell = ({
+      label,
+      children,
+    }: {
+      label: string;
+      children: React.ReactNode;
+    }) => (
+      <div className="flex flex-col items-center gap-s-2">
+        <span
+          className="flex h-10 w-10 items-center justify-center rounded-sm border border-hairline bg-surface-02"
+          aria-hidden
+        >
+          {children}
+        </span>
+        <span className="font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
+          {label}
+        </span>
+      </div>
+    );
+
+    return (
+      <div className="flex flex-col gap-s-6 rounded-sm border border-hairline bg-surface-01 p-s-5">
+        <div>
+          <p className="mb-s-3 font-sans text-label-sm text-ink-hi">
+            Default — auto-invert on dark theme
+          </p>
+          <div className="grid grid-cols-5 gap-s-4">
+            {samples.map((name) => (
+              <Cell key={`on-${name}`} label={name}>
+                <CompanyLogo name={name} size={20} radius={3} />
+              </Cell>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-s-3 font-sans text-label-sm text-ink-hi">
+            <code className="font-mono text-[12px]">themeAware=&#123;false&#125;</code>{" "}
+            — pre-patch render
+          </p>
+          <div className="grid grid-cols-5 gap-s-4">
+            {samples.map((name) => (
+              <Cell key={`off-${name}`} label={name}>
+                <CompanyLogo
+                  name={name}
+                  size={20}
+                  radius={3}
+                  themeAware={false}
+                />
+              </Cell>
+            ))}
+          </div>
+        </div>
+
+        <p className="font-mono text-mono-sm text-ink-dim">
+          Curated allowlist:{" "}
+          {[...MONOCHROME_DARK_MARK_BRANDS].sort().join(", ")}
+        </p>
+      </div>
+    );
+  },
 };
 
 export const LogoDevUrls: Story = {

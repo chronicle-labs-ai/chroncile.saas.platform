@@ -20,12 +20,15 @@
     "./onboarding": "./src/onboarding/index.ts",
     "./connectors": "./src/connectors/index.ts",
     "./icons": "./src/icons/index.ts",
-    "./rhf": "./src/primitives/rhf.tsx"
+    "./rhf": "./src/primitives/rhf.tsx",
+    "./bones/registry": "./src/bones/registry.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build -o storybook-static"
+    "build-storybook": "storybook build -o storybook-static",
+    "bones:build": "boneyard-js build http://localhost:6006 --out src/bones",
+    "bones:watch": "boneyard-js build http://localhost:6006 --watch --out src/bones"
   },
   "peerDependencies": {
     "react": ">=19.0.0",
@@ -43,6 +46,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.0",
+    "playwright": "^1.59.1",
     "postcss": "^8.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -53,6 +57,9 @@
     "vite": "^5.4.0"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.24",
+    "boneyard-js": "^1.8.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

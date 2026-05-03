@@ -160,11 +160,51 @@ export { DatasetClusterCard } from "./dataset-cluster-card";
 export type { DatasetClusterCardProps } from "./dataset-cluster-card";
 
 export {
-  TraceSummaryRow,
+  DatasetTracesTableRow,
+  /** @deprecated alias retained for back-compat — use `DatasetTracesTableRow`. */
+  DatasetTracesTableRow as TraceSummaryRow,
   buildClusterIndex,
   formatTraceDuration,
-} from "./trace-summary-row";
-export type { TraceSummaryRowProps } from "./trace-summary-row";
+} from "./dataset-traces-table-row";
+export type {
+  DatasetTracesTableRowProps,
+  /** @deprecated alias retained for back-compat — use `DatasetTracesTableRowProps`. */
+  DatasetTracesTableRowProps as TraceSummaryRowProps,
+  TracesRowColumnId,
+} from "./dataset-traces-table-row";
+
+/* New tablecn-flavored List lens. */
+export {
+  DatasetTracesTable,
+  useDatasetTracesTable,
+  visibilityFromDisplayProperties,
+  displayPropertiesFromVisibility,
+  rowSelectionFromIds,
+  idsFromRowSelection,
+  DATASET_TRACES_DISPLAY_PROPERTIES,
+} from "./dataset-traces-table";
+export type {
+  DatasetTracesTableProps,
+  DatasetTracesGroupBy,
+  DatasetTracesDensity,
+  DatasetTracesDisplayProperty,
+} from "./dataset-traces-table";
+
+/* Tablecn-shaped data-table primitives (faceted filter, view options,
+ * multi-column sort) — exposed for any other surface that wants to
+ * adopt the same chrome on top of TanStack Table. */
+export {
+  DataTableFacetedFilter,
+  DataTableViewOptions,
+  DataTableSortList,
+} from "./data-table";
+export type {
+  Option as DataTableOption,
+  FilterVariant as DataTableFilterVariant,
+} from "./data-table";
+
+export { SourceLogoStack } from "./source-logo-stack";
+export type { SourceLogoStackProps } from "./source-logo-stack";
 
 /* ── Graph view ────────────────────────────────────────────── */
 export { DatasetGraphView } from "./dataset-graph-view";

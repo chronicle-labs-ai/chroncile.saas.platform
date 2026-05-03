@@ -18,6 +18,11 @@ import { ConnectionHealthBadge } from "./connection-health-badge";
  * Presentational + uncontrolled-friendly. State (query, filters,
  * view) is owned by the consumer (`ConnectionsManager`); this is
  * just the shaped controls.
+ *
+ * Filter chips render with a count badge derived from the live
+ * `healthCounts` map. Counts of `0` are dimmed (or hidden when
+ * `hideEmptyHealthFilters` is set) so the strip never grows
+ * dead controls — Emil rule: "don't show what doesn't matter."
  */
 
 export type ConnectionsView = "list" | "grid";
@@ -35,6 +40,17 @@ export interface ConnectionsToolbarProps {
   onAdd?: () => void;
   /** Total connection count, rendered as a faint counter next to search. */
   totalCount?: number;
+  /**
+   * Per-health row counts. Drives the chip count badges and lets us
+   * hide chips with zero rows when `hideEmptyHealthFilters` is set.
+   */
+  healthCounts?: Partial<Record<ConnectionHealth, number>>;
+  /**
+   * Drop chips with `0` matching rows entirely. Defaults to `false`
+   * so the chip strip stays stable (chips appear/disappear only on
+   * the threshold of "did this state ever exist?").
+   */
+  hideEmptyHealthFilters?: boolean;
   className?: string;
 }
 
@@ -48,13 +64,15 @@ export function ConnectionsToolbar({
   hideAdd,
   onAdd,
   totalCount,
+  healthCounts,
+  hideEmptyHealthFilters = false,
   className,
 }: ConnectionsToolbarProps) {
   const selectedSet = new Set(selectedHealth);
   return (
     <div
       className={cx(
-        "flex flex-wrap items-center gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-2",
+        "flex flex-wrap items-center gap-3 rounded-[2px] border border-divider bg-wash-micro px-3 py-2",
         className,
       )}
     >
@@ -75,12 +93,24 @@ export function ConnectionsToolbar({
       <div className="flex flex-wrap items-center gap-1.5">
         {CONNECTION_HEALTH_FILTERS.map((h) => {
           const active = selectedSet.has(h);
+          const count = healthCounts?.[h] ?? 0;
+          const empty = count === 0;
+          if (empty && hideEmptyHealthFilters && !active) return null;
           return (
             <Chip
               key={h}
               active={active}
               onClick={() => onHealthToggle(h)}
-              icon={<ConnectionHealthBadge health={h} iconOnly />}
+              icon={
+                <ConnectionHealthBadge
+                  health={h}
+                  iconOnly
+                  pulse={active && h === "live"}
+                />
+              }
+              count={healthCounts ? count : undefined}
+              className={cx(empty && !active ? "opacity-50" : null)}
+              aria-pressed={active}
             >
               {capitalize(h)}
             </Chip>
@@ -98,8 +128,8 @@ export function ConnectionsToolbar({
             onClick={() => onViewChange("list")}
             className={cx(
               "flex h-7 w-7 items-center justify-center text-ink-dim",
-              "hover:bg-[rgba(255,255,255,0.025)]",
-              "data-[active=true]:bg-[rgba(255,255,255,0.04)] data-[active=true]:text-ink-hi",
+              "hover:bg-wash-2",
+              "data-[active=true]:bg-wash-5 data-[active=true]:text-ink-hi data-[active=true]:shadow-[inset_0_-1px_0_var(--c-ember)]",
             )}
           >
             <List className="size-3.5" strokeWidth={1.75} />
@@ -112,8 +142,8 @@ export function ConnectionsToolbar({
             onClick={() => onViewChange("grid")}
             className={cx(
               "flex h-7 w-7 items-center justify-center border-l border-divider text-ink-dim",
-              "hover:bg-[rgba(255,255,255,0.025)]",
-              "data-[active=true]:bg-[rgba(255,255,255,0.04)] data-[active=true]:text-ink-hi",
+              "hover:bg-wash-2",
+              "data-[active=true]:bg-wash-5 data-[active=true]:text-ink-hi data-[active=true]:shadow-[inset_0_-1px_0_var(--c-ember)]",
             )}
           >
             <LayoutGrid className="size-3.5" strokeWidth={1.75} />

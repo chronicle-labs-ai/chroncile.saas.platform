@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import type * as React from "react";
 
+import { Skeleton } from "../primitives/skeleton";
 import { EnvCard } from "./env-card";
 
 const meta = {
@@ -82,4 +83,41 @@ export const Default: Story = {
 
 export const Gallery: Story = {
   render: () => <CardDemo />,
+};
+
+/* Loading-state capture for the boneyard registry.
+ *
+ * `<Skeleton name="env-card" loading fixture={…}>` renders the real
+ * card during `yarn workspace ui bones:build`, so the captured bones
+ * mirror the production EnvCard shape (header, host rows, footer).
+ * Consumers (env-manager dashboard) render the same `name="env-card"`
+ * with `loading={isLoading}` and pick the bones up automatically. */
+function LoadingFixture() {
+  return (
+    <div className="max-w-[420px]">
+      <EnvCard
+        type="ephemeral"
+        title="invite-flow · pr-1276"
+        meta="feature/invite-flow · 8f3a91c"
+        badgeLabel="ephemeral"
+      >
+        <EnvCard.Hosts>
+          <EnvCard.HostRow label="Backend" value="chronicle-pr-1276.fly.dev" />
+          <EnvCard.HostRow label="Frontend" value="chronicle-pr-1276.vercel.app" />
+        </EnvCard.Hosts>
+        <EnvCard.Footer>
+          <EnvCard.Health status="hot">2m ago</EnvCard.Health>
+          <EnvCard.Ttl>TTL 18h</EnvCard.Ttl>
+        </EnvCard.Footer>
+      </EnvCard>
+    </div>
+  );
+}
+
+export const Loading: Story = {
+  render: () => (
+    <Skeleton name="env-card" loading fixture={<LoadingFixture />}>
+      <LoadingFixture />
+    </Skeleton>
+  ),
 };

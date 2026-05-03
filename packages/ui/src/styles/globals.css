@@ -91,6 +91,29 @@
 }
 
 /* ============================================================
+   COMPANY LOGOS — invert monochrome-dark brand marks on dark theme
+   Logo.dev returns each brand's primary mark; for many developer-tool
+   brands (GitHub, Vercel, OpenAI, Cursor, X, …) that mark is pure
+   black on transparent and disappears against our dark product
+   canvas. `<CompanyLogo>` / `<BrandIcon>` tag those marks with
+   `data-brand-tone="dark-mark"` from a curated allowlist
+   (`MONOCHROME_DARK_MARK_BRANDS`). We invert them under the dark
+   theme so the silhouette flips to white. The `hue-rotate(180deg)`
+   is a no-op for pure black/white but preserves any subtle tint for
+   near-monochrome marks (e.g. Pydantic's red accent). Light theme
+   renders the original — a black mark on a light surface is fine.
+
+   Components that wrap the logo in their own contrasting tile
+   (e.g. `<AgentCompanyMark>`) opt out via `themeAware={false}`,
+   otherwise the inversion would flip a black mark to white on a
+   white tile and re-hide it.
+   ============================================================ */
+
+[data-theme="dark"] img[data-brand-tone="dark-mark"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* ============================================================
    SCROLLBAR — thin, hairline-colored
    Opt-in via `.chron-scrollbar` on small scrollable surfaces
    (code blocks, drawers, inspectors). The page scrollbar stays
@@ -118,6 +141,20 @@
 .chron-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--c-hairline-strong) transparent;
+}
+
+/* Opt-in via `.chron-scrollbar-hidden` to keep a surface scrollable
+   while removing the visual scrollbar entirely — used inside dense
+   inspectors and table containers where the rail/divider already
+   communicates extent and a track would add noise. */
+.chron-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chron-scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* ============================================================
@@ -190,8 +227,12 @@ body {
   background: var(--c-page);
   color: var(--c-ink);
   font-family: var(--font-sans);
-  font-weight: 300;
-  font-feature-settings: "ss01", "ss02", "cv01";
+  /* Product body weight. 300 reads as anemic at 14 px on dark
+     surfaces (Emil's Typography rule #6 — light weights are for
+     large display, not UI body). Use `.display` / `.font-light`
+     explicitly for marketing / decks. */
+  font-weight: 400;
+  font-feature-settings: "cv01", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

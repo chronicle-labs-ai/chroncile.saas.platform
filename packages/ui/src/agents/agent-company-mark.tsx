@@ -172,6 +172,11 @@ export function AgentCompanyMark({
         size={SIZE_PX[size]}
         radius={Math.max(radius - 1, 0)}
         fallbackBackground="transparent"
+        // Tile already paints the contrast. Without this opt-out the
+        // global `[data-theme="dark"] img[data-brand-tone="dark-mark"]`
+        // rule would flip a black mark to white on top of the white
+        // tile we just selected for it — re-hiding the logo.
+        themeAware={false}
       />
     </span>
   );

@@ -21,6 +21,13 @@ export interface ConnectionEmptyProps {
   variant?: "empty" | "filtered";
   onAdd?: () => void;
   onClearFilters?: () => void;
+  /**
+   * Number of connections currently filtered out. Used by the
+   * `filtered` variant to tell users "there are X hidden by your
+   * filters" instead of the ambiguous "no matches" — Emil rule:
+   * empty states should explain the *why*, not just the *what*.
+   */
+  totalHidden?: number;
   className?: string;
 }
 
@@ -28,14 +35,19 @@ export function ConnectionEmpty({
   variant = "empty",
   onAdd,
   onClearFilters,
+  totalHidden,
   className,
 }: ConnectionEmptyProps) {
   if (variant === "filtered") {
+    const hint =
+      totalHidden && totalHidden > 0
+        ? `Try clearing filters to see ${totalHidden} ${totalHidden === 1 ? "hidden connection" : "hidden connections"}.`
+        : "Try removing a filter or clearing the search.";
     return (
       <EmptyState
         icon={<Plug strokeWidth={1.5} />}
         title="No connections match"
-        description="Try removing a filter or clearing the search."
+        description={hint}
         actions={
           onClearFilters ? (
             <Button variant="secondary" size="sm" onPress={onClearFilters}>

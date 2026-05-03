@@ -43,7 +43,7 @@ export function BacktestLaunchDock({
   return (
     <div
       className={cx(
-        "flex flex-wrap items-center justify-between gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-2.5",
+        "flex flex-wrap items-center justify-between gap-3 rounded-[2px] border border-divider bg-wash-micro px-3 py-2.5",
         className,
       )}
     >

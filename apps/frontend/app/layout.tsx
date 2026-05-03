@@ -2,6 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider, themeScript } from "ui";
 import "./globals.css";
+// Boneyard bone registry — populated at design time by
+// `yarn workspace ui bones:build`. Importing here makes every
+// `<Skeleton name="...">` in the tree resolve its pre-captured layout
+// without each consumer wiring it up. Empty stub when no bones have
+// been captured yet, so this is a safe no-op import.
+import "ui/bones/registry";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

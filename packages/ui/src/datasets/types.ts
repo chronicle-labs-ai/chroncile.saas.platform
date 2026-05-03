@@ -270,7 +270,17 @@ export interface DatasetSavedView {
   state: {
     lens?: string;
     groupBy?: string;
+    /** @deprecated since the table moved to TanStack multi-column
+     *  sort. New views write `sorting` instead; this is still read at
+     *  apply-time as a back-compat fallback for views captured before
+     *  the migration. */
     ordering?: string;
+    /**
+     * Multi-column TanStack sort. Each entry mirrors `ColumnSort`:
+     * `{ id: traceColumnId, desc: boolean }`. Typed loosely so this
+     * module doesn't depend on `@tanstack/react-table`.
+     */
+    sorting?: ReadonlyArray<{ id: string; desc: boolean }>;
     density?: string;
     showEmptyGroups?: boolean;
     /** List of trace-row column ids that should be visible. */

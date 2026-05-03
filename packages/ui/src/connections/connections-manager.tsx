@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
@@ -19,6 +20,7 @@ import { ConnectionDetailDrawer } from "./connection-detail-drawer";
 import { type ConnectionDetailTab } from "./connection-detail-body";
 import { AddConnectionPicker } from "./add-connection-picker";
 import {
+  CONNECTION_HEALTH_FILTERS,
   connectionBackfillsSeed,
   connectionDeliveriesSeed,
   connectionEventSubsSeed,
@@ -40,6 +42,14 @@ import { formatStableDateTime } from "./time";
  *
  * Mostly uncontrolled (state lives inside) but every callback is
  * also surfaced so apps can persist mutations to the backend.
+ *
+ * Mutation contracts: `onPause` / `onResume` / `onDisconnect` /
+ * `onTest` / `onReauth` / `onRotateSecret` / `onRunBackfill` may
+ * return a `Promise`. The manager wraps each call in a pending
+ * state, swaps the action button to a spinner, and emits a sonner
+ * toast on success or failure. Consumers that rely on synchronous
+ * updates (stories, Storybook) can keep returning `void` — the
+ * pending state still flips, just instantly.
  */
 
 export interface ConnectionsManagerProps {
@@ -59,23 +69,60 @@ export interface ConnectionsManagerProps {
   >;
   /** Initial view. Defaults to list. */
   initialView?: ConnectionsView;
-  /** Hide the right-side header CTA. The toolbar still has its own. */
+  /**
+   * Show a redundant "Add" CTA in the page header. Defaults to
+   * `false` — the toolbar already has its own primary, and the empty
+   * state has its own dedicated CTA. Two stacked primaries on the
+   * same surface violates Emil's single-CTA-per-context rule.
+   */
+  showHeaderAdd?: boolean;
+  /**
+   * Backwards-compat alias for the inverse of `showHeaderAdd`. The
+   * old default rendered both CTAs; flip this if any existing
+   * consumer overrides the header.
+   * @deprecated Use `showHeaderAdd` instead.
+   */
   hideHeaderAdd?: boolean;
   /** Optional workspace label rendered in the breadcrumb. */
   workspace?: string;
+  /**
+   * Builder for the canonical detail-page URL. Wired so cmd-click
+   * on a row opens the page in a new tab and the drawer's "View
+   * full details" link is accurate. Defaults to
+   * `/dashboard/connections/{id}`.
+   */
+  detailHrefBuilder?: (id: string) => string;
 
   /* mutation hooks — let apps persist outside the local store */
-  onPause?: (id: string) => void;
-  onResume?: (id: string) => void;
-  onReauth?: (id: string) => void;
-  onTest?: (id: string) => void;
-  onDisconnect?: (id: string) => void;
-  onRotateSecret?: (id: string) => void;
-  onRunBackfill?: (id: string) => void;
+  onPause?: (id: string) => void | Promise<void>;
+  onResume?: (id: string) => void | Promise<void>;
+  onReauth?: (id: string) => void | Promise<void>;
+  onTest?: (id: string) => void | Promise<void>;
+  onDisconnect?: (id: string) => void | Promise<void>;
+  onRotateSecret?: (id: string) => void | Promise<void>;
+  onRunBackfill?: (id: string) => void | Promise<void>;
   onAdd?: (next: Connection) => void;
   onChange?: (next: readonly Connection[]) => void;
   /** Optional callback for the Activity tab's "Open full activity log" link. */
   onOpenActivityLog?: (id: string) => void;
+  /**
+   * Live updates from a server-side SSE stream. When provided, the
+   * manager subscribes via the consumer-supplied function and merges
+   * each incoming patch into the matching connection row by id.
+   * Returning a cleanup is the conventional shape — the manager calls
+   * it on unmount or when the dep changes.
+   *
+   * Example wire-up in `apps/frontend`:
+   *
+   *   subscribeUpdates={(onPatch) =>
+   *     subscribeEventsManagerSSE("connections", (msg) => {
+   *       onPatch({ id: msg.id, lastEventAt: msg.ts, eventsLast24h: msg.count })
+   *     })
+   *   }
+   */
+  subscribeUpdates?: (
+    onPatch: (patch: Partial<Connection> & { id: string }) => void,
+  ) => () => void;
   className?: string;
 }
 
@@ -94,14 +141,18 @@ const TESTING_CHECKS: readonly ConnectorCheck[] = [
   { id: "ping", label: "First event", status: "pending" },
 ];
 
+const DEFAULT_DETAIL_HREF = (id: string) => `/dashboard/connections/${id}`;
+
 export function ConnectionsManager({
   connections: initialConnections = connectionsSeed,
   backfillsByConnection = connectionBackfillsSeed,
   deliveriesByConnection = connectionDeliveriesSeed,
   eventSubsByConnection = connectionEventSubsSeed,
   initialView = "list",
+  showHeaderAdd,
   hideHeaderAdd,
   workspace = "Chronicle",
+  detailHrefBuilder = DEFAULT_DETAIL_HREF,
   onPause,
   onResume,
   onReauth,
@@ -112,6 +163,7 @@ export function ConnectionsManager({
   onAdd,
   onChange,
   onOpenActivityLog,
+  subscribeUpdates,
   className,
 }: ConnectionsManagerProps) {
   const [list, setList] = React.useState<Connection[]>(() => [
@@ -150,6 +202,52 @@ export function ConnectionsManager({
     [onChange],
   );
 
+  /*
+   * Per-id × action pending bookkeeping. Lets the action menu, the
+   * row's button, and the drawer all reflect the same in-flight
+   * mutation without a separate Reducer. `kind` lets us distinguish
+   * "pause in flight" from "test in flight" so we don't over-disable.
+   */
+  type PendingKind =
+    | "pause"
+    | "resume"
+    | "reauth"
+    | "test"
+    | "disconnect"
+    | "rotate"
+    | "backfill";
+  const [pending, setPending] = React.useState<Record<string, PendingKind[]>>(
+    {},
+  );
+
+  const isPending = React.useCallback(
+    (id: string, kind?: PendingKind) =>
+      pending[id]?.some((k) => !kind || k === kind) ?? false,
+    [pending],
+  );
+
+  const startPending = React.useCallback(
+    (id: string, kind: PendingKind) => {
+      setPending((prev) => {
+        const cur = prev[id] ?? [];
+        if (cur.includes(kind)) return prev;
+        return { ...prev, [id]: [...cur, kind] };
+      });
+    },
+    [],
+  );
+  const endPending = React.useCallback((id: string, kind: PendingKind) => {
+    setPending((prev) => {
+      const cur = prev[id] ?? [];
+      const next = cur.filter((k) => k !== kind);
+      if (next.length === 0) {
+        const { [id]: _drop, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: next };
+    });
+  }, []);
+
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return list.filter((c) => {
@@ -160,6 +258,15 @@ export function ConnectionsManager({
       return haystack.toLowerCase().includes(q);
     });
   }, [list, query, filters]);
+
+  const healthCounts = React.useMemo(() => {
+    const out: Partial<Record<ConnectionHealth, number>> = {};
+    for (const h of CONNECTION_HEALTH_FILTERS) out[h] = 0;
+    for (const c of list) {
+      out[c.health] = (out[c.health] ?? 0) + 1;
+    }
+    return out;
+  }, [list]);
 
   const selected = React.useMemo(
     () => (selectedId ? list.find((c) => c.id === selectedId) ?? null : null),
@@ -172,34 +279,142 @@ export function ConnectionsManager({
     );
   };
 
-  const updateConn = (id: string, patch: Partial<Connection>) => {
-    propagate(list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-  };
+  const updateConn = React.useCallback(
+    (id: string, patch: Partial<Connection>) => {
+      setList((prev) => {
+        const next = prev.map((c) => (c.id === id ? { ...c, ...patch } : c));
+        onChange?.(next);
+        return next;
+      });
+    },
+    [onChange],
+  );
 
-  const handlePause = (id: string) => {
-    updateConn(id, { health: "paused" });
-    onPause?.(id);
-  };
-  const handleResume = (id: string) => {
-    updateConn(id, { health: "live" });
-    onResume?.(id);
-  };
-  const handleReauth = (id: string) => {
-    setEdge({ kind: "reauth", id });
-    onReauth?.(id);
-  };
-  const handleTest = (id: string) => {
-    setEdge({ kind: "testing", id, checks: TESTING_CHECKS });
-    onTest?.(id);
-  };
+  /*
+   * Subscribe to live updates if the host wired it up. Each patch is
+   * merged into the matching row; rows that don't exist locally are
+   * ignored (the SSE feed may be wider than the visible filter).
+   */
+  React.useEffect(() => {
+    if (!subscribeUpdates) return;
+    const unsub = subscribeUpdates((patch) => {
+      if (!patch?.id) return;
+      const { id, ...rest } = patch;
+      updateConn(id, rest);
+    });
+    return unsub;
+  }, [subscribeUpdates, updateConn]);
+
+  /*
+   * Generic optimistic-runner. Applies the optimistic patch, calls
+   * `cb`, awaits the result if it's a promise, and on rejection
+   * rolls the patch back and shows an error toast. Each mutation
+   * passes its own `kind` so multiple concurrent mutations on the
+   * same id don't trample each other's pending flags.
+   */
+  const runMutation = React.useCallback(
+    async <T,>(opts: {
+      id: string;
+      kind: PendingKind;
+      optimistic?: Partial<Connection>;
+      rollback?: Partial<Connection>;
+      successTitle?: string;
+      errorTitle: string;
+      cb?: (id: string) => T | Promise<T>;
+    }): Promise<{ ok: boolean; error?: unknown }> => {
+      const { id, kind, optimistic, rollback, successTitle, errorTitle, cb } =
+        opts;
+      startPending(id, kind);
+      if (optimistic) updateConn(id, optimistic);
+      try {
+        await Promise.resolve(cb?.(id));
+        if (successTitle) toast.success(successTitle);
+        return { ok: true };
+      } catch (error) {
+        if (rollback) updateConn(id, rollback);
+        toast.error(errorTitle, {
+          description:
+            error instanceof Error
+              ? error.message
+              : "The action didn't complete. Try again.",
+        });
+        return { ok: false, error };
+      } finally {
+        endPending(id, kind);
+      }
+    },
+    [endPending, startPending, updateConn],
+  );
+
+  const handlePause = React.useCallback(
+    (id: string) => {
+      const conn = list.find((c) => c.id === id);
+      void runMutation({
+        id,
+        kind: "pause",
+        optimistic: { health: "paused" },
+        rollback: conn ? { health: conn.health } : undefined,
+        successTitle: `${conn?.name ?? "Connection"} paused`,
+        errorTitle: "Couldn't pause connection",
+        cb: onPause,
+      });
+    },
+    [list, onPause, runMutation],
+  );
+  const handleResume = React.useCallback(
+    (id: string) => {
+      const conn = list.find((c) => c.id === id);
+      void runMutation({
+        id,
+        kind: "resume",
+        optimistic: { health: "live" },
+        rollback: conn ? { health: conn.health } : undefined,
+        successTitle: `${conn?.name ?? "Connection"} resumed`,
+        errorTitle: "Couldn't resume connection",
+        cb: onResume,
+      });
+    },
+    [list, onResume, runMutation],
+  );
+  const handleReauth = React.useCallback(
+    (id: string) => {
+      setEdge({ kind: "reauth", id });
+      onReauth?.(id);
+    },
+    [onReauth],
+  );
+  const handleTest = React.useCallback(
+    (id: string) => {
+      setEdge({ kind: "testing", id, checks: TESTING_CHECKS });
+      updateConn(id, { lastTestStatus: "pending" });
+      onTest?.(id);
+    },
+    [onTest, updateConn],
+  );
   const requestDisconnect = (id: string) => {
     setConfirmDisconnect(id);
   };
-  const handleDisconnect = (id: string) => {
-    propagate(list.filter((c) => c.id !== id));
-    if (selectedId === id) setSelectedId(null);
-    onDisconnect?.(id);
-  };
+  const handleDisconnect = React.useCallback(
+    (id: string) => {
+      const conn = list.find((c) => c.id === id);
+      void runMutation({
+        id,
+        kind: "disconnect",
+        successTitle: `${conn?.name ?? "Connection"} disconnected`,
+        errorTitle: "Couldn't disconnect",
+        cb: async (innerId) => {
+          await Promise.resolve(onDisconnect?.(innerId));
+          // Remove the row only after the mutation resolves so a
+          // failed call doesn't surprise users with disappearing
+          // rows that pop back. The error-path rollback handles
+          // any optimistic patch we'd attached.
+          setList((prev) => prev.filter((c) => c.id !== innerId));
+          if (selectedId === innerId) setSelectedId(null);
+        },
+      });
+    },
+    [list, onDisconnect, runMutation, selectedId],
+  );
   const confirmConn = confirmDisconnect
     ? list.find((c) => c.id === confirmDisconnect) ?? null
     : null;
@@ -208,12 +423,32 @@ export function ConnectionsManager({
     setEdge({ kind: "error", id });
   };
 
-  const handleRotateSecret = (id: string) => {
-    onRotateSecret?.(id);
-  };
-  const handleRunBackfill = (id: string) => {
-    onRunBackfill?.(id);
-  };
+  const handleRotateSecret = React.useCallback(
+    (id: string) => {
+      const conn = list.find((c) => c.id === id);
+      void runMutation({
+        id,
+        kind: "rotate",
+        successTitle: `Secret rotated for ${conn?.name ?? "connection"}`,
+        errorTitle: "Couldn't rotate secret",
+        cb: onRotateSecret,
+      });
+    },
+    [list, onRotateSecret, runMutation],
+  );
+  const handleRunBackfill = React.useCallback(
+    (id: string) => {
+      const conn = list.find((c) => c.id === id);
+      void runMutation({
+        id,
+        kind: "backfill",
+        successTitle: `Backfill started for ${conn?.name ?? "connection"}`,
+        errorTitle: "Couldn't start backfill",
+        cb: onRunBackfill,
+      });
+    },
+    [list, onRunBackfill, runMutation],
+  );
 
   const handleConnected = ({
     id,
@@ -240,10 +475,14 @@ export function ConnectionsManager({
     };
     propagate([next, ...list]);
     onAdd?.(next);
+    toast.success(`${name} connected`, {
+      description: "Streaming live and historical events into Chronicle.",
+    });
   };
 
   const showEmpty = list.length === 0;
   const showFilteredEmpty = !showEmpty && filtered.length === 0;
+  const totalHidden = list.length - filtered.length;
 
   const connectedSourceIds = React.useMemo(
     () => list.map((c) => c.source),
@@ -271,6 +510,24 @@ export function ConnectionsManager({
     }));
   };
 
+  const handleOpenExisting = React.useCallback(
+    (sourceId: Connection["source"]) => {
+      const match = list.find((c) => c.source === sourceId);
+      if (!match) return;
+      setSelectedId(match.id);
+      setDrawerTab(match.health === "error" ? "activity" : "overview");
+    },
+    [list],
+  );
+
+  const headerAddVisible =
+    showHeaderAdd ?? (hideHeaderAdd === undefined ? false : !hideHeaderAdd);
+
+  const buildDetailHref = React.useCallback(
+    (id: string) => detailHrefBuilder(id),
+    [detailHrefBuilder],
+  );
+
   return (
     <div
       className={cx(
@@ -282,7 +539,7 @@ export function ConnectionsManager({
         workspace={workspace}
         count={list.length}
         liveCount={list.filter((c) => c.health === "live").length}
-        hideAdd={hideHeaderAdd}
+        showAdd={headerAddVisible}
         onAdd={() => setAddOpen(true)}
       />
 
@@ -298,12 +555,14 @@ export function ConnectionsManager({
             selectedHealth={filters}
             onHealthToggle={toggleHealth}
             totalCount={list.length}
+            healthCounts={healthCounts}
             onAdd={() => setAddOpen(true)}
           />
 
           {showFilteredEmpty ? (
             <ConnectionEmpty
               variant="filtered"
+              totalHidden={totalHidden}
               onClearFilters={() => {
                 setFilters([]);
                 setQuery("");
@@ -315,24 +574,32 @@ export function ConnectionsManager({
                 <ConnectionRow
                   key={c.id}
                   connection={c}
+                  href={buildDetailHref(c.id)}
                   isActive={selectedId === c.id}
                   onOpen={(id) => {
                     setSelectedId(id);
                     setDrawerTab(c.health === "error" ? "activity" : "overview");
                   }}
-                  onPause={handlePause}
-                  onResume={handleResume}
+                  onPause={isPending(c.id, "pause") ? undefined : handlePause}
+                  onResume={
+                    isPending(c.id, "resume") ? undefined : handleResume
+                  }
                   onReauth={
                     c.health === "error"
                       ? () => handleOpenError(c.id)
                       : handleReauth
                   }
-                  onTest={handleTest}
+                  onTest={isPending(c.id, "test") ? undefined : handleTest}
                   onSettings={(id) => {
                     setSelectedId(id);
                     setDrawerTab("scopes");
                   }}
                   onDisconnect={requestDisconnect}
+                  onOpenInNewTab={(id) => {
+                    if (typeof window !== "undefined") {
+                      window.open(buildDetailHref(id), "_blank", "noopener");
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -342,24 +609,32 @@ export function ConnectionsManager({
                 <ConnectionCard
                   key={c.id}
                   connection={c}
+                  href={buildDetailHref(c.id)}
                   isActive={selectedId === c.id}
                   onOpen={(id) => {
                     setSelectedId(id);
                     setDrawerTab(c.health === "error" ? "activity" : "overview");
                   }}
-                  onPause={handlePause}
-                  onResume={handleResume}
+                  onPause={isPending(c.id, "pause") ? undefined : handlePause}
+                  onResume={
+                    isPending(c.id, "resume") ? undefined : handleResume
+                  }
                   onReauth={
                     c.health === "error"
                       ? () => handleOpenError(c.id)
                       : handleReauth
                   }
-                  onTest={handleTest}
+                  onTest={isPending(c.id, "test") ? undefined : handleTest}
                   onSettings={(id) => {
                     setSelectedId(id);
                     setDrawerTab("scopes");
                   }}
                   onDisconnect={requestDisconnect}
+                  onOpenInNewTab={(id) => {
+                    if (typeof window !== "undefined") {
+                      window.open(buildDetailHref(id), "_blank", "noopener");
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -375,6 +650,7 @@ export function ConnectionsManager({
           connection={selected}
           tab={drawerTab}
           onTabChange={setDrawerTab}
+          detailHref={buildDetailHref(selected.id)}
           backfills={backfillsByConnection[selected.id] ?? []}
           deliveries={deliveriesByConnection[selected.id] ?? []}
           events={detailEvents}
@@ -414,7 +690,7 @@ export function ConnectionsManager({
         }
         message={
           confirmConn
-            ? `New events from ${getSource(confirmConn.source)?.name ?? confirmConn.name} will buffer upstream until you reconnect. Existing scopes (${confirmConn.scopes.length}) will be revoked. This can't be undone from this screen.`
+            ? `New events from ${getSource(confirmConn.source)?.name ?? confirmConn.name} will buffer upstream until you reconnect. Existing scopes (${confirmConn.scopes.length}) will be revoked. You'll need to re-authorize from scratch to reconnect.`
             : ""
         }
         confirmText="Disconnect"
@@ -428,6 +704,9 @@ export function ConnectionsManager({
         onClose={() => setAddOpen(false)}
         connectedIds={connectedSourceIds}
         onConnected={handleConnected}
+        onOpenExisting={(sourceId) => {
+          handleOpenExisting(sourceId);
+        }}
       />
 
       {/* Edge-state modals */}
@@ -439,6 +718,8 @@ export function ConnectionsManager({
           onConfirm={() => {
             updateConn(edge.id, { health: "live", expiresAt: undefined });
             setEdge(null);
+            const conn = list.find((c) => c.id === edge.id);
+            toast.success(`Re-authorized ${conn?.name ?? "connection"}`);
           }}
         />
       ) : null}
@@ -450,6 +731,8 @@ export function ConnectionsManager({
           onRetry={() => {
             updateConn(edge.id, { health: "live", errorKind: undefined });
             setEdge(null);
+            const conn = list.find((c) => c.id === edge.id);
+            toast.success(`Recovered ${conn?.name ?? "connection"}`);
           }}
         />
       ) : null}
@@ -460,6 +743,12 @@ export function ConnectionsManager({
           checks={edge.checks ?? TESTING_CHECKS}
           onClose={() => setEdge(null)}
           onAdvance={(checks) => setEdge({ ...edge, checks })}
+          onComplete={(allOk) => {
+            updateConn(edge.id, {
+              lastTestedAt: new Date().toISOString(),
+              lastTestStatus: allOk ? "ok" : "fail",
+            });
+          }}
         />
       ) : null}
     </div>
@@ -472,39 +761,35 @@ function Header({
   workspace,
   count,
   liveCount,
-  hideAdd,
+  showAdd,
   onAdd,
 }: {
   workspace: string;
   count: number;
   liveCount: number;
-  hideAdd?: boolean;
+  showAdd?: boolean;
   onAdd: () => void;
 }) {
+  const subline =
+    count === 0
+      ? "Authorize a source to start streaming events into Chronicle."
+      : `${count} ${count === 1 ? "source" : "sources"} connected · ${liveCount} streaming live`;
   return (
     <header className="flex flex-col gap-3 border-b border-divider pb-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <div className="mb-2 flex items-center gap-2 font-mono text-mono-sm uppercase tracking-tactical text-ink-dim">
           <span>{workspace}</span>
-          <span>/</span>
+          <span aria-hidden>/</span>
           <span className="text-ember">Connections</span>
         </div>
         <h1 className="font-display text-[28px] font-normal leading-none tracking-[-0.04em] text-ink-hi md:text-[34px]">
           Connections.
         </h1>
-        <p className="mt-2 max-w-2xl text-[12.5px] leading-5 text-ink-dim">
-          {count === 0 ? (
-            "Authorize a source to start streaming events into Chronicle."
-          ) : (
-            <>
-              <span className="tabular-nums">{liveCount}</span> of{" "}
-              <span className="tabular-nums">{count}</span> sources live —
-              streaming live + historical backfills, per source.
-            </>
-          )}
+        <p className="mt-2 max-w-2xl font-mono text-mono-sm tabular-nums text-ink-dim">
+          {subline}
         </p>
       </div>
-      {hideAdd ? null : (
+      {showAdd ? (
         <div className="flex items-center gap-2">
           <Button
             variant="primary"
@@ -515,7 +800,7 @@ function Header({
             Add connection
           </Button>
         </div>
-      )}
+      ) : null}
     </header>
   );
 }
@@ -545,7 +830,9 @@ function EdgeReauth({
       onClose={onClose}
       source={src}
       expiredAt={
-        conn.expiresAt ? formatStableDateTime(conn.expiresAt) : "earlier today"
+        conn.expiresAt
+          ? formatStableDateTime(conn.expiresAt)
+          : "an earlier session"
       }
       onReauth={onConfirm}
     />
@@ -588,19 +875,25 @@ function EdgeTesting({
   checks,
   onClose,
   onAdvance,
+  onComplete,
 }: {
   id: string;
   list: readonly Connection[];
   checks: readonly ConnectorCheck[];
   onClose: () => void;
   onAdvance: (next: readonly ConnectorCheck[]) => void;
+  onComplete: (allOk: boolean) => void;
 }) {
   const conn = list.find((c) => c.id === id);
   const src = conn ? getSource(conn.source) : undefined;
 
   React.useEffect(() => {
     const pendingIdx = checks.findIndex((c) => c.status === "pending");
-    if (pendingIdx === -1) return;
+    if (pendingIdx === -1) {
+      const allOk = checks.every((c) => c.status === "ok");
+      onComplete(allOk);
+      return;
+    }
     const t = window.setTimeout(() => {
       const next = checks.map((c, i) =>
         i === pendingIdx ? { ...c, status: "ok" as const } : c,
@@ -608,7 +901,7 @@ function EdgeTesting({
       onAdvance(next);
     }, 800);
     return () => window.clearTimeout(t);
-  }, [checks, onAdvance]);
+  }, [checks, onAdvance, onComplete]);
 
   if (!src || !conn) {
     onClose();

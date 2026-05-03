@@ -5,6 +5,7 @@ import * as React from "react";
 import { cx } from "../utils/cx";
 import { Sparkline } from "../primitives/sparkline";
 import { CompanyLogo } from "../icons";
+import { RouterLink } from "../layout/link-context";
 import { getSource } from "../onboarding/data";
 import { ConnectionActionsMenu } from "./connection-actions-menu";
 import { ConnectionHealthBadge } from "./connection-health-badge";
@@ -17,14 +18,16 @@ import { RelativeTime, formatNumber } from "./time";
  * relative ts, 24h event count + sparkline, scope count, and an
  * actions menu (Pause/Resume, Reauth, Test, Settings, Disconnect).
  *
- * Activation pattern: the row uses a "stretched link" — a real
- * `<button>` is positioned absolutely behind the row's contents and
- * owns the `onOpen` click + keyboard activation. The contents (logo,
- * spans, badge, dropdown) sit in front via `relative z-[1]` so the
- * `⋯` menu, focus rings, and the sparkline still receive their own
- * pointer events. This replaces the previous `div role="button"`
- * pattern, which screen-readers announced as one giant button and
- * which broke text selection of the connection id.
+ * Activation pattern: a stretched `<a>` (or `<button>` when no `href`
+ * is given) sits behind the row contents at `z-0`. Display-only
+ * children get `pointer-events-none` so clicks fall through to the
+ * activator — including clicks on text, the sparkline cell, and the
+ * health badge. Only the actions menu, which has its own dropdown
+ * trigger, lives at `z-[1]` with `pointer-events-auto` so it
+ * intercepts its own clicks. The activator's `onClick` lets cmd /
+ * ctrl / shift / middle-click fall through to the browser, so power
+ * users get "open in new tab" semantics; plain click is intercepted
+ * via `preventDefault` and routed to `onOpen` (drawer flow).
  *
  * Presentational: state lives at the boundary. Callbacks are all
  * optional — when omitted, the corresponding menu item is absent.
@@ -40,6 +43,12 @@ export const CONNECTION_ROW_GRID_TEMPLATE =
 
 export interface ConnectionRowProps {
   connection: Connection;
+  /**
+   * Canonical detail-page URL. When provided, the activator is an
+   * `<a>` so cmd / ctrl / middle-click opens the page in a new tab;
+   * plain click is intercepted and routed to `onOpen` (drawer flow).
+   */
+  href?: string;
   /** Callback fired when the row chrome (not the action menu) is clicked. */
   onOpen?: (id: string) => void;
   onPause?: (id: string) => void;
@@ -48,12 +57,14 @@ export interface ConnectionRowProps {
   onTest?: (id: string) => void;
   onSettings?: (id: string) => void;
   onDisconnect?: (id: string) => void;
+  /** Optional handler for the actions menu's "Open in new tab" item. */
+  onOpenInNewTab?: (id: string) => void;
   /** Tone the row when it's the active one in the master/detail layout. */
   isActive?: boolean;
   /**
-   * Hide the connection id in the subtitle. Defaults to `false`. The id is
-   * useful for engineers but pushes the subtitle past the truncation point
-   * on most viewports — opt out for production-like density.
+   * Hide the connection id in the subtitle. Defaults to `true`. The id
+   * is still accessible via the actions menu's "Copy id" item, which
+   * is the discoverable home for the rare engineer-style use case.
    */
   hideId?: boolean;
   className?: string;
@@ -71,8 +82,19 @@ const SPARK_TONE: Record<
   disconnected: "ember",
 };
 
+function isModifiedClick(event: React.MouseEvent): boolean {
+  return (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  );
+}
+
 export function ConnectionRow({
   connection,
+  href,
   onOpen,
   onPause,
   onResume,
@@ -80,35 +102,57 @@ export function ConnectionRow({
   onTest,
   onSettings,
   onDisconnect,
+  onOpenInNewTab,
   isActive,
-  hideId,
+  hideId = true,
   className,
 }: ConnectionRowProps) {
   const src = getSource(connection.source);
   const titleId = React.useId();
+  const sparkSummary = React.useMemo(() => {
+    if (!connection.spark || connection.spark.length === 0) return null;
+    const peak = Math.max(...connection.spark);
+    const last = connection.spark[connection.spark.length - 1] ?? 0;
+    return { peak, last };
+  }, [connection.spark]);
+  const sparkLabel = sparkSummary
+    ? `Last 24h events for ${connection.name}: peak ${formatNumber(sparkSummary.peak)}, current ${formatNumber(sparkSummary.last)}.`
+    : undefined;
+
+  const handleActivate = React.useCallback(
+    (event: React.MouseEvent) => {
+      if (isModifiedClick(event)) return;
+      if (onOpen) {
+        event.preventDefault();
+        onOpen(connection.id);
+      }
+    },
+    [onOpen, connection.id],
+  );
 
   return (
     <div
       data-active={isActive || undefined}
       className={cx(
-        "group relative isolate grid items-center gap-3 rounded-[2px] border border-divider bg-[rgba(255,255,255,0.012)] px-3 py-2.5",
+        "group relative isolate grid items-center gap-3 rounded-[2px] border border-divider bg-wash-micro px-3 py-2.5",
         "transition-colors duration-fast",
         CONNECTION_ROW_GRID_TEMPLATE,
-        onOpen
-          ? "hover:bg-[rgba(255,255,255,0.025)] focus-within:bg-[rgba(255,255,255,0.025)]"
+        onOpen || href
+          ? "focus-within:bg-wash-2 hover:bg-wash-2"
           : null,
         isActive ? "border-ember/35 bg-[rgba(216,67,10,0.045)]" : null,
         className,
       )}
     >
-      {/*
-       * Stretched-link overlay. Sits behind row contents (`z-0`); the
-       * dropdown trigger and other interactive children are promoted to
-       * `relative z-[1]` so they intercept their own pointer events.
-       * `aria-labelledby` points at the connection name span so screen
-       * readers announce "Stripe — open" instead of the whole row.
-       */}
-      {onOpen ? (
+      {href ? (
+        <RouterLink
+          href={href}
+          prefetch={false}
+          aria-labelledby={titleId}
+          onClick={handleActivate}
+          className="absolute inset-0 z-0 cursor-pointer rounded-[2px] outline-none focus-visible:ring-1 focus-visible:ring-ember/50"
+        />
+      ) : onOpen ? (
         <button
           type="button"
           aria-labelledby={titleId}
@@ -118,7 +162,7 @@ export function ConnectionRow({
       ) : null}
 
       <span
-        className="relative z-[1] flex h-9 w-9 items-center justify-center rounded-sm border border-hairline bg-surface-02"
+        className="pointer-events-none relative z-[1] flex h-9 w-9 items-center justify-center rounded-sm border border-hairline bg-surface-02"
         aria-hidden
       >
         <CompanyLogo
@@ -130,7 +174,7 @@ export function ConnectionRow({
         />
       </span>
 
-      <div className="relative z-[1] flex min-w-0 flex-col gap-[2px]">
+      <div className="pointer-events-none relative z-[1] flex min-w-0 flex-col gap-[2px]">
         <span
           id={titleId}
           className="truncate font-sans text-[13.5px] text-ink-hi"
@@ -146,10 +190,10 @@ export function ConnectionRow({
       <ConnectionHealthBadge
         health={connection.health}
         size="sm"
-        className="relative z-[1]"
+        className="pointer-events-none relative z-[1]"
       />
 
-      <div className="relative z-[1] flex min-w-0 flex-col gap-[2px]">
+      <div className="pointer-events-none relative z-[1] flex min-w-0 flex-col gap-[2px]">
         <span className="font-mono text-mono-sm tabular-nums text-ink-lo">
           {formatNumber(connection.eventsLast24h)}{" "}
           <span className="text-ink-dim">/24h</span>
@@ -162,7 +206,7 @@ export function ConnectionRow({
         </span>
       </div>
 
-      <div className="relative z-[1] h-7 min-w-0">
+      <div className="pointer-events-none relative z-[1] h-7 min-w-0">
         {connection.spark && connection.spark.length > 0 ? (
           <Sparkline
             values={connection.spark}
@@ -170,13 +214,14 @@ export function ConnectionRow({
             height={28}
             width={140}
             className="h-7 w-full"
+            aria-label={sparkLabel}
           />
         ) : (
           <span className="font-mono text-mono-sm text-ink-dim">—</span>
         )}
       </div>
 
-      <span className="relative z-[1] font-mono text-mono-sm tabular-nums text-ink-dim">
+      <span className="pointer-events-none relative z-[1] font-mono text-mono-sm tabular-nums text-ink-dim">
         {connection.scopes.length}{" "}
         {connection.scopes.length === 1 ? "scope" : "scopes"}
       </span>
@@ -189,7 +234,8 @@ export function ConnectionRow({
         onTest={onTest}
         onSettings={onSettings}
         onDisconnect={onDisconnect}
-        className="relative z-[1] flex items-center justify-end"
+        onOpenInNewTab={onOpenInNewTab}
+        className="pointer-events-auto relative z-[1] flex items-center justify-end"
       />
     </div>
   );

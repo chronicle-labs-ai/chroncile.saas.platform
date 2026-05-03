@@ -38,6 +38,14 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"]
+    },
+    "bones:build": {
+      "cache": false,
+      "outputs": ["src/bones/**"]
+    },
+    "bones:watch": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

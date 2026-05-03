@@ -38,11 +38,11 @@ export function BacktestRecipePill({
       onClick={onToggle}
       data-open={open || undefined}
       className={cx(
-        "group inline-flex flex-col items-start gap-0.5 rounded-[2px] border bg-[rgba(255,255,255,0.012)] px-2.5 py-1.5 text-left",
+        "group inline-flex flex-col items-start gap-0.5 rounded-[2px] border bg-wash-micro px-2.5 py-1.5 text-left",
         "transition-colors duration-fast",
         open
-          ? "border-ember/45 bg-[rgba(216,67,10,0.045)]"
-          : "border-divider hover:border-hairline-strong hover:bg-[rgba(255,255,255,0.025)]",
+          ? "border-ember/45 bg-row-active"
+          : "border-divider hover:border-hairline-strong hover:bg-wash-2",
         className,
       )}
     >

@@ -9,6 +9,11 @@ import { Toaster } from "../src/primitives/sonner";
 // they win the cascade against `@tailwind base`'s resets.
 import "./preview.css";
 import "../src/styles/globals.css";
+// Boneyard registry — populated by `yarn workspace ui bones:build`.
+// Importing here lets every story's `<Skeleton name="...">` resolve
+// pre-captured bones without each story wiring it up. Empty stub when
+// no bones have been captured yet, so this is a safe no-op import.
+import "../src/bones/registry";
 
 // Wrap every story in UIProviders (RAC I18n) + ThemeProvider. No
 // RouterProvider in stories — navigate is only wired inside apps.

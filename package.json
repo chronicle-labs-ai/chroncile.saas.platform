@@ -11,6 +11,8 @@
     "dev:env-manager": "turbo run dev --filter=env-manager",
     "dev:storybook": "turbo run storybook --filter=ui",
     "build:storybook": "turbo run build-storybook --filter=ui",
+    "bones": "turbo run bones:build --filter=ui",
+    "bones:watch": "turbo run bones:watch --filter=ui",
     "build": "turbo build",
     "build:frontend": "turbo build --filter=frontend",
     "build:env-manager": "turbo build --filter=env-manager",

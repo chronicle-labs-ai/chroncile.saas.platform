@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   Check,
   List as ListIcon,
   Network,
@@ -60,10 +62,26 @@ import {
 import { DatasetCommandPalette } from "./dataset-command-palette";
 import { DatasetShortcutSheet } from "./dataset-shortcut-sheet";
 import {
-  TraceSummaryRow,
-  buildClusterIndex,
-  traceRowGridTemplate,
-} from "./trace-summary-row";
+  DatasetTracesTable,
+  useDatasetTracesTable,
+  visibilityFromDisplayProperties,
+  displayPropertiesFromVisibility,
+  rowSelectionFromIds,
+  idsFromRowSelection,
+  densityToRowHeight,
+} from "./dataset-traces-table";
+import {
+  DataTableSortList,
+  DataTableRowHeightMenu,
+  type DatasetTracesRowHeight,
+} from "./data-table";
+import type {
+  OnChangeFn,
+  RowSelectionState,
+  SortingState,
+  Table as TanStackTable,
+  VisibilityState,
+} from "@tanstack/react-table";
 import type {
   AddTraceToDatasetHandler,
   DatasetMembershipsResolver,
@@ -413,6 +431,15 @@ export function DatasetDetailPage({
     onDensityChange?.(next);
   };
 
+  /* New 4-step row height (compact / default / comfortable / spacious),
+     mounted alongside the legacy 2-step `density` for back-compat. The
+     row-height menu writes here directly; `density` initial value is
+     translated via `densityToRowHeight` so the canvas starts at the
+     right size when it's seeded from the legacy prop. */
+  const [rowHeight, setRowHeight] = React.useState<DatasetTracesRowHeight>(
+    () => densityToRowHeight(densityProp ?? defaultDensity),
+  );
+
   /* ── Filter rail wiring ──────────────────────────────── */
   const filterColumns = React.useMemo(
     () => filterColumnsProp ?? defaultDatasetTraceColumns(snapshot),
@@ -497,9 +524,58 @@ export function DatasetDetailPage({
     [selectedIds],
   );
 
+  /* Latest selectedIds in a ref so the TanStack `onRowSelectionChange`
+     callback can resolve the previous selection without recreating the
+     callback identity on every selection change. */
+  const selectedIdsRef = React.useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
+
   /* Anchor for shift-range selection. Defaults to the most-recently
      toggled trace; falls back to the inspector selection. */
   const anchorRef = React.useRef<string | null>(selectedTraceId ?? null);
+
+  /* ── TanStack table state ─────────────────────────────────
+     The list lens is now driven by `useDatasetTracesTable` (a thin
+     wrapper around TanStack's `useReactTable`). We keep the canvas's
+     existing canonical state (`selectedIds`, `displayProperties`,
+     `ordering`) and translate to TanStack's state shapes
+     (`RowSelectionState`, `VisibilityState`, `SortingState`) at the
+     boundary. Updates flow back through the existing setters so saved
+     views, multi-select fan-out, and the bulk strip don't have to
+     re-learn anything. */
+  const [sortingState, setSortingState] = React.useState<SortingState>(() =>
+    orderingToSortingState(orderingProp ?? defaultOrdering),
+  );
+
+  const columnVisibility = React.useMemo<VisibilityState>(
+    () => visibilityFromDisplayProperties(displayProperties),
+    [displayProperties],
+  );
+  const handleColumnVisibilityChange = React.useCallback<
+    OnChangeFn<VisibilityState>
+  >(
+    (updater) => {
+      const current = visibilityFromDisplayProperties(displayProperties);
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setDisplayProperties(displayPropertiesFromVisibility(next));
+    },
+    [displayProperties, setDisplayProperties],
+  );
+
+  const rowSelection = React.useMemo<RowSelectionState>(
+    () => rowSelectionFromIds(selectedIds),
+    [selectedIds],
+  );
+  const handleRowSelectionChange = React.useCallback<
+    OnChangeFn<RowSelectionState>
+  >(
+    (updater) => {
+      const current = rowSelectionFromIds(selectedIdsRef.current);
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setSelectedIds(idsFromRowSelection(next));
+    },
+    [setSelectedIds],
+  );
 
   /* Drop selection state for any traces no longer in the dataset
      (e.g. after a remove) so the batch strip never references stale
@@ -596,14 +672,33 @@ export function DatasetDetailPage({
 
   /* ── Multi-select interaction handlers ───────────────── */
 
-  /** Resolve the visible (filtered+grouped) row order — used to
-   *  resolve a shift-click range. Computed against `filteredTraces`
-   *  but in the *grouped* order so a shift-click inside a cluster
-   *  bucket only spans the visible window. The List lens flattens
-   *  groups in the same order it renders them. */
+  /* TanStack table instance — single source of truth for sort,
+     column visibility, and row-selection state-as-derived. The state
+     pipes are wired above; here we just assemble the table so the
+     list lens, the multi-column SortList, and `visibleRowOrder`
+     (used by the canvas keymap + shift-range selection) all read
+     from one place. The pre-`sortingState` order of `filteredTraces`
+     is the legacy `ordering`-driven sort; user-driven multi-column
+     sort overrides on top. */
+  const tracesTable = useDatasetTracesTable({
+    data: filteredTraces,
+    clusters: snapshot.clusters,
+    sorting: sortingState,
+    onSortingChange: setSortingState,
+    columnVisibility,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
+    rowSelection,
+    onRowSelectionChange: handleRowSelectionChange,
+  });
+
+  /** Resolve the visible (filtered + sorted) row order — used to
+   *  resolve a shift-click range AND drive j/k caret nav through
+   *  `useDatasetCanvasKeyboard`. Reads from TanStack's row model so
+   *  multi-column header sort flows through the keymap. */
+  const tableRows = tracesTable.getRowModel().rows;
   const visibleRowOrder = React.useMemo(
-    () => filteredTraces.map((t) => t.traceId),
-    [filteredTraces],
+    () => tableRows.map((r) => r.original.traceId),
+    [tableRows],
   );
 
   const handleRowClick = React.useCallback(
@@ -861,6 +956,7 @@ export function DatasetDetailPage({
       lens,
       groupBy,
       ordering,
+      sorting: sortingState.map((s) => ({ id: s.id, desc: s.desc })),
       density,
       showEmptyGroups,
       displayProperties: [...displayProperties],
@@ -876,6 +972,7 @@ export function DatasetDetailPage({
       lens,
       groupBy,
       ordering,
+      sortingState,
       density,
       showEmptyGroups,
       displayProperties,
@@ -909,6 +1006,21 @@ export function DatasetDetailPage({
         setDisplayProperties(
           s.displayProperties as DatasetDisplayProperty[],
         );
+      }
+      /* Sort state — prefer the new multi-column shape; fall back to
+         deriving a single-column sort from the legacy `ordering`
+         string so views captured before the tablecn migration still
+         apply their intent. Empty `sorting` reverts to the
+         pre-sort baked into `filteredTraces` (which respects the
+         legacy `ordering`). */
+      if (s.sorting && s.sorting.length > 0) {
+        setSortingState(
+          s.sorting.map((item) => ({ id: item.id, desc: item.desc })),
+        );
+      } else if (s.ordering) {
+        setSortingState(orderingToSortingState(s.ordering as DatasetOrdering));
+      } else {
+        setSortingState([]);
       }
       setSearch(s.search ?? "");
       const nextFilters: FilterState[] = (s.filters ?? []).map((f, idx) => ({
@@ -1068,12 +1180,11 @@ export function DatasetDetailPage({
 
       <div className="flex min-w-0 flex-1 flex-col">
       <DatasetCanvasToolbar
+        tracesTable={tracesTable}
         lens={lens}
         onLensChange={setLens}
         groupBy={groupBy}
         onGroupByChange={setGroupBy}
-        ordering={ordering}
-        onOrderingChange={setOrdering}
         showEmptyGroups={showEmptyGroups}
         onShowEmptyGroupsChange={setShowEmptyGroups}
         displayProperties={displayProperties}
@@ -1081,12 +1192,16 @@ export function DatasetDetailPage({
         onResetDisplay={() => {
           setGroupBy(defaultGroupBy);
           setOrdering(defaultOrdering);
+          setSortingState(orderingToSortingState(defaultOrdering));
           setShowEmptyGroups(defaultShowEmptyGroups);
           setDisplayProperties(defaultDisplayProperties);
           setDensity(defaultDensity);
+          setRowHeight(densityToRowHeight(defaultDensity));
         }}
         density={density}
         onDensityChange={setDensity}
+        rowHeight={rowHeight}
+        onRowHeightChange={setRowHeight}
         filterColumns={filterColumns}
         filterState={filterStore.filters}
         filterActions={filterStore.actions}
@@ -1147,14 +1262,13 @@ export function DatasetDetailPage({
           <DatasetCanvasContent
             snapshot={snapshot}
             lens={lens}
+            tracesTable={tracesTable}
             groupBy={groupBy}
-            density={density}
+            rowHeight={rowHeight}
             showEmptyGroups={showEmptyGroups}
-            displayProperties={displayProperties}
             filteredTraces={filteredTraces}
             selectedTraceId={selectedTraceId ?? null}
             onSelectTrace={onSelectTrace}
-            selectedIdSet={selectedIdSet}
             focusedTraceId={focusedTraceId}
             failingTraceIdSet={failingTraceIdSet}
             onRowClick={handleRowClick}
@@ -1197,6 +1311,31 @@ function cssEscape(value: string): string {
     return CSS.escape(value);
   }
   return value.replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`);
+}
+
+/** Translate the legacy single-axis `DatasetOrdering` to a TanStack
+ *  `SortingState`. Used to seed the table's initial sort from the
+ *  `defaultOrdering` prop and to upgrade old saved views (which only
+ *  carry `state.ordering`) to the new sort state. Returns `[]` for
+ *  the date-based orderings since the table doesn't currently expose
+ *  `addedAt` / `startedAt` as user-toggleable columns — those keep
+ *  flowing through `sortTraces` as the pre-sort beneath any
+ *  user-driven multi-column sort. */
+function orderingToSortingState(ordering: DatasetOrdering): SortingState {
+  switch (ordering) {
+    case "durationDesc":
+      return [{ id: "duration", desc: true }];
+    case "eventCountDesc":
+      return [{ id: "events", desc: true }];
+    case "labelAsc":
+      return [{ id: "trace", desc: false }];
+    case "addedAtAsc":
+    case "addedAtDesc":
+    case "startedAtAsc":
+    case "startedAtDesc":
+    default:
+      return [];
+  }
 }
 
 /** Returns a new array sorted by the given ordering. Falls back to
@@ -1404,17 +1543,21 @@ interface SelectionAggregate {
 }
 
 interface DatasetCanvasToolbarProps {
+  /** TanStack table instance — drives the multi-column SortList in
+   *  the DisplayPopover. */
+  tracesTable: TanStackTable<TraceSummary>;
   lens: DatasetDetailLens;
   onLensChange: (next: DatasetDetailLens) => void;
   groupBy: DatasetGroupBy;
   onGroupByChange: (next: DatasetGroupBy) => void;
-  ordering: DatasetOrdering;
-  onOrderingChange: (next: DatasetOrdering) => void;
   showEmptyGroups: boolean;
   onShowEmptyGroupsChange: (next: boolean) => void;
   displayProperties: readonly DatasetDisplayProperty[];
   onToggleDisplayProperty: (key: DatasetDisplayProperty) => void;
   onResetDisplay: () => void;
+  /** Row height (4-step). Drives the DataTableRowHeightMenu. */
+  rowHeight: DatasetTracesRowHeight;
+  onRowHeightChange: (next: DatasetTracesRowHeight) => void;
   density: DatasetDensity;
   onDensityChange: (next: DatasetDensity) => void;
   filterColumns: ColumnConfig<TraceSummary>[];
@@ -1441,12 +1584,11 @@ interface DatasetCanvasToolbarProps {
 }
 
 function DatasetCanvasToolbar({
+  tracesTable,
   lens,
   onLensChange,
   groupBy,
   onGroupByChange,
-  ordering,
-  onOrderingChange,
   showEmptyGroups,
   onShowEmptyGroupsChange,
   displayProperties,
@@ -1454,6 +1596,8 @@ function DatasetCanvasToolbar({
   onResetDisplay,
   density: _density,
   onDensityChange: _onDensityChange,
+  rowHeight,
+  onRowHeightChange,
   filterColumns,
   filterState,
   filterActions,
@@ -1461,8 +1605,8 @@ function DatasetCanvasToolbar({
   onSearchChange,
   searchInputRef,
   onOpenShortcuts,
-  totalCount,
-  filteredCount,
+  totalCount: _totalCount,
+  filteredCount: _filteredCount,
   selectionCount,
   selectionAggregate,
   clusters,
@@ -1474,21 +1618,28 @@ function DatasetCanvasToolbar({
   onBulkUpdateStatus,
   onBulkRemove,
 }: DatasetCanvasToolbarProps) {
-  const isFiltered = filteredCount !== totalCount;
+  /* `totalCount` / `filteredCount` are kept on the prop interface
+     for back-compat but the always-visible row count moved into the
+     DataTableFooter strip below the table (matches tablecn). The
+     toolbar's trailing slot now only renders the batch-actions
+     strip when `selectionCount > 0`. */
   const inBatchMode = selectionCount > 0;
 
   return (
     <div
-      className="flex flex-shrink-0 flex-col gap-2 border-b border-l-border-faint bg-l-surface-bar/40 px-4 py-2"
+      className="flex flex-shrink-0 flex-col gap-2 border-b border-border bg-card/40 px-4 py-2"
       role="toolbar"
       aria-label="Dataset canvas controls"
     >
+      {/* Top row — Chronicle-specific controls (lens picker, shortcuts,
+          batch strip). Kept separate from the tablecn-shaped data-table
+          toolbar below so the canonical tablecn pattern (search +
+          filters left, view options right) is visible at a glance. */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Lens picker — visible always, kbd-driven later (P3). */}
         <div
           role="tablist"
           aria-label="Lens"
-          className="inline-flex items-center gap-1 rounded-[3px] border border-hairline-strong bg-l-surface-raised p-0.5"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-0.5"
         >
           {DATASET_DETAIL_LENSES.map((id) => (
             <LensButton
@@ -1500,27 +1651,6 @@ function DatasetCanvasToolbar({
           ))}
         </div>
 
-        <Input
-          ref={searchInputRef}
-          search
-          placeholder="Search · / to focus"
-          value={search}
-          onChange={(e) => onSearchChange(e.currentTarget.value)}
-          className="w-[260px] max-w-full"
-        />
-
-        <DisplayPopover
-          groupBy={groupBy}
-          onGroupByChange={onGroupByChange}
-          ordering={ordering}
-          onOrderingChange={onOrderingChange}
-          showEmptyGroups={showEmptyGroups}
-          onShowEmptyGroupsChange={onShowEmptyGroupsChange}
-          displayProperties={displayProperties}
-          onToggleDisplayProperty={onToggleDisplayProperty}
-          onResetToDefault={onResetDisplay}
-        />
-
         <Button
           variant="ghost"
           size="sm"
@@ -1531,11 +1661,11 @@ function DatasetCanvasToolbar({
           <span className="font-mono text-[12px]">?</span>
         </Button>
 
-        {/* Trailing slot — morphs in place between count + batch
-           actions. Both branches share the same min-height so the
-           toolbar never shifts vertically when selection changes. */}
-        <div className="ml-auto flex min-h-7 flex-wrap items-center gap-2">
-          {inBatchMode && selectionAggregate ? (
+        {/* Trailing slot — only renders the batch strip when N rows
+           are selected. The always-visible row count lives in the
+           DataTableFooter strip below the table to match tablecn. */}
+        {inBatchMode && selectionAggregate ? (
+          <div className="ml-auto flex min-h-7 flex-wrap items-center gap-2">
             <BatchActionsStrip
               count={selectionAggregate.count}
               clusterValue={selectionAggregate.cluster}
@@ -1550,32 +1680,46 @@ function DatasetCanvasToolbar({
               onUpdateStatus={onBulkUpdateStatus}
               onRemove={onBulkRemove}
             />
-          ) : (
-            <span
-              className="font-mono text-[10.5px] tabular-nums text-l-ink-dim"
-              aria-live="polite"
-            >
-              {isFiltered ? (
-                <>
-                  {formatNumber(filteredCount)}{" "}
-                  <span className="text-l-ink-dim/70">
-                    / {formatNumber(totalCount)}
-                  </span>{" "}
-                  traces
-                </>
-              ) : (
-                <>{formatNumber(totalCount)} traces</>
-              )}
-            </span>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
 
-      <DatasetFilterRail
-        columns={filterColumns}
-        filters={filterState}
-        actions={filterActions}
-      />
+      {/* Tablecn-shaped data-table toolbar — search + filter chips on
+          the left, View / Sort / Height on the right. Mirrors
+          tablecn's reference layout 1:1. */}
+      <div className="flex w-full flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <Input
+            ref={searchInputRef}
+            search
+            placeholder="Filter rows…"
+            value={search}
+            onChange={(e) => onSearchChange(e.currentTarget.value)}
+            className="h-8 w-[180px] lg:w-[240px]"
+          />
+          <DatasetFilterRail
+            columns={filterColumns}
+            filters={filterState}
+            actions={filterActions}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <DataTableSortList table={tracesTable} />
+          <DisplayPopover
+            groupBy={groupBy}
+            onGroupByChange={onGroupByChange}
+            showEmptyGroups={showEmptyGroups}
+            onShowEmptyGroupsChange={onShowEmptyGroupsChange}
+            displayProperties={displayProperties}
+            onToggleDisplayProperty={onToggleDisplayProperty}
+            onResetToDefault={onResetDisplay}
+          />
+          <DataTableRowHeightMenu
+            value={rowHeight}
+            onChange={onRowHeightChange}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -1715,16 +1859,6 @@ const GROUP_BY_OPTIONS: Array<{ value: DatasetGroupBy; label: string }> = [
   { value: "none", label: "None" },
 ];
 
-const ORDERING_OPTIONS: Array<{ value: DatasetOrdering; label: string }> = [
-  { value: "addedAtDesc", label: "Added (newest)" },
-  { value: "addedAtAsc", label: "Added (oldest)" },
-  { value: "startedAtDesc", label: "Started (newest)" },
-  { value: "startedAtAsc", label: "Started (oldest)" },
-  { value: "durationDesc", label: "Duration (longest)" },
-  { value: "eventCountDesc", label: "Events (most)" },
-  { value: "labelAsc", label: "Label (A→Z)" },
-];
-
 const DISPLAY_PROPERTY_LABELS: Record<DatasetDisplayProperty, string> = {
   cluster: "Cluster",
   events: "Events",
@@ -1736,8 +1870,6 @@ const DISPLAY_PROPERTY_LABELS: Record<DatasetDisplayProperty, string> = {
 interface DisplayPopoverProps {
   groupBy: DatasetGroupBy;
   onGroupByChange: (next: DatasetGroupBy) => void;
-  ordering: DatasetOrdering;
-  onOrderingChange: (next: DatasetOrdering) => void;
   showEmptyGroups: boolean;
   onShowEmptyGroupsChange: (next: boolean) => void;
   displayProperties: readonly DatasetDisplayProperty[];
@@ -1747,17 +1879,14 @@ interface DisplayPopoverProps {
 }
 
 /**
- * Linear-style view dropdown — three logical sections (data shape,
- * view options, column visibility) divided by hairlines, with a
- * Reset footer. Matches the Linear Design System "View dropdown"
- * component (Figma node 86:2955) so the canvas reads as familiar
- * to anyone fluent in Linear.
+ * Tablecn-shaped view dropdown — Grouping picker + show-empty-groups
+ * toggle + column-visibility list + Reset. The Sort affordance now
+ * lives at the top-level toolbar (`DataTableSortList`) so it doesn't
+ * have to live nested inside this popover.
  */
 function DisplayPopover({
   groupBy,
   onGroupByChange,
-  ordering,
-  onOrderingChange,
   showEmptyGroups,
   onShowEmptyGroupsChange,
   displayProperties,
@@ -1766,13 +1895,11 @@ function DisplayPopover({
 }: DisplayPopoverProps) {
   const groupByLabel =
     GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label ?? "—";
-  const orderingLabel =
-    ORDERING_OPTIONS.find((o) => o.value === ordering)?.label ?? "—";
   const displaySet = new Set(displayProperties);
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
@@ -1787,21 +1914,14 @@ function DisplayPopover({
         placement="bottom end"
         className="w-[296px] overflow-hidden p-0"
       >
-        {/* Section 1 — Grouping + Ordering */}
-        <div className="flex flex-col gap-0.5 border-b border-hairline px-3 py-2">
+        {/* Section 1 — Grouping (Sort lives in the toolbar now) */}
+        <div className="flex flex-col gap-0.5 border-b border-border px-3 py-2">
           <DisplayDropdownRow
             label="Grouping"
             value={groupByLabel}
             options={GROUP_BY_OPTIONS}
             selected={groupBy}
             onSelect={(v) => onGroupByChange(v as DatasetGroupBy)}
-          />
-          <DisplayDropdownRow
-            label="Ordering"
-            value={orderingLabel}
-            options={ORDERING_OPTIONS}
-            selected={ordering}
-            onSelect={(v) => onOrderingChange(v as DatasetOrdering)}
           />
         </div>
 
@@ -1815,35 +1935,46 @@ function DisplayPopover({
           />
         </div>
 
-        {/* Section 3 — Display properties */}
-        <div className="flex flex-col gap-1.5 border-b border-hairline px-3 py-2">
-          <span className="font-sans text-[11px] text-l-ink-dim">
-            Display properties
-          </span>
-          <div className="flex flex-wrap gap-1">
+        {/* Section 3 — Display properties (TanStack-driven column visibility) */}
+        <div className="flex flex-col border-b border-hairline">
+          <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1">
+            <span className="font-sans text-[11px] text-muted-foreground">
+              Properties
+            </span>
+            <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+              {displaySet.size + 3 /* select+status+trace are always on */} of {DATASET_DISPLAY_PROPERTIES.length + 3}
+            </span>
+          </div>
+          <ul role="listbox" aria-label="Visible columns" className="flex flex-col px-1 pb-1">
             {DATASET_DISPLAY_PROPERTIES.map((key) => {
               const active = displaySet.has(key);
               return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onToggleDisplayProperty(key)}
-                  className={cx(
-                    "inline-flex h-6 items-center rounded-[3px] px-2",
-                    "font-sans text-[11.5px] transition-colors duration-fast ease-out",
-                    "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
-                    "[@media(pointer:coarse)]:h-9",
-                    active
-                      ? "bg-l-surface-hover text-l-ink"
-                      : "border border-l-border-faint text-l-ink-dim hover:border-hairline-strong hover:text-l-ink",
-                  )}
-                  aria-pressed={active}
-                >
-                  {DISPLAY_PROPERTY_LABELS[key]}
-                </button>
+                <li key={key}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => onToggleDisplayProperty(key)}
+                    className={cx(
+                      "flex w-full items-center justify-between rounded-[3px] px-2 py-1.5 text-left",
+                      "font-sans text-[12px] text-foreground",
+                      "hover:bg-muted/60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+                      "[@media(pointer:coarse)]:py-2",
+                    )}
+                  >
+                    <span>{DISPLAY_PROPERTY_LABELS[key]}</span>
+                    <Check
+                      className={cx(
+                        "size-3.5 shrink-0",
+                        active ? "text-ember" : "opacity-0",
+                      )}
+                      strokeWidth={2}
+                    />
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
 
         {/* Section 4 — Reset */}
@@ -1883,7 +2014,7 @@ function DisplayDropdownRow({
     <div className="flex items-center justify-between gap-2 py-1">
       <span className="font-sans text-[12px] text-l-ink-dim">{label}</span>
       <Popover>
-        <PopoverTrigger>
+        <PopoverTrigger asChild>
           <button
             type="button"
             className={cx(
@@ -1987,15 +2118,15 @@ function DisplayToggleRow({
 interface DatasetCanvasContentProps {
   snapshot: DatasetSnapshot;
   lens: DatasetDetailLens;
+  /** TanStack table instance — the list lens's source of truth for
+   *  sort, column visibility, and row-selection state. */
+  tracesTable: TanStackTable<TraceSummary>;
   groupBy: DatasetGroupBy;
-  density: DatasetDensity;
+  rowHeight: DatasetTracesRowHeight;
   showEmptyGroups: boolean;
-  displayProperties: readonly DatasetDisplayProperty[];
   filteredTraces: TraceSummary[];
   selectedTraceId: string | null;
   onSelectTrace?: (traceId: string | null) => void;
-  /* Multi-select wiring for the List lens. */
-  selectedIdSet: ReadonlySet<string>;
   focusedTraceId: string | null;
   /** Trace ids that the active eval run failed on; renders a small
    *  red marker on the row's status column. */
@@ -2025,14 +2156,13 @@ interface DatasetCanvasContentProps {
 function DatasetCanvasContent({
   snapshot,
   lens,
+  tracesTable,
   groupBy,
-  density,
+  rowHeight,
   showEmptyGroups,
-  displayProperties,
   filteredTraces,
   selectedTraceId,
   onSelectTrace,
-  selectedIdSet,
   focusedTraceId,
   failingTraceIdSet,
   onRowClick,
@@ -2053,18 +2183,18 @@ function DatasetCanvasContent({
   switch (lens) {
     case "list":
       return (
-        <ListLens
+        <DatasetTracesTable
+          table={tracesTable}
           snapshot={snapshot}
-          traces={filteredTraces}
           groupBy={groupBy}
-          density={density}
+          rowHeight={rowHeight}
           showEmptyGroups={showEmptyGroups}
-          displayProperties={displayProperties}
+          /* density was the legacy 2-step prop; the new 4-step
+             rowHeight is the source of truth. */
           selectedTraceId={selectedTraceId}
-          onRowClick={onRowClick}
-          selectedIdSet={selectedIdSet}
           focusedTraceId={focusedTraceId}
           failingTraceIdSet={failingTraceIdSet}
+          onRowClick={onRowClick}
           onCheckboxChange={onCheckboxChange}
           selectAllState={selectAllState}
           onSelectAllVisible={onSelectAllVisible}
@@ -2072,6 +2202,9 @@ function DatasetCanvasContent({
           onUpdateCluster={onUpdateCluster}
           onUpdateSplit={onUpdateSplit}
           onUpdateStatus={onUpdateStatus}
+          emptyPlaceholder={
+            <FilteredEmpty totalCount={snapshot.traces.length} />
+          }
         />
       );
     case "graph":
@@ -2117,395 +2250,6 @@ function DatasetCanvasContent({
         </div>
       );
   }
-}
-
-/* ── List lens ──────────────────────────────────────────── */
-
-interface ListLensProps {
-  snapshot: DatasetSnapshot;
-  traces: TraceSummary[];
-  groupBy: DatasetGroupBy;
-  density: DatasetDensity;
-  showEmptyGroups: boolean;
-  displayProperties: readonly DatasetDisplayProperty[];
-  selectedTraceId: string | null;
-  onRowClick: (traceId: string, event: React.MouseEvent | React.KeyboardEvent) => void;
-  selectedIdSet: ReadonlySet<string>;
-  focusedTraceId: string | null;
-  failingTraceIdSet: ReadonlySet<string>;
-  onCheckboxChange: (
-    traceId: string,
-    next: boolean,
-    event: React.MouseEvent,
-  ) => void;
-  selectAllState: "none" | "indeterminate" | "all";
-  onSelectAllVisible: (next: boolean) => void;
-  canEdit: boolean;
-  onUpdateCluster: (traceId: string, next: string | null) => void;
-  onUpdateSplit: (traceId: string, next: DatasetSplit | null) => void;
-  onUpdateStatus: (traceId: string, next: TraceStatus) => void;
-}
-
-function ListLens({
-  snapshot,
-  traces,
-  groupBy,
-  density,
-  showEmptyGroups,
-  displayProperties,
-  selectedTraceId,
-  onRowClick,
-  selectedIdSet,
-  focusedTraceId,
-  failingTraceIdSet,
-  onCheckboxChange,
-  selectAllState,
-  onSelectAllVisible,
-  canEdit,
-  onUpdateCluster,
-  onUpdateSplit,
-  onUpdateStatus,
-}: ListLensProps) {
-  const clusterIndex = React.useMemo(
-    () => buildClusterIndex(snapshot.clusters),
-    [snapshot.clusters],
-  );
-
-  const grouped = React.useMemo(
-    () => groupTracesBy(traces, groupBy, clusterIndex, snapshot, showEmptyGroups),
-    [traces, groupBy, clusterIndex, snapshot, showEmptyGroups],
-  );
-
-  const visibleProps = React.useMemo<ReadonlySet<DatasetDisplayProperty>>(
-    () => new Set(displayProperties),
-    [displayProperties],
-  );
-
-  if (traces.length === 0 && !showEmptyGroups) {
-    return (
-      <FilteredEmpty totalCount={snapshot.traces.length} />
-    );
-  }
-
-  return (
-    <div className="flex flex-1 min-h-0 flex-col overflow-auto p-4">
-      <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
-        <ListHeader
-          showCluster={groupBy !== "cluster" && visibleProps.has("cluster")}
-          showEvents={visibleProps.has("events")}
-          showDuration={visibleProps.has("duration")}
-          showSplit={visibleProps.has("split")}
-          selectAllState={selectAllState}
-          onSelectAllVisible={onSelectAllVisible}
-        />
-        <div>
-          {grouped.map((group) => (
-            <React.Fragment key={group.key}>
-              {groupBy !== "none" ? (
-                <GroupHead label={group.label} count={group.traces.length} dot={group.dot} fill={group.fill} />
-              ) : null}
-              {group.traces.length === 0 ? (
-                <EmptyGroupHint />
-              ) : null}
-              {group.traces.map((trace) => (
-                <TraceSummaryRow
-                  key={trace.traceId}
-                  trace={trace}
-                  cluster={
-                    groupBy === "cluster" || !visibleProps.has("cluster")
-                      ? null
-                      : trace.clusterId
-                        ? clusterIndex.get(trace.clusterId) ?? null
-                        : null
-                  }
-                  density={density}
-                  showCluster={visibleProps.has("cluster")}
-                  showEvents={visibleProps.has("events")}
-                  showDuration={visibleProps.has("duration")}
-                  showSplit={visibleProps.has("split")}
-                  showTraceId={visibleProps.has("traceId")}
-                  isActive={trace.traceId === selectedTraceId}
-                  isMultiSelected={selectedIdSet.has(trace.traceId)}
-                  isFocused={trace.traceId === focusedTraceId}
-                  isFailing={failingTraceIdSet.has(trace.traceId)}
-                  onSelect={onRowClick}
-                  selectable
-                  onMultiSelectChange={onCheckboxChange}
-                  editable={canEdit}
-                  clusters={canEdit ? snapshot.clusters : undefined}
-                  onUpdateCluster={canEdit ? onUpdateCluster : undefined}
-                  onUpdateSplit={canEdit ? onUpdateSplit : undefined}
-                  onUpdateStatus={canEdit ? onUpdateStatus : undefined}
-                />
-              ))}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyGroupHint() {
-  return (
-    <div className="px-3 py-2 font-mono text-[10.5px] text-l-ink-dim">
-      No traces in this group.
-    </div>
-  );
-}
-
-interface TraceGroup {
-  key: string;
-  label: string;
-  /** Solid token color for the dot (Tailwind class). */
-  dot?: string;
-  /** Optional inline fill (CSS variable for cluster colors). */
-  fill?: string;
-  traces: TraceSummary[];
-}
-
-function groupTracesBy(
-  traces: readonly TraceSummary[],
-  groupBy: DatasetGroupBy,
-  clusterIndex: Map<string, DatasetCluster>,
-  snapshot: DatasetSnapshot,
-  showEmptyGroups: boolean,
-): TraceGroup[] {
-  if (groupBy === "none") {
-    return [{ key: "all", label: "", traces: [...traces] }];
-  }
-
-  const buckets = new Map<string, TraceGroup>();
-  const order: TraceGroup[] = [];
-
-  const ensure = (key: string, init: () => Omit<TraceGroup, "traces">): TraceGroup => {
-    let existing = buckets.get(key);
-    if (existing) return existing;
-    existing = { ...init(), traces: [] } as TraceGroup;
-    buckets.set(key, existing);
-    order.push(existing);
-    return existing;
-  };
-
-  /* When showEmptyGroups is set, prime the group order with the
-     full universe of buckets so empty ones still render headers.
-     Order matches the populated case below to keep bucket positions
-     stable as filters change. */
-  if (showEmptyGroups) {
-    if (groupBy === "cluster") {
-      for (const cluster of snapshot.clusters) {
-        ensure(cluster.id, () => ({
-          key: cluster.id,
-          label: cluster.label,
-          fill: cluster.color,
-        }));
-      }
-      ensure("__none__", () => ({
-        key: "__none__",
-        label: "Unclustered",
-        dot: "bg-l-ink-dim",
-      }));
-    } else if (groupBy === "split") {
-      ensure("train", () => ({ key: "train", label: "Train", dot: "bg-event-violet" }));
-      ensure("validation", () => ({
-        key: "validation",
-        label: "Validation",
-        dot: "bg-event-teal",
-      }));
-      ensure("test", () => ({ key: "test", label: "Test", dot: "bg-event-amber" }));
-      ensure("__unassigned__", () => ({
-        key: "__unassigned__",
-        label: "Unassigned",
-        dot: "bg-l-ink-dim",
-      }));
-    } else if (groupBy === "source") {
-      const sources = new Set<string>();
-      for (const t of snapshot.traces) {
-        if (t.primarySource) sources.add(t.primarySource);
-      }
-      for (const source of Array.from(sources).sort()) {
-        ensure(source, () => ({ key: source, label: source, dot: "bg-event-teal" }));
-      }
-    } else if (groupBy === "status") {
-      ensure("ok", () => ({ key: "ok", label: "OK", dot: "bg-l-status-done" }));
-      ensure("warn", () => ({
-        key: "warn",
-        label: "Warn",
-        dot: "bg-l-status-inprogress",
-      }));
-      ensure("error", () => ({
-        key: "error",
-        label: "Error",
-        dot: "bg-l-p-urgent",
-      }));
-    }
-  }
-
-  for (const trace of traces) {
-    if (groupBy === "cluster") {
-      const id = trace.clusterId ?? "__none__";
-      const cluster = trace.clusterId
-        ? clusterIndex.get(trace.clusterId) ?? null
-        : null;
-      ensure(id, () => ({
-        key: id,
-        label: cluster?.label ?? "Unclustered",
-        fill: cluster?.color,
-        dot: cluster ? undefined : "bg-l-ink-dim",
-      })).traces.push(trace);
-      continue;
-    }
-
-    if (groupBy === "split") {
-      const id = trace.split ?? "__unassigned__";
-      ensure(id, () => ({
-        key: id,
-        label:
-          trace.split === "train"
-            ? "Train"
-            : trace.split === "validation"
-              ? "Validation"
-              : trace.split === "test"
-                ? "Test"
-                : "Unassigned",
-        dot:
-          trace.split === "train"
-            ? "bg-event-violet"
-            : trace.split === "validation"
-              ? "bg-event-teal"
-              : trace.split === "test"
-                ? "bg-event-amber"
-                : "bg-l-ink-dim",
-      })).traces.push(trace);
-      continue;
-    }
-
-    if (groupBy === "source") {
-      const id = trace.primarySource;
-      ensure(id, () => ({
-        key: id,
-        label: id,
-        dot: "bg-event-teal",
-      })).traces.push(trace);
-      continue;
-    }
-
-    /* status */
-    const id = trace.status;
-    ensure(id, () => ({
-      key: id,
-      label:
-        trace.status === "ok"
-          ? "OK"
-          : trace.status === "warn"
-            ? "Warn"
-            : "Error",
-      dot:
-        trace.status === "ok"
-          ? "bg-l-status-done"
-          : trace.status === "warn"
-            ? "bg-l-status-inprogress"
-            : "bg-l-p-urgent",
-    })).traces.push(trace);
-  }
-
-  /* Drop empty groups when the toggle is off — the populated set
-     was just appended to the primed groups. */
-  if (!showEmptyGroups) {
-    return order.filter((g) => g.traces.length > 0);
-  }
-  return order;
-}
-
-function ListHeader({
-  showCluster,
-  showEvents,
-  showDuration,
-  showSplit,
-  selectAllState,
-  onSelectAllVisible,
-}: {
-  showCluster: boolean;
-  showEvents: boolean;
-  showDuration: boolean;
-  showSplit: boolean;
-  selectAllState: "none" | "indeterminate" | "all";
-  onSelectAllVisible: (next: boolean) => void;
-}) {
-  const checked: boolean | "indeterminate" =
-    selectAllState === "all"
-      ? true
-      : selectAllState === "indeterminate"
-        ? "indeterminate"
-        : false;
-  return (
-    <div
-      style={{
-        gridTemplateColumns: traceRowGridTemplate(
-          showCluster,
-          showEvents,
-          showDuration,
-          showSplit,
-        ),
-      }}
-      className={cx(
-        "sticky top-0 z-[1] grid items-center gap-2 px-2 h-7",
-        "border-b border-hairline-strong bg-l-surface-bar",
-        "font-mono text-[10px] uppercase tracking-[0.06em] text-l-ink-dim",
-      )}
-    >
-      <div className="flex items-center justify-center">
-        <Checkbox
-          size="sm"
-          checked={checked}
-          aria-label={
-            selectAllState === "all"
-              ? "Deselect all visible traces"
-              : "Select all visible traces"
-          }
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelectAllVisible(selectAllState !== "all");
-          }}
-          onChange={() => undefined}
-        />
-      </div>
-      <span aria-hidden />
-      <span>Trace</span>
-      {showCluster ? <span>Cluster</span> : null}
-      {showEvents ? <span className="text-right">Events</span> : null}
-      {showDuration ? <span className="text-right">Dur</span> : null}
-      {showSplit ? <span>Split / added</span> : null}
-      <span aria-hidden />
-    </div>
-  );
-}
-
-
-function GroupHead({
-  label,
-  count,
-  dot,
-  fill,
-}: {
-  label: string;
-  count: number;
-  dot?: string;
-  fill?: string;
-}) {
-  return (
-    <div className="sticky top-7 z-[1] flex items-center gap-2 border-b border-t border-l-border-faint bg-l-surface-bar-2 px-3 h-7 font-sans text-[11px] text-l-ink-lo">
-      <span
-        aria-hidden
-        className={cx("size-1.5 rounded-pill", dot)}
-        style={fill ? { background: fill } : undefined}
-      />
-      <span className="font-medium text-l-ink">{label}</span>
-      <span className="ml-auto font-mono text-[10px] tabular-nums text-l-ink-dim">
-        {count} {count === 1 ? "trace" : "traces"}
-      </span>
-    </div>
-  );
 }
 
 function FilteredEmpty({ totalCount }: { totalCount: number }) {

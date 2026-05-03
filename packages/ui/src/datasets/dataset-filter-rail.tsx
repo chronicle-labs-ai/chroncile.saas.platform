@@ -1,16 +1,27 @@
 "use client";
 
 import * as React from "react";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, PlusCircle, X, XCircle } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
+import { Badge } from "../primitives/badge";
 import { Input } from "../primitives/input";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "../primitives/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "../primitives/popover";
+import { Separator } from "../primitives/separator";
 import {
   coerceValueForOperator,
   defaultOperatorFor,
@@ -40,6 +51,26 @@ import type { TraceSummary } from "./types";
  * same operator lifecycle, same predicate evaluation. Only the
  * chrome differs.
  *
+ * Relationship to the tablecn-flavored `DataTableFacetedFilter` in
+ * `./data-table/`:
+ *
+ *   - `DataTableFacetedFilter` is TanStack-coupled (consumes a
+ *     `Column<TData>` from `useReactTable` and uses
+ *     `column.setFilterValue`). It's the right tool when a future
+ *     surface wants its filter state to live in TanStack's
+ *     `ColumnFiltersState` directly.
+ *   - This rail is `useDataTableFilters`-coupled. It powers the
+ *     dataset detail page today AND every other Chronicle surface
+ *     that already speaks the `FilterState[]` API (Connections,
+ *     Agents, Stream timeline). Migrating those en masse is out of
+ *     scope; instead we mirror tablecn's faceted UX on top of the
+ *     existing actions surface so the dataset rail visually +
+ *     behaviorally matches what `DataTableFacetedFilter` ships.
+ *
+ * The multi-option editor uses chron's `Command` primitive (which
+ * wraps `cmdk` — the same primitive `DataTableFacetedFilter` uses)
+ * so fuzzy search behaves identically across the two flavors.
+ *
  * For the brand-density data-table look (mono uppercase, large
  * 28 px pills with dividers), keep using
  * `<DataTableFilterBar>` + `<DataTableFilterPill>` from
@@ -67,13 +98,81 @@ export function DatasetFilterRail({
     [columns],
   );
 
+  /* Index of multiOption filters keyed by columnId — these are
+     surfaced as faceted chips so empty / non-empty states share one
+     trigger. Non-multiOption filters (text / number) stay as
+     individual pills since they carry an operator. */
+  const facetedFilterByColumn = React.useMemo(() => {
+    const m = new Map<string, FilterState>();
+    for (const f of filters) {
+      const col = columnById.get(f.columnId);
+      if (!col || col.type !== "multiOption") continue;
+      m.set(f.columnId, f);
+    }
+    return m;
+  }, [filters, columnById]);
+
+  /* Multi-option columns are always rendered as a chip — present or
+     not — so the toolbar reads as "click Status to filter." Order is
+     stable: the column-config order. */
+  const facetedColumns = React.useMemo(
+    () => columns.filter((c) => c.type === "multiOption"),
+    [columns],
+  );
+
+  /* Non-multiOption filters (text / number) keep their original
+     operator-bearing pill since they carry per-filter operator
+     semantics that don't fit the faceted shape. */
+  const customFilters = React.useMemo(
+    () =>
+      filters.filter((f) => {
+        const col = columnById.get(f.columnId);
+        return col?.type !== "multiOption";
+      }),
+    [filters, columnById],
+  );
+
+  /* Columns that aren't already surfaced as a faceted chip and aren't
+     a multiOption — these are the ones a user might want to add via
+     the "+ Filter" trigger. */
+  const addableColumns = React.useMemo(
+    () => columns.filter((c) => c.type !== "multiOption"),
+    [columns],
+  );
+
   return (
     <div
       role="toolbar"
       aria-label="Filters"
       className={cx("flex flex-wrap items-center gap-1.5", className)}
     >
-      {filters.map((f) => {
+      {facetedColumns.map((col) => {
+        const filter = facetedFilterByColumn.get(col.id) ?? null;
+        return (
+          <DatasetFacetedFilterChip
+            key={col.id}
+            column={col}
+            filter={filter}
+            onAdd={(value) =>
+              actions.addConfiguredFilter({
+                columnId: col.id,
+                operator: "isAnyOf",
+                value,
+              })
+            }
+            onUpdateValue={(value) => {
+              if (!filter) return;
+              actions.updateValue(filter.id, value);
+            }}
+            onRemove={() => {
+              if (!filter) return;
+              actions.removeFilter(filter.id);
+            }}
+          />
+        );
+      })}
+
+      {customFilters.map((f) => {
         const col = columnById.get(f.columnId);
         if (!col) return null;
         return (
@@ -87,26 +186,202 @@ export function DatasetFilterRail({
           />
         );
       })}
-      <DatasetFilterAdd
-        columns={columns}
-        onAdd={(payload) => actions.addConfiguredFilter(payload)}
-      />
+
+      {addableColumns.length > 0 ? (
+        <DatasetFilterAdd
+          columns={addableColumns}
+          onAdd={(payload) => actions.addConfiguredFilter(payload)}
+        />
+      ) : null}
+
       {showClear && filters.length > 0 ? (
         <button
           type="button"
           onClick={() => actions.clearAll()}
           className={cx(
-            "inline-flex h-6 items-center px-2 rounded-[3px]",
+            "inline-flex h-6 items-center gap-1 px-2 rounded-[3px]",
             "font-sans text-[11.5px] text-l-ink-dim",
             "transition-colors duration-fast ease-out motion-reduce:transition-none",
             "hover:bg-l-surface-hover hover:text-l-ink",
             "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
           )}
         >
-          Clear
+          Reset
+          <X className="size-3" strokeWidth={1.75} />
         </button>
       ) : null}
     </div>
+  );
+}
+
+/* ── Faceted filter chip (tablecn-style, useDataTableFilters API) ─ */
+
+interface DatasetFacetedFilterChipProps {
+  column: ColumnConfig<TraceSummary>;
+  /** Current FilterState for this column, or null when no filter is
+   *  active (the chip then renders as a dashed-border "add" trigger). */
+  filter: FilterState | null;
+  /** Called when the user picks the first value(s) — the rail then
+   *  asks `useDataTableFilters` to add a new FilterState. */
+  onAdd: (value: string[]) => void;
+  /** Called when the user toggles a value while the filter already
+   *  exists. */
+  onUpdateValue: (value: string[]) => void;
+  /** Called when the user clicks the inline reset glyph. */
+  onRemove: () => void;
+}
+
+function DatasetFacetedFilterChip({
+  column,
+  filter,
+  onAdd,
+  onUpdateValue,
+  onRemove,
+}: DatasetFacetedFilterChipProps) {
+  const options = column.options ?? [];
+  const selected = React.useMemo(() => {
+    if (!filter) return new Set<string>();
+    return new Set(Array.isArray(filter.value) ? (filter.value as string[]) : []);
+  }, [filter]);
+
+  const onItemSelect = React.useCallback(
+    (value: string) => {
+      const next = new Set(selected);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      const arr = options.map((o) => o.value).filter((v) => next.has(v));
+      if (filter) {
+        if (arr.length === 0) {
+          onRemove();
+        } else {
+          onUpdateValue(arr);
+        }
+      } else if (arr.length > 0) {
+        onAdd(arr);
+      }
+    },
+    [filter, onAdd, onUpdateValue, onRemove, options, selected],
+  );
+
+  const onReset = React.useCallback(
+    (event?: React.MouseEvent) => {
+      event?.stopPropagation();
+      if (filter) onRemove();
+    },
+    [filter, onRemove],
+  );
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cx(
+            "h-[26px] gap-1.5 px-2 text-[12px] text-l-ink-lo",
+            selected.size === 0 ? "border-dashed" : null,
+          )}
+        >
+          {selected.size > 0 ? (
+            <button
+              type="button"
+              aria-label={`Clear ${column.label} filter`}
+              onClick={onReset}
+              className="inline-flex rounded-pill text-l-ink-dim hover:text-l-ink"
+            >
+              <XCircle className="size-3.5" strokeWidth={1.75} />
+            </button>
+          ) : (
+            <PlusCircle className="size-3.5" strokeWidth={1.75} />
+          )}
+          <span className="font-medium">{column.label}</span>
+          {selected.size > 0 ? (
+            <>
+              <Separator
+                orientation="vertical"
+                className="mx-0.5 h-3.5 data-[orientation=vertical]:h-3.5"
+              />
+              <Badge
+                variant="ember"
+                className="rounded-sm font-mono text-[10px] lg:hidden"
+              >
+                {selected.size}
+              </Badge>
+              <div className="hidden items-center gap-1 lg:flex">
+                {selected.size > 2 ? (
+                  <Badge
+                    variant="ember"
+                    className="rounded-sm font-mono text-[10px]"
+                  >
+                    {selected.size} selected
+                  </Badge>
+                ) : (
+                  options
+                    .filter((o) => selected.has(o.value))
+                    .map((o) => (
+                      <Badge
+                        key={o.value}
+                        variant="ember"
+                        className="rounded-sm font-mono text-[10px]"
+                      >
+                        {o.label}
+                      </Badge>
+                    ))
+                )}
+              </div>
+            </>
+          ) : null}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[220px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={column.label} />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => {
+                const isSelected = selected.has(option.value);
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={`${option.label} ${option.value}`}
+                    onSelect={() => onItemSelect(option.value)}
+                  >
+                    <span
+                      aria-hidden
+                      className={cx(
+                        "mr-2 inline-flex size-3.5 shrink-0 items-center justify-center rounded-xs border",
+                        isSelected
+                          ? "bg-ember border-ember text-white"
+                          : "border-l-border-strong opacity-60",
+                      )}
+                    >
+                      {isSelected ? (
+                        <Check className="size-3" strokeWidth={3} />
+                      ) : null}
+                    </span>
+                    <span className="flex-1 truncate">{option.label}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+            {selected.size > 0 ? (
+              <>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => onReset()}
+                    className="justify-center text-center text-l-ink-lo"
+                  >
+                    Clear filter
+                  </CommandItem>
+                </CommandGroup>
+              </>
+            ) : null}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -720,19 +995,13 @@ function MultiOptionList({
   options,
   value,
   onChange,
-  autoFocus,
 }: {
   options: readonly ColumnOption[];
   value: readonly string[];
   onChange: (next: string[]) => void;
   autoFocus?: boolean;
 }) {
-  const [query, setQuery] = React.useState("");
   const selected = React.useMemo(() => new Set(value), [value]);
-  const filtered = React.useMemo(
-    () => filterOptions(options, query),
-    [options, query],
-  );
 
   const toggle = (v: string) => {
     const next = new Set(selected);
@@ -744,81 +1013,57 @@ function MultiOptionList({
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="border-b border-hairline px-2 py-1.5">
-        <Input
-          search
-          autoFocus={autoFocus}
-          value={query}
-          onChange={(e) => setQuery(e.currentTarget.value)}
-          placeholder="Search…"
-          aria-label="Search options"
-        />
-      </div>
-      <ul
-        role="listbox"
-        aria-multiselectable
-        className="max-h-[260px] overflow-auto p-1"
-      >
-        {filtered.length === 0 ? (
-          <li className="px-2 py-3 font-mono text-[10.5px] text-l-ink-dim">
-            No matches.
-          </li>
-        ) : (
-          filtered.map((opt) => {
+    <Command>
+      <CommandInput placeholder="Search…" />
+      <CommandList>
+        <CommandEmpty>No matches.</CommandEmpty>
+        <CommandGroup>
+          {options.map((opt) => {
             const isSelected = selected.has(opt.value);
             return (
-              <li key={opt.value}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => toggle(opt.value)}
+              <CommandItem
+                key={opt.value}
+                value={`${opt.label} ${opt.value}`}
+                onSelect={() => toggle(opt.value)}
+                aria-selected={isSelected}
+              >
+                <span
+                  aria-hidden
                   className={cx(
-                    "flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-left",
-                    "font-sans text-[12px] text-l-ink",
-                    "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+                    "mr-2 flex size-3.5 shrink-0 items-center justify-center rounded-[2px] border",
+                    isSelected
+                      ? "border-ember bg-ember"
+                      : "border-l-border-faint bg-l-surface-input",
                   )}
                 >
-                  <span
-                    aria-hidden
-                    className={cx(
-                      "flex size-3.5 shrink-0 items-center justify-center rounded-[2px] border",
-                      isSelected
-                        ? "border-ember bg-ember"
-                        : "border-l-border-faint bg-l-surface-input",
-                    )}
-                  >
-                    {isSelected ? (
-                      <Check
-                        className="size-2.5 text-white"
-                        strokeWidth={2.5}
-                        aria-hidden
-                      />
-                    ) : null}
-                  </span>
-                  <span className="flex-1 truncate">{opt.label}</span>
-                </button>
-              </li>
+                  {isSelected ? (
+                    <Check
+                      className="size-2.5 text-white"
+                      strokeWidth={2.5}
+                      aria-hidden
+                    />
+                  ) : null}
+                </span>
+                <span className="flex-1 truncate">{opt.label}</span>
+              </CommandItem>
             );
-          })
-        )}
-      </ul>
-      {value.length > 0 ? (
-        <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5 font-mono text-[10.5px] text-l-ink-dim">
-          <span>
-            {value.length} of {options.length}
-          </span>
-          <button
-            type="button"
-            onClick={() => onChange([])}
-            className="hover:text-l-ink"
-          >
-            Clear
-          </button>
-        </div>
-      ) : null}
-    </div>
+          })}
+        </CommandGroup>
+        {value.length > 0 ? (
+          <>
+            <CommandSeparator />
+            <CommandGroup>
+              <CommandItem
+                onSelect={() => onChange([])}
+                className="justify-center text-center text-l-ink-lo"
+              >
+                Clear ({value.length} of {options.length})
+              </CommandItem>
+            </CommandGroup>
+          </>
+        ) : null}
+      </CommandList>
+    </Command>
   );
 }
 

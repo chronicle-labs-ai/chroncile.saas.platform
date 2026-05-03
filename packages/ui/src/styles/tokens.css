@@ -47,18 +47,27 @@
   /* ── Core surface / neutrals (semantic aliases) ──────────
      These are the legacy `--c-*` names mapped onto the Linear
      surface stack. Existing utilities (`bg-surface-01`,
-     `border-hairline-strong`, …) keep working without edits. */
+     `border-hairline-strong`, …) keep working without edits.
+
+     Note: the reference palette above is Linear's *marketing*
+     canvas (`#08090a` pitch). The *product* app sits one step
+     lifted so body text doesn't collide with absolute black and
+     the elevation stack has breathing room — cf. Emil's Color
+     rule #7: keep a perceivable "brightest dark grey" in the
+     canvas. The `--c-black` token stays pitch for decks and
+     marketing surfaces; `--c-surface-00` is the softer canvas
+     the product UI paints on. */
   --c-void: #000000;
   --c-black: var(--color-pitch-black);   /* brand canvas (slides, marketing) */
-  --c-surface-00: var(--color-pitch-black);  /* app background — pitch black */
-  --c-surface-01: var(--color-graphite);     /* default card — graphite */
-  --c-surface-02: var(--color-deep-slate);   /* elevated card — deep slate */
-  --c-surface-03: var(--color-charcoal-grey); /* input / hover — charcoal grey */
+  --c-surface-00: #0c0d10;               /* app background — lifted near-black */
+  --c-surface-01: #131418;               /* default card — one step up */
+  --c-surface-02: #191a1f;               /* elevated card — two steps up */
+  --c-surface-03: #23252a;               /* input / hover — charcoal grey */
   --c-surface-input: var(--color-gunmetal);  /* "Subtle Input Field" fill */
 
-  --c-hairline: rgba(255, 255, 255, 0.06);
-  --c-hairline-strong: rgba(255, 255, 255, 0.12);
-  --c-divider: rgba(255, 255, 255, 0.05);
+  --c-hairline: rgba(255, 255, 255, 0.08);
+  --c-hairline-strong: rgba(255, 255, 255, 0.14);
+  --c-divider: rgba(255, 255, 255, 0.06);
 
   /* ── Ink (text on dark) ──────────────────────────────────── */
   --c-ink-hi: var(--color-porcelain);     /* titles / primary text */
@@ -73,7 +82,14 @@
   --c-ink-inv-lo: #2b2720;
   --c-ink-inv-dim: var(--color-fog-grey);
 
-  /* ── Wash / hover overlays (formerly `--l-wash-*`) ───────── */
+  /* ── Wash / hover overlays (formerly `--l-wash-*`) ─────────
+     `--c-wash-micro` is the barely-there 1.5% tint used on
+     low-elevation cards in the product (trace rows, picker
+     tiles, backtest cards). It has a deliberate light-theme
+     counterpart so these surfaces stay visible when the theme
+     flips — hardcoded `rgba(255,255,255,0.012)` fills would
+     render white-on-white. See Emil's Color rule #9. */
+  --c-wash-micro: rgba(255, 255, 255, 0.015);
   --c-wash-1: rgba(255, 255, 255, 0.02);
   --c-wash-2: rgba(255, 255, 255, 0.03);
   --c-wash-3: rgba(255, 255, 255, 0.04);
@@ -86,6 +102,7 @@
      are kept as aux palette entries used by the glass-scene
      recipes and a handful of marketing surfaces. */
   --c-ember: #d8430a;
+  --c-ember-hover: #e85520; /* +1 value, for :hover on primary CTAs */
   --c-ember-deep: #b83606;
   --c-bronze: #905838;
   --c-gold: #b09b74;
@@ -387,6 +404,7 @@
   --l-surface-bar-2: var(--c-surface-00);
   --l-surface-hover: var(--c-row-hover);
   --l-surface-selected: var(--c-row-selected);
+  --l-wash-micro: var(--c-wash-micro);
   --l-wash-1: var(--c-wash-1);
   --l-wash-2: var(--c-wash-2);
   --l-wash-3: var(--c-wash-3);
@@ -441,9 +459,14 @@
   --c-surface-03: #f4f4f5; /* input / hover */
   --c-surface-input: #f4f4f5;
 
-  --c-hairline: rgba(8, 9, 10, 0.08);
-  --c-hairline-strong: rgba(8, 9, 10, 0.16);
+  --c-hairline: rgba(8, 9, 10, 0.09);
+  --c-hairline-strong: rgba(8, 9, 10, 0.17);
   --c-divider: rgba(8, 9, 10, 0.06);
+
+  /* Ember one value darker on light (primary buttons read
+     stronger on cream, so :hover needs to *deepen* rather than
+     lighten — inverse of dark-mode behaviour). */
+  --c-ember-hover: #b83606;
 
   /* Ink — charcoal stack on cool white */
   --c-ink-hi: var(--color-pitch-black);
@@ -459,6 +482,7 @@
   --c-ink-inv-dim: #8a8f98;
 
   /* Wash / hover overlays — dark on light */
+  --c-wash-micro: rgba(8, 9, 10, 0.02);
   --c-wash-1: rgba(8, 9, 10, 0.03);
   --c-wash-2: rgba(8, 9, 10, 0.04);
   --c-wash-3: rgba(8, 9, 10, 0.06);
@@ -593,28 +617,11 @@
   color: var(--c-ink);
 }
 
-/* ─── Base reset for cards ─────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--c-page);
-  color: var(--c-ink);
-  transition:
-    background-color 220ms var(--ease-out),
-    color 220ms var(--ease-out);
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-feature-settings: "cv01", "ss03";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
+/* Base reset + typographic defaults live in `./globals.css` as the
+   single source of truth. `tokens.css` is intentionally vars-only
+   past this point so it can be imported standalone (e.g. by
+   email templates or isolated Storybook stories) without
+   applying a reset. */
 
 /* The signature "light source + glass" background. Drop
    <div class="bg-lightsource"></div> inside a relative parent. */

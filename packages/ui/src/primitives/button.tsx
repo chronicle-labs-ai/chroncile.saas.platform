@@ -29,11 +29,11 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-transparent bg-ember text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] hover:bg-[#e85520] active:bg-ember-deep",
+          "border-transparent bg-ember text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] hover:bg-ember-hover active:bg-ember-deep",
         secondary:
           "bg-l-wash-3 border-hairline-strong text-l-ink hover:bg-l-wash-5 hover:border-l-border-strong",
         ember:
-          "border-transparent bg-ember text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] hover:bg-[#e85520] active:bg-ember-deep",
+          "border-transparent bg-ember text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_1px_rgba(0,0,0,0.35)] hover:bg-ember-hover active:bg-ember-deep",
         ghost:
           "border-transparent bg-transparent text-l-ink-lo hover:bg-l-wash-3 hover:text-l-ink",
         icon:

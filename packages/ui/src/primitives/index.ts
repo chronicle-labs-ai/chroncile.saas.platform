@@ -330,6 +330,9 @@ export type {
   CellProps,
 } from "./table";
 
+export { SkeletonBlock } from "./skeleton-block";
+export type { SkeletonBlockProps } from "./skeleton-block";
+
 export { Skeleton } from "./skeleton";
 export type { SkeletonProps } from "./skeleton";
 

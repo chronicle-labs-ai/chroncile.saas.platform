@@ -2,6 +2,11 @@
 
 import * as React from "react";
 
+import { CompanyLogo } from "../icons";
+import {
+  sourceColor,
+  sourceTintedBackground,
+} from "../stream-timeline/source-color";
 import { cx } from "../utils/cx";
 import { formatNumber } from "../connections/time";
 
@@ -141,6 +146,13 @@ interface CoverageBucket {
   /** Optional CSS-variable fill (used for cluster colors which
    *  come in as CSS variables). */
   fill?: string;
+  /** Optional pre-rendered leading glyph that replaces the colored
+   *  dot. The Source group uses this slot to render a `<CompanyLogo>`
+   *  so each row carries the brand mark instead of a generic dot —
+   *  GitHub becomes the octocat, Stripe becomes the Stripe S, etc.
+   *  Other groups (cluster / status / split) leave it unset and fall
+   *  back to the colored dot. */
+  iconNode?: React.ReactNode;
   selection: CoverageBucketSelection;
   warn?: boolean;
 }
@@ -216,11 +228,13 @@ function CoverageBar({
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span
-            aria-hidden
-            className={cx("size-1.5 shrink-0 rounded-pill", bucket.dot)}
-            style={bucket.fill ? { background: bucket.fill } : undefined}
-          />
+          {bucket.iconNode ?? (
+            <span
+              aria-hidden
+              className={cx("size-1.5 shrink-0 rounded-pill", bucket.dot)}
+              style={bucket.fill ? { background: bucket.fill } : undefined}
+            />
+          )}
           <span className="truncate font-sans text-[12px] text-l-ink">
             {bucket.label}
           </span>
@@ -251,18 +265,40 @@ function buildCoverageGroups(
   const total = traces.length;
   if (total === 0) return [];
 
-  /* Source — primary source per trace, sorted desc, top 8 + Other. */
+  /* Source — primary source per trace, sorted desc, top 8.
+     Each row renders the brand's `<CompanyLogo>` in the leading slot
+     and the bar fills with the brand's `sourceColor()` so the row
+     reads as the brand at a glance. The same `sourceTintedBackground`
+     fallback is used elsewhere (timeline, trace summary) so unknown
+     sources still get a deterministic hue + tinted backstop while
+     the logo loads or if logo.dev fails. */
   const sourceCounts = countBy(traces, (t) => t.primarySource);
   const sourceBuckets = topN(sourceCounts, 8).map<CoverageBucket>(
-    ([value, count]) => ({
-      key: `source:${value}`,
-      label: value || "unknown",
-      count,
-      ratio: count / total,
-      bar: "bg-event-teal/60",
-      dot: "bg-event-teal",
-      selection: { kind: "source", value },
-    }),
+    ([value, count]) => {
+      const color = sourceColor(value);
+      const tint = sourceTintedBackground(color, 22);
+      return {
+        key: `source:${value}`,
+        label: value || "unknown",
+        count,
+        ratio: count / total,
+        bar: "",
+        dot: "",
+        fill: color,
+        iconNode: (
+          <CompanyLogo
+            name={value}
+            size={14}
+            radius={3}
+            fallbackBackground={tint}
+            fallbackColor="var(--c-ink-hi)"
+            aria-hidden
+            className="shrink-0"
+          />
+        ),
+        selection: { kind: "source", value },
+      };
+    },
   );
 
   /* Cluster — uses the snapshot's cluster colors. Includes an

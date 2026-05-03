@@ -11,7 +11,7 @@ import { formatNumber } from "../connections/time";
 import { DatasetEmpty } from "./dataset-empty";
 import { DatasetSplitChip } from "./dataset-split-chip";
 import { findNearestNode, type ClusterCentroid, type GraphLayout, type GraphNode } from "./graph-layout";
-import { formatTraceDuration } from "./trace-summary-row";
+import { formatTraceDuration } from "./dataset-traces-table-row";
 import { useGraphSimulation } from "./use-graph-simulation";
 import type { DatasetSnapshot, TraceStatus, TraceSummary } from "./types";
 
