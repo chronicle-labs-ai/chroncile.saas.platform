@@ -84,12 +84,20 @@ function SignupPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const initialStep =
-    searchParams.get("step") === "verify" ? "verify" : "email";
   const initialEmail = searchParams.get("email") ?? "";
   const initialToken = searchParams.get("token") ?? "";
   const invitationTokenFromQuery =
     searchParams.get("invitation_token") ?? undefined;
+  const invitationOrgName =
+    searchParams.get("organization_name") ?? undefined;
+
+  const isInvited = Boolean(invitationTokenFromQuery && initialEmail);
+  const initialStep: Step =
+    searchParams.get("step") === "verify"
+      ? "verify"
+      : isInvited
+        ? "password"
+        : "email";
 
   const [step, setStep] = useState<Step>(initialStep);
   const [email, setEmail] = useState(initialEmail);
@@ -141,6 +149,14 @@ function SignupPageInner() {
       if (!response.ok || !data || !("ok" in data) || data.ok !== true) {
         const errCode = (data as SignupErrResponse | null)?.error;
         if (errCode === "email_already_exists") {
+          if (isInvited) {
+            const params = new URLSearchParams({
+              email: value.email,
+              invitation_token: invitationTokenFromQuery!,
+            });
+            router.push(`/login?${params.toString()}`);
+            return;
+          }
           setError(humanizeSignupError(errCode));
           setStep("email");
           return;
@@ -230,6 +246,13 @@ function SignupPageInner() {
     }
   };
 
+  const signInHref = isInvited
+    ? `/login?${new URLSearchParams({
+        email: initialEmail,
+        invitation_token: invitationTokenFromQuery!,
+      }).toString()}`
+    : "/login";
+
   let body: ReactNode;
   switch (step) {
     case "email":
@@ -238,7 +261,7 @@ function SignupPageInner() {
           persona="signup"
           defaultValue={{ email }}
           onSubmit={handleEmailSubmit}
-          onSignIn={() => router.push("/login")}
+          onSignIn={() => router.push(signInHref)}
           onSSO={(provider) => {
             if (provider === "google" || provider === "github") {
               startOAuth(provider);
@@ -255,15 +278,20 @@ function SignupPageInner() {
         <SignUpPassword
           value={{ email, password, firstName }}
           onChange={(next) => {
-            setEmail(next.email);
+            
+            if (!isInvited) setEmail(next.email);
             setPassword(next.password);
             setFirstName(next.firstName ?? "");
           }}
           onSubmit={handlePasswordSubmit}
-          onBack={() => {
-            setError(null);
-            setStep("email");
-          }}
+          onBack={
+            isInvited
+              ? undefined
+              : () => {
+                  setError(null);
+                  setStep("email");
+                }
+          }
           error={error}
           isSubmitting={isSubmitting}
         />
@@ -286,17 +314,44 @@ function SignupPageInner() {
       break;
   }
 
+  const invitationBanner = isInvited ? (
+    <div
+      role="status"
+      className="mb-6 rounded-md border border-orange-700/40 bg-orange-700/10 px-4 py-3 font-mono text-xs text-orange-200"
+    >
+      <p>
+        You&apos;ve been invited to join{" "}
+        <span className="font-semibold text-orange-100">
+          {invitationOrgName ?? "a workspace"}
+        </span>
+        . Create your account to accept.
+      </p>
+      <p className="mt-1 text-orange-200/70">
+        Already have an account?{" "}
+        <button
+          type="button"
+          onClick={() => router.push(signInHref)}
+          className="underline underline-offset-2 hover:text-orange-100"
+        >
+          Sign in instead
+        </button>
+        .
+      </p>
+    </div>
+  ) : null;
+
   return (
     <AuthShell
       topbar={{
         cta: (
-          <button type="button" onClick={() => router.push("/login")}>
+          <button type="button" onClick={() => router.push(signInHref)}>
             Sign in
           </button>
         ),
       }}
       align="center"
     >
+      {invitationBanner}
       {body}
     </AuthShell>
   );

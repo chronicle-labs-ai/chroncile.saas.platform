@@ -78,6 +78,11 @@ pub trait UserRepository: Send + Sync {
         id: &str,
         workos_user_id: &str,
     ) -> RepoResult<User>;
+    async fn set_tenant_id(
+        &self,
+        id: &str,
+        tenant_id: &str,
+    ) -> RepoResult<User>;
 }
 
 /// Mirrors WorkOS's `organization_membership` resource. A `User` may be a

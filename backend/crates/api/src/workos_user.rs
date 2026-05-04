@@ -34,6 +34,42 @@ impl WorkosAuthUser {
     }
 }
 
+
+#[derive(Debug, Clone)]
+pub struct WorkosIdentityUser {
+    pub user: User,
+    pub claims: WorkosClaims,
+}
+
+#[async_trait]
+impl FromRequestParts<SaasAppState> for WorkosIdentityUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &SaasAppState,
+    ) -> Result<Self, Self::Rejection> {
+        let token = extract_bearer_token(parts).map_err(|_| ApiError::unauthorized())?;
+        let claims = state.workos_jwt.verify(token).await.map_err(|err| {
+            tracing::warn!(error = %err, "WorkOS access token verification failed");
+            ApiError::unauthorized()
+        })?;
+        let user = state
+            .users
+            .find_by_workos_user_id(&claims.sub)
+            .await
+            .map_err(|err| {
+                tracing::error!(error = ?err, workos_user_id = %claims.sub, "user lookup failed");
+                ApiError::internal()
+            })?
+            .ok_or_else(|| {
+                tracing::warn!(workos_user_id = %claims.sub, "no local user for workos sub");
+                ApiError::unauthorized()
+            })?;
+        Ok(WorkosIdentityUser { user, claims })
+    }
+}
+
 #[async_trait]
 impl FromRequestParts<SaasAppState> for WorkosAuthUser {
     type Rejection = ApiError;

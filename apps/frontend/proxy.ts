@@ -20,6 +20,7 @@ const PUBLIC_PATHS = new Set<string>([
   "/forgot-password",
   "/reset-password",
   "/auth-test",
+  "/accept-invite",
 ]);
 
 const PUBLIC_PREFIXES = [

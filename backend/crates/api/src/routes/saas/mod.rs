@@ -44,6 +44,11 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
         // CP 7.5 — current user via WorkOS JWKS path. Self-protected by the
         // WorkosAuthUser extractor (no JWT middleware).
         .route("/api/saas/me", get(me::get_me))
+        // Org-agnostic identity probe. Used by the frontend when the
+        // sealed session is authenticated but has no `org_id` claim
+        // (typically right after a token refresh) so the dashboard guard
+        // can recover by switching to the user's primary workspace.
+        .route("/api/saas/identity", get(me::get_identity))
         .route("/api/webhooks/workos", post(auth::workos_webhook))
         .route("/api/platform/admin/stats", get(dashboard::admin_stats))
         .route(
@@ -233,15 +238,6 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/team/members/:user_id/role",
             patch(team::update_member_role),
         )
-        // Pre-resolve `AuthUser` + `ResolvedFeatureAccess` and stash them in
-        // request extensions, so handlers that take `user: AuthUser` get the
-        // already-resolved value (the extractor's `from_request_parts` checks
-        // extensions first) and `feature_access` is available without a
-        // second round-trip.
-        //
-        // If anything fails (no token, bad signature, missing user/tenant)
-        // we silently skip the bootstrap — the per-handler extractor will
-        // surface the proper 401 to the caller.
         .layer(axum_mw::from_fn_with_state(
             state.clone(),
             |axum::extract::State(state): axum::extract::State<SaasAppState>,

@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getBackendUrl } from "platform-api";
+
 import { classifyAuthError } from "@/server/auth/auth-errors";
 import { getCookiePassword, setSealedSession } from "@/server/auth/session";
 import {
@@ -18,6 +20,12 @@ interface VerifyBody {
 interface EmailVerificationSessionResult {
   sealedSession?: string;
   organizationId?: string;
+  user?: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+  };
 }
 
 interface EmailVerificationAuthenticator {
@@ -114,13 +122,80 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { sealedSession, organizationId } = result;
+  const { sealedSession, organizationId, user: workosUser } = result;
 
   if (!sealedSession) {
     console.error(
       "[auth/signup/verify] SDK returned no sealedSession despite sealSession=true",
     );
     return NextResponse.json({ error: "sealing_failed" }, { status: 500 });
+  }
+
+  if (organizationId && workosUser?.id) {
+    const serviceSecret = process.env.SERVICE_SECRET;
+    if (!serviceSecret) {
+      console.error(
+        "[auth/signup/verify] SERVICE_SECRET missing — cannot mirror invited membership in backend",
+      );
+      return NextResponse.json(
+        {
+          error: "service_secret_not_configured",
+          detail:
+            "SERVICE_SECRET env var is not set in apps/frontend. Add it and restart.",
+        },
+        { status: 500 },
+      );
+    }
+
+    try {
+      const registerRes = await fetch(
+        `${getBackendUrl()}/api/platform/tenants/register-workos`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            serviceSecret,
+            workosUserId: workosUser.id,
+            workosOrganizationId: organizationId,
+            email: workosUser.email,
+            // Empty name/slug → backend takes the "tenant already exists"
+            // attach-membership branch instead of creating a new tenant.
+            name: "",
+            slug: "",
+            firstName: workosUser.firstName ?? null,
+            lastName: workosUser.lastName ?? null,
+          }),
+        },
+      );
+      if (!registerRes.ok) {
+        const detail = await registerRes.text().catch(() => "");
+        console.error(
+          "[auth/signup/verify] backend register-workos returned non-ok",
+          registerRes.status,
+          detail,
+        );
+        return NextResponse.json(
+          {
+            error: "invitation_provision_failed",
+            backendStatus: registerRes.status,
+            detail,
+          },
+          { status: 500 },
+        );
+      }
+    } catch (error) {
+      console.error(
+        "[auth/signup/verify] backend register-workos network error:",
+        error instanceof Error ? error.message : error,
+      );
+      return NextResponse.json(
+        {
+          error: "backend_unreachable",
+          detail: error instanceof Error ? error.message : String(error),
+        },
+        { status: 502 },
+      );
+    }
   }
 
   await setSealedSession(sealedSession);

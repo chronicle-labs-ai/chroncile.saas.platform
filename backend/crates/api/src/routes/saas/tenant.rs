@@ -419,7 +419,26 @@ pub async fn register_workos_tenant(
         .find_by_workos_user_id(&input.workos_user_id)
         .await?
     {
-        existing
+
+        if existing.tenant_id != tenant.id {
+            state
+                .users
+                .set_tenant_id(&existing.id, &tenant.id)
+                .await?;
+            tracing::info!(
+                user_id = %existing.id,
+                old_tenant_id = %existing.tenant_id,
+                new_tenant_id = %tenant.id,
+                "Promoted self-serve workspace to user's primary tenant",
+            );
+        }
+        // Re-fetch so downstream code (membership upsert, role) sees the
+        // updated tenant_id. This is cheap and keeps the function simple.
+        state
+            .users
+            .find_by_workos_user_id(&input.workos_user_id)
+            .await?
+            .unwrap_or(existing)
     } else {
         let display_name = match (input.first_name.as_deref(), input.last_name.as_deref()) {
             (Some(f), Some(l)) if !f.is_empty() && !l.is_empty() => Some(format!("{f} {l}")),

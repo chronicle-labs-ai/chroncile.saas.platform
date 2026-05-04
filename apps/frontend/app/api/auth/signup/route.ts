@@ -85,34 +85,133 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let userId: string;
-  try {
-    const created = await workos.userManagement.createUser({
-      email,
-      password,
-      ...(firstName ? { firstName } : {}),
-      ...(lastName ? { lastName } : {}),
-    });
-    userId = created.id;
-  } catch (error) {
-    if (isEmailAlreadyExistsError(error)) {
+  let userId: string | undefined;
+
+  if (invitationToken) {
+    let invitation;
+    try {
+      invitation = await workos.userManagement.findInvitationByToken(
+        invitationToken,
+      );
+    } catch (error) {
+      console.error(
+        "[auth/signup] findInvitationByToken failed:",
+        error instanceof Error ? error.message : error,
+      );
       return NextResponse.json(
-        { error: "email_already_exists", email },
-        { status: 409 },
+        { error: "invitation_not_found" },
+        { status: 404 },
       );
     }
-    if (isWeakPasswordError(error)) {
-      const classified = classifyAuthError(error);
+    if (invitation.state !== "pending") {
       return NextResponse.json(
-        { error: "weak_password", message: classified.message },
-        { status: 422 },
+        {
+          error:
+            invitation.state === "expired"
+              ? "invitation_expired"
+              : "invitation_not_pending",
+        },
+        { status: 410 },
       );
     }
-    console.error("[auth/signup] createUser failed:", error);
-    return NextResponse.json(
-      { error: "user_creation_failed" },
-      { status: 500 },
+    if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "invitation_email_mismatch" },
+        { status: 400 },
+      );
+    }
+
+    const list = await workos.userManagement.listUsers({ email, limit: 1 });
+    const preAllocated = list.data[0];
+    if (!preAllocated) {
+      // Fallback: invitation says pending but no user record was found.
+      // Treat as a fresh signup (will most likely succeed; if WorkOS
+      // returns `email_not_available` the catch below surfaces it).
+      console.warn(
+        "[auth/signup] invitation pending but no pre-allocated user found; falling through to createUser",
+      );
+    } else {
+      try {
+        await workos.userManagement.updateUser({
+          userId: preAllocated.id,
+          password,
+          ...(firstName ? { firstName } : {}),
+          ...(lastName ? { lastName } : {}),
+        });
+        userId = preAllocated.id;
+      } catch (error) {
+        if (isWeakPasswordError(error)) {
+          const classified = classifyAuthError(error);
+          return NextResponse.json(
+            { error: "weak_password", message: classified.message },
+            { status: 422 },
+          );
+        }
+        const detail =
+          error && typeof error === "object" && "errors" in error
+            ? (error as { errors: unknown }).errors
+            : undefined;
+        console.error(
+          "[auth/signup] updateUser on pre-allocated invitee failed:",
+          error,
+          "errors:",
+          JSON.stringify(detail, null, 2),
+        );
+        return NextResponse.json(
+          { error: "user_creation_failed" },
+          { status: 500 },
+        );
+      }
+    }
+  }
+
+  if (!userId) {
+    try {
+      const created = await workos.userManagement.createUser({
+        email,
+        password,
+        ...(firstName ? { firstName } : {}),
+        ...(lastName ? { lastName } : {}),
+      });
+      userId = created.id;
+    } catch (error) {
+      if (isEmailAlreadyExistsError(error)) {
+        return NextResponse.json(
+          { error: "email_already_exists", email },
+          { status: 409 },
+        );
+      }
+      if (isWeakPasswordError(error)) {
+        const classified = classifyAuthError(error);
+        return NextResponse.json(
+          { error: "weak_password", message: classified.message },
+          { status: 422 },
+        );
+      }
+      // WorkOS often wraps the actual cause in `errors[]`. Dump that array
+      // explicitly so it's not truncated to "[Array]" in the dev console.
+      const detail =
+        error && typeof error === "object" && "errors" in error
+          ? (error as { errors: unknown }).errors
+          : undefined;
+      console.error(
+        "[auth/signup] createUser failed:",
+        error,
+        "errors:",
+        JSON.stringify(detail, null, 2),
+      );
+      return NextResponse.json(
+        { error: "user_creation_failed" },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (!userId) {
+    console.error(
+      "[auth/signup] reached auth phase without a userId — invariant broken",
     );
+    return NextResponse.json({ error: "user_creation_failed" }, { status: 500 });
   }
 
   const ipAddress = getClientIp(request);

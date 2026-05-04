@@ -150,15 +150,43 @@ export function classifyAuthError(err: unknown): ClassifiedAuthError {
   };
 }
 
+const EMAIL_EXISTS_CODES = new Set([
+  "email_already_exists",
+  "user_already_exists",
+  "email_taken",
+]);
+
+function codeMeansEmailExists(code: string | undefined): boolean {
+  return code !== undefined && EMAIL_EXISTS_CODES.has(code);
+}
+
 export function isEmailAlreadyExistsError(err: unknown): boolean {
+  // WorkOS often wraps a specific cause inside `errors[0].code` while the
+  // top-level code is a generic wrapper like `user_creation_error`. Check
+  // the inner array first, then the flattened source as a fallback.
+  if (err && typeof err === "object") {
+    const innerErrors = (err as { errors?: unknown }).errors;
+    if (Array.isArray(innerErrors)) {
+      for (const entry of innerErrors) {
+        if (entry && typeof entry === "object") {
+          const innerCode = pickString(entry, CODE_KEYS);
+          if (codeMeansEmailExists(innerCode)) return true;
+          const innerMessage = pickString(entry, MESSAGE_KEYS) ?? "";
+          if (
+            /email/i.test(innerMessage) &&
+            /(exist|taken|use)/i.test(innerMessage)
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
   const source = flattenErrorSource(err);
   if (!source || typeof source !== "object") return false;
   const code = pickString(source, CODE_KEYS);
-  if (
-    code === "email_already_exists" ||
-    code === "user_already_exists" ||
-    code === "email_taken"
-  ) {
+  if (codeMeansEmailExists(code)) {
     return true;
   }
   const status = (source as { status?: unknown }).status;

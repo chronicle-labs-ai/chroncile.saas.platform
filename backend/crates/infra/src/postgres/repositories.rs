@@ -473,6 +473,24 @@ impl UserRepository for PgUserRepo {
         .await
         .map_err(to_repo_err)
     }
+
+    async fn set_tenant_id(
+        &self,
+        id: &str,
+        tenant_id: &str,
+    ) -> RepoResult<User> {
+        sqlx::query(
+            "UPDATE \"User\" SET \"tenantId\" = $1, \"updatedAt\" = $3 \
+             WHERE id = $2 RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(id)
+        .bind(Utc::now().naive_utc())
+        .try_map(user_from_row)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
 }
 
 // === Invitation ===

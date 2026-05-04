@@ -109,6 +109,41 @@ export async function authWithReason(): Promise<AuthResult> {
     }
   }
 
+  if (BACKEND_URL && !me) {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/saas/identity`, {
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+        next: { revalidate: 0 },
+      });
+      if (res.ok) {
+        const identity = (await res.json()) as {
+          userId: string;
+          email: string;
+          name: string | null;
+          workosUserId: string | null;
+          primaryTenantId: string;
+          organizations?: BackendMeOrganization[];
+        };
+        
+        me = {
+          userId: identity.userId,
+          email: identity.email,
+          name: identity.name,
+          role: "member",
+          tenantId: "",
+          tenantName: "",
+          tenantSlug: "",
+          workosUserId: identity.workosUserId,
+          workosOrganizationId: null,
+          primaryTenantId: identity.primaryTenantId,
+          organizations: identity.organizations,
+        };
+      }
+    } catch (err) {
+      console.warn("[auth] backend /api/saas/identity unreachable", err);
+    }
+  }
+
   const fallbackName =
     [session.user.firstName, session.user.lastName].filter(Boolean).join(" ") ||
     null;

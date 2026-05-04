@@ -283,6 +283,20 @@ impl UserRepository for InMemoryUserRepo {
         entry.updated_at = Utc::now();
         Ok(entry.clone())
     }
+
+    async fn set_tenant_id(
+        &self,
+        id: &str,
+        tenant_id: &str,
+    ) -> RepoResult<User> {
+        let mut entry = self
+            .store
+            .get_mut(id)
+            .ok_or_else(|| RepoError::NotFound(format!("user: {id}")))?;
+        entry.tenant_id = tenant_id.to_string();
+        entry.updated_at = Utc::now();
+        Ok(entry.clone())
+    }
 }
 
 // === Invitation ===

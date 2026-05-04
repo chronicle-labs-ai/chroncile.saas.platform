@@ -77,7 +77,22 @@ export default async function AcceptInvitePage({
       email: invitation.email,
       invitation_token: token,
     });
-    redirect(`/login?${params.toString()}`);
+
+    if (invitation.organizationId) {
+      try {
+        const org = await workos.organizations.getOrganization(
+          invitation.organizationId,
+        );
+        if (org?.name) params.set("organization_name", org.name);
+      } catch (err) {
+        console.warn(
+          "[accept-invite] getOrganization failed, falling back to generic banner:",
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
+    redirect(`/signup?${params.toString()}`);
   }
 
   return (

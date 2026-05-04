@@ -68,48 +68,45 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    let organizationId = session.organizationId ?? null;
-    if (!organizationId) {
-      const organization = await workos.organizations.createOrganization(
-        {
-          name: orgName,
-          metadata: {
-            chronicleSlug: slug,
-            [OWNER_METADATA_KEY]: session.user.id,
-          },
+    const organization = await workos.organizations.createOrganization(
+      {
+        name: orgName,
+        metadata: {
+          chronicleSlug: slug,
+          [OWNER_METADATA_KEY]: session.user.id,
         },
-        { idempotencyKey: `self-serve:${session.user.id}:${slug}` },
+      },
+      { idempotencyKey: `self-serve:${session.user.id}:${slug}` },
+    );
+    const organizationId = organization.id;
+
+    const membership = await workos.userManagement.createOrganizationMembership({
+      organizationId,
+      userId: session.user.id,
+      roleSlug: ADMIN_ROLE_SLUG,
+    });
+
+    const assignedSlug = membership.role?.slug;
+    if (assignedSlug !== ADMIN_ROLE_SLUG) {
+      console.error(
+        "[onboarding/workspace] WorkOS assigned role",
+        assignedSlug,
+        "instead of",
+        ADMIN_ROLE_SLUG,
+        {
+          organizationId,
+          userId: session.user.id,
+          membershipId: membership.id,
+        },
       );
-      organizationId = organization.id;
-
-      const membership = await workos.userManagement.createOrganizationMembership({
-        organizationId,
-        userId: session.user.id,
-        roleSlug: ADMIN_ROLE_SLUG,
-      });
-
-      const assignedSlug = membership.role?.slug;
-      if (assignedSlug !== ADMIN_ROLE_SLUG) {
-        console.error(
-          "[onboarding/workspace] WorkOS assigned role",
-          assignedSlug,
-          "instead of",
-          ADMIN_ROLE_SLUG,
-          {
-            organizationId,
-            userId: session.user.id,
-            membershipId: membership.id,
-          },
-        );
-        return NextResponse.json(
-          {
-            error: "admin_role_not_configured",
-            detail:
-              "WorkOS assigned a different role than 'admin'. Create the 'admin' role in your WorkOS dashboard and retry.",
-          },
-          { status: 500 },
-        );
-      }
+      return NextResponse.json(
+        {
+          error: "admin_role_not_configured",
+          detail:
+            "WorkOS assigned a different role than 'admin'. Create the 'admin' role in your WorkOS dashboard and retry.",
+        },
+        { status: 500 },
+      );
     }
 
     const registerResponse = await fetch(
@@ -138,6 +135,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Always rebind the sealed session to the freshly-created workspace —
+    // this is the user's new primary. They keep their other memberships
+    // (any invited workspaces) and can flip back via the org switcher.
     const sealed = await loadSession();
     if (!sealed) {
       return NextResponse.json(
@@ -146,19 +146,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!session.organizationId) {
-      const refresh = await sealed.refresh({
-        cookiePassword: getCookiePassword(),
-        organizationId,
-      });
-      if (!refresh.authenticated) {
-        return NextResponse.json(
-          { error: refresh.reason || "session_refresh_failed" },
-          { status: 401 },
-        );
-      }
-      await setSealedSession(refresh.sealedSession);
+    const refresh = await sealed.refresh({
+      cookiePassword: getCookiePassword(),
+      organizationId,
+    });
+    if (!refresh.authenticated) {
+      return NextResponse.json(
+        { error: refresh.reason || "session_refresh_failed" },
+        { status: 401 },
+      );
     }
+    await setSealedSession(refresh.sealedSession);
 
     return NextResponse.json({
       workspace: {
