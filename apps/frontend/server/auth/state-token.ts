@@ -1,8 +1,12 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
+const STATE_MAX_AGE_SECONDS = 10 * 60;
+
 export interface OAuthStatePayload {
   nonce: string;
+  iat: number;
   from?: string;
+  invitationToken?: string;
 }
 
 function getStateSecret(): string {
@@ -21,15 +25,25 @@ function sign(payloadB64: string): string {
     .digest("base64url");
 }
 
-export function createOAuthState(from?: string | null): string {
+export function createOAuthState(
+  from?: string | null,
+  invitationToken?: string | null,
+): string {
   const safeFrom =
     typeof from === "string" && from.startsWith("/") && !from.startsWith("//")
       ? from
       : undefined;
 
+  const safeInvitationToken =
+    typeof invitationToken === "string" && invitationToken.length > 0
+      ? invitationToken
+      : undefined;
+
   const payload: OAuthStatePayload = {
     nonce: randomUUID(),
+    iat: Math.floor(Date.now() / 1000),
     from: safeFrom,
+    invitationToken: safeInvitationToken,
   };
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = sign(payloadB64);
@@ -63,7 +77,23 @@ export function verifyOAuthState(state: string): OAuthStatePayload | null {
       Buffer.from(payloadB64, "base64url").toString("utf8"),
     ) as OAuthStatePayload;
     if (typeof payload.nonce !== "string") return null;
+    if (typeof payload.iat !== "number" || !Number.isFinite(payload.iat)) {
+      return null;
+    }
     if (payload.from !== undefined && typeof payload.from !== "string") {
+      return null;
+    }
+    if (
+      payload.invitationToken !== undefined &&
+      typeof payload.invitationToken !== "string"
+    ) {
+      return null;
+    }
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (payload.iat - nowSeconds > 30) {
+      return null;
+    }
+    if (nowSeconds - payload.iat > STATE_MAX_AGE_SECONDS) {
       return null;
     }
     return payload;

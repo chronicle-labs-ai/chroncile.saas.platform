@@ -42,6 +42,7 @@ import {
   Sparkles,
   Sun,
   Trash2,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -95,6 +96,19 @@ export interface DashboardShellUser {
 export interface DashboardShellWorkspace {
   name: string;
   plan?: string | null;
+}
+
+/**
+ * One organization the signed-in user is an active member of. Surfaced in
+ * the workspace dropdown so the user can switch contexts. The shell itself
+ * doesn't fetch this — the host app passes the list down.
+ */
+export interface DashboardShellOrganization {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  workosOrganizationId: string | null;
+  role: string;
 }
 
 const defaultData = {
@@ -170,6 +184,29 @@ export interface AppSidebarProps
    * package and can't import `next/navigation` directly.
    */
   currentPath?: string;
+  /**
+   * All workspaces the user is an active member of. When more than one is
+   * present, the workspace chip's dropdown shows a "Switch workspace"
+   * section; clicking an entry navigates to the host's switch endpoint
+   * (typically `/api/auth/switch-org?organizationId=…`). Empty / omitted
+   * for single-workspace users.
+   */
+  organizations?: DashboardShellOrganization[];
+  /** WorkOS organization id of the *currently active* workspace. */
+  activeWorkosOrganizationId?: string | null;
+  /**
+   * Tenant id of the user's primary workspace. Marked with a "Primary"
+   * label in the dropdown. The primary workspace is created at signup and
+   * cannot be removed — it's the user's permanent home.
+   */
+  primaryTenantId?: string;
+  /**
+   * URL pattern used to switch organizations. The placeholder
+   * `{organizationId}` is replaced with the WorkOS org id of the
+   * destination workspace. Defaults to
+   * `/api/auth/switch-org?organizationId={organizationId}&from=/dashboard`.
+   */
+  switchOrgHrefTemplate?: string;
 }
 
 export function AppSidebar({
@@ -177,6 +214,10 @@ export function AppSidebar({
   workspace,
   signOutHref = "/api/auth/sign-out",
   currentPath,
+  organizations,
+  activeWorkosOrganizationId,
+  primaryTenantId,
+  switchOrgHrefTemplate,
   className,
   ...props
 }: AppSidebarProps) {
@@ -192,7 +233,13 @@ export function AppSidebar({
         .join(" ")}
     >
       <SidebarHeader>
-        <WorkspaceMenu workspace={workspace} />
+        <WorkspaceMenu
+          workspace={workspace}
+          organizations={organizations}
+          activeWorkosOrganizationId={activeWorkosOrganizationId}
+          primaryTenantId={primaryTenantId}
+          switchOrgHrefTemplate={switchOrgHrefTemplate}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={defaultData.navMain} currentPath={currentPath} />
@@ -205,14 +252,44 @@ export function AppSidebar({
   );
 }
 
+const DEFAULT_SWITCH_ORG_HREF =
+  "/api/auth/switch-org?organizationId={organizationId}&from=/dashboard";
+
+function buildSwitchOrgHref(
+  template: string | undefined,
+  organizationId: string,
+): string {
+  return (template ?? DEFAULT_SWITCH_ORG_HREF).replace(
+    "{organizationId}",
+    encodeURIComponent(organizationId),
+  );
+}
+
 function WorkspaceMenu({
   workspace,
+  organizations,
+  activeWorkosOrganizationId,
+  primaryTenantId,
+  switchOrgHrefTemplate,
 }: {
   workspace?: DashboardShellWorkspace;
+  organizations?: DashboardShellOrganization[];
+  activeWorkosOrganizationId?: string | null;
+  primaryTenantId?: string;
+  switchOrgHrefTemplate?: string;
 }) {
   const { theme, toggle } = useTheme();
   const nextTheme = theme === "light" ? "dark" : "light";
   const navigate = useNavigate();
+
+  // Build the list of *other* workspaces (everything except the active one)
+  // so the dropdown's "Switch workspace" section reads as actionable rows
+  // rather than including a non-functional "you are here" entry.
+  const switchableOrgs = (organizations ?? []).filter(
+    (o) =>
+      o.workosOrganizationId &&
+      o.workosOrganizationId !== activeWorkosOrganizationId,
+  );
 
   /*
    * Workspace identity row.
@@ -269,6 +346,39 @@ function WorkspaceMenu({
                 </div>
               </div>
             </DropdownMenuSection>
+            {switchableOrgs.length > 0 ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuSection title="Switch workspace">
+                  {switchableOrgs.map((org) => {
+                    const isPrimary = org.tenantId === primaryTenantId;
+                    const href = buildSwitchOrgHref(
+                      switchOrgHrefTemplate,
+                      org.workosOrganizationId!,
+                    );
+                    return (
+                      <DropdownMenuItem
+                        key={org.tenantId}
+                        className={menuItemClassName}
+                        onAction={() => {
+                          // Full navigation: the switch endpoint sets the
+                          // sealed cookie server-side and 302s back, which
+                          // a client-side router can't handle.
+                          window.location.assign(href);
+                        }}
+                      >
+                        <span className="flex-1 truncate">{org.tenantName}</span>
+                        {isPrimary ? (
+                          <span className="ml-2 rounded bg-[var(--c-surface-02)] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-l-ink-dim">
+                            Primary
+                          </span>
+                        ) : null}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuSection>
+              </>
+            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuSection>
               <DropdownMenuItem
@@ -277,6 +387,13 @@ function WorkspaceMenu({
               >
                 <Command className="size-4" strokeWidth={1.75} />
                 Dashboard
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={menuItemClassName}
+                onAction={() => navigate("/settings/team")}
+              >
+                <Users className="size-4" strokeWidth={1.75} />
+                Team
               </DropdownMenuItem>
             </DropdownMenuSection>
             <DropdownMenuSeparator />
@@ -529,6 +646,7 @@ export function NavUser({
   signOutHref: string;
 }) {
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
 
   return (
     <SidebarMenu>
@@ -594,6 +712,16 @@ export function NavUser({
                   strokeWidth={1.75}
                 />
                 Upgrade to Pro
+              </DropdownMenuItem>
+            </DropdownMenuSection>
+            <DropdownMenuSeparator />
+            <DropdownMenuSection title="Workspace">
+              <DropdownMenuItem
+                className={menuItemClassName}
+                onAction={() => navigate("/settings/team")}
+              >
+                <Users aria-hidden className="size-4" strokeWidth={1.75} />
+                Team
               </DropdownMenuItem>
             </DropdownMenuSection>
             <DropdownMenuSeparator />

@@ -37,6 +37,10 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/tenants/register-workos",
             post(tenant::register_workos_tenant),
         )
+        .route(
+            "/api/platform/users/primary-org",
+            post(tenant::lookup_primary_org),
+        )
         // CP 7.5 — current user via WorkOS JWKS path. Self-protected by the
         // WorkosAuthUser extractor (no JWT middleware).
         .route("/api/saas/me", get(me::get_me))

@@ -1,10 +1,11 @@
 use async_trait::async_trait;
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
-    CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateUserInput,
-    FeatureFlagDefinition, FeatureFlagKey, FeatureFlagOverride, FeatureFlagScope, IntegrationSync,
-    Invitation, PasswordResetToken, Run, Tenant, UpsertFeatureFlagDefinitionInput,
-    UpsertFeatureFlagOverrideInput, User,
+    CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateTenantMembershipInput,
+    CreateUserInput, FeatureFlagDefinition, FeatureFlagKey, FeatureFlagOverride,
+    FeatureFlagScope, IntegrationSync, Invitation, MembershipStatus, PasswordResetToken, Run,
+    Tenant, TenantMembership, UpsertFeatureFlagDefinitionInput, UpsertFeatureFlagOverrideInput,
+    User, UserRole,
 };
 
 pub type RepoResult<T> = Result<T, RepoError>;
@@ -77,6 +78,43 @@ pub trait UserRepository: Send + Sync {
         id: &str,
         workos_user_id: &str,
     ) -> RepoResult<User>;
+}
+
+/// Mirrors WorkOS's `organization_membership` resource. A `User` may be a
+/// member of zero, one, or many `Tenant`s. The `WorkosAuthUser` extractor
+/// resolves the active org from the JWT `org_id` claim and validates
+/// membership through this repo (active status only).
+#[async_trait]
+pub trait TenantMembershipRepository: Send + Sync {
+    /// Idempotent insert. If a membership already exists for `(user_id,
+    /// tenant_id)`, returns it without modifying status or role.
+    async fn upsert(
+        &self,
+        input: CreateTenantMembershipInput,
+    ) -> RepoResult<TenantMembership>;
+    /// Find the membership row for a single (user, tenant) pair.
+    async fn find(
+        &self,
+        user_id: &str,
+        tenant_id: &str,
+    ) -> RepoResult<Option<TenantMembership>>;
+    /// All memberships for a user. By default callers should filter to
+    /// `MembershipStatus::Active`; the repo returns rows in any status so the
+    /// admin surface can show pending/inactive too.
+    async fn list_by_user(&self, user_id: &str) -> RepoResult<Vec<TenantMembership>>;
+    /// All memberships for a tenant. Used by `team.rs::list_members`.
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<TenantMembership>>;
+    /// Promote a pending membership to active or vice-versa. Also updates
+    /// `role` if `role` is `Some`.
+    async fn update(
+        &self,
+        user_id: &str,
+        tenant_id: &str,
+        status: Option<MembershipStatus>,
+        role: Option<UserRole>,
+    ) -> RepoResult<TenantMembership>;
+    /// Hard delete. Use `update` with `Inactive` for soft-delete semantics.
+    async fn delete(&self, user_id: &str, tenant_id: &str) -> RepoResult<()>;
 }
 
 #[async_trait]

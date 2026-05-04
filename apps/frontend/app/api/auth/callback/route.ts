@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
 
+import { getBackendUrl } from "platform-api";
+
 import { classifyAuthError } from "@/server/auth/auth-errors";
 import {
   getCookiePassword,
@@ -17,6 +19,53 @@ function errorRedirect(message: string): never {
   redirect(`/login?error=${encodeURIComponent(message)}`);
 }
 
+interface PrimaryOrgLookupResponse {
+  tenantId?: string | null;
+  workosOrganizationId?: string | null;
+}
+
+async function lookupPrimaryOrgByEmail(
+  email: string,
+): Promise<string | undefined> {
+  const serviceSecret = process.env.SERVICE_SECRET;
+  if (!serviceSecret) {
+    console.warn(
+      "[auth/callback] SERVICE_SECRET not set — skipping primary-org lookup",
+    );
+    return undefined;
+  }
+  try {
+    const res = await fetch(
+      `${getBackendUrl()}/api/platform/users/primary-org`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceSecret, email }),
+      },
+    );
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      console.warn(
+        "[auth/callback] primary-org lookup non-ok:",
+        res.status,
+        detail,
+      );
+      return undefined;
+    }
+    const data = (await res.json()) as PrimaryOrgLookupResponse;
+    return typeof data.workosOrganizationId === "string" &&
+      data.workosOrganizationId.length > 0
+      ? data.workosOrganizationId
+      : undefined;
+  } catch (err) {
+    console.warn(
+      "[auth/callback] primary-org lookup failed:",
+      err instanceof Error ? err.message : err,
+    );
+    return undefined;
+  }
+}
+
 function getClientIp(request: NextRequest): string | undefined {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -28,7 +77,6 @@ function getClientIp(request: NextRequest): string | undefined {
 export async function GET(request: NextRequest) {
   assertWorkOSEnvironment();
 
-  // 1. Provider-level error came back (user hit "Cancel" on Google, etc.).
   const providerError = request.nextUrl.searchParams.get("error");
   if (providerError) {
     const desc = request.nextUrl.searchParams.get("error_description") ?? "";
@@ -48,16 +96,17 @@ export async function GET(request: NextRequest) {
   const ipAddress = getClientIp(request);
   const userAgent = request.headers.get("user-agent") ?? undefined;
 
-  // 2. Exchange the code for a sealed session.
+  
   let result;
   try {
-    // SDK 9.1.1 ships `sealSession` at runtime; .d.ts lags.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     result = await (workos.userManagement as any).authenticateWithCode({
       code,
       clientId: WORKOS_CLIENT_ID,
       ipAddress,
       userAgent,
+      ...(stateData.invitationToken
+        ? { invitationToken: stateData.invitationToken }
+        : {}),
       session: {
         sealSession: true,
         cookiePassword: getCookiePassword(),
@@ -81,12 +130,65 @@ export async function GET(request: NextRequest) {
       redirect(`/signup?${params.toString()}`);
     }
 
-    errorRedirect(classified.code);
+    if (
+      classified.code === "organization_selection_required" &&
+      classified.pendingAuthenticationToken
+    ) {
+      let chosenOrgId: string | undefined;
+      if (classified.email) {
+        chosenOrgId = await lookupPrimaryOrgByEmail(classified.email);
+      }
+      if (!chosenOrgId && classified.organizations?.[0]) {
+        chosenOrgId = classified.organizations[0].id;
+        console.info(
+          "[auth/callback] no primary org resolved; falling back to first WorkOS org:",
+          chosenOrgId,
+        );
+      }
+      if (chosenOrgId) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          result = await (workos.userManagement as any).authenticateWithOrganizationSelection({
+            pendingAuthenticationToken: classified.pendingAuthenticationToken,
+            organizationId: chosenOrgId,
+            clientId: WORKOS_CLIENT_ID,
+            ipAddress,
+            userAgent,
+            session: {
+              sealSession: true,
+              cookiePassword: getCookiePassword(),
+            },
+          });
+          console.info(
+            "[auth/callback] resumed auth with org",
+            chosenOrgId,
+          );
+        } catch (retryErr) {
+          const retryClassified = classifyAuthError(retryErr);
+          console.warn(
+            "[auth/callback] authenticateWithOrganizationSelection failed:",
+            retryClassified.code,
+            retryClassified.message,
+          );
+          errorRedirect(retryClassified.code);
+        }
+      } else {
+        errorRedirect(classified.code);
+      }
+    } else {
+      errorRedirect(classified.code);
+    }
   }
 
-  const { sealedSession, organizationId } = result as {
+  const { sealedSession, organizationId, user: workosUser } = result as {
     sealedSession?: string;
     organizationId?: string;
+    user?: {
+      id: string;
+      email: string;
+      firstName?: string | null;
+      lastName?: string | null;
+    };
   };
 
   if (!sealedSession) {
@@ -97,6 +199,48 @@ export async function GET(request: NextRequest) {
   }
 
   await setSealedSession(sealedSession);
+
+  if (organizationId && workosUser?.id) {
+    const serviceSecret = process.env.SERVICE_SECRET;
+    if (serviceSecret) {
+      try {
+        const registerRes = await fetch(
+          `${getBackendUrl()}/api/platform/tenants/register-workos`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              serviceSecret,
+              workosUserId: workosUser.id,
+              workosOrganizationId: organizationId,
+              email: workosUser.email,
+              name: "",
+              slug: "",
+              firstName: workosUser.firstName ?? null,
+              lastName: workosUser.lastName ?? null,
+            }),
+          },
+        );
+        if (!registerRes.ok) {
+          const detail = await registerRes.text().catch(() => "");
+          console.error(
+            "[auth/callback] backend register-workos returned non-ok",
+            registerRes.status,
+            detail,
+          );
+        }
+      } catch (err) {
+        console.error(
+          "[auth/callback] backend register-workos network error:",
+          err instanceof Error ? err.message : err,
+        );
+      }
+    } else {
+      console.warn(
+        "[auth/callback] SERVICE_SECRET missing — skipping backend membership sync",
+      );
+    }
+  }
 
   if (!organizationId) {
     redirect("/onboarding/workspace");

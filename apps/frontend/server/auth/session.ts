@@ -140,6 +140,29 @@ export async function setSealedSession(sealedSession: string): Promise<void> {
   store.set(SESSION_COOKIE_NAME, sealedSession, cookieAttributes());
 }
 
+export async function rebindSealedSessionToOrganization(
+  sealedSession: string,
+  organizationId: string,
+): Promise<string | null> {
+  assertWorkOSEnvironment();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const helper = (workos.userManagement as any).loadSealedSession({
+    sessionData: sealedSession,
+    cookiePassword: cookiePassword(),
+  }) as SealedSession;
+
+  const refresh = await helper.refresh({
+    cookiePassword: cookiePassword(),
+    organizationId,
+  });
+
+  if (!refresh.authenticated || !refresh.sealedSession) {
+    return null;
+  }
+  return refresh.sealedSession;
+}
+
 export async function clearSession(): Promise<void> {
   const store = await cookies();
   store.delete(SESSION_COOKIE_NAME);

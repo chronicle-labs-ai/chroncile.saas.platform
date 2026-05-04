@@ -1,0 +1,92 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { getSession } from "@/server/auth/session";
+import { workos } from "@/server/auth/workos";
+
+import { AcceptInviteSignedIn } from "./accept-invite-signed-in";
+
+export const dynamic = "force-dynamic";
+
+interface SearchParams {
+  invitation_token?: string;
+}
+
+function ErrorScreen({ title, body }: { title: string; body: string }) {
+  return (
+    <main className="mx-auto max-w-md px-6 py-16 font-mono text-sm text-neutral-400">
+      <h1 className="text-2xl font-semibold text-neutral-100">{title}</h1>
+      <p className="mt-3">{body}</p>
+      <Link href="/login" className="mt-6 inline-block underline hover:text-neutral-100">
+        Return to sign in
+      </Link>
+    </main>
+  );
+}
+
+export default async function AcceptInvitePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const token = typeof params.invitation_token === "string" ? params.invitation_token : "";
+
+  if (!token) {
+    return (
+      <ErrorScreen
+        title="Invitation link is missing or malformed"
+        body="Ask the person who invited you to resend the link."
+      />
+    );
+  }
+
+  let invitation;
+  try {
+    invitation = await workos.userManagement.findInvitationByToken(token);
+  } catch (error) {
+    console.warn(
+      "[accept-invite] findInvitationByToken failed:",
+      error instanceof Error ? error.message : error,
+    );
+    return (
+      <ErrorScreen
+        title="This invitation isn't valid"
+        body="It may have expired or been revoked. Ask the person who invited you to send a new one."
+      />
+    );
+  }
+
+  if (invitation.state !== "pending") {
+    const body =
+      invitation.state === "accepted"
+        ? "You can sign in to access the workspace."
+        : "Ask for a new invitation to join.";
+    return (
+      <ErrorScreen
+        title={`This invitation has already been ${invitation.state}`}
+        body={body}
+      />
+    );
+  }
+
+  const session = await getSession();
+
+  if (!session.authenticated) {
+    const params = new URLSearchParams({
+      email: invitation.email,
+      invitation_token: token,
+    });
+    redirect(`/login?${params.toString()}`);
+  }
+
+  return (
+    <AcceptInviteSignedIn
+      invitationId={invitation.id}
+      invitationToken={token}
+      invitedEmail={invitation.email}
+      signedInEmail={session.user.email}
+      organizationId={invitation.organizationId ?? null}
+    />
+  );
+}

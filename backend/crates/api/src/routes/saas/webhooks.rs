@@ -1531,8 +1531,8 @@ mod tests {
         memory::{
             InMemoryAgentEndpointConfigRepo, InMemoryAuditLogRepo, InMemoryConnectionRepo,
             InMemoryFeatureFlagRepo, InMemoryIntegrationSyncRepo, InMemoryInvitationRepo,
-            InMemoryPasswordResetRepo, InMemoryRunRepo, InMemoryTenantRepo, InMemoryUserRepo,
-            MemoryStore, MemoryStream,
+            InMemoryPasswordResetRepo, InMemoryRunRepo, InMemoryTenantMembershipRepo,
+            InMemoryTenantRepo, InMemoryUserRepo, MemoryStore, MemoryStream,
         },
         StoreBackend, StreamBackend,
     };
@@ -1580,6 +1580,7 @@ mod tests {
         let agent_configs = Arc::new(InMemoryAgentEndpointConfigRepo::default());
         let feature_flags = Arc::new(InMemoryFeatureFlagRepo::default());
         let invitations = Arc::new(InMemoryInvitationRepo::default());
+        let memberships = Arc::new(InMemoryTenantMembershipRepo::default());
         let password_resets = Arc::new(InMemoryPasswordResetRepo::default());
         let integration_syncs = Arc::new(InMemoryIntegrationSyncRepo::default());
         let event_store = Arc::new(StoreBackend::Memory(MemoryStore::new()));
@@ -1587,6 +1588,7 @@ mod tests {
         let mut config = SaasRuntimeConfig::default();
         config.nango.webhook_secret = webhook_secret.map(ToString::to_string);
 
+        let _ = password_resets;
         let state = SaasAppState::new(
             "client_test_workos",
             tenants,
@@ -1598,7 +1600,7 @@ mod tests {
             integration_syncs,
             feature_flags,
             invitations,
-            password_resets,
+            memberships,
             nango.map(Arc::new),
             Arc::new(TestEmailService),
             None,

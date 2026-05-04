@@ -56,7 +56,7 @@ function humanizeError(code: string | undefined): string {
     mfa_enrollment: "MFA is not yet supported in this app.",
     mfa_challenge: "MFA is not yet supported in this app.",
     organization_selection_required:
-      "Multi-organization sign-in is not yet supported.",
+      "We couldn't determine which workspace to sign you into. Try again, or contact support.",
     rate_limit_exceeded: "Too many attempts. Wait a moment and try again.",
     auth_unreachable:
       "We couldn't reach the auth provider. Check your connection and try again — your session is preserved.",
@@ -146,6 +146,8 @@ function LoginPageInner() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from") ?? "/dashboard";
   const queryError = searchParams.get("error");
+  const invitationTokenFromQuery =
+    searchParams.get("invitation_token") ?? undefined;
 
   const [error, setError] = useState<ReactNode | null>(
     queryError ? humanizeError(queryError) : null,
@@ -166,7 +168,13 @@ function LoginPageInner() {
           "Content-Type": "application/json",
           "x-auth-from": from,
         },
-        body: JSON.stringify({ email: value.email, password: value.password }),
+        body: JSON.stringify({
+          email: value.email,
+          password: value.password,
+          ...(invitationTokenFromQuery
+            ? { invitationToken: invitationTokenFromQuery }
+            : {}),
+        }),
       });
 
       const data = (await response.json().catch(() => null)) as LoginResponse | null;

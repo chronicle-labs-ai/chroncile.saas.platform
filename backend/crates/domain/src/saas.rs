@@ -4,7 +4,7 @@ use std::fmt;
 use std::str::FromStr;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "generated/")]
 pub enum UserRole {
@@ -69,6 +69,73 @@ pub struct Tenant {
     pub workos_organization_id: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+// ---------------------------------------------------------------------------
+// TenantMembership — mirrors WorkOS's `organization_membership` resource.
+// One User can be a member of zero, one, or many Tenants. Replaces the
+// User.tenant_id == Tenant.id check in the WorkosAuthUser extractor.
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "generated/")]
+pub enum MembershipStatus {
+    #[serde(rename = "pending")]
+    Pending,
+    #[serde(rename = "active")]
+    Active,
+    #[serde(rename = "inactive")]
+    Inactive,
+}
+
+impl MembershipStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Active => "active",
+            Self::Inactive => "inactive",
+        }
+    }
+}
+
+impl FromStr for MembershipStatus {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(Self::Pending),
+            "active" => Ok(Self::Active),
+            "inactive" => Ok(Self::Inactive),
+            _ => Err(()),
+        }
+    }
+}
+
+impl fmt::Display for MembershipStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct TenantMembership {
+    pub id: String,
+    pub user_id: String,
+    pub tenant_id: String,
+    pub role: UserRole,
+    pub status: MembershipStatus,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateTenantMembershipInput {
+    pub user_id: String,
+    pub tenant_id: String,
+    pub role: UserRole,
+    pub status: MembershipStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

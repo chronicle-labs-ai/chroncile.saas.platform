@@ -2,6 +2,14 @@ import { getSession } from "./session";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
+export interface AuthSessionOrganization {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  workosOrganizationId: string | null;
+  role: string;
+}
+
 export interface AuthSessionUser {
   id: string;
   email: string;
@@ -14,6 +22,8 @@ export interface AuthSessionUser {
   backendToken: string;
   workosUserId: string | null;
   workosOrganizationId: string | null;
+  primaryTenantId: string;
+  organizations: AuthSessionOrganization[];
 }
 
 export interface AuthSession {
@@ -21,11 +31,6 @@ export interface AuthSession {
   backendToken: string;
 }
 
-/**
- * Reason an `auth()` call returned null. Useful for server components
- * that want to forward the failure mode to the login page so the user
- * sees a meaningful banner instead of a silent redirect.
- */
 export type AuthFailureReason =
   | "no_cookie"
   | "invalid_session_cookie"
@@ -34,11 +39,6 @@ export type AuthFailureReason =
   | "auth_provider_unreachable"
   | "authenticate_failed";
 
-/**
- * Convert a session failure reason to the matching `?error=` code on
- * the login page. Returns `undefined` when the failure is the boring
- * "no session yet" path so we don't show a banner on first load.
- */
 export function loginErrorCodeFromAuthReason(
   reason: AuthFailureReason | undefined,
 ): string | undefined {
@@ -52,6 +52,14 @@ export function loginErrorCodeFromAuthReason(
   }
 }
 
+interface BackendMeOrganization {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  workosOrganizationId: string | null;
+  role: string;
+}
+
 interface BackendMeResponse {
   userId: string;
   email: string;
@@ -62,19 +70,10 @@ interface BackendMeResponse {
   tenantSlug: string;
   workosUserId: string | null;
   workosOrganizationId: string | null;
+  primaryTenantId?: string;
+  organizations?: BackendMeOrganization[];
 }
 
-/**
- * Returns the current session in NextAuth-compatible shape, or `null` if
- * the user is not signed in (no cookie or expired access token).
- *
- * The caller should redirect to `/login` on null. The client-side
- * `AuthSessionProvider` will handle refresh attempts.
- *
- * Use `authWithReason()` instead when you need to differentiate
- * between "not signed in" and "auth provider unreachable" so the
- * login page can show a friendly banner.
- */
 export async function auth(): Promise<AuthSession | null> {
   const result = await authWithReason();
   return result.session;
@@ -95,7 +94,6 @@ export async function authWithReason(): Promise<AuthResult> {
     };
   }
 
-  // Best-effort backend enrichment for tenant details.
   let me: BackendMeResponse | null = null;
   if (BACKEND_URL && session.organizationId) {
     try {
@@ -128,6 +126,14 @@ export async function authWithReason(): Promise<AuthResult> {
     workosUserId: me?.workosUserId ?? session.user.id,
     workosOrganizationId:
       me?.workosOrganizationId ?? session.organizationId ?? null,
+    primaryTenantId: me?.primaryTenantId ?? "",
+    organizations: (me?.organizations ?? []).map((o) => ({
+      tenantId: o.tenantId,
+      tenantName: o.tenantName,
+      tenantSlug: o.tenantSlug,
+      workosOrganizationId: o.workosOrganizationId,
+      role: o.role,
+    })),
   };
 
   return { session: { user, backendToken: session.accessToken } };

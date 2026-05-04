@@ -38,7 +38,9 @@ export async function GET(
   }
 
   const fromParam = request.nextUrl.searchParams.get("from");
-  const state = createOAuthState(fromParam);
+  const invitationTokenParam =
+    request.nextUrl.searchParams.get("invitation_token");
+  const state = createOAuthState(fromParam, invitationTokenParam);
 
   const authorizationUrl = workos.userManagement.getAuthorizationUrl({
     provider: PROVIDER_MAP[alias],

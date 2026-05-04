@@ -88,6 +88,8 @@ function SignupPageInner() {
     searchParams.get("step") === "verify" ? "verify" : "email";
   const initialEmail = searchParams.get("email") ?? "";
   const initialToken = searchParams.get("token") ?? "";
+  const invitationTokenFromQuery =
+    searchParams.get("invitation_token") ?? undefined;
 
   const [step, setStep] = useState<Step>(initialStep);
   const [email, setEmail] = useState(initialEmail);
@@ -127,6 +129,9 @@ function SignupPageInner() {
           email: value.email,
           password: value.password,
           firstName: value.firstName ?? null,
+          ...(invitationTokenFromQuery
+            ? { invitationToken: invitationTokenFromQuery }
+            : {}),
         }),
       });
       const data = (await response.json().catch(() => null)) as

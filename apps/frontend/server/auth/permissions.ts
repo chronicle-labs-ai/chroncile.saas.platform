@@ -9,6 +9,8 @@ export type AuthenticatedSession = Extract<
 
 const ADMIN_LIKE_ROLES = new Set(["admin", "owner"]);
 
+const OPEN_TO_ANY_MEMBER = new Set(["members:read"]);
+
 function hasAdminLikeRole(session: AuthenticatedSession): boolean {
   if (typeof session.role === "string" && ADMIN_LIKE_ROLES.has(session.role.toLowerCase())) {
     return true;
@@ -29,16 +31,12 @@ export function hasPermission(
 ): boolean {
   if (hasAdminLikeRole(session)) return true;
 
+  // Any authenticated member of the active org can read membership.
+  if (OPEN_TO_ANY_MEMBER.has(permission)) return true;
+
   const perms = session.permissions;
   if (Array.isArray(perms) && perms.length > 0) {
     return perms.includes(permission);
-  }
-
-  const noRoles =
-    !session.role &&
-    (!Array.isArray(session.roles) || session.roles.length === 0);
-  if (noRoles && permission === "members:read") {
-    return true;
   }
 
   return false;

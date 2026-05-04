@@ -1,11 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getBackendUrl } from "platform-api";
 
 import {
   classifyAuthError,
   isEmailAlreadyExistsError,
   isWeakPasswordError,
 } from "@/server/auth/auth-errors";
-import { getCookiePassword, setSealedSession } from "@/server/auth/session";
+import {
+  getCookiePassword,
+  rebindSealedSessionToOrganization,
+  setSealedSession,
+} from "@/server/auth/session";
 import {
   assertWorkOSEnvironment,
   workos,
@@ -19,11 +24,18 @@ interface SignupBody {
   password?: unknown;
   firstName?: unknown;
   lastName?: unknown;
+  invitationToken?: unknown;
 }
 
 interface PasswordAuthSessionResult {
   sealedSession?: string;
   organizationId?: string;
+  user?: {
+    id: string;
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+  };
 }
 
 interface PasswordAuthenticator {
@@ -31,6 +43,7 @@ interface PasswordAuthenticator {
     clientId: string;
     email: string;
     password: string;
+    invitationToken?: string;
     ipAddress?: string;
     userAgent?: string;
     session: {
@@ -60,6 +73,10 @@ export async function POST(request: NextRequest) {
   const password = typeof body?.password === "string" ? body.password : "";
   const firstName = trimOrNull(body?.firstName);
   const lastName = trimOrNull(body?.lastName);
+  const invitationToken =
+    typeof body?.invitationToken === "string" && body.invitationToken.length > 0
+      ? body.invitationToken
+      : undefined;
 
   if (!email || !password) {
     return NextResponse.json(
@@ -110,6 +127,7 @@ export async function POST(request: NextRequest) {
       clientId: WORKOS_CLIENT_ID,
       email,
       password,
+      invitationToken,
       ipAddress,
       userAgent,
       session: {
@@ -147,7 +165,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { sealedSession, organizationId } = authResult ?? {};
+  let { sealedSession, organizationId } = authResult ?? {};
   if (!sealedSession) {
     console.error(
       "[auth/signup] SDK returned no sealedSession in path-B (verification off)",
@@ -156,6 +174,103 @@ export async function POST(request: NextRequest) {
       { error: "sealing_failed" },
       { status: 500 },
     );
+  }
+
+  if (invitationToken) {
+    try {
+      const invitation = await workos.userManagement.findInvitationByToken(
+        invitationToken,
+      );
+      if (
+        invitation.organizationId &&
+        invitation.organizationId !== organizationId
+      ) {
+        const rebound = await rebindSealedSessionToOrganization(
+          sealedSession,
+          invitation.organizationId,
+        );
+        if (rebound) {
+          sealedSession = rebound;
+          organizationId = invitation.organizationId;
+        } else {
+          console.warn(
+            "[auth/signup] could not rebind session to invitation org; falling through with original session",
+          );
+        }
+      }
+
+      if (invitation.organizationId && authResult?.user?.id) {
+        const serviceSecret = process.env.SERVICE_SECRET;
+        if (!serviceSecret) {
+          console.error(
+            "[auth/signup] SERVICE_SECRET missing — cannot provision invited user in backend",
+          );
+          return NextResponse.json(
+            {
+              error: "service_secret_not_configured",
+              detail:
+                "SERVICE_SECRET env var is not set in apps/frontend. Add it and restart.",
+            },
+            { status: 500 },
+          );
+        }
+
+        let registerRes: Response;
+        try {
+          registerRes = await fetch(
+            `${getBackendUrl()}/api/platform/tenants/register-workos`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                serviceSecret,
+                workosUserId: authResult.user.id,
+                workosOrganizationId: invitation.organizationId,
+                email: authResult.user.email,
+                name: "",
+                slug: "",
+                firstName: authResult.user.firstName ?? null,
+                lastName: authResult.user.lastName ?? null,
+              }),
+            },
+          );
+        } catch (error) {
+          console.error(
+            "[auth/signup] backend register-workos network error:",
+            error instanceof Error ? error.message : error,
+          );
+          return NextResponse.json(
+            {
+              error: "backend_unreachable",
+              detail: error instanceof Error ? error.message : String(error),
+            },
+            { status: 502 },
+          );
+        }
+
+        if (!registerRes.ok) {
+          const detail = await registerRes.text().catch(() => "");
+          console.error(
+            "[auth/signup] backend register-workos returned non-ok",
+            registerRes.status,
+            detail,
+          );
+          return NextResponse.json(
+            {
+              error: "invitation_provision_failed",
+              backendStatus: registerRes.status,
+              detail,
+            },
+            { status: 500 },
+          );
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "[auth/signup] post-auth invitation lookup failed:",
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   await setSealedSession(sealedSession);

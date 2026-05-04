@@ -5,13 +5,14 @@ use std::sync::Arc;
 
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
-    CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateUserInput,
-    IntegrationSync, Invitation, PasswordResetToken, Run, Tenant, User,
+    CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput,
+    CreateTenantMembershipInput, CreateUserInput, IntegrationSync, Invitation, MembershipStatus,
+    PasswordResetToken, Run, Tenant, TenantMembership, User, UserRole,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository,
     IntegrationSyncRepository, InvitationRepository, PasswordResetRepository, RepoError,
-    RepoResult, RunRepository, TenantRepository, UserRepository,
+    RepoResult, RunRepository, TenantMembershipRepository, TenantRepository, UserRepository,
 };
 
 fn new_id() -> String {
@@ -359,6 +360,102 @@ impl InvitationRepository for InMemoryInvitationRepo {
         self.store
             .remove(id)
             .ok_or_else(|| RepoError::NotFound(format!("invitation: {id}")))?;
+        Ok(())
+    }
+}
+
+// === TenantMembership ===
+
+#[derive(Clone, Default)]
+pub struct InMemoryTenantMembershipRepo {
+    /// Keyed by `(user_id, tenant_id)`.
+    store: Arc<DashMap<(String, String), TenantMembership>>,
+}
+
+#[async_trait]
+impl TenantMembershipRepository for InMemoryTenantMembershipRepo {
+    async fn upsert(
+        &self,
+        input: CreateTenantMembershipInput,
+    ) -> RepoResult<TenantMembership> {
+        let key = (input.user_id.clone(), input.tenant_id.clone());
+        if let Some(existing) = self.store.get(&key) {
+            return Ok(existing.clone());
+        }
+        let now = Utc::now();
+        let membership = TenantMembership {
+            id: format!("tm_{}", new_id()),
+            user_id: input.user_id,
+            tenant_id: input.tenant_id,
+            role: input.role,
+            status: input.status,
+            created_at: now,
+            updated_at: now,
+        };
+        self.store.insert(key, membership.clone());
+        Ok(membership)
+    }
+
+    async fn find(
+        &self,
+        user_id: &str,
+        tenant_id: &str,
+    ) -> RepoResult<Option<TenantMembership>> {
+        Ok(self
+            .store
+            .get(&(user_id.to_string(), tenant_id.to_string()))
+            .map(|e| e.clone()))
+    }
+
+    async fn list_by_user(&self, user_id: &str) -> RepoResult<Vec<TenantMembership>> {
+        let mut rows: Vec<TenantMembership> = self
+            .store
+            .iter()
+            .filter(|e| e.value().user_id == user_id)
+            .map(|e| e.value().clone())
+            .collect();
+        rows.sort_by_key(|m| m.created_at);
+        Ok(rows)
+    }
+
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<TenantMembership>> {
+        let mut rows: Vec<TenantMembership> = self
+            .store
+            .iter()
+            .filter(|e| e.value().tenant_id == tenant_id)
+            .map(|e| e.value().clone())
+            .collect();
+        rows.sort_by_key(|m| m.created_at);
+        Ok(rows)
+    }
+
+    async fn update(
+        &self,
+        user_id: &str,
+        tenant_id: &str,
+        status: Option<MembershipStatus>,
+        role: Option<UserRole>,
+    ) -> RepoResult<TenantMembership> {
+        let key = (user_id.to_string(), tenant_id.to_string());
+        let mut entry = self.store.get_mut(&key).ok_or_else(|| {
+            RepoError::NotFound(format!("membership: ({user_id}, {tenant_id})"))
+        })?;
+        if let Some(s) = status {
+            entry.status = s;
+        }
+        if let Some(r) = role {
+            entry.role = r;
+        }
+        entry.updated_at = Utc::now();
+        Ok(entry.clone())
+    }
+
+    async fn delete(&self, user_id: &str, tenant_id: &str) -> RepoResult<()> {
+        self.store
+            .remove(&(user_id.to_string(), tenant_id.to_string()))
+            .ok_or_else(|| {
+                RepoError::NotFound(format!("membership: ({user_id}, {tenant_id})"))
+            })?;
         Ok(())
     }
 }

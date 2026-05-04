@@ -11,13 +11,14 @@ fn naive_to_utc(naive: NaiveDateTime) -> chrono::DateTime<Utc> {
 
 use chronicle_domain::{
     AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
-    CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateUserInput,
-    IntegrationSync, Invitation, PasswordResetToken, Run, Tenant, User, UserRole,
+    CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput,
+    CreateTenantMembershipInput, CreateUserInput, IntegrationSync, Invitation, MembershipStatus,
+    PasswordResetToken, Run, Tenant, TenantMembership, User, UserRole,
 };
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository,
     IntegrationSyncRepository, InvitationRepository, PasswordResetRepository, RepoError,
-    RepoResult, RunRepository, TenantRepository, UserRepository,
+    RepoResult, RunRepository, TenantMembershipRepository, TenantRepository, UserRepository,
 };
 
 fn new_id() -> String {
@@ -587,6 +588,156 @@ impl InvitationRepository for PgInvitationRepo {
             .map_err(to_repo_err)?;
         if result.rows_affected() == 0 {
             return Err(RepoError::NotFound(format!("invitation: {id}")));
+        }
+        Ok(())
+    }
+}
+
+// === TenantMembership ===
+
+fn membership_from_row(
+    row: sqlx::postgres::PgRow,
+) -> Result<TenantMembership, sqlx::Error> {
+    let created: NaiveDateTime = row.try_get("createdAt")?;
+    let updated: NaiveDateTime = row.try_get("updatedAt")?;
+    let role_str: String = row.try_get("role")?;
+    let status_str: String = row.try_get("status")?;
+    Ok(TenantMembership {
+        id: row.try_get("id")?,
+        user_id: row.try_get("userId")?,
+        tenant_id: row.try_get("tenantId")?,
+        role: role_str.parse().unwrap_or(UserRole::Member),
+        status: status_str.parse().unwrap_or(MembershipStatus::Active),
+        created_at: naive_to_utc(created),
+        updated_at: naive_to_utc(updated),
+    })
+}
+
+#[derive(Clone)]
+pub struct PgTenantMembershipRepo {
+    pool: TracedPgPool,
+}
+
+impl PgTenantMembershipRepo {
+    pub fn new(pool: TracedPgPool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl TenantMembershipRepository for PgTenantMembershipRepo {
+    async fn upsert(
+        &self,
+        input: CreateTenantMembershipInput,
+    ) -> RepoResult<TenantMembership> {
+        let id = format!("tm_{}", new_id());
+        let now = Utc::now().naive_utc();
+        let role_str = input.role.as_str();
+        let status_str = input.status.as_str();
+        sqlx::query(
+            "INSERT INTO \"TenantMembership\" \
+                (id, \"userId\", \"tenantId\", role, status, \"createdAt\", \"updatedAt\") \
+             VALUES ($1, $2, $3, $4, $5, $6, $6) \
+             ON CONFLICT (\"userId\", \"tenantId\") DO NOTHING",
+        )
+        .bind(&id)
+        .bind(&input.user_id)
+        .bind(&input.tenant_id)
+        .bind(role_str)
+        .bind(status_str)
+        .bind(now)
+        .execute(&self.pool)
+        .await
+        .map_err(to_repo_err)?;
+
+        self.find(&input.user_id, &input.tenant_id)
+            .await?
+            .ok_or_else(|| RepoError::Internal("membership not found after upsert".to_string()))
+    }
+
+    async fn find(
+        &self,
+        user_id: &str,
+        tenant_id: &str,
+    ) -> RepoResult<Option<TenantMembership>> {
+        sqlx::query(
+            "SELECT * FROM \"TenantMembership\" \
+             WHERE \"userId\" = $1 AND \"tenantId\" = $2",
+        )
+        .bind(user_id)
+        .bind(tenant_id)
+        .try_map(membership_from_row)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
+
+    async fn list_by_user(&self, user_id: &str) -> RepoResult<Vec<TenantMembership>> {
+        sqlx::query(
+            "SELECT * FROM \"TenantMembership\" \
+             WHERE \"userId\" = $1 \
+             ORDER BY \"createdAt\" ASC",
+        )
+        .bind(user_id)
+        .try_map(membership_from_row)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
+
+    async fn list_by_tenant(&self, tenant_id: &str) -> RepoResult<Vec<TenantMembership>> {
+        sqlx::query(
+            "SELECT * FROM \"TenantMembership\" \
+             WHERE \"tenantId\" = $1 \
+             ORDER BY \"createdAt\" ASC",
+        )
+        .bind(tenant_id)
+        .try_map(membership_from_row)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
+
+    async fn update(
+        &self,
+        user_id: &str,
+        tenant_id: &str,
+        status: Option<MembershipStatus>,
+        role: Option<UserRole>,
+    ) -> RepoResult<TenantMembership> {
+        sqlx::query(
+            "UPDATE \"TenantMembership\" SET \
+                status = COALESCE($3, status), \
+                role = COALESCE($4, role), \
+                \"updatedAt\" = $5 \
+             WHERE \"userId\" = $1 AND \"tenantId\" = $2 \
+             RETURNING *",
+        )
+        .bind(user_id)
+        .bind(tenant_id)
+        .bind(status.map(|s| s.as_str().to_string()))
+        .bind(role.map(|r| r.as_str().to_string()))
+        .bind(Utc::now().naive_utc())
+        .try_map(membership_from_row)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(to_repo_err)
+    }
+
+    async fn delete(&self, user_id: &str, tenant_id: &str) -> RepoResult<()> {
+        let result = sqlx::query(
+            "DELETE FROM \"TenantMembership\" \
+             WHERE \"userId\" = $1 AND \"tenantId\" = $2",
+        )
+        .bind(user_id)
+        .bind(tenant_id)
+        .execute(&self.pool)
+        .await
+        .map_err(to_repo_err)?;
+        if result.rows_affected() == 0 {
+            return Err(RepoError::NotFound(format!(
+                "membership: ({user_id}, {tenant_id})"
+            )));
         }
         Ok(())
     }

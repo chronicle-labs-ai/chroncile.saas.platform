@@ -6,7 +6,7 @@ use chronicle_infra::{StoreBackend, StreamBackend};
 use chronicle_interfaces::{
     AgentEndpointConfigRepository, AuditLogRepository, ConnectionRepository, EmailService,
     FeatureFlagRepository, IntegrationSyncRepository, InvitationRepository, RunRepository,
-    SandboxAiConfigService, TenantRepository, UserRepository,
+    SandboxAiConfigService, TenantMembershipRepository, TenantRepository, UserRepository,
 };
 use chronicle_nango::NangoClient;
 
@@ -26,6 +26,10 @@ pub struct SaasAppState {
     pub agent_configs: Arc<dyn AgentEndpointConfigRepository>,
     pub integration_syncs: Arc<dyn IntegrationSyncRepository>,
     pub invitations: Arc<dyn InvitationRepository>,
+    /// Multi-org membership lookup. The `WorkosAuthUser` extractor uses this
+    /// to validate that the JWT's `org_id` claim corresponds to an active
+    /// membership for the user. See migration 012_tenant_memberships.sql.
+    pub memberships: Arc<dyn TenantMembershipRepository>,
     pub nango: Option<Arc<NangoClient>>,
     pub email: Arc<dyn EmailService>,
     pub sandbox_ai: Option<Arc<dyn SandboxAiConfigService>>,
@@ -48,6 +52,7 @@ impl SaasAppState {
         integration_syncs: Arc<dyn IntegrationSyncRepository>,
         feature_flags: Arc<dyn FeatureFlagRepository>,
         invitations: Arc<dyn InvitationRepository>,
+        memberships: Arc<dyn TenantMembershipRepository>,
         nango: Option<Arc<NangoClient>>,
         email: Arc<dyn EmailService>,
         sandbox_ai: Option<Arc<dyn SandboxAiConfigService>>,
@@ -65,6 +70,7 @@ impl SaasAppState {
             agent_configs,
             integration_syncs,
             invitations,
+            memberships,
             nango,
             email,
             sandbox_ai,
