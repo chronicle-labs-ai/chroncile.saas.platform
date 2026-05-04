@@ -1,3 +1,4 @@
+#![cfg(feature = "helix")]
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
