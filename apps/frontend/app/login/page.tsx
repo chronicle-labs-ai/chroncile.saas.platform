@@ -4,137 +4,13 @@ import { Suspense, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell, SignIn, type SignInValue } from "ui/auth";
 
-import { humanizeBackendError } from "@/server/auth/humanize-backend-error";
-
-function oauthPath(provider: "google" | "github", from: string): string {
-  const params = new URLSearchParams({ from });
-  return `/api/auth/oauth/${provider}?${params.toString()}`;
-}
-
-interface LoginErrorResponse {
-  error?: string;
-  message?: string;
-}
-
-interface LoginOkResponse {
-  ok: true;
-  redirect: string;
-}
-
-interface LoginNeedsVerifyResponse {
-  ok: false;
-  code: "email_verification_required";
-  pendingAuthenticationToken?: string;
-  email?: string;
-}
-
-interface LoginNeedsSsoResponse {
-  ok: false;
-  code: "sso_required";
-  connectionIds?: string[];
-  email?: string;
-}
-
-interface LoginAuthMethodsRequiredResponse {
-  ok: false;
-  code: "organization_authentication_methods_required";
-  authMethods?: Record<string, boolean>;
-  connectionIds?: string[];
-}
-
-type LoginResponse =
-  | LoginOkResponse
-  | LoginNeedsVerifyResponse
-  | LoginNeedsSsoResponse
-  | LoginAuthMethodsRequiredResponse
-  | LoginErrorResponse;
-
-/**
- * Login-specific error humanizer. Delegates to the shared
- * `humanizeBackendError` dictionary so we don't duplicate copy across
- * pages, and so unknown codes never leak as raw text.
- */
-function humanizeError(code: string | undefined): string {
-  if (!code) return "We couldn't sign you in. Try again.";
-  return humanizeBackendError(code).message;
-}
-
-const PROVIDER_LABEL: Record<string, string> = {
-  GoogleOAuth: "Google",
-  GitHubOAuth: "GitHub",
-  AppleOAuth: "Apple",
-  MicrosoftOAuth: "Microsoft",
-};
-
-function providerLabel(provider: string): string {
-  return PROVIDER_LABEL[provider] ?? provider;
-}
-
-interface IdentifyResponse {
-  exists: boolean;
-  providers: string[];
-  hasPassword: boolean;
-}
-
-const EMPTY_IDENTIFY: IdentifyResponse = {
-  exists: false,
-  providers: [],
-  hasPassword: false,
-};
-
-async function identifyAccount(email: string): Promise<IdentifyResponse> {
-  try {
-    const response = await fetch("/api/auth/identify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    const data = (await response.json().catch(() => null)) as IdentifyResponse | null;
-    return data ?? EMPTY_IDENTIFY;
-  } catch {
-    return EMPTY_IDENTIFY;
-  }
-}
-
-function explainAuthFailure(
-  providers: string[],
-  hasPassword: boolean,
-  onSetPassword: () => void,
-): ReactNode | null {
-  if (providers.length === 0 && !hasPassword) {
-    return null;
-  }
-  const labels = providers.map(providerLabel);
-  const providersText =
-    labels.length === 0
-      ? null
-      : labels.length === 1
-        ? labels[0]
-        : `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
-
-  if (hasPassword) {
-    return providersText ? (
-      <>Email or password is incorrect. You can also sign in with {providersText}.</>
-    ) : (
-      <>Email or password is incorrect.</>
-    );
-  }
-
-  return (
-    <>
-      This account is registered with {providersText}. Continue with{" "}
-      {labels.length === 1 ? labels[0] : "one of those"}, or{" "}
-      <button
-        type="button"
-        onClick={onSetPassword}
-        className="font-medium underline underline-offset-2 hover:text-ink-hi transition-colors"
-      >
-        click here
-      </button>{" "}
-      to set a password.
-    </>
-  );
-}
+import {
+  explainAuthFailure,
+  humanizeError,
+  identifyAccount,
+  oauthPath,
+  type LoginResponse,
+} from "./login-helpers";
 
 function LoginPageInner() {
   const router = useRouter();
@@ -172,7 +48,9 @@ function LoginPageInner() {
         }),
       });
 
-      const data = (await response.json().catch(() => null)) as LoginResponse | null;
+      const data = (await response
+        .json()
+        .catch(() => null)) as LoginResponse | null;
 
       if (response.ok && data && "ok" in data && data.ok === true) {
         router.push(data.redirect ?? "/dashboard");
@@ -207,7 +85,7 @@ function LoginPageInner() {
         }
       }
 
-      const code = (data as LoginErrorResponse | null)?.error;
+      const code = (data as { error?: string } | null)?.error;
 
       if (code === "invalid_credentials" && value.email) {
         const identify = await identifyAccount(value.email);

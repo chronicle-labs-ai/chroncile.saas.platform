@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AuthShell, Button, EmptyState } from "ui";
+
 import { getSession } from "@/server/auth/session";
 import { workos } from "@/server/auth/workos";
 
@@ -14,13 +16,17 @@ interface SearchParams {
 
 function ErrorScreen({ title, body }: { title: string; body: string }) {
   return (
-    <main className="mx-auto max-w-md px-6 py-16 font-mono text-sm text-neutral-400">
-      <h1 className="text-2xl font-semibold text-neutral-100">{title}</h1>
-      <p className="mt-3">{body}</p>
-      <Link href="/login" className="mt-6 inline-block underline hover:text-neutral-100">
-        Return to sign in
-      </Link>
-    </main>
+    <AuthShell topbar={{}} align="center">
+      <EmptyState
+        title={title}
+        description={body}
+        actions={
+          <Button variant="secondary" asChild>
+            <Link href="/login">Return to sign in</Link>
+          </Button>
+        }
+      />
+    </AuthShell>
   );
 }
 

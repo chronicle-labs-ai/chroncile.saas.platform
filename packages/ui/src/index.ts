@@ -22,6 +22,7 @@ export * from "./datasets";
 export * from "./environments";
 export * from "./agents";
 export * from "./backtests";
+export * from "./team";
 
 // Theme
 export {

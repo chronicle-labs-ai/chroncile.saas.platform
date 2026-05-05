@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  DashboardViewportShell,
   EnvironmentsManager,
   type SandboxExecuteResult,
   type SandboxLifecycleResult,
@@ -105,18 +106,13 @@ const stopSandbox = (environmentId: string) =>
 
 export default function EnvironmentsPage() {
   return (
-    <div
-      className="flex min-h-0 flex-col"
-      style={{
-        height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
+    <DashboardViewportShell>
       <EnvironmentsManager
         onExecute={executeSandboxCommand}
         onFetchStats={fetchSandboxStats}
         onStartSandbox={startSandbox}
         onStopSandbox={stopSandbox}
       />
-    </div>
+    </DashboardViewportShell>
   );
 }

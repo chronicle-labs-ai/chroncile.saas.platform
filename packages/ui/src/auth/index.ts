@@ -60,6 +60,9 @@ export type { WorkspaceCardProps, Role } from "./workspace-card";
 export { AcceptInvite } from "./accept-invite";
 export type { AcceptInviteProps, AcceptInviteValue } from "./accept-invite";
 
+export { InvitationBanner } from "./invitation-banner";
+export type { InvitationBannerProps } from "./invitation-banner";
+
 export { SelectWorkspace } from "./select-workspace";
 export type { SelectWorkspaceProps, Workspace } from "./select-workspace";
 

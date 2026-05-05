@@ -330,6 +330,13 @@ export type {
   CellProps,
 } from "./table";
 
+export { TextLink } from "./text-link";
+export type {
+  TextLinkProps,
+  TextLinkAnchorProps,
+  TextLinkButtonProps,
+} from "./text-link";
+
 export { SkeletonBlock } from "./skeleton-block";
 export type { SkeletonBlockProps } from "./skeleton-block";
 

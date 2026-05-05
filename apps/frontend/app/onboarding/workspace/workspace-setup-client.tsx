@@ -1,80 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
   AuthShell,
   WorkspaceSetup,
-  type ProvisioningStep,
   type WorkspaceSetupCaptureValue,
   type WorkspaceSetupFieldErrors,
   type WorkspaceSetupSub,
 } from "ui/auth";
 import {
-  OnboardingShell,
-  StepConnect,
-  StepDescribe,
-  StepDone,
-  StepMiddleware,
-  StepStream,
   type ConnectState,
   type DescribeState,
-  type OnboardingStepId,
-  type SourceId,
 } from "ui/onboarding";
 
-import { humanizeBackendError } from "@/server/auth/humanize-backend-error";
-
-const ONBOARDING_ORDER = [
-  "describe",
-  "connect",
-  "stream",
-  "middleware",
-  "done",
-] as const satisfies readonly OnboardingStepId[];
-
-type ProductOnboardingStep = (typeof ONBOARDING_ORDER)[number];
-type FlowStep = WorkspaceSetupSub | ProductOnboardingStep;
-
-const ONBOARDING_STEPS = [
-  { id: "describe", label: "Describe" },
-  { id: "connect", label: "Connect" },
-  { id: "stream", label: "Preview" },
-  { id: "middleware", label: "Install" },
-  { id: "done", label: "Launch" },
-] as const satisfies readonly { id: OnboardingStepId; label: string }[];
-
-function isProductOnboardingStep(step: FlowStep): step is ProductOnboardingStep {
-  return (ONBOARDING_ORDER as readonly string[]).includes(step);
-}
-
-const RUNNING_STEPS: ProvisioningStep[] = [
-  {
-    label: "Create WorkOS organization",
-    state: "running",
-    techKey: "workos.organizations.create",
-  },
-  {
-    label: "Attach you as admin",
-    state: "pending",
-    techKey: "userManagement.createOrganizationMembership",
-  },
-  {
-    label: "Register Chronicle workspace",
-    state: "pending",
-    techKey: "tenants.registerWorkos",
-  },
-  {
-    label: "Refresh session into workspace",
-    state: "pending",
-    techKey: "session.refresh",
-  },
-];
-
-const DONE_STEPS = RUNNING_STEPS.map((step) => ({
-  ...step,
-  state: "done" as const,
-}));
+import { ProductOnboardingFlow } from "./product-onboarding-flow";
+import {
+  DONE_STEPS,
+  isProductOnboardingStep,
+  nextProductStep,
+  routeWorkspaceError,
+  RUNNING_STEPS,
+  type FlowStep,
+} from "./workspace-setup-helpers";
 
 interface WorkspaceSetupClientProps {
   email: string;
@@ -82,32 +30,18 @@ interface WorkspaceSetupClientProps {
 }
 
 /*
- * Translate a backend error code into either an inline field error or
- * a top-level banner. Delegates to `humanizeBackendError` which owns
- * the canonical dictionary — see
- * `server/auth/humanize-backend-error.ts`. The colocate-vs-banner
- * decision is driven by the `field` hint on each entry: codes tied
- * to a specific input render next to it ("colocate errors" rule),
- * everything else surfaces as a banner.
+ * Workspace provisioning + product onboarding orchestrator.
  *
- * Unknown codes go to the banner with a generic message — the user
- * never sees the raw code (no more "email already registered to
- * different workos user" leaking into the UI).
+ * Two flows live in one component because they share state
+ * (`describe` seeds `connect.intendedSources`) and a single user
+ * journey:
+ *
+ *   capture / running / success  → owned by WorkspaceSetup (auth shell)
+ *   describe / connect / stream / middleware / done
+ *                                → owned by ProductOnboardingFlow
+ *
+ * `flowStep` discriminates which surface renders.
  */
-function routeWorkspaceError(code: string): {
-  field?: WorkspaceSetupFieldErrors;
-  banner?: string;
-} {
-  const humanized = humanizeBackendError(code);
-  if (humanized.field === "orgName") {
-    return { field: { orgName: humanized.message } };
-  }
-  if (humanized.field === "slug") {
-    return { field: { slug: humanized.message } };
-  }
-  return { banner: humanized.message };
-}
-
 export function WorkspaceSetupClient({
   email,
   firstName,
@@ -134,14 +68,9 @@ export function WorkspaceSetupClient({
   }, [describe.intendedSources, describe.sandbox]);
 
   const advance = (delta: 1 | -1) => {
-    if (!isProductOnboardingStep(flowStep)) return;
-    const index = ONBOARDING_ORDER.indexOf(flowStep);
-    if (index < 0) return;
-    const next = Math.max(0, Math.min(ONBOARDING_ORDER.length - 1, index + delta));
-    setFlowStep(ONBOARDING_ORDER[next]);
+    const next = nextProductStep(flowStep, delta);
+    if (next) setFlowStep(next);
   };
-
-  const connected = connect.connected as SourceId[];
 
   async function submit(value: WorkspaceSetupCaptureValue) {
     setError(null);
@@ -177,66 +106,21 @@ export function WorkspaceSetupClient({
   }
 
   if (isProductOnboardingStep(flowStep)) {
-    let body: ReactNode = null;
-    switch (flowStep) {
-      case "describe":
-        body = (
-          <StepDescribe
-            value={describe}
-            onChange={setDescribe}
-            onNext={() => advance(1)}
-          />
-        );
-        break;
-      case "connect":
-        body = (
-          <StepConnect
-            value={connect}
-            onChange={setConnect}
-            onNext={() => advance(1)}
-            onBack={() => advance(-1)}
-          />
-        );
-        break;
-      case "stream":
-        body = (
-          <StepStream
-            value={{ connected }}
-            onNext={() => advance(1)}
-            onBack={() => advance(-1)}
-          />
-        );
-        break;
-      case "middleware":
-        body = (
-          <StepMiddleware onNext={() => advance(1)} onBack={() => advance(-1)} />
-        );
-        break;
-      case "done":
-        body = (
-          <StepDone
-            value={{
-              name: describe.name || workspaceName,
-              connected,
-            }}
-            onRestart={() => setFlowStep("describe")}
-            onOpen={() => router.push("/dashboard")}
-          />
-        );
-        break;
-    }
-
     return (
-      <OnboardingShell
-        currentStep={flowStep}
-        steps={ONBOARDING_STEPS}
+      <ProductOnboardingFlow
+        step={flowStep}
+        describe={describe}
+        onDescribeChange={setDescribe}
+        connect={connect}
+        onConnectChange={setConnect}
+        workspaceName={workspaceName}
+        onAdvance={advance}
         onJumpStep={(id) => {
           if (id !== "billing") setFlowStep(id);
         }}
-        align="center"
-      >
-        {body}
-      </OnboardingShell>
+        onRestart={() => setFlowStep("describe")}
+        onOpenDashboard={() => router.push("/dashboard")}
+      />
     );
   }
 

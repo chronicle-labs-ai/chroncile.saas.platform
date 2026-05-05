@@ -6,8 +6,11 @@ import { use } from "react";
 
 import {
   AgentDetailPage,
+  DashboardViewportShell,
+  EmptyState,
   agentSnapshotsByName,
   resolveLegacyAgentDetailTab,
+  useSetSiteBreadcrumb,
   type AgentDetailTab,
 } from "ui";
 
@@ -64,37 +67,31 @@ export default function AgentDetailRoute({ params }: PageProps) {
     runParam ?? null,
   );
 
+  useSetSiteBreadcrumb(
+    snapshot
+      ? [
+          { label: "Agents", href: "/dashboard/agents" },
+          { label: snapshot.summary.name },
+        ]
+      : [{ label: "Agents", href: "/dashboard/agents" }],
+  );
+
   if (!snapshot) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <div className="rounded-[4px] border border-l-border-faint bg-l-wash-1 p-6 text-center font-mono text-[11px] text-l-ink-dim">
-          No agent found for <span className="text-l-ink-lo">{name}</span>.
+      <DashboardViewportShell>
+        <div className="flex flex-1 items-center justify-center p-8">
+          <EmptyState
+            title="Agent not found"
+            description={`No agent registered for "${name}".`}
+          />
         </div>
-      </div>
+      </DashboardViewportShell>
     );
   }
 
   return (
-    <div
-      className="flex min-h-0 flex-col gap-3 bg-l-surface text-l-ink"
-      style={{
-        height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
-      <header className="flex items-center gap-1.5 px-1 font-sans text-[11px] text-l-ink-dim">
-        <span>Chronicle</span>
-        <span aria-hidden>›</span>
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard/agents")}
-          className="text-l-ink-lo hover:text-l-ink"
-        >
-          Agents
-        </button>
-        <span aria-hidden>›</span>
-        <span className="text-ember">{snapshot.summary.name}</span>
-      </header>
-      <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-l-border bg-l-surface-raised">
+    <DashboardViewportShell>
+      <div className="flex flex-1 min-h-0 flex-col rounded-md border border-hairline-strong bg-surface-01">
         <AgentDetailPage
           snapshot={snapshot}
           tab={tab}
@@ -113,6 +110,6 @@ export default function AgentDetailRoute({ params }: PageProps) {
           }}
         />
       </div>
-    </div>
+    </DashboardViewportShell>
   );
 }

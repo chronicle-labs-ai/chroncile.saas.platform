@@ -1,4 +1,4 @@
-import { TimelineDashboard } from "ui";
+import { DashboardViewportShell, TimelineDashboard } from "ui";
 
 /*
  * /dashboard/timeline
@@ -25,14 +25,8 @@ import { TimelineDashboard } from "ui";
  */
 export default function TimelineDashboardPage() {
   return (
-    <div
-      className="flex min-h-0 flex-col"
-      style={{
-        height:
-          "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
+    <DashboardViewportShell>
       <TimelineDashboard />
-    </div>
+    </DashboardViewportShell>
   );
 }

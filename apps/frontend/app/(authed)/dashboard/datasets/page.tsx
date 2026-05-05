@@ -1,4 +1,4 @@
-import { DatasetsManager } from "ui";
+import { DashboardViewportShell, DatasetsManager } from "ui";
 
 /*
  * /dashboard/datasets
@@ -32,13 +32,8 @@ import { DatasetsManager } from "ui";
  */
 export default function DatasetsPage() {
   return (
-    <div
-      className="flex min-h-0 flex-col"
-      style={{
-        height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
+    <DashboardViewportShell>
       <DatasetsManager />
-    </div>
+    </DashboardViewportShell>
   );
 }

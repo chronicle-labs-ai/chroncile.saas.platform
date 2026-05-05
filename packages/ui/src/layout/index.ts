@@ -4,6 +4,9 @@ export type { ChronHeaderProps } from "./chron-header";
 export { PageHeader } from "./page-header";
 export type { PageHeaderProps } from "./page-header";
 
+export { DashboardViewportShell } from "./dashboard-viewport-shell";
+export type { DashboardViewportShellProps } from "./dashboard-viewport-shell";
+
 export { AppShell } from "./app-shell";
 export type { AppShellProps, AppShellDensity } from "./app-shell";
 

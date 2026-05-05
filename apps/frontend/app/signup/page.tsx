@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AuthShell,
+  InvitationBanner,
   SignUpEmail,
   SignUpPassword,
   SignUpVerify,
@@ -307,29 +308,10 @@ function SignupPageInner() {
   }
 
   const invitationBanner = isInvited ? (
-    <div
-      role="status"
-      className="mb-6 rounded-md border border-orange-700/40 bg-orange-700/10 px-4 py-3 font-mono text-xs text-orange-200"
-    >
-      <p>
-        You&apos;ve been invited to join{" "}
-        <span className="font-semibold text-orange-100">
-          {invitationOrgName ?? "a workspace"}
-        </span>
-        . Create your account to accept.
-      </p>
-      <p className="mt-1 text-orange-200/70">
-        Already have an account?{" "}
-        <button
-          type="button"
-          onClick={() => router.push(signInHref)}
-          className="underline underline-offset-2 hover:text-orange-100"
-        >
-          Sign in instead
-        </button>
-        .
-      </p>
-    </div>
+    <InvitationBanner
+      orgName={invitationOrgName}
+      onSignIn={() => router.push(signInHref)}
+    />
   ) : null;
 
   return (

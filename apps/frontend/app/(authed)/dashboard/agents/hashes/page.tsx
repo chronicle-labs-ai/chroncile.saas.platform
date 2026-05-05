@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 
-import { AgentHashIndexPage, type HashDomain } from "ui";
+import { AgentHashIndexPage, DashboardViewportShell, type HashDomain } from "ui";
 
 /*
  * /dashboard/agents/hashes
@@ -31,17 +31,12 @@ export default function AgentsHashIndexPage() {
   }, [kindParam]);
 
   return (
-    <div
-      className="flex min-h-0 flex-col"
-      style={{
-        height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
+    <DashboardViewportShell>
       <AgentHashIndexPage
         initialQuery={initialQuery}
         initialDomains={initialDomains}
       />
-    </div>
+    </DashboardViewportShell>
   );
 }
 

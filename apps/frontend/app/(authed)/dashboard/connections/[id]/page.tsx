@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   CONNECTION_DETAIL_TABS,
   ConnectionDetailPage,
+  EmptyState,
   connectionBackfillsSeed,
   connectionDeliveriesSeed,
   connectionEventSubsSeed,
@@ -56,10 +57,10 @@ export default function ConnectionDetailRoute({ params }: PageProps) {
   if (!connection) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
-        <div className="rounded-[4px] border border-divider bg-[rgba(255,255,255,0.012)] p-6 text-center font-mono text-mono-sm text-ink-dim">
-          No connection found for{" "}
-          <span className="text-ink-lo">{id}</span>.
-        </div>
+        <EmptyState
+          title="Connection not found"
+          description={`No connection registered for "${id}".`}
+        />
       </div>
     );
   }

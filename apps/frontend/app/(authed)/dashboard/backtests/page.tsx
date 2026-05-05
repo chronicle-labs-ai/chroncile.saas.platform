@@ -1,5 +1,6 @@
 import {
   BacktestsManager,
+  DashboardViewportShell,
   agentsManagerSeed,
   datasetsSeed,
   environmentsSeed,
@@ -38,17 +39,12 @@ import {
  */
 export default function BacktestsPage() {
   return (
-    <div
-      className="flex min-h-0 flex-col"
-      style={{
-        height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
+    <DashboardViewportShell>
       <BacktestsManager
         availableDatasets={datasetsSeed}
         availableEnvironments={environmentsSeed}
         availableAgents={agentsManagerSeed}
       />
-    </div>
+    </DashboardViewportShell>
   );
 }

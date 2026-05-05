@@ -1,11 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getBackendUrl } from "platform-api";
-
 import { classifyAuthError } from "@/server/auth/auth-errors";
 import {
+  getClientIp,
+  type PasswordAuthSessionResult,
+  type PasswordAuthenticator,
+} from "@/server/auth/password-auth";
+import { lookupPrimaryOrgByEmail } from "@/server/auth/primary-org";
+import { provisionInvitedUser } from "@/server/auth/provision-invited-user";
+import {
   getCookiePassword,
-  rebindSealedSessionToOrganization,
   setSealedSession,
 } from "@/server/auth/session";
 import {
@@ -21,106 +25,6 @@ interface LoginBody {
   password?: unknown;
   invitationToken?: unknown;
   organizationId?: unknown;
-}
-
-interface PasswordAuthSessionResult {
-  sealedSession?: string;
-  organizationId?: string;
-  user?: {
-    id: string;
-    email: string;
-    firstName?: string | null;
-    lastName?: string | null;
-  };
-}
-
-interface PasswordAuthenticator {
-  authenticateWithPassword(args: {
-    clientId: string;
-    email: string;
-    password: string;
-    invitationToken?: string;
-    /**
-     * Optional WorkOS organization id. When provided, the auth attempt is
-     * scoped to that org and WorkOS will not raise
-     * `organization_selection_required`. Used to land multi-org users in
-     * their primary workspace transparently.
-     */
-    organizationId?: string;
-    ipAddress?: string;
-    userAgent?: string;
-    session: {
-      sealSession: boolean;
-      cookiePassword: string;
-    };
-  }): Promise<PasswordAuthSessionResult>;
-}
-
-interface PrimaryOrgLookupResponse {
-  tenantId?: string | null;
-  workosOrganizationId?: string | null;
-}
-
-async function lookupPrimaryOrgByEmail(
-  email: string,
-): Promise<string | undefined> {
-  const serviceSecret = process.env.SERVICE_SECRET;
-  if (!serviceSecret) {
-    console.warn(
-      "[auth/login] SERVICE_SECRET not set — skipping primary-org lookup. Add SERVICE_SECRET to apps/frontend/.env.local (must match backend).",
-    );
-    return undefined;
-  }
-  try {
-    const res = await fetch(
-      `${getBackendUrl()}/api/platform/users/primary-org`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceSecret, email }),
-      },
-    );
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.warn(
-        "[auth/login] primary-org lookup non-ok:",
-        res.status,
-        detail,
-      );
-      return undefined;
-    }
-    const data = (await res.json()) as PrimaryOrgLookupResponse;
-    if (
-      typeof data.workosOrganizationId === "string" &&
-      data.workosOrganizationId.length > 0
-    ) {
-      console.info(
-        "[auth/login] primary-org resolved for",
-        email,
-        "→",
-        data.workosOrganizationId,
-      );
-      return data.workosOrganizationId;
-    }
-    console.warn(
-      "[auth/login] primary-org lookup returned empty for",
-      email,
-      "(user not in local DB or no primary tenant set) — fallback to WorkOS first-org",
-    );
-    return undefined;
-  } catch (err) {
-    console.warn(
-      "[auth/login] primary-org lookup failed:",
-      err instanceof Error ? err.message : err,
-    );
-    return undefined;
-  }
-}
-
-function getClientIp(request: NextRequest): string | undefined {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || undefined;
-  return request.headers.get("x-real-ip") ?? undefined;
 }
 
 function safeRedirect(value: unknown): string {
@@ -159,7 +63,7 @@ export async function POST(request: NextRequest) {
       : undefined;
   let primaryOrgId = explicitOrganizationId;
   if (!primaryOrgId) {
-    primaryOrgId = await lookupPrimaryOrgByEmail(email);
+    primaryOrgId = await lookupPrimaryOrgByEmail(email, "auth/login");
   }
 
   let result: PasswordAuthSessionResult;
@@ -281,100 +185,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (invitationToken) {
-    try {
-      const invitation = await workos.userManagement.findInvitationByToken(
-        invitationToken,
-      );
-      if (
-        invitation.organizationId &&
-        invitation.organizationId !== organizationId
-      ) {
-        const rebound = await rebindSealedSessionToOrganization(
-          sealedSession,
-          invitation.organizationId,
-        );
-        if (rebound) {
-          sealedSession = rebound;
-          organizationId = invitation.organizationId;
-        } else {
-          console.warn(
-            "[auth/login] could not rebind session to invitation org; falling through with original session",
-          );
-        }
-      }
-
-      if (invitation.organizationId && result.user?.id) {
-        const serviceSecret = process.env.SERVICE_SECRET;
-        if (!serviceSecret) {
-          console.error(
-            "[auth/login] SERVICE_SECRET missing — cannot provision invited user in backend",
-          );
-          return NextResponse.json(
-            {
-              error: "service_secret_not_configured",
-              detail:
-                "SERVICE_SECRET env var is not set in apps/frontend. Add it and restart.",
-            },
-            { status: 500 },
-          );
-        }
-
-        let registerRes: Response;
-        try {
-          registerRes = await fetch(
-            `${getBackendUrl()}/api/platform/tenants/register-workos`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                serviceSecret,
-                workosUserId: result.user.id,
-                workosOrganizationId: invitation.organizationId,
-                email: result.user.email,
-                name: "",
-                slug: "",
-                firstName: result.user.firstName ?? null,
-                lastName: result.user.lastName ?? null,
-              }),
-            },
-          );
-        } catch (error) {
-          console.error(
-            "[auth/login] backend register-workos network error:",
-            error instanceof Error ? error.message : error,
-          );
-          return NextResponse.json(
-            {
-              error: "backend_unreachable",
-              detail: error instanceof Error ? error.message : String(error),
-            },
-            { status: 502 },
-          );
-        }
-
-        if (!registerRes.ok) {
-          const detail = await registerRes.text().catch(() => "");
-          console.error(
-            "[auth/login] backend register-workos returned non-ok",
-            registerRes.status,
-            detail,
-          );
-          return NextResponse.json(
-            {
-              error: "invitation_provision_failed",
-              backendStatus: registerRes.status,
-              detail,
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } catch (error) {
-      console.warn(
-        "[auth/login] post-auth invitation lookup failed:",
-        error instanceof Error ? error.message : error,
-      );
-    }
+    const outcome = await provisionInvitedUser(
+      result,
+      invitationToken,
+      "auth/login",
+    );
+    if (outcome.kind === "response") return outcome.response;
+    sealedSession = outcome.result.sealedSession;
+    organizationId = outcome.result.organizationId;
   }
 
   await setSealedSession(sealedSession);

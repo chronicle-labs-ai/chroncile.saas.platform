@@ -4,6 +4,8 @@ import type { NextRequest } from "next/server";
 import { getBackendUrl } from "platform-api";
 
 import { classifyAuthError } from "@/server/auth/auth-errors";
+import { getClientIp } from "@/server/auth/password-auth";
+import { lookupPrimaryOrgByEmail } from "@/server/auth/primary-org";
 import {
   getCookiePassword,
   setSealedSession,
@@ -17,61 +19,6 @@ import {
 
 function errorRedirect(message: string): never {
   redirect(`/login?error=${encodeURIComponent(message)}`);
-}
-
-interface PrimaryOrgLookupResponse {
-  tenantId?: string | null;
-  workosOrganizationId?: string | null;
-}
-
-async function lookupPrimaryOrgByEmail(
-  email: string,
-): Promise<string | undefined> {
-  const serviceSecret = process.env.SERVICE_SECRET;
-  if (!serviceSecret) {
-    console.warn(
-      "[auth/callback] SERVICE_SECRET not set — skipping primary-org lookup",
-    );
-    return undefined;
-  }
-  try {
-    const res = await fetch(
-      `${getBackendUrl()}/api/platform/users/primary-org`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceSecret, email }),
-      },
-    );
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.warn(
-        "[auth/callback] primary-org lookup non-ok:",
-        res.status,
-        detail,
-      );
-      return undefined;
-    }
-    const data = (await res.json()) as PrimaryOrgLookupResponse;
-    return typeof data.workosOrganizationId === "string" &&
-      data.workosOrganizationId.length > 0
-      ? data.workosOrganizationId
-      : undefined;
-  } catch (err) {
-    console.warn(
-      "[auth/callback] primary-org lookup failed:",
-      err instanceof Error ? err.message : err,
-    );
-    return undefined;
-  }
-}
-
-function getClientIp(request: NextRequest): string | undefined {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || undefined;
-  }
-  return request.headers.get("x-real-ip") ?? undefined;
 }
 
 export async function GET(request: NextRequest) {
@@ -136,7 +83,10 @@ export async function GET(request: NextRequest) {
     ) {
       let chosenOrgId: string | undefined;
       if (classified.email) {
-        chosenOrgId = await lookupPrimaryOrgByEmail(classified.email);
+        chosenOrgId = await lookupPrimaryOrgByEmail(
+          classified.email,
+          "auth/callback",
+        );
       }
       if (!chosenOrgId && classified.organizations?.[0]) {
         chosenOrgId = classified.organizations[0].id;

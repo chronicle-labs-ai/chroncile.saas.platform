@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import { AgentsManager } from "ui";
+import { AgentsManager, DashboardViewportShell } from "ui";
 
 /*
  * /dashboard/agents
@@ -26,12 +26,7 @@ export default function AgentsManagerPage() {
   const router = useRouter();
 
   return (
-    <div
-      className="flex min-h-0 flex-col"
-      style={{
-        height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
-      }}
-    >
+    <DashboardViewportShell>
       <AgentsManager
         onOpenHashSearch={(hint) => {
           const qs = hint
@@ -40,6 +35,6 @@ export default function AgentsManagerPage() {
           router.push(`/dashboard/agents/hashes${qs}`);
         }}
       />
-    </div>
+    </DashboardViewportShell>
   );
 }
