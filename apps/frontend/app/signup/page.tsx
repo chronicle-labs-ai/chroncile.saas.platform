@@ -11,6 +11,8 @@ import {
   type SignUpPasswordValue,
 } from "ui/auth";
 
+import { humanizeBackendError } from "@/server/auth/humanize-backend-error";
+
 type Step = "email" | "password" | "verify";
 
 interface SignupOkVerifyResponse {
@@ -54,30 +56,20 @@ function oauthPath(provider: "google" | "github"): string {
   return `/api/auth/oauth/${provider}?${params.toString()}`;
 }
 
+/**
+ * Signup-specific wrappers around the shared backend-error dictionary.
+ * Both delegate to `humanizeBackendError` so we never duplicate copy
+ * and unknown codes always render as a generic safe fallback instead
+ * of leaking like "email_already_registered_to_different_workos_user".
+ */
 function humanizeSignupError(code: string | undefined): string {
   if (!code) return "Something went wrong. Try again.";
-  const map: Record<string, string> = {
-    email_already_exists:
-      "That email is already registered. Sign in instead.",
-    weak_password:
-      "That password doesn't meet the strength policy. Try a longer one with mixed characters.",
-    missing_credentials: "Enter both your email and password.",
-    user_creation_failed: "We couldn't create your account. Try again.",
-    sealing_failed: "Couldn't establish your session. Try again.",
-  };
-  return map[code] ?? code.replaceAll("_", " ");
+  return humanizeBackendError(code).message;
 }
 
 function humanizeVerifyError(code: string | undefined): string {
   if (!code) return "Verification failed. Try again.";
-  const map: Record<string, string> = {
-    invalid_code: "That code didn't match. Check your email and retry.",
-    invalid_code_format: "Enter the 6-digit code from your email.",
-    token_invalid:
-      "Your verification window expired. Start signup again to get a fresh code.",
-    missing_pending_token: "Verification token missing. Start signup again.",
-  };
-  return map[code] ?? code.replaceAll("_", " ");
+  return humanizeBackendError(code).message;
 }
 
 function SignupPageInner() {

@@ -4,6 +4,8 @@ import { Suspense, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell, SignIn, type SignInValue } from "ui/auth";
 
+import { humanizeBackendError } from "@/server/auth/humanize-backend-error";
+
 function oauthPath(provider: "google" | "github", from: string): string {
   const params = new URLSearchParams({ from });
   return `/api/auth/oauth/${provider}?${params.toString()}`;
@@ -47,21 +49,14 @@ type LoginResponse =
   | LoginAuthMethodsRequiredResponse
   | LoginErrorResponse;
 
+/**
+ * Login-specific error humanizer. Delegates to the shared
+ * `humanizeBackendError` dictionary so we don't duplicate copy across
+ * pages, and so unknown codes never leak as raw text.
+ */
 function humanizeError(code: string | undefined): string {
   if (!code) return "We couldn't sign you in. Try again.";
-  const map: Record<string, string> = {
-    invalid_credentials: "Email or password is incorrect.",
-    missing_credentials: "Enter your email and password.",
-    sealing_failed: "Couldn't establish your session. Try again.",
-    mfa_enrollment: "MFA is not yet supported in this app.",
-    mfa_challenge: "MFA is not yet supported in this app.",
-    organization_selection_required:
-      "We couldn't determine which workspace to sign you into. Try again, or contact support.",
-    rate_limit_exceeded: "Too many attempts. Wait a moment and try again.",
-    auth_unreachable:
-      "We couldn't reach the auth provider. Check your connection and try again — your session is preserved.",
-  };
-  return map[code] ?? code.replaceAll("_", " ");
+  return humanizeBackendError(code).message;
 }
 
 const PROVIDER_LABEL: Record<string, string> = {

@@ -23,6 +23,8 @@ import {
   type SourceId,
 } from "ui/onboarding";
 
+import { humanizeBackendError } from "@/server/auth/humanize-backend-error";
+
 const ONBOARDING_ORDER = [
   "describe",
   "connect",
@@ -80,48 +82,30 @@ interface WorkspaceSetupClientProps {
 }
 
 /*
- * Map server error codes onto either an inline field error or a
- * top-level banner. The backend currently returns flat snake_case
- * codes via `{ error }`; this routes the known ones to the right
- * surface so the user sees the message next to the offending input
- * (Emil's "colocate errors" rule). Unknown codes fall through to
- * the banner so we never lose visibility of a server failure.
+ * Translate a backend error code into either an inline field error or
+ * a top-level banner. Delegates to `humanizeBackendError` which owns
+ * the canonical dictionary — see
+ * `server/auth/humanize-backend-error.ts`. The colocate-vs-banner
+ * decision is driven by the `field` hint on each entry: codes tied
+ * to a specific input render next to it ("colocate errors" rule),
+ * everything else surfaces as a banner.
+ *
+ * Unknown codes go to the banner with a generic message — the user
+ * never sees the raw code (no more "email already registered to
+ * different workos user" leaking into the UI).
  */
 function routeWorkspaceError(code: string): {
   field?: WorkspaceSetupFieldErrors;
   banner?: string;
 } {
-  switch (code) {
-    case "slug_taken":
-    case "slug_already_in_use":
-    case "org_slug_conflict":
-    case "duplicate_slug":
-      return {
-        field: { slug: "That slug is already in use. Try another." },
-      };
-    case "invalid_slug":
-      return {
-        field: {
-          slug: "Lowercase letters, numbers, and hyphens only.",
-        },
-      };
-    case "org_name_already_exists":
-    case "name_taken":
-    case "duplicate_org_name":
-      return {
-        field: { orgName: "That workspace name is already in use." },
-      };
-    case "invalid_org_name":
-      return { field: { orgName: "Pick a name between 2 and 60 characters." } };
-    case "workos_unreachable":
-    case "auth_unreachable":
-      return {
-        banner:
-          "We couldn't reach the auth provider. Try again — your input is preserved.",
-      };
-    default:
-      return { banner: code.replaceAll("_", " ") };
+  const humanized = humanizeBackendError(code);
+  if (humanized.field === "orgName") {
+    return { field: { orgName: humanized.message } };
   }
+  if (humanized.field === "slug") {
+    return { field: { slug: humanized.message } };
+  }
+  return { banner: humanized.message };
 }
 
 export function WorkspaceSetupClient({
