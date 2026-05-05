@@ -34,3 +34,14 @@ export const Running: Story = {
 export const Results: Story = {
   args: { stage: "results", runStatus: "done" },
 };
+
+export const WithBackToList: Story = {
+  args: {
+    stage: "configure",
+    runName: "compare v3 vs v4.0",
+    runStatus: null,
+    onBackToList: () => {
+      console.log("back to list");
+    },
+  },
+};

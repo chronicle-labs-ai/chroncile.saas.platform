@@ -116,6 +116,9 @@ export type {
   DatasetsView,
 } from "./datasets-toolbar";
 
+export { DatasetsStatsPanel } from "./datasets-stats-panel";
+export type { DatasetsStatsPanelProps } from "./datasets-stats-panel";
+
 export { DatasetCard } from "./dataset-card";
 export type { DatasetCardProps } from "./dataset-card";
 

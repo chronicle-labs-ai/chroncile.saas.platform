@@ -47,25 +47,44 @@ export type { AgentHashIndexPageProps } from "./agent-hash-index-page";
 export {
   AgentsToolbar,
   AGENT_HEALTH_FILTERS,
-  AGENT_GROUP_BY_OPTIONS,
+  AGENT_SCOPE_FILTERS,
   matchesHealthFilter,
 } from "./agents-toolbar";
 export type {
   AgentsToolbarProps,
-  AgentsView,
-  AgentsGroupBy,
+  AgentsScope,
   AgentHealthFilter,
 } from "./agents-toolbar";
 
+export { AgentLinearRow, toAgentIssueId } from "./agent-linear-row";
+export type { AgentLinearRowProps } from "./agent-linear-row";
+
+export { AgentsFacetRail, buildAgentFacets } from "./agents-facet-rail";
+export type { AgentsFacetRailProps } from "./agents-facet-rail";
+
+/**
+ * @deprecated Replaced by the persistent health dot in `AgentLinearRow`
+ * and the facet rail's framework/owner/category filters. The KPI strip
+ * is still exported so existing stories render, but new code should
+ * not consume it.
+ */
 export { AgentsKpiStrip, AGENTS_KPI_KEYS } from "./agents-kpi-strip";
 export type {
   AgentsKpiStripProps,
   AgentsKpiKey,
 } from "./agents-kpi-strip";
 
+/**
+ * @deprecated Superseded by `AgentLinearRow`. Kept for stories +
+ * historical consumers; the manager itself no longer renders cards.
+ */
 export { AgentCard } from "./agent-card";
 export type { AgentCardProps } from "./agent-card";
 
+/**
+ * @deprecated Superseded by `AgentLinearRow`. Kept for stories +
+ * historical consumers.
+ */
 export { AgentRow } from "./agent-row";
 export type { AgentRowProps } from "./agent-row";
 

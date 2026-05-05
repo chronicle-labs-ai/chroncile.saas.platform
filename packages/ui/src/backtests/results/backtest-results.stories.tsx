@@ -33,7 +33,7 @@ const regression = cloneRecipe(
   BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
 );
 const compare = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "compare")!.recipe);
-const bug = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "bug")!.recipe);
+const replay = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "replay")!.recipe);
 
 export const Default: Story = {
   args: { recipe: regression },
@@ -43,8 +43,8 @@ export const TwoAgents: Story = {
   args: { recipe: compare },
 };
 
-export const FourAgentsBugRepro: Story = {
-  args: { recipe: bug, defaultFocusedAgentId: "support-v4.2" },
+export const ReplayAcrossVersions: Story = {
+  args: { recipe: replay, defaultFocusedAgentId: "support-v4.1" },
 };
 
 export const RegressionFocused: Story = {

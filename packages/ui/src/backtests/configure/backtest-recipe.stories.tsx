@@ -31,7 +31,9 @@ const compareRecipe = cloneRecipe(
 const suiteRecipe = cloneRecipe(
   BACKTEST_JOB_PRESETS.find((j) => j.id === "suite")!.recipe,
 );
-const bugRecipe = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "bug")!.recipe);
+const replayRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "replay")!.recipe,
+);
 
 function StatefulRecipe(initial: BacktestRecipeType) {
   return function Component(args: React.ComponentProps<typeof BacktestRecipe>) {
@@ -48,8 +50,8 @@ export const TwoAgents: Story = {
   render: StatefulRecipe(compareRecipe),
 };
 
-export const FourAgents: Story = {
-  render: StatefulRecipe(bugRecipe),
+export const ReplayAcrossVersions: Story = {
+  render: StatefulRecipe(replayRecipe),
 };
 
 export const FromSavedDataset: Story = {

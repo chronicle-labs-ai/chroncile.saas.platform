@@ -1,4 +1,9 @@
-import { BacktestsManager } from "ui";
+import {
+  BacktestsManager,
+  agentsManagerSeed,
+  datasetsSeed,
+  environmentsSeed,
+} from "ui";
 
 /*
  * /dashboard/backtests
@@ -8,12 +13,20 @@ import { BacktestsManager } from "ui";
  * against production traces, generated scenarios, or a saved
  * dataset.
  *
+ * Configure is now a directional pipeline:
+ *
+ *   01 Dataset → 02 Discover gaps → 03 Environment → 04 Versions
+ *
+ * The Replay preset auto-skips step 02. Each step bridges to a real
+ * primitive: datasets reuse `Dataset` shapes from the design system
+ * seeds, environments reuse `SandboxEnvironment`, versions reuse
+ * `AgentSummary`. When the Rust backend exposes registries for any
+ * of these, swap the seeds for live data.
+ *
  * `BacktestsManager` is a `"use client"` component that owns the
  * stage state machine, the active recipe, and all editor / drawer
  * state internally. This route is a thin server-component wrapper
- * to match the established dashboard pattern (see
- * `/dashboard/connections`, `/dashboard/datasets`,
- * `/dashboard/timeline`).
+ * to match the established dashboard pattern.
  *
  * The wrapper pins the page to exactly the viewport space available
  * inside the dashboard shell — `100svh` minus the site header (the
@@ -22,13 +35,6 @@ import { BacktestsManager } from "ui";
  * own top nav stays anchored and the stage body owns its scroll —
  * the live trace feed in Running and the divergences list in
  * Results would otherwise grow past the viewport.
- *
- * Seed data is sourced from the design system today. When the Rust
- * backend exposes endpoints for runs / recipes / divergences /
- * metrics, fetch from `server/backend/fetch-from-backend.ts` here
- * and pass `initialRecipe` / `divergences` / `metrics` props down.
- * Mutation slots (`onLaunch`, `onFinish`, `onPromote`) are already
- * wired through the manager's API for the same drop-in pattern.
  */
 export default function BacktestsPage() {
   return (
@@ -38,7 +44,11 @@ export default function BacktestsPage() {
         height: "calc(100svh - var(--header-height, 3.5rem) - 2rem)",
       }}
     >
-      <BacktestsManager />
+      <BacktestsManager
+        availableDatasets={datasetsSeed}
+        availableEnvironments={environmentsSeed}
+        availableAgents={agentsManagerSeed}
+      />
     </div>
   );
 }

@@ -13,7 +13,7 @@ import { DatasetSplitChip } from "./dataset-split-chip";
 import { findNearestNode, type ClusterCentroid, type GraphLayout, type GraphNode } from "./graph-layout";
 import { formatTraceDuration } from "./dataset-traces-table-row";
 import { useGraphSimulation } from "./use-graph-simulation";
-import type { DatasetSnapshot, TraceStatus, TraceSummary } from "./types";
+import type { DatasetSnapshot, TraceSummary } from "./types";
 
 /*
  * DatasetGraphView — Canvas-2D scatter for inspecting traces in a
@@ -749,12 +749,9 @@ function HoverHeader({
 
 function HoverStats({ trace }: { trace: TraceSummary }) {
   return (
-    <dl className="grid grid-cols-3 gap-1.5 rounded-[3px] border border-l-border-faint bg-l-surface-input px-2 py-1.5">
+    <dl className="grid grid-cols-2 gap-1.5 rounded-[3px] border border-l-border-faint bg-l-surface-input px-2 py-1.5">
       <Cell label="Events">{formatNumber(trace.eventCount)}</Cell>
       <Cell label="Duration">{formatTraceDuration(trace.durationMs)}</Cell>
-      <Cell label="Status">
-        <StatusInline status={trace.status} />
-      </Cell>
     </dl>
   );
 }
@@ -785,28 +782,6 @@ function Cell({
       </dt>
       <dd className="truncate font-sans text-[11.5px] text-l-ink">{children}</dd>
     </div>
-  );
-}
-
-function StatusInline({ status }: { status: TraceStatus }) {
-  const meta = {
-    ok: { label: "OK", color: "bg-l-status-done", text: "text-l-status-done" },
-    warn: {
-      label: "Warn",
-      color: "bg-l-status-inprogress",
-      text: "text-l-status-inprogress",
-    },
-    error: {
-      label: "Error",
-      color: "bg-l-p-urgent",
-      text: "text-l-p-urgent",
-    },
-  }[status];
-  return (
-    <span className={cx("inline-flex items-center gap-1 font-medium", meta.text)}>
-      <span aria-hidden className={cx("size-1.5 rounded-pill", meta.color)} />
-      {meta.label}
-    </span>
   );
 }
 

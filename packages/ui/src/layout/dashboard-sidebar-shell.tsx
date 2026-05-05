@@ -21,24 +21,28 @@
 
 import * as React from "react";
 import {
+  Activity,
   BadgeCheck,
   Bell,
-  ChevronRight,
+  Bot,
+  Boxes,
+  Cable,
   ChevronsUpDown,
   Command,
   CreditCard,
+  Database,
   Folder,
+  History,
+  Keyboard,
   LifeBuoy,
   LogOut,
   Moon,
   MoreHorizontal,
-  Activity,
   PanelsTopLeft,
   Search,
   Send,
-  SidebarIcon,
-  CircleCheckBig,
   Share,
+  SidebarIcon,
   Sparkles,
   Sun,
   Trash2,
@@ -53,11 +57,6 @@ import {
   deriveInitials,
 } from "../primitives/avatar";
 import { Logo } from "../primitives/logo";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "../primitives/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,12 +78,10 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from "./sidebar";
 import { RouterLink, useNavigate } from "./link-context";
+import { useSiteBreadcrumb } from "./site-breadcrumb";
 import { useTheme } from "../theme";
 
 export interface DashboardShellUser {
@@ -111,38 +108,54 @@ export interface DashboardShellOrganization {
   role: string;
 }
 
+/*
+ * Primary navigation — a flat list broken into labelled groups.
+ *
+ * We used to render Signals / Validation as collapsible parents with
+ * their real destinations nested underneath. Nested rails inside a
+ * rail read as two levels of hierarchy where the information
+ * architecture only has one: every link here resolves to a top-level
+ * `/dashboard/<thing>` page. Flattening keeps the click target on the
+ * actual destination (one tap instead of expand-then-tap) and turns
+ * the groupings into quiet section dividers — the pattern Linear /
+ * Vercel / Height all use for product nav of this size.
+ */
+const navGroups: NavGroup[] = [
+  {
+    label: "Workspace",
+    items: [
+      {
+        title: "Overview",
+        url: "/dashboard",
+        icon: PanelsTopLeft,
+        // Exact match — Overview is the bare /dashboard, not a prefix.
+        match: "exact",
+      },
+    ],
+  },
+  {
+    label: "Signals",
+    items: [
+      { title: "Connections", url: "/dashboard/connections", icon: Cable },
+      { title: "Timeline", url: "/dashboard/timeline", icon: Activity },
+    ],
+  },
+  {
+    label: "Validation",
+    items: [
+      { title: "Datasets", url: "/dashboard/datasets", icon: Database },
+      { title: "Environments", url: "/dashboard/environments", icon: Boxes },
+      { title: "Agents", url: "/dashboard/agents", icon: Bot },
+      { title: "Backtests / Replay", url: "/dashboard/backtests", icon: History },
+    ],
+  },
+];
+
 const defaultData = {
-  navMain: [
-    {
-      title: "Overview",
-      url: "/dashboard",
-      icon: PanelsTopLeft,
-      // Exact match — Overview is the bare /dashboard, not a prefix.
-      match: "exact" as const,
-    },
-    {
-      title: "Signals",
-      url: "/dashboard/signals",
-      icon: Activity,
-      items: [
-        { title: "Connections", url: "/dashboard/connections" },
-        { title: "Timeline", url: "/dashboard/timeline" },
-      ],
-    },
-    {
-      title: "Validation",
-      url: "/dashboard/validation",
-      icon: CircleCheckBig,
-      items: [
-        { title: "Datasets", url: "/dashboard/datasets" },
-        { title: "Agents", url: "/dashboard/agents" },
-        { title: "Backtests / Replay", url: "/dashboard/backtests" },
-      ],
-    },
-  ],
   navSecondary: [
     { title: "Support", url: "#", icon: LifeBuoy },
     { title: "Feedback", url: "#", icon: Send },
+    { title: "Shortcuts", url: "#", icon: Keyboard },
   ],
 };
 
@@ -157,7 +170,7 @@ const defaultData = {
 function isActivePath(
   pathname: string | undefined,
   target: string,
-  match: "exact" | "prefix" = "prefix",
+  match: "exact" | "prefix" = "prefix"
 ): boolean {
   if (!pathname || !target || target === "#") return false;
   if (match === "exact") return pathname === target;
@@ -172,8 +185,9 @@ const menuIdentityClassName =
 const menuItemClassName =
   "flex items-center gap-2 rounded-sm px-2 py-1.5 font-sans text-[13px] leading-none";
 
-export interface AppSidebarProps
-  extends React.ComponentPropsWithoutRef<typeof Sidebar> {
+export interface AppSidebarProps extends React.ComponentPropsWithoutRef<
+  typeof Sidebar
+> {
   user: DashboardShellUser;
   workspace?: DashboardShellWorkspace;
   signOutHref?: string;
@@ -242,7 +256,7 @@ export function AppSidebar({
         />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={defaultData.navMain} currentPath={currentPath} />
+        <NavMain groups={navGroups} currentPath={currentPath} />
         <NavSecondary items={defaultData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
@@ -257,11 +271,11 @@ const DEFAULT_SWITCH_ORG_HREF =
 
 function buildSwitchOrgHref(
   template: string | undefined,
-  organizationId: string,
+  organizationId: string
 ): string {
   return (template ?? DEFAULT_SWITCH_ORG_HREF).replace(
     "{organizationId}",
-    encodeURIComponent(organizationId),
+    encodeURIComponent(organizationId)
   );
 }
 
@@ -288,7 +302,7 @@ function WorkspaceMenu({
   const switchableOrgs = (organizations ?? []).filter(
     (o) =>
       o.workosOrganizationId &&
-      o.workosOrganizationId !== activeWorkosOrganizationId,
+      o.workosOrganizationId !== activeWorkosOrganizationId
   );
 
   /*
@@ -354,7 +368,7 @@ function WorkspaceMenu({
                     const isPrimary = org.tenantId === primaryTenantId;
                     const href = buildSwitchOrgHref(
                       switchOrgHrefTemplate,
-                      org.workosOrganizationId!,
+                      org.workosOrganizationId!
                     );
                     return (
                       <DropdownMenuItem
@@ -367,7 +381,9 @@ function WorkspaceMenu({
                           window.location.assign(href);
                         }}
                       >
-                        <span className="flex-1 truncate">{org.tenantName}</span>
+                        <span className="flex-1 truncate">
+                          {org.tenantName}
+                        </span>
                         {isPrimary ? (
                           <span className="ml-2 rounded bg-[var(--c-surface-02)] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-l-ink-dim">
                             Primary
@@ -447,105 +463,62 @@ export interface NavMainItem {
   icon: LucideIcon;
   match?: "exact" | "prefix";
   isActive?: boolean;
-  items?: { title: string; url: string }[];
 }
 
+export interface NavGroup {
+  label: string;
+  items: NavMainItem[];
+}
+
+/**
+ * Primary nav list. Renders each `NavGroup` as its own `SidebarGroup`
+ * with a small uppercase label. Inside a group, every item is a
+ * single flat row — no collapsibles, no second rail. Active state is
+ * resolved per-item directly from the current pathname.
+ */
 export function NavMain({
-  items,
+  groups,
   currentPath,
 }: {
-  items: NavMainItem[];
+  groups: NavGroup[];
   currentPath?: string;
 }) {
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Workspace</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => {
-          // Resolve active state from the live route.
-          //   - The parent row is active when the path matches its own
-          //     URL (exact or prefix per the item's `match`), OR when
-          //     any of its children is active. The latter keeps the
-          //     parent rail visible while the user drills into a
-          //     subitem like "Datasets".
-          //   - Each child uses an exact match to avoid flashing two
-          //     rails when navigating between siblings.
-          const childIsActive = item.items?.some((sub) =>
-            isActivePath(currentPath, sub.url, "exact"),
-          );
-          const selfActive = isActivePath(
-            currentPath,
-            item.url,
-            item.match ?? "prefix",
-          );
-          const parentActive =
-            (selfActive || childIsActive) ?? item.isActive ?? false;
-
-          return (
-            <Collapsible
-              key={item.title}
-              asChild
-              defaultOpen={parentActive || childIsActive}
-            >
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={parentActive}
-                  tooltip={item.title}
-                >
-                  <RouterLink href={item.url}>
-                    <item.icon
-                      aria-hidden
-                      className="size-4"
-                      strokeWidth={1.75}
-                    />
-                    <span>{item.title}</span>
-                  </RouterLink>
-                </SidebarMenuButton>
-                {item.items?.length ? (
-                  <>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuAction
-                        aria-label={`Toggle ${item.title} subnav`}
-                        className="data-[state=open]:rotate-90"
-                      >
-                        <ChevronRight aria-hidden strokeWidth={1.75} />
-                      </SidebarMenuAction>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items.map((subItem) => {
-                          const active = isActivePath(
-                            currentPath,
-                            subItem.url,
-                            "exact",
-                          );
-                          return (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={active}
-                              >
-                                <RouterLink
-                                  href={subItem.url}
-                                  aria-current={active ? "page" : undefined}
-                                >
-                                  <span>{subItem.title}</span>
-                                </RouterLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          );
-                        })}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </>
-                ) : null}
-              </SidebarMenuItem>
-            </Collapsible>
-          );
-        })}
-      </SidebarMenu>
-    </SidebarGroup>
+    <>
+      {groups.map((group) => (
+        <SidebarGroup key={group.label}>
+          <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarMenu>
+            {group.items.map((item) => {
+              const active =
+                isActivePath(currentPath, item.url, item.match ?? "prefix") ||
+                item.isActive === true;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={active}
+                    tooltip={item.title}
+                  >
+                    <RouterLink
+                      href={item.url}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <item.icon
+                        aria-hidden
+                        className="size-4"
+                        strokeWidth={1.75}
+                      />
+                      <span>{item.title}</span>
+                    </RouterLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
+      ))}
+    </>
   );
 }
 
@@ -564,7 +537,7 @@ export function NavProjects({
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <RouterLink href={item.url}>
-                  <item.icon className="size-4" strokeWidth={1.75} />
+                <item.icon className="size-4" strokeWidth={1.75} />
                 <span>{item.name}</span>
               </RouterLink>
             </SidebarMenuButton>
@@ -659,9 +632,7 @@ export function NavUser({
               className="h-10 gap-2.5 data-[state=open]:bg-[var(--c-row-hover)] data-[state=open]:text-foreground"
             >
               <Avatar size="sm" shape="square">
-                {user.avatar ? (
-                  <AvatarImage src={user.avatar} alt="" />
-                ) : null}
+                {user.avatar ? <AvatarImage src={user.avatar} alt="" /> : null}
                 <AvatarFallback>{deriveInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left leading-tight">
@@ -706,11 +677,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuSection>
               <DropdownMenuItem className={menuItemClassName}>
-                <Sparkles
-                  aria-hidden
-                  className="size-4"
-                  strokeWidth={1.75}
-                />
+                <Sparkles aria-hidden className="size-4" strokeWidth={1.75} />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuSection>
@@ -727,19 +694,11 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuSection>
               <DropdownMenuItem className={menuItemClassName}>
-                <BadgeCheck
-                  aria-hidden
-                  className="size-4"
-                  strokeWidth={1.75}
-                />
+                <BadgeCheck aria-hidden className="size-4" strokeWidth={1.75} />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem className={menuItemClassName}>
-                <CreditCard
-                  aria-hidden
-                  className="size-4"
-                  strokeWidth={1.75}
-                />
+                <CreditCard aria-hidden className="size-4" strokeWidth={1.75} />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem className={menuItemClassName}>
@@ -762,37 +721,15 @@ export function NavUser({
   );
 }
 
-export function SearchForm({
-  className,
-  ...props
-}: React.ComponentProps<"form">) {
-  return (
-    <form className={className} {...props} role="search">
-      <div className="relative">
-        <label htmlFor="dashboard-search" className="sr-only">
-          Search
-        </label>
-        <SidebarInput
-          id="dashboard-search"
-          name="q"
-          type="search"
-          placeholder="Search…"
-          autoComplete="off"
-          className="h-8 pl-7"
-        />
-        <Search
-          aria-hidden
-          className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 select-none text-l-ink-dim"
-          strokeWidth={1.75}
-        />
-      </div>
-    </form>
-  );
-}
-
 export function SiteHeader() {
   const { toggleSidebar, open, isMobile, openMobile } = useSidebar();
   const expanded = isMobile ? openMobile : open;
+  const crumbs = useSiteBreadcrumb();
+
+  /* Fall back to a sensible default so empty routes don't render a
+     bare logo. Pages register their own crumbs via
+     `useSetSiteBreadcrumb` from the layout module. */
+  const trail = crumbs.length > 0 ? crumbs : [{ label: "Overview" }];
 
   return (
     <header
@@ -829,10 +766,7 @@ export function SiteHeader() {
           <SidebarIcon aria-hidden className="size-4" strokeWidth={1.75} />
         </button>
 
-        <div
-          aria-hidden
-          className="mr-2 h-4 w-px shrink-0 bg-hairline"
-        />
+        <div aria-hidden className="mr-2 h-4 w-px shrink-0 bg-hairline" />
 
         <nav aria-label="Breadcrumb" className="hidden sm:block">
           <ol className="flex items-center gap-2 text-[13px] text-l-ink-dim">
@@ -842,23 +776,39 @@ export function SiteHeader() {
                 aria-label="Chronicle Labs"
                 className="flex items-center text-l-ink-lo transition-colors duration-[150ms] ease-out hover:text-foreground motion-reduce:transition-none"
               >
-                <Logo
-                  variant="wordmark"
-                  theme="auto"
-                  className="h-5 w-auto"
-                />
+                <Logo variant="wordmark" theme="auto" className="h-5 w-auto" />
               </RouterLink>
             </li>
-            <li aria-hidden className="text-l-ink-dim/70 select-none">
-              /
-            </li>
-            <li className="font-medium text-foreground" aria-current="page">
-              Overview
-            </li>
+            {trail.map((crumb, idx) => {
+              const isLast = idx === trail.length - 1;
+              return (
+                <React.Fragment key={`${crumb.label}-${idx}`}>
+                  <li aria-hidden className="text-l-ink-dim/70 select-none">
+                    /
+                  </li>
+                  <li
+                    className={
+                      isLast ? "font-medium text-foreground" : "text-l-ink-lo"
+                    }
+                    aria-current={isLast ? "page" : undefined}
+                  >
+                    {!isLast && crumb.href ? (
+                      <RouterLink
+                        href={crumb.href}
+                        className="transition-colors duration-[150ms] ease-out hover:text-foreground motion-reduce:transition-none"
+                      >
+                        {crumb.label}
+                      </RouterLink>
+                    ) : (
+                      crumb.label
+                    )}
+                  </li>
+                </React.Fragment>
+              );
+            })}
           </ol>
         </nav>
 
-        <SearchForm className="w-full sm:ml-auto sm:w-auto" />
       </div>
     </header>
   );

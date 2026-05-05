@@ -19,6 +19,13 @@ export type {
 export { BacktestNav } from "./backtest-nav";
 export type { BacktestNavProps } from "./backtest-nav";
 
+/* ── List view (manager landing) ───────────────────────────── */
+export { BacktestsList } from "./list/backtests-list";
+export type { BacktestsListProps } from "./list/backtests-list";
+
+export { NewBacktestMenu } from "./list/new-backtest-menu";
+export type { NewBacktestMenuProps } from "./list/new-backtest-menu";
+
 /* ── Configure surfaces ───────────────────────────────────── */
 export { BacktestConfigure } from "./configure/backtest-configure";
 export type { BacktestConfigureProps } from "./configure/backtest-configure";
@@ -34,6 +41,24 @@ export type { BacktestRecipeStripProps } from "./configure/backtest-recipe-strip
 
 export { BacktestRecipePill } from "./configure/backtest-recipe-pill";
 export type { BacktestRecipePillProps } from "./configure/backtest-recipe-pill";
+
+export { BacktestSummaryStrip } from "./configure/backtest-summary-strip";
+export type { BacktestSummaryStripProps } from "./configure/backtest-summary-strip";
+
+export { BacktestStepper } from "./configure/backtest-stepper";
+export type { BacktestStepperProps, BacktestStepStatus } from "./configure/backtest-stepper";
+
+export { StepDataset } from "./configure/steps/step-dataset";
+export type { StepDatasetProps } from "./configure/steps/step-dataset";
+
+export { StepEnrich } from "./configure/steps/step-enrich";
+export type { StepEnrichProps } from "./configure/steps/step-enrich";
+
+export { StepEnvironment } from "./configure/steps/step-environment";
+export type { StepEnvironmentProps } from "./configure/steps/step-environment";
+
+export { StepVersions } from "./configure/steps/step-versions";
+export type { StepVersionsProps } from "./configure/steps/step-versions";
 
 export { BacktestLaunchDock } from "./configure/backtest-launch-dock";
 export type { BacktestLaunchDockProps } from "./configure/backtest-launch-dock";
@@ -69,28 +94,47 @@ export {
   BACKTEST_RECENT_RUNS,
   BACKTEST_CLUSTER_OPTIONS,
   BACKTEST_SCENARIO_MOVES,
+  BACKTEST_SCENARIO_BUCKETS,
+  BACKTEST_DISCOVERY_PROPOSALS,
+  BACKTEST_ENVIRONMENTS_SEED,
+  BACKTEST_RUNS_SEED,
   backtestSparkline,
   buildLiveFeed,
   buildProposedGraders,
+  bucketMeta,
   cloneRecipe,
   findCandidate,
+  findEnvironmentRef,
+  hydrateRecipeFromRun,
+  isAcceptedScenario,
+  isDatasetStepDone,
+  isEnrichStepDone,
+  isEnvironmentStepDone,
+  isVersionsStepDone,
+  isRecipeLaunchable,
   recipeAgentCount,
   recipeCaseCount,
+  recipeEnrichmentCount,
 } from "./data";
 
 export type {
   BacktestRecentRun,
   BacktestClusterOption,
   BacktestScenarioMove,
+  BacktestScenarioBucketMeta,
 } from "./data";
+
+export { BACKTEST_PIPELINE_STEPS } from "./types";
 
 export type {
   BacktestStage,
   BacktestRunStatus,
   BacktestConfigurePhase,
+  BacktestPipelineStep,
   BacktestAgent,
   BacktestAgentRole,
   BacktestDataset,
+  BacktestEnvironmentRef,
   BacktestGrader,
   BacktestGraderKind,
   BacktestGraderWeight,
@@ -101,7 +145,9 @@ export type {
   BacktestDataKind,
   BacktestDataSource,
   BacktestDataScenario,
+  BacktestScenarioBucket,
   BacktestRecipe,
+  BacktestRunSummary,
   BacktestJobPreset,
   BacktestJobIcon,
   BacktestJobMode,

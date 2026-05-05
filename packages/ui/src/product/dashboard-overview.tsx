@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { CompanyLogo } from "../icons";
+import { useSetSiteBreadcrumb } from "../layout/site-breadcrumb";
 import { Button } from "../primitives/button";
 import { StatusDot, type StatusDotVariant } from "../primitives/status-dot";
 
@@ -312,6 +313,13 @@ export function DashboardOverview({
   const [timeline, setTimeline] = React.useState(data.timeline);
   const liveEventIndex = React.useRef(0);
 
+  /* Register the site-header breadcrumb for the overview page. */
+  const breadcrumbCrumbs = React.useMemo(
+    () => [{ label: "Overview" }],
+    []
+  );
+  useSetSiteBreadcrumb(breadcrumbCrumbs);
+
   React.useEffect(() => {
     setTimeline(data.timeline);
     liveEventIndex.current = 0;
@@ -355,15 +363,8 @@ function DashboardHero({ data }: { data: DashboardOverviewData }) {
   return (
     <header className="flex flex-col gap-4 border-b border-divider pb-5 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <div className="mb-3 flex items-center gap-2 font-mono text-[8.5px] uppercase tracking-[0.2em] text-ink-dim">
-          <span>{data.workspace}</span>
-          <span>/</span>
-          <span>{data.agent}</span>
-          <span>/</span>
-          <span className="text-ember">Overview</span>
-        </div>
         <h1 className="font-display text-[34px] font-normal leading-none tracking-[-0.04em] text-ink-hi md:text-[44px]">
-          Today’s <em className="font-normal italic text-ink-lo">signal.</em>
+          Today’s <em className="font-normal italic text-ember">signal.</em>
         </h1>
         <p className="mt-2 max-w-2xl text-[12.5px] leading-5 text-ink-dim">
           {data.subtitle}

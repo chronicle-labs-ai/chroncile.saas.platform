@@ -87,6 +87,19 @@ const TILE_RADIUS: Record<NonNullable<AgentCompanyMarkProps["size"]>, number> = 
 };
 
 /**
+ * Source resolution we request from logo.dev. Generous on purpose — the
+ * default (`size * 2`) lands at 24–44px source which goes soft on
+ * 2.5x/3x displays once Tailwind shrinks the image into the 12–22px
+ * slot. Requesting a flat ~96–256px source keeps the mark crisp at any
+ * tile size and costs nothing extra (logo.dev caches per URL).
+ */
+const REQUEST_SIZE_PX: Record<NonNullable<AgentCompanyMarkProps["size"]>, number> = {
+  xs: 96,
+  sm: 128,
+  md: 256,
+};
+
+/**
  * Tile colors per resolved tone. We use a near-white tile for dark
  * marks and an ink tile for light marks. Both use a thin hairline so
  * the tile reads as design-system surface, not a sticker.
@@ -170,6 +183,7 @@ export function AgentCompanyMark({
         name={name}
         domain={domain}
         size={SIZE_PX[size]}
+        requestSize={REQUEST_SIZE_PX[size]}
         radius={Math.max(radius - 1, 0)}
         fallbackBackground="transparent"
         // Tile already paints the contrast. Without this opt-out the

@@ -47,12 +47,15 @@ interface DataTableSortListProps<TData> {
   table: Table<TData>;
   disabled?: boolean;
   className?: string;
+  /** Icon-only square pill trigger, with a small dot when sort is active. */
+  compact?: boolean;
 }
 
 export function DataTableSortList<TData>({
   table,
   disabled,
   className,
+  compact,
 }: DataTableSortListProps<TData>) {
   const sorting = table.getState().sorting;
 
@@ -112,29 +115,60 @@ export function DataTableSortList<TData>({
     table.setSorting(table.initialState.sorting);
   }, [table]);
 
+  const isActive = sorting.length > 0;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          className={cn(
-            "h-[26px] gap-1.5 px-2 text-[12px] text-l-ink-lo",
-            className,
-          )}
-        >
-          <ArrowDownUp className="size-3.5" strokeWidth={1.75} />
-          Sort
-          {sorting.length > 0 ? (
-            <Badge
-              variant="ember"
-              className="rounded-sm font-mono text-[10px]"
-            >
-              {sorting.length}
-            </Badge>
-          ) : null}
-        </Button>
+        {compact ? (
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={
+              isActive ? `Sort (${sorting.length} active)` : "Sort"
+            }
+            title="Sort"
+            className={cn(
+              "relative inline-flex size-8 shrink-0 items-center justify-center rounded-[10px]",
+              "border border-l-border-faint bg-l-wash-1 text-l-ink-lo",
+              "transition-colors duration-fast ease-out motion-reduce:transition-none",
+              "hover:bg-l-wash-3 hover:text-l-ink",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+              "disabled:cursor-not-allowed disabled:opacity-40",
+              isActive ? "text-l-ink" : null,
+              className,
+            )}
+          >
+            <ArrowDownUp className="size-4" strokeWidth={1.75} aria-hidden />
+            {isActive ? (
+              <span
+                aria-hidden
+                className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-ember"
+              />
+            ) : null}
+          </button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={disabled}
+            className={cn(
+              "h-[26px] gap-1.5 px-2 text-[12px] text-l-ink-lo",
+              className,
+            )}
+          >
+            <ArrowDownUp className="size-3.5" strokeWidth={1.75} />
+            Sort
+            {sorting.length > 0 ? (
+              <Badge
+                variant="ember"
+                className="rounded-sm font-mono text-[10px]"
+              >
+                {sorting.length}
+              </Badge>
+            ) : null}
+          </Button>
+        )}
       </PopoverTrigger>
 
       <PopoverContent

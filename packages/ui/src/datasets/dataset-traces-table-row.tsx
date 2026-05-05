@@ -5,11 +5,10 @@
  * trace, mounted inside the tablecn-powered `DatasetTracesTable`.
  *
  * This is the successor to the old `TraceSummaryRow`. The row's
- * visual affordances (status indicator, source-logo stack, label,
- * cluster pill, events / duration / split / traceId, ember rail,
- * multi-select rail, focus ring, failing dot, chevron, inline
- * pickers) are lifted verbatim — only the host element shape
- * changed.
+ * visual affordances (source-logo stack, label, cluster pill,
+ * events / duration / split / traceId, ember rail, multi-select
+ * rail, focus ring, failing dot, chevron, inline pickers) are
+ * lifted verbatim — only the host element shape changed.
  *
  * Element shape:
  *   - The row is a real `<tr>` (matches tablecn's table semantics
@@ -32,24 +31,14 @@
 import * as React from "react";
 import { ChevronRight } from "lucide-react";
 
-import { Status } from "../primitives/status";
 import { Checkbox } from "../primitives/checkbox";
 import { formatNumber, RelativeTime } from "../connections/time";
 import { cx } from "../utils/cx";
 
 import { DatasetSplitChip } from "./dataset-split-chip";
-import {
-  ClusterPicker,
-  SplitPicker,
-  StatusPicker,
-} from "./dataset-trace-pickers";
+import { ClusterPicker, SplitPicker } from "./dataset-trace-pickers";
 import { SourceLogoStack } from "./source-logo-stack";
-import type {
-  DatasetCluster,
-  DatasetSplit,
-  TraceStatus,
-  TraceSummary,
-} from "./types";
+import type { DatasetCluster, DatasetSplit, TraceSummary } from "./types";
 
 export interface DatasetTracesTableRowProps {
   trace: TraceSummary;
@@ -74,7 +63,7 @@ export interface DatasetTracesTableRowProps {
    *  so the surrounding `<table>` reads correctly to assistive tech.
    *  Header is row 1, so the first data row is typically 2. */
   ariaRowIndex?: number;
-  /** Whether the active eval run (in the canvas's left rail) failed
+  /** Whether the active eval run (in the canvas toolbar) failed
    *  on this trace. Renders a discrete red dot on the leading edge
    *  alongside the status indicator. */
   isFailing?: boolean;
@@ -83,7 +72,7 @@ export interface DatasetTracesTableRowProps {
    *  shift/cmd-click for range / additive multi-select. */
   onSelect?: (
     traceId: string,
-    event: React.MouseEvent | React.KeyboardEvent,
+    event: React.MouseEvent | React.KeyboardEvent
   ) => void;
   /** Hide the chevron affordance on the right. Defaults to false when
    *  `onSelect` is set, true otherwise. */
@@ -95,7 +84,7 @@ export interface DatasetTracesTableRowProps {
   /** Toggleable column visibility — driven by the canvas's TanStack
    *  column visibility state. Hidden columns drop out of the grid
    *  template so the remaining cells redistribute width naturally.
-   *  Status + the trace-label cell are always shown. */
+   *  The trace-label cell is always shown. */
   showCluster?: boolean;
   showEvents?: boolean;
   showDuration?: boolean;
@@ -113,7 +102,6 @@ export interface DatasetTracesTableRowProps {
   clusters?: readonly DatasetCluster[];
   onUpdateCluster?: (traceId: string, next: string | null) => void;
   onUpdateSplit?: (traceId: string, next: DatasetSplit | null) => void;
-  onUpdateStatus?: (traceId: string, next: TraceStatus) => void;
 
   /** Show a checkbox in the leading slot. When set, clicking the
    *  checkbox calls `onMultiSelectChange`. */
@@ -121,11 +109,11 @@ export interface DatasetTracesTableRowProps {
   onMultiSelectChange?: (
     traceId: string,
     next: boolean,
-    event: React.MouseEvent,
+    event: React.MouseEvent
   ) => void;
 
-  /** Optional extra leading slot rendered before the checkbox /
-   *  status indicator. Mostly used by the inspector queue. */
+  /** Optional extra leading slot rendered before the checkbox.
+   *  Mostly used by the inspector queue. */
   selectSlot?: React.ReactNode;
   className?: string;
 
@@ -137,18 +125,6 @@ export interface DatasetTracesTableRowProps {
    *  uses this to position rows absolutely. */
   style?: React.CSSProperties;
 }
-
-const STATUS_KIND: Record<TraceStatus, React.ComponentProps<typeof Status>["kind"]> = {
-  ok: "done",
-  warn: "inprogress",
-  error: "todo",
-};
-
-const STATUS_RING: Record<TraceStatus, string> = {
-  ok: "ring-l-status-done/30",
-  warn: "ring-l-status-inprogress/40",
-  error: "ring-l-p-urgent/40",
-};
 
 export function DatasetTracesTableRow({
   trace,
@@ -171,7 +147,6 @@ export function DatasetTracesTableRow({
   clusters,
   onUpdateCluster,
   onUpdateSplit,
-  onUpdateStatus,
   selectable,
   onMultiSelectChange,
   selectSlot,
@@ -193,7 +168,6 @@ export function DatasetTracesTableRow({
   const clusterEditable =
     editable && !!onUpdateCluster && !!clusters && clusters.length > 0;
   const splitEditable = editable && !!onUpdateSplit;
-  const statusEditable = editable && !!onUpdateStatus;
 
   const gridTemplate = tracesRowGridTemplate(
     showCluster,
@@ -201,7 +175,7 @@ export function DatasetTracesTableRow({
     showDuration,
     showSplit,
     showTraceId,
-    columnWidths,
+    columnWidths
   );
 
   /* Roving tabindex: when the parent passes `isTabStop`, only the
@@ -219,35 +193,39 @@ export function DatasetTracesTableRow({
      hover wash, `data-[state=selected]:bg-muted` styling. The
      ember rail (a Chronicle signature) is kept as a 2-px
      pseudo-element on the leading edge of active / multi-selected
-     rows — additive to shadcn's row chrome, not a replacement. */
+     rows — additive to shadcn's row chrome, not a replacement.
+     Hover affordance is a soft rounded inset overlay (`after:`
+     pseudo-element), mirroring the datasets list view's
+     pseudo-button pattern so the affordance feels card-like
+     instead of cell-flush. */
   const rowClassName = cx(
     "group relative isolate grid items-center",
-    /* Inset the row content from the card edges so cells don't crowd
-       the border. The ember rail stays flush at left:0 because absolute
-       children position against the row's padding-box edge, not its
-       content area. */
-    "px-3",
-    "border-b border-border transition-colors data-[state=selected]:bg-muted",
-    "font-sans text-sm text-foreground",
+    /* No horizontal inset — rows / sticky header / group heads all
+       run edge-to-edge so their bottom borders line up with the
+       scroll container's rounded outline. Cells provide their own
+       internal padding via the `Cell` base. */
+    "border-b border-l-border-faint transition-[background-color,box-shadow] data-[state=selected]:bg-l-surface-selected",
+    "font-sans text-[13px] text-l-ink",
     "motion-reduce:transition-none",
+    /* Full-bleed hover overlay — spans the entire row so the
+       affordance reads as the whole line, not an inset card. */
+    "after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:bg-transparent after:transition-colors after:duration-fast motion-reduce:after:transition-none",
     interactive
       ? cx(
           "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40",
           /* Hover state guarded by `(hover: hover)` so iOS / touch
              devices don't get a stuck wash after tap. */
-          "[@media(hover:hover)]:hover:bg-muted/50",
+          "[@media(hover:hover)]:hover:after:bg-l-surface-hover"
         )
       : null,
     isActive
-      ? "bg-muted before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-ember"
+      ? "bg-l-surface-selected before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-ember"
       : null,
     isMultiSelected && !isActive
       ? "bg-ember/[0.06] before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:bg-ember/40"
       : null,
-    isFocused && !isActive
-      ? "ring-1 ring-inset ring-ember/40"
-      : null,
-    className,
+    isFocused && !isActive ? "ring-1 ring-inset ring-ember/40" : null,
+    className
   );
 
   const sharedProps = {
@@ -277,7 +255,6 @@ export function DatasetTracesTableRow({
     "data-multi-selected": isMultiSelected || undefined,
     "data-canvas-focus": isFocused || undefined,
     "data-trace-id": trace.traceId,
-    "data-status": trace.status,
     "data-failing": isFailing || undefined,
     style: {
       gridTemplateColumns: gridTemplate,
@@ -312,31 +289,18 @@ export function DatasetTracesTableRow({
         )}
       </Cell>
 
-      <Cell asDiv={asDiv} className="relative flex items-center justify-center">
-        {statusEditable ? (
-          <StatusPicker
-            value={trace.status}
-            onChange={(next) => onUpdateStatus!(trace.traceId, next)}
-            variant="dot"
-          />
-        ) : (
-          <Status
-            kind={STATUS_KIND[trace.status]}
-            size={12}
-            className={cx("ring-1", STATUS_RING[trace.status])}
-            ariaLabel={`status: ${trace.status}`}
-          />
-        )}
+      <Cell asDiv={asDiv} className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 font-mono text-[12px] tabular-nums text-l-ink-dim">
+          {formatTraceKey(trace.traceId)}
+        </span>
+        <span className="truncate font-medium text-l-ink">{trace.label}</span>
         {isFailing ? (
           <span
             aria-label="Failed in active eval run"
             title="Failed in active eval run"
-            className="pointer-events-none absolute -right-0.5 -top-0.5 size-1.5 rounded-pill bg-l-p-urgent ring-1 ring-card"
+            className="pointer-events-none size-1.5 shrink-0 rounded-pill bg-l-p-urgent"
           />
         ) : null}
-      </Cell>
-
-      <Cell asDiv={asDiv} className="flex min-w-0 items-center gap-2">
         <SourceLogoStack
           sources={
             trace.sources.length > 0 ? trace.sources : [trace.primarySource]
@@ -347,7 +311,6 @@ export function DatasetTracesTableRow({
           ringClassName="ring-card"
           className="shrink-0"
         />
-        <span className="truncate text-foreground">{trace.label}</span>
       </Cell>
 
       {showCluster ? (
@@ -360,15 +323,13 @@ export function DatasetTracesTableRow({
               variant="ghost"
             />
           ) : cluster ? (
-            <span className="flex min-w-0 items-center gap-1.5">
+            <span className="inline-flex max-w-full items-center gap-1.5 rounded-pill border border-l-border-faint px-2 py-1 text-l-ink-lo">
               <span
                 aria-hidden
                 className="size-1.5 shrink-0 rounded-pill"
                 style={{ background: cluster.color }}
               />
-              <span className="truncate text-[12px] text-muted-foreground">
-                {cluster.label}
-              </span>
+              <span className="truncate text-[12px]">{cluster.label}</span>
             </span>
           ) : (
             /* Empty cluster: render nothing instead of an em-dash. The
@@ -386,7 +347,7 @@ export function DatasetTracesTableRow({
       {showEvents ? (
         <Cell
           asDiv={asDiv}
-          className="text-right font-mono text-[12px] tabular-nums text-muted-foreground"
+          className="text-right font-mono text-[12px] tabular-nums text-l-ink-dim"
         >
           {formatNumber(trace.eventCount)}
         </Cell>
@@ -395,7 +356,7 @@ export function DatasetTracesTableRow({
       {showDuration ? (
         <Cell
           asDiv={asDiv}
-          className="text-right font-mono text-[12px] tabular-nums text-muted-foreground"
+          className="text-right font-mono text-[12px] tabular-nums text-l-ink-dim"
         >
           {formatTraceDuration(trace.durationMs)}
         </Cell>
@@ -412,7 +373,7 @@ export function DatasetTracesTableRow({
           ) : trace.split ? (
             <DatasetSplitChip split={trace.split} compact />
           ) : trace.addedAt ? (
-            <span className="font-mono text-[11.5px] text-muted-foreground">
+            <span className="font-mono text-[11.5px] text-l-ink-dim">
               <RelativeTime iso={trace.addedAt} fallback="" />
             </span>
           ) : (
@@ -424,16 +385,13 @@ export function DatasetTracesTableRow({
       {showTraceId ? (
         <Cell
           asDiv={asDiv}
-          className="truncate font-mono text-[11px] text-muted-foreground"
+          className="truncate font-mono text-[11px] text-l-ink-dim"
         >
           {trace.traceId}
         </Cell>
       ) : null}
 
-      <Cell
-        asDiv={asDiv}
-        className="flex justify-end text-muted-foreground"
-      >
+      <Cell asDiv={asDiv} className="flex justify-end text-l-ink-dim">
         {showChevron ? (
           <ChevronRight
             className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-data-[active=true]:opacity-100"
@@ -459,12 +417,15 @@ interface CellProps extends React.HTMLAttributes<HTMLElement> {
   asDiv?: boolean;
 }
 
-/** Mirrors shadcn `<TableCell>`'s base — `p-2 align-middle`. The
+/** Mirrors shadcn `<TableCell>`'s base — `px-3 align-middle`. The
  *  caller's `className` is appended so per-column overrides
  *  (`text-right`, `min-w-0`, etc.) still win without losing the
- *  base padding. */
+ *  base padding. The 12 px horizontal inset gives content room to
+ *  breathe inside an edge-to-edge row (which otherwise has no row
+ *  inset of its own — the borders run flush with the scroll
+ *  container so each row reads as one connected band). */
 function Cell({ asDiv, className, children, ...rest }: CellProps) {
-  const merged = cx("px-2 align-middle", className);
+  const merged = cx("px-3 align-middle", className);
   if (asDiv) {
     return (
       <div role="cell" className={merged} {...rest}>
@@ -489,7 +450,6 @@ function Cell({ asDiv, className, children, ...rest }: CellProps) {
  *  but keeps the row-template / header in sync. */
 export type TracesRowColumnId =
   | "select"
-  | "status"
   | "trace"
   | "cluster"
   | "events"
@@ -516,33 +476,59 @@ interface TracesRowColumnDef {
 
 export const TRACES_ROW_COLUMNS: readonly TracesRowColumnDef[] = [
   { id: "select", defaultTrack: "16px", defaultPx: 16, resizable: false },
-  { id: "status", defaultTrack: "18px", defaultPx: 18, resizable: false },
   {
     id: "trace",
-    defaultTrack: "minmax(120px,1.5fr)",
+    defaultTrack: "minmax(180px,1.6fr)",
     defaultPx: 320,
     resizable: true,
-    minPx: 120,
+    minPx: 180,
     maxPx: 720,
   },
   {
     id: "cluster",
-    defaultTrack: "minmax(80px,0.7fr)",
-    defaultPx: 160,
+    defaultTrack: "minmax(120px,0.8fr)",
+    defaultPx: 180,
     resizable: true,
-    minPx: 80,
+    minPx: 120,
     maxPx: 360,
   },
-  { id: "events", defaultTrack: "64px", defaultPx: 64, resizable: true, minPx: 56, maxPx: 120 },
-  { id: "duration", defaultTrack: "64px", defaultPx: 64, resizable: true, minPx: 56, maxPx: 120 },
-  { id: "split", defaultTrack: "88px", defaultPx: 88, resizable: true, minPx: 72, maxPx: 200 },
-  { id: "traceId", defaultTrack: "120px", defaultPx: 120, resizable: true, minPx: 80, maxPx: 320 },
+  {
+    id: "events",
+    defaultTrack: "64px",
+    defaultPx: 64,
+    resizable: true,
+    minPx: 56,
+    maxPx: 120,
+  },
+  {
+    id: "duration",
+    defaultTrack: "64px",
+    defaultPx: 64,
+    resizable: true,
+    minPx: 56,
+    maxPx: 120,
+  },
+  {
+    id: "split",
+    defaultTrack: "88px",
+    defaultPx: 88,
+    resizable: true,
+    minPx: 72,
+    maxPx: 200,
+  },
+  {
+    id: "traceId",
+    defaultTrack: "120px",
+    defaultPx: 120,
+    resizable: true,
+    minPx: 80,
+    maxPx: 320,
+  },
   { id: "chevron", defaultTrack: "16px", defaultPx: 16, resizable: false },
 ];
 
-const COLUMN_BY_ID: ReadonlyMap<TracesRowColumnId, TracesRowColumnDef> = new Map(
-  TRACES_ROW_COLUMNS.map((c) => [c.id, c]),
-);
+const COLUMN_BY_ID: ReadonlyMap<TracesRowColumnId, TracesRowColumnDef> =
+  new Map(TRACES_ROW_COLUMNS.map((c) => [c.id, c]));
 
 /** Inline `grid-template-columns` for the trace row + matching list
  *  header. Inline-style instead of a Tailwind class so toggling
@@ -553,11 +539,10 @@ export function tracesRowGridTemplate(
   showDuration: boolean,
   showSplit: boolean,
   showTraceId: boolean = false,
-  widths?: Partial<Record<TracesRowColumnId, number>>,
+  widths?: Partial<Record<TracesRowColumnId, number>>
 ): string {
   const visibility: Record<TracesRowColumnId, boolean> = {
     select: true,
-    status: true,
     trace: true,
     cluster: showCluster,
     events: showEvents,
@@ -582,7 +567,7 @@ export function tracesRowGridTemplate(
 /** Lookup helper for resize handlers — returns the column definition
  *  by id (min/max bounds, resizable flag). */
 export function getTracesRowColumn(
-  id: TracesRowColumnId,
+  id: TracesRowColumnId
 ): TracesRowColumnDef | undefined {
   return COLUMN_BY_ID.get(id);
 }
@@ -595,9 +580,21 @@ export function formatTraceDuration(ms: number): string {
   return `${Math.round(ms / 3_600_000)}h`;
 }
 
+function formatTraceKey(traceId: string): string {
+  const explicit = traceId.match(/(?:trace[_-])?([a-z]+)?[_-]?(\d+)$/i);
+  if (explicit?.[2]) {
+    return `TR-${explicit[2].padStart(3, "0")}`;
+  }
+  let hash = 0;
+  for (let i = 0; i < traceId.length; i += 1) {
+    hash = (hash * 31 + traceId.charCodeAt(i)) % 997;
+  }
+  return `TR-${String(hash + 1).padStart(3, "0")}`;
+}
+
 /** Lookup helper for grouping a trace list by cluster. */
 export function buildClusterIndex(
-  clusters: readonly DatasetCluster[],
+  clusters: readonly DatasetCluster[]
 ): Map<string, DatasetCluster> {
   return new Map(clusters.map((c) => [c.id, c]));
 }

@@ -1,52 +1,58 @@
 "use client";
 
 import * as React from "react";
-import { Hash } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
+import { useSetSiteBreadcrumb } from "../layout/site-breadcrumb";
 
 import { AgentActionsMenu } from "./agent-actions-menu";
-import { AgentCard } from "./agent-card";
+import { AgentCompanyMark } from "./agent-company-mark";
 import { AgentDetailPage } from "./agent-detail-page";
 import { AgentEmpty } from "./agent-empty";
-import { AgentRow } from "./agent-row";
-import { AgentsKpiStrip } from "./agents-kpi-strip";
-import {
-  AgentsToolbar,
-  matchesHealthFilter,
-  type AgentHealthFilter,
-  type AgentsGroupBy,
-  type AgentsView,
-} from "./agents-toolbar";
+import { AgentLinearRow } from "./agent-linear-row";
+import { AgentsFacetRail } from "./agents-facet-rail";
+import { AgentsToolbar, type AgentsScope } from "./agents-toolbar";
 import { agentsManagerSeed, agentSnapshotsByName } from "./data";
 import { FRAMEWORK_META } from "./framework-meta";
-import type { AgentSnapshot, AgentSummary } from "./types";
+import type {
+  AgentFramework,
+  AgentSnapshot,
+  AgentSummary,
+} from "./types";
 
 /*
- * AgentsManager — page-level surface for browsing registered agents.
+ * AgentsManager — Linear-style page-level surface for the agent
+ * registry. The previous implementation stacked four loud layers
+ * (display hero + KPI strip + group-by chips + dense cards/rows). The
+ * rewrite mirrors `DatasetsManager`:
  *
- * The rewrite swaps the old Linear-utility header for a brand-aligned
- * narrative shell ("Your agent fleet.") and reorganizes the surface
- * around three jobs:
+ *   ┌──────────────────────────────────────────────────────────┐
+ *   │  Agents · 18 agents · 14 active across 4 frameworks      │
+ *   ├──────────────────────────────────────────────────────────┤
+ *   │  [search] [filter] [panel] [hash]                        │
+ *   ├──────────────────────────────────────────────────────────┤
+ *   │  ▼ Vercel AI SDK · 5                                      │
+ *   │     AGT-001  refund-bot   ·   [Vercel AI SDK]  [SP]  Apr 28 ⋯ │
+ *   │     AGT-007  triage-bot   ·   [Vercel AI SDK]  [TS]  Apr 22 ⋯ │
+ *   │  ▼ OpenAI Agents · 3                                       │
+ *   └──────────────────────────────────────────────────────────┘
  *
- *   1. Tell the user what agents are for     → AgentCard purpose line
- *   2. Tell the user how the fleet is doing  → AgentsKpiStrip tiles
- *   3. Group by what makes sense to the user → AgentsToolbar groupBy
+ * Three things are deliberately gone:
+ *   - `AgentsKpiStrip` (health rolls into a row dot)
+ *   - Grid view + group-by chips (list-only, fixed framework grouping)
+ *   - Hero subhead with display font + ember accent
  *
  * Detail navigation: when the user opens an agent inside the manager,
  * the manager renders `AgentDetailPage` inline. Read-only over the
- * registry; the only mutation we surface is "pin a version as current"
- * which flows through `onPinLatest` (optimistic when no handler is
- * wired so stories feel real).
+ * registry; `onPinLatest` remains the only mutation we surface.
  */
 
 export interface AgentsManagerProps {
   agents?: readonly AgentSummary[];
   /** Snapshot data for the detail surface, keyed by agent name. */
   snapshotsByName?: Readonly<Record<string, AgentSnapshot>>;
-  initialView?: AgentsView;
-  initialGroupBy?: AgentsGroupBy;
   workspace?: string;
   /** Render slot for the detail surface — defaults to the
    *  `AgentDetailPage` chassis. Threaded through so the same manager
@@ -75,8 +81,6 @@ export interface AgentsManagerDetailHelpers {
 export function AgentsManager({
   agents: initialAgents = agentsManagerSeed,
   snapshotsByName = agentSnapshotsByName,
-  initialView = "grid",
-  initialGroupBy = "purpose",
   workspace = "Chronicle",
   renderDetail,
   onChange,
@@ -88,12 +92,19 @@ export function AgentsManager({
     ...initialAgents,
   ]);
   const [query, setQuery] = React.useState("");
-  const [healthFilters, setHealthFilters] = React.useState<AgentHealthFilter[]>(
+  const [scope, setScope] = React.useState<AgentsScope>("all");
+  const [selectedFrameworks, setSelectedFrameworks] = React.useState<
+    AgentFramework[]
+  >([]);
+  const [selectedOwners, setSelectedOwners] = React.useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = React.useState<string[]>(
     [],
   );
-  const [view, setView] = React.useState<AgentsView>(initialView);
-  const [groupBy, setGroupBy] =
-    React.useState<AgentsGroupBy>(initialGroupBy);
+  const [panelOpen, setPanelOpen] = React.useState(true);
+  const [railWidth, setRailWidth] = React.useState(320);
+  const [collapsedGroups, setCollapsedGroups] = React.useState<
+    readonly string[]
+  >([]);
   const [selectedName, setSelectedName] = React.useState<string | null>(null);
 
   const propagate = React.useCallback(
@@ -107,9 +118,23 @@ export function AgentsManager({
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return list.filter((agent) => {
+      if (scope === "active" && agent.totalRuns === 0) return false;
+      if (scope === "idle" && agent.totalRuns > 0) return false;
       if (
-        healthFilters.length > 0 &&
-        !healthFilters.some((f) => matchesHealthFilter(agent, f))
+        selectedFrameworks.length > 0 &&
+        !selectedFrameworks.includes(agent.framework)
+      ) {
+        return false;
+      }
+      if (
+        selectedOwners.length > 0 &&
+        !(agent.owner && selectedOwners.includes(agent.owner))
+      ) {
+        return false;
+      }
+      if (
+        selectedCategories.length > 0 &&
+        !(agent.category && selectedCategories.includes(agent.category))
       ) {
         return false;
       }
@@ -130,20 +155,47 @@ export function AgentsManager({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [list, query, healthFilters]);
+  }, [
+    list,
+    query,
+    scope,
+    selectedFrameworks,
+    selectedOwners,
+    selectedCategories,
+  ]);
 
-  const grouped = React.useMemo(
-    () => groupAgents(filtered, groupBy),
-    [filtered, groupBy],
-  );
+  const grouped = React.useMemo(() => groupAgents(filtered), [filtered]);
+  const summary = React.useMemo(() => getAgentsSummary(list), [list]);
 
-  const toggleHealth = (health: AgentHealthFilter) => {
-    setHealthFilters((cur) =>
-      cur.includes(health)
-        ? cur.filter((h) => h !== health)
-        : [...cur, health],
+  const toggleFramework = (framework: AgentFramework) => {
+    setSelectedFrameworks((cur) =>
+      cur.includes(framework)
+        ? cur.filter((f) => f !== framework)
+        : [...cur, framework],
     );
   };
+
+  const toggleOwner = (owner: string) => {
+    setSelectedOwners((cur) =>
+      cur.includes(owner) ? cur.filter((o) => o !== owner) : [...cur, owner],
+    );
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((cur) =>
+      cur.includes(category)
+        ? cur.filter((c) => c !== category)
+        : [...cur, category],
+    );
+  };
+
+  const toggleGroup = React.useCallback((key: string) => {
+    setCollapsedGroups((current) =>
+      current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key],
+    );
+  }, []);
 
   const showEmpty = list.length === 0;
   const showFilteredEmpty = !showEmpty && filtered.length === 0;
@@ -162,6 +214,17 @@ export function AgentsManager({
     if (fromIndex) return { ...fromIndex, summary: selectedAgent };
     return null;
   }, [selectedAgent, snapshotsByName]);
+
+  /* Register the site-header breadcrumb. Detail surface deepens the
+     trail with the active agent's name. */
+  const breadcrumbCrumbs = React.useMemo(
+    () =>
+      selectedAgent
+        ? [{ label: "Agents" }, { label: selectedAgent.name }]
+        : [{ label: "Agents" }],
+    [selectedAgent],
+  );
+  useSetSiteBreadcrumb(breadcrumbCrumbs);
 
   const requestCopy = React.useCallback((value: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -196,18 +259,16 @@ export function AgentsManager({
   return (
     <div
       className={cx(
-        "flex min-h-[calc(100svh-var(--header-height,3.5rem)-2rem)] flex-col gap-4 bg-l-surface p-4 text-l-ink",
+        "flex h-full min-h-0 flex-col bg-l-surface text-l-ink",
+        selectedSnapshot
+          ? "gap-0 p-0"
+          : "min-h-[calc(100svh-var(--header-height,3.5rem)-2rem)] gap-4 p-4",
         className,
       )}
     >
       {selectedSnapshot ? (
-        <>
-          <DetailHeader
-            workspace={workspace}
-            agentName={selectedSnapshot.summary.name}
-            onBack={() => setSelectedName(null)}
-          />
-          <div className="flex flex-1 min-h-0 flex-col rounded-[4px] border border-hairline-strong bg-l-surface-raised">
+        <div className="flex flex-1 min-h-0 flex-row overflow-hidden bg-l-surface-raised">
+          <div className="flex min-w-0 flex-1 flex-col">
             {renderDetail ? (
               renderDetail(selectedSnapshot, helpers)
             ) : (
@@ -217,55 +278,65 @@ export function AgentsManager({
               />
             )}
           </div>
-        </>
+        </div>
       ) : (
         <>
-          <ManagerHero
-            workspace={workspace}
-            count={list.length}
-            onOpenHashSearch={onOpenHashSearch}
-          />
+          <ListHeader count={list.length} summary={summary} />
 
           {showEmpty ? (
             <AgentEmpty variant="empty" />
           ) : (
             <>
-              <AgentsKpiStrip
-                agents={list}
-                selected={healthFilters}
-                onToggle={toggleHealth}
-              />
-
               <AgentsToolbar
                 query={query}
                 onQueryChange={setQuery}
-                view={view}
-                onViewChange={setView}
-                groupBy={groupBy}
-                onGroupByChange={setGroupBy}
+                selectedScope={scope}
+                onScopeChange={setScope}
                 totalCount={list.length}
-                onOpenHashSearch={onOpenHashSearch}
+                panelOpen={panelOpen}
+                onPanelToggle={() => setPanelOpen((prev) => !prev)}
+                onOpenHashSearch={
+                  onOpenHashSearch ? () => onOpenHashSearch() : undefined
+                }
               />
 
               {showFilteredEmpty ? (
                 <AgentEmpty
                   variant="filtered"
                   onClearFilters={() => {
-                    setHealthFilters([]);
+                    setSelectedFrameworks([]);
+                    setSelectedOwners([]);
+                    setSelectedCategories([]);
+                    setScope("all");
                     setQuery("");
                   }}
                 />
               ) : (
-                <GroupedFleet
-                  groups={grouped}
-                  view={view}
-                  groupBy={groupBy}
-                  snapshotsByName={snapshotsByName}
-                  onOpen={(name) => setSelectedName(name)}
-                  onPinLatest={requestPinLatest}
-                  onCopy={requestCopy}
-                  onOpenHashSearch={onOpenHashSearch}
-                />
+                <div className="flex min-h-0 flex-1 overflow-hidden">
+                  <GroupedAgentsList
+                    groups={grouped}
+                    collapsedGroups={collapsedGroups}
+                    onToggleGroup={toggleGroup}
+                    onOpen={(name) => setSelectedName(name)}
+                    snapshotsByName={snapshotsByName}
+                    onPinLatest={requestPinLatest}
+                    onCopy={requestCopy}
+                    onOpenHashSearch={onOpenHashSearch}
+                  />
+                  {panelOpen ? (
+                    <AgentsFacetRail
+                      agents={list}
+                      selectedFrameworks={selectedFrameworks}
+                      onFrameworkToggle={toggleFramework}
+                      selectedOwners={selectedOwners}
+                      onOwnerToggle={toggleOwner}
+                      selectedCategories={selectedCategories}
+                      onCategoryToggle={toggleCategory}
+                      width={railWidth}
+                      onWidthChange={setRailWidth}
+                    />
+                  ) : null}
+                </div>
               )}
             </>
           )}
@@ -275,88 +346,51 @@ export function AgentsManager({
   );
 }
 
-/* ── Hero ────────────────────────────────────────────────── */
+/* ── Header ──────────────────────────────────────────────── */
 
-interface ManagerHeroProps {
-  workspace: string;
-  count: number;
-  onOpenHashSearch?: () => void;
+interface AgentsSummary {
+  total: number;
+  active: number;
+  frameworks: number;
 }
 
-function ManagerHero({
-  workspace,
-  count,
-  onOpenHashSearch,
-}: ManagerHeroProps) {
+function getAgentsSummary(agents: readonly AgentSummary[]): AgentsSummary {
+  const frameworks = new Set<AgentFramework>();
+  let active = 0;
+  for (const agent of agents) {
+    frameworks.add(agent.framework);
+    if (agent.totalRuns > 0) active += 1;
+  }
+  return { total: agents.length, active, frameworks: frameworks.size };
+}
+
+interface ListHeaderProps {
+  count: number;
+  summary: AgentsSummary;
+}
+
+/**
+ * Hero header — mirrors `DatasetsManager`'s `ListHeader` so both
+ * surfaces read as the same product. Display headline at 34/44px with
+ * an italic ember-toned accent ("fleet."), followed by a 12.5px dim
+ * summary line. The KPI strip is intentionally absent — health rolls
+ * into the per-row dot and the facet rail handles filtering.
+ */
+function ListHeader({ count, summary }: ListHeaderProps) {
   return (
     <header className="flex flex-col gap-4 border-b border-l-border-faint pb-5 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <div className="mb-3 flex items-center gap-2 font-mono text-[8.5px] uppercase tracking-[0.2em] text-l-ink-dim">
-          <span>{workspace}</span>
-          <span aria-hidden>/</span>
-          <span className="text-ember">Agents</span>
-        </div>
         <h1 className="font-display text-[34px] font-normal leading-none tracking-[-0.04em] text-l-ink-hi md:text-[44px]">
           Your agent{" "}
-          <em className="font-normal italic text-l-ink-lo">fleet.</em>
+          <em className="font-normal italic text-ember">fleet.</em>
         </h1>
         <p className="mt-2 max-w-2xl text-[12.5px] leading-5 text-l-ink-dim">
-          What every agent is for, what it&rsquo;s been doing, and where it&rsquo;s
-          drifting. {count > 0
-            ? `${count} ${count === 1 ? "agent" : "agents"} versioned across prompts, tools, models, and runtime policies.`
+          What every agent is for, what it&rsquo;s been doing, and where
+          it&rsquo;s drifting.{" "}
+          {count > 0
+            ? `${summary.total} ${summary.total === 1 ? "agent" : "agents"} · ${summary.active} active across ${summary.frameworks} ${summary.frameworks === 1 ? "framework" : "frameworks"}.`
             : "Wrap an agent with the artifactory SDK to start versioning prompts, tools, models, and policies as immutable artifacts."}
         </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-[8.5px] uppercase tracking-[0.14em] text-l-ink-dim">
-          Live
-        </span>
-        {onOpenHashSearch ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            onPress={onOpenHashSearch}
-            leadingIcon={<Hash className="size-3.5" strokeWidth={1.75} />}
-          >
-            Hash search
-          </Button>
-        ) : null}
-      </div>
-    </header>
-  );
-}
-
-interface DetailHeaderProps {
-  workspace: string;
-  agentName: string;
-  onBack: () => void;
-}
-
-function DetailHeader({
-  workspace,
-  agentName,
-  onBack,
-}: DetailHeaderProps) {
-  return (
-    <header className="flex flex-col gap-3 border-b border-l-border-faint pb-3 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <div className="mb-1 flex items-center gap-1.5 font-sans text-[11px] text-l-ink-dim">
-          <span>{workspace}</span>
-          <span aria-hidden>›</span>
-          <button
-            type="button"
-            onClick={onBack}
-            className={cx(
-              "text-l-ink-lo transition-colors duration-fast",
-              "hover:text-l-ink",
-              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-ember",
-            )}
-          >
-            Agents
-          </button>
-          <span aria-hidden>›</span>
-          <span className="truncate text-ember">{agentName}</span>
-        </div>
       </div>
     </header>
   );
@@ -365,149 +399,139 @@ function DetailHeader({
 /* ── Grouping ────────────────────────────────────────────── */
 
 interface AgentGroup {
-  key: string;
+  key: AgentFramework;
   label: string;
-  description?: string;
   agents: readonly AgentSummary[];
 }
 
 function groupAgents(
   agents: readonly AgentSummary[],
-  groupBy: AgentsGroupBy,
 ): readonly AgentGroup[] {
-  if (groupBy === "flat") {
-    return [
-      {
-        key: "all",
-        label: "All agents",
-        agents,
-      },
-    ];
-  }
-
-  const groups = new Map<string, AgentSummary[]>();
-
+  const groups = new Map<AgentFramework, AgentSummary[]>();
   for (const agent of agents) {
-    const key =
-      groupBy === "framework"
-        ? agent.framework
-        : agent.category ?? "uncategorized";
-    const arr = groups.get(key);
+    const arr = groups.get(agent.framework);
     if (arr) arr.push(agent);
-    else groups.set(key, [agent]);
+    else groups.set(agent.framework, [agent]);
   }
-
-  const ordered = Array.from(groups.entries()).map(([key, arr]) => ({
-    key,
-    label:
-      groupBy === "framework"
-        ? FRAMEWORK_META[key as keyof typeof FRAMEWORK_META]?.label ?? key
-        : key === "uncategorized"
-          ? "Uncategorized"
-          : key,
-    agents: arr,
-  }));
-
-  ordered.sort((a, b) => {
-    if (b.agents.length !== a.agents.length) {
-      return b.agents.length - a.agents.length;
-    }
-    return a.label.localeCompare(b.label);
-  });
-
-  return ordered;
+  return Array.from(groups.entries())
+    .map(([key, arr]) => ({
+      key,
+      label: FRAMEWORK_META[key]?.label ?? key,
+      agents: arr,
+    }))
+    .sort((a, b) => {
+      if (b.agents.length !== a.agents.length) {
+        return b.agents.length - a.agents.length;
+      }
+      return a.label.localeCompare(b.label);
+    });
 }
 
-/* ── Grouped fleet ──────────────────────────────────────── */
+/* ── Grouped list ────────────────────────────────────────── */
 
-interface GroupedFleetProps {
+interface GroupedAgentsListProps {
   groups: readonly AgentGroup[];
-  view: AgentsView;
-  groupBy: AgentsGroupBy;
-  snapshotsByName: Readonly<Record<string, AgentSnapshot>>;
+  collapsedGroups: readonly string[];
+  onToggleGroup: (key: string) => void;
   onOpen: (name: string) => void;
+  snapshotsByName: Readonly<Record<string, AgentSnapshot>>;
   onPinLatest: (name: string) => Promise<void> | void;
   onCopy: (value: string) => void;
   onOpenHashSearch?: (hint?: string) => void;
 }
 
-function GroupedFleet({
+function GroupedAgentsList({
   groups,
-  view,
-  groupBy,
-  snapshotsByName,
+  collapsedGroups,
+  onToggleGroup,
   onOpen,
+  snapshotsByName,
   onPinLatest,
   onCopy,
   onOpenHashSearch,
-}: GroupedFleetProps) {
-  return (
-    <div className="flex flex-col gap-5">
-      {groups.map((group) => (
-        <section key={group.key} className="flex flex-col gap-2.5">
-          {groupBy === "flat" ? null : (
-            <header className="flex items-baseline justify-between gap-3 border-b border-l-border-faint pb-1.5">
-              <h2 className="font-sans text-[12px] font-medium tracking-[0.02em] text-l-ink">
-                {group.label}
-              </h2>
-              <span className="font-mono text-[10.5px] tabular-nums text-l-ink-dim">
-                {group.agents.length} agent
-                {group.agents.length === 1 ? "" : "s"}
-              </span>
-            </header>
-          )}
+}: GroupedAgentsListProps) {
+  const collapsed = React.useMemo(
+    () => new Set(collapsedGroups),
+    [collapsedGroups],
+  );
 
-          {view === "list" ? (
-            <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
-              {group.agents.map((agent) => (
-                <AgentRow
-                  key={agent.name}
-                  agent={agent}
-                  onOpen={onOpen}
-                  actionsSlot={
-                    <AgentActionsMenu
+  return (
+    <div className="flex min-w-0 flex-1 overflow-hidden">
+      <div className="chron-scrollbar-hidden flex h-full w-full flex-col gap-2 overflow-auto">
+        {groups.map((group) => {
+          const isCollapsed = collapsed.has(group.key);
+          const meta = FRAMEWORK_META[group.key];
+          return (
+            <section key={group.key} className="flex flex-col">
+              <div className="flex h-9 items-center gap-2 rounded-md border border-transparent bg-l-wash-1 px-3 text-[13px] text-l-ink">
+                <button
+                  type="button"
+                  aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${group.label}`}
+                  aria-expanded={!isCollapsed}
+                  onClick={() => onToggleGroup(group.key)}
+                  className="flex size-5 items-center justify-center rounded-md text-l-ink-dim transition-[background-color,color] duration-fast hover:bg-l-wash-3 hover:text-l-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
+                >
+                  <ChevronDown
+                    className={cx(
+                      "size-3.5 transition-transform duration-fast",
+                      isCollapsed ? "-rotate-90" : null,
+                    )}
+                    strokeWidth={1.75}
+                  />
+                </button>
+                {meta ? (
+                  <AgentCompanyMark
+                    name={meta.companyName}
+                    domain={meta.companyDomain}
+                    size="xs"
+                    fallbackIcon={meta.Icon}
+                    alt={`${meta.label} logo`}
+                  />
+                ) : null}
+                <span className="font-medium">{group.label}</span>
+                <span className="font-mono text-[11px] tabular-nums text-l-ink-dim">
+                  {group.agents.length}
+                </span>
+                <Button
+                  variant="icon"
+                  size="sm"
+                  aria-label={`Add agent to ${group.label}`}
+                  className="ml-auto"
+                  isDisabled
+                >
+                  <Plus className="size-3.5" strokeWidth={1.75} />
+                </Button>
+              </div>
+
+              {isCollapsed ? null : (
+                <div className="flex flex-col">
+                  {group.agents.map((agent) => (
+                    <AgentLinearRow
+                      key={agent.name}
                       agent={agent}
                       onOpen={onOpen}
-                      onPinLatest={onPinLatest}
-                      onCopyArtifactId={onCopy}
-                      onOpenHashSearch={onOpenHashSearch}
-                      configHash={
-                        snapshotsByName[agent.name]?.versions[0]?.artifact
-                          .configHash
+                      actionsSlot={
+                        <AgentActionsMenu
+                          agent={agent}
+                          onOpen={onOpen}
+                          onPinLatest={onPinLatest}
+                          onCopyArtifactId={onCopy}
+                          onOpenHashSearch={onOpenHashSearch}
+                          configHash={
+                            snapshotsByName[agent.name]?.versions[0]?.artifact
+                              .configHash
+                          }
+                          onCopyConfigHash={onCopy}
+                        />
                       }
-                      onCopyConfigHash={onCopy}
                     />
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {group.agents.map((agent) => (
-                <AgentCard
-                  key={agent.name}
-                  agent={agent}
-                  onOpen={onOpen}
-                  actionsSlot={
-                    <AgentActionsMenu
-                      agent={agent}
-                      onOpen={onOpen}
-                      onPinLatest={onPinLatest}
-                      onCopyArtifactId={onCopy}
-                      onOpenHashSearch={onOpenHashSearch}
-                      configHash={
-                        snapshotsByName[agent.name]?.versions[0]?.artifact
-                          .configHash
-                      }
-                      onCopyConfigHash={onCopy}
-                    />
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      ))}
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -46,6 +46,8 @@ interface DataTableRowHeightMenuProps {
   value: DatasetTracesRowHeight;
   onChange: (next: DatasetTracesRowHeight) => void;
   className?: string;
+  /** Icon-only square pill trigger, with a small dot when not the default. */
+  compact?: boolean;
 }
 
 const OPTIONS: Array<{
@@ -63,24 +65,51 @@ export function DataTableRowHeightMenu({
   value,
   onChange,
   className,
+  compact,
 }: DataTableRowHeightMenuProps) {
   const [open, setOpen] = React.useState(false);
+  const isActive = value !== "default";
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            "h-[26px] gap-1.5 px-2 text-[12px] text-l-ink-lo",
-            className,
-          )}
-          aria-label="Row height"
-          title="Row height"
-        >
-          <Rows3 className="size-3.5" strokeWidth={1.75} />
-          <span className="hidden sm:inline">Height</span>
-        </Button>
+        {compact ? (
+          <button
+            type="button"
+            aria-label="Row height"
+            title="Row height"
+            className={cn(
+              "relative inline-flex size-8 shrink-0 items-center justify-center rounded-[10px]",
+              "border border-l-border-faint bg-l-wash-1 text-l-ink-lo",
+              "transition-colors duration-fast ease-out motion-reduce:transition-none",
+              "hover:bg-l-wash-3 hover:text-l-ink",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+              isActive ? "text-l-ink" : null,
+              className,
+            )}
+          >
+            <Rows3 className="size-4" strokeWidth={1.75} aria-hidden />
+            {isActive ? (
+              <span
+                aria-hidden
+                className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-ember"
+              />
+            ) : null}
+          </button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "h-[26px] gap-1.5 px-2 text-[12px] text-l-ink-lo",
+              className,
+            )}
+            aria-label="Row height"
+            title="Row height"
+          >
+            <Rows3 className="size-3.5" strokeWidth={1.75} />
+            <span className="hidden sm:inline">Height</span>
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-[180px] p-1" align="end">
         <ul role="listbox" aria-label="Row height" className="flex flex-col">

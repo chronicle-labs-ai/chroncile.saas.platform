@@ -151,7 +151,7 @@ export interface CreateDatasetPayload {
 
 /** Handler for `CreateDatasetPayload`; returns the created dataset. */
 export type CreateDatasetHandler = (
-  payload: CreateDatasetPayload,
+  payload: CreateDatasetPayload
 ) => Promise<Dataset> | Dataset;
 
 /**
@@ -161,13 +161,11 @@ export type CreateDatasetHandler = (
  */
 export interface UpdateDatasetPayload {
   id: string;
-  patch: Partial<
-    Pick<Dataset, "name" | "description" | "purpose" | "tags">
-  >;
+  patch: Partial<Pick<Dataset, "name" | "description" | "purpose" | "tags">>;
 }
 
 export type UpdateDatasetHandler = (
-  payload: UpdateDatasetPayload,
+  payload: UpdateDatasetPayload
 ) => Promise<Dataset> | Dataset;
 
 /**
@@ -182,7 +180,7 @@ export interface DeleteDatasetPayload {
 }
 
 export type DeleteDatasetHandler = (
-  payload: DeleteDatasetPayload,
+  payload: DeleteDatasetPayload
 ) => void | Promise<void>;
 
 /* ── Trace removal (complements the add flow) ──────────────── */
@@ -200,7 +198,7 @@ export interface RemoveTraceFromDatasetPayload {
 }
 
 export type RemoveTraceFromDatasetHandler = (
-  payload: RemoveTraceFromDatasetPayload,
+  payload: RemoveTraceFromDatasetPayload
 ) => void | Promise<void>;
 
 /* ── Bulk + inline trace mutations ─────────────────────────── */
@@ -236,7 +234,7 @@ export interface UpdateTracesPayload {
  * batch button while the returned promise resolves.
  */
 export type UpdateTracesHandler = (
-  payload: UpdateTracesPayload,
+  payload: UpdateTracesPayload
 ) => void | Promise<void>;
 
 /* ── Saved views ─────────────────────────────────────────── */
@@ -256,6 +254,8 @@ export interface DatasetSavedView {
   id: string;
   /** Display name. */
   name: string;
+  /** Optional one-line description for the view editor. */
+  description?: string;
   /** Visibility scope. `personal` = only the creator; `workspace` =
    *  shared with everyone. */
   scope: "personal" | "workspace";
@@ -320,19 +320,23 @@ export interface DeleteSavedViewPayload {
 }
 
 export type CreateSavedViewHandler = (
-  payload: CreateSavedViewPayload,
+  payload: CreateSavedViewPayload
 ) => Promise<DatasetSavedView> | DatasetSavedView;
 export type UpdateSavedViewHandler = (
-  payload: UpdateSavedViewPayload,
+  payload: UpdateSavedViewPayload
 ) => Promise<DatasetSavedView> | DatasetSavedView;
 export type DeleteSavedViewHandler = (
-  payload: DeleteSavedViewPayload,
+  payload: DeleteSavedViewPayload
 ) => void | Promise<void>;
 
 /* ── Eval runs ───────────────────────────────────────────── */
 
 /** Status badge tone for an eval run. */
-export type DatasetEvalRunStatus = "passing" | "regressed" | "running" | "failed";
+export type DatasetEvalRunStatus =
+  | "passing"
+  | "regressed"
+  | "running"
+  | "failed";
 
 /**
  * One eval run scoped to a dataset. Surfaces the agent version, the
@@ -359,9 +363,4 @@ export interface DatasetEvalRun {
 
 /* ── Re-exports for ergonomic import ───────────────────────── */
 
-export type {
-  Dataset,
-  DatasetPurpose,
-  DatasetSplit,
-  StreamTimelineEvent,
-};
+export type { Dataset, DatasetPurpose, DatasetSplit, StreamTimelineEvent };

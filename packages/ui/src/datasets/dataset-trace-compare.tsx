@@ -9,7 +9,7 @@ import { formatNumber, formatStableDateTime } from "../connections/time";
 
 import { DatasetSplitChip } from "./dataset-split-chip";
 import { formatTraceDuration } from "./dataset-traces-table-row";
-import type { DatasetCluster, TraceStatus, TraceSummary } from "./types";
+import type { DatasetCluster, TraceSummary } from "./types";
 
 /*
  * DatasetTraceCompareDrawer — inline compare panel that swaps in
@@ -19,7 +19,7 @@ import type { DatasetCluster, TraceStatus, TraceSummary } from "./types";
  * properties, same close affordance).
  *
  * Surfaces the metadata fields builders look at first when
- * triaging dataset cleanups: status, cluster, split, source,
+ * triaging dataset cleanups: cluster, split, source,
  * duration, event count, addedAt, addedBy, note. Cells with
  * differing values get an ember accent so the eye lands on
  * differences immediately. Anything that's identical is muted.
@@ -180,7 +180,6 @@ function CompareGrid({
      to tint and screen readers can pick up "differs" on the row. */
   const diffSet = React.useMemo<ReadonlySet<string>>(() => {
     const set = new Set<string>();
-    if (left.status !== right.status) set.add("Status");
     if ((left.clusterId ?? null) !== (right.clusterId ?? null)) set.add("Cluster");
     if ((left.split ?? null) !== (right.split ?? null)) set.add("Split");
     if (left.primarySource !== right.primarySource) set.add("Source");
@@ -278,12 +277,6 @@ function buildFieldRows(
 ): FieldRow[] {
   return [
     {
-      label: "Status",
-      leftValue: <StatusInline status={left.status} />,
-      rightValue: <StatusInline status={right.status} />,
-      diffKey: "status",
-    },
-    {
       label: "Cluster",
       leftValue: <ClusterCell trace={left} clusters={clusters} />,
       rightValue: <ClusterCell trace={right} clusters={clusters} />,
@@ -379,28 +372,6 @@ function buildFieldRows(
 }
 
 /* ── Cells ───────────────────────────────────────────────── */
-
-function StatusInline({ status }: { status: TraceStatus }) {
-  const meta = {
-    ok: { label: "OK", color: "bg-l-status-done", text: "text-l-status-done" },
-    warn: {
-      label: "Warn",
-      color: "bg-l-status-inprogress",
-      text: "text-l-status-inprogress",
-    },
-    error: {
-      label: "Error",
-      color: "bg-l-p-urgent",
-      text: "text-l-p-urgent",
-    },
-  }[status];
-  return (
-    <span className={cx("inline-flex items-center gap-1.5 font-medium", meta.text)}>
-      <span aria-hidden className={cx("size-1.5 rounded-pill", meta.color)} />
-      {meta.label}
-    </span>
-  );
-}
 
 function ClusterCell({
   trace,

@@ -6,8 +6,8 @@
  * menus as Connections / Agents / Stream timeline. New filterable
  * fields go here, keyed by id; the canvas wires them through.
  *
- * Static columns (cluster, split, status, source, addedBy) read their
- * options from `defaultDatasetTraceColumns(snapshot)` so each dataset
+ * Static columns (cluster, split, source, addedBy) read their options
+ * from `defaultDatasetTraceColumns(snapshot)` so each dataset
  * advertises only the values it actually contains.
  */
 
@@ -16,17 +16,10 @@ import type { ColumnConfig, ColumnOption } from "../product/filters";
 import type {
   DatasetCluster,
   DatasetSnapshot,
-  TraceStatus,
   TraceSummary,
 } from "./types";
 
 /* ── Static option pickers ─────────────────────────────────── */
-
-const STATUS_OPTIONS: ColumnOption[] = [
-  { value: "ok", label: "OK", tone: "green" },
-  { value: "warn", label: "Warn", tone: "amber" },
-  { value: "error", label: "Error", tone: "red" },
-];
 
 const SPLIT_OPTIONS: ColumnOption[] = [
   { value: "train", label: "Train", tone: "violet" },
@@ -38,17 +31,29 @@ const SPLIT_OPTIONS: ColumnOption[] = [
 
 function clusterOptions(
   clusters: readonly DatasetCluster[],
+  traces: readonly TraceSummary[]
 ): ColumnOption[] {
-  if (clusters.length === 0) return [];
-  return clusters.map<ColumnOption>((c) => ({
+  const options = clusters.map<ColumnOption>((c) => ({
     value: c.id,
     label: c.label,
     tone: "neutral",
   }));
+  if (traces.some((trace) => !trace.clusterId)) {
+    options.push({ value: "", label: "Unclustered", tone: "neutral" });
+  }
+  return options;
+}
+
+function splitOptions(traces: readonly TraceSummary[]): ColumnOption[] {
+  const options = [...SPLIT_OPTIONS];
+  if (traces.some((trace) => !trace.split)) {
+    options.push({ value: "", label: "Unassigned", tone: "neutral" });
+  }
+  return options;
 }
 
 function distinctSourceOptions(
-  traces: readonly TraceSummary[],
+  traces: readonly TraceSummary[]
 ): ColumnOption[] {
   const seen = new Set<string>();
   for (const t of traces) {
@@ -61,7 +66,7 @@ function distinctSourceOptions(
 }
 
 function distinctAddedByOptions(
-  traces: readonly TraceSummary[],
+  traces: readonly TraceSummary[]
 ): ColumnOption[] {
   const seen = new Set<string>();
   for (const t of traces) {
@@ -83,9 +88,10 @@ function distinctAddedByOptions(
  * text contains, and number compares.
  */
 export function defaultDatasetTraceColumns(
-  snapshot: DatasetSnapshot,
+  snapshot: DatasetSnapshot
 ): ColumnConfig<TraceSummary>[] {
-  const clusters = clusterOptions(snapshot.clusters);
+  const clusters = clusterOptions(snapshot.clusters, snapshot.traces);
+  const splits = splitOptions(snapshot.traces);
   const sources = distinctSourceOptions(snapshot.traces);
   const addedBy = distinctAddedByOptions(snapshot.traces);
 
@@ -105,24 +111,18 @@ export function defaultDatasetTraceColumns(
       placeholder: "trace_…",
     },
     {
-      id: "status",
-      label: "Status",
-      type: "multiOption",
-      accessor: (row) => row.status as TraceStatus,
-      options: STATUS_OPTIONS,
-    },
-    {
       id: "split",
       label: "Split",
       type: "multiOption",
       accessor: (row) => row.split ?? null,
-      options: SPLIT_OPTIONS,
+      options: splits,
     },
     {
       id: "source",
       label: "Source",
       type: "multiOption",
-      accessor: (row) => row.primarySource,
+      accessor: (row) =>
+        row.sources.length > 0 ? row.sources : [row.primarySource],
       options: sources,
     },
     {

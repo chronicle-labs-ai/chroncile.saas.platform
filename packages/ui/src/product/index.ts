@@ -1,6 +1,12 @@
 export { ShowcaseCard } from "./showcase-card";
 export type { ShowcaseCardProps } from "./showcase-card";
 
+export { ProductionCaptureAnimation } from "./production-capture-animation";
+export type { ProductionCaptureAnimationProps } from "./production-capture-animation";
+
+export { ProductionCaptureCard } from "./production-capture-card";
+export type { ProductionCaptureCardProps } from "./production-capture-card";
+
 export { SectionHeader } from "./section-header";
 export type { SectionHeaderProps } from "./section-header";
 

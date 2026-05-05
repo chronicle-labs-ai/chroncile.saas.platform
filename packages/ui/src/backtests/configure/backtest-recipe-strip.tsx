@@ -145,6 +145,15 @@ function DataGlyph({ kind }: { kind: BacktestRecipe["data"]["kind"] }) {
       </svg>
     );
   }
+  if (kind === "production") {
+    return (
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+        <path d="M2 8a6 6 0 1 0 2-4.5" />
+        <path d="M2 3v4h4" />
+        <path d="M6 6.5l4 2-4 2z" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
   return (
     <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
       <path d="M2 4c0-1.1 2.7-2 6-2s6 .9 6 2v8c0 1.1-2.7 2-6 2s-6-.9-6-2z" />
@@ -159,8 +168,15 @@ function dataSummary(recipe: BacktestRecipe): string {
     const n = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
     return `${d.datasetLabel} · ${n.toLocaleString()} cases`;
   }
+  if (d.kind === "production") {
+    const n = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
+    const window = d.sources[0]?.filters?.window ?? "recent";
+    return `prod · ${window} · ${n.toLocaleString()} traces`;
+  }
   const traces = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
-  const gen = d.scenarios.reduce((acc, s) => acc + (s.count || 0), 0);
+  const gen = d.scenarios
+    .filter((s) => s.accepted !== false)
+    .reduce((acc, s) => acc + (s.count || 0), 0);
   if (traces && gen) return `${traces.toLocaleString()} traces + ${gen} gen`;
   if (traces) return `${traces.toLocaleString()} traces`;
   if (gen) return `${gen} gen cases`;

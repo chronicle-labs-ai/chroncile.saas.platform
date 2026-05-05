@@ -41,12 +41,12 @@ export function JobIcon({
           <path d="M9 12l2 2 4-4" />
         </svg>
       );
-    case "bug":
+    case "replay":
       return (
         <svg {...props}>
-          <rect x="7" y="8" width="10" height="11" rx="4" />
-          <path d="M9 8V6a3 3 0 016 0v2" />
-          <path d="M3 12h4M17 12h4M4 6l3 3M20 6l-3 3M4 18l3-3M20 18l-3-3" />
+          <path d="M3 12a9 9 0 1 0 3-6.7" />
+          <path d="M3 4v5h5" />
+          <path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none" />
         </svg>
       );
     case "suite":

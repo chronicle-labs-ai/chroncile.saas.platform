@@ -66,6 +66,7 @@ export type {
   AppSidebarProps,
   DashboardShellUser,
   DashboardShellWorkspace,
+  NavGroup,
   NavMainItem,
 } from "./dashboard-sidebar-shell";
 
@@ -81,6 +82,22 @@ export type {
   LinkProviderProps,
   NavigateFn,
 } from "./link-context";
+
+export {
+  SiteBreadcrumbProvider,
+  useSetSiteBreadcrumb,
+  useSiteBreadcrumb,
+} from "./site-breadcrumb";
+export type {
+  SiteBreadcrumbItem,
+  SiteBreadcrumbProviderProps,
+} from "./site-breadcrumb";
+
+export { RAIL_HANDLE_CLASSNAME, useRailResize } from "./use-rail-resize";
+export type {
+  UseRailResizeOptions,
+  UseRailResizeReturn,
+} from "./use-rail-resize";
 
 export { WorkspaceSwitcher } from "./workspace-switcher";
 export type {

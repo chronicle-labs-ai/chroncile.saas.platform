@@ -11,7 +11,9 @@ const meta: Meta<typeof BacktestConfigure> = {
   decorators: [
     (Story) => (
       <ProductChromeFrame padding="none">
-        <Story />
+        <div className="h-[calc(100svh-3rem)]">
+          <Story />
+        </div>
       </ProductChromeFrame>
     ),
   ],
@@ -20,12 +22,33 @@ const meta: Meta<typeof BacktestConfigure> = {
 export default meta;
 type Story = StoryObj<typeof BacktestConfigure>;
 
+const replayRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "replay")!.recipe,
+);
+const compareRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "compare")!.recipe,
+);
 const regressionRecipe = cloneRecipe(
   BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
 );
+const suiteRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "suite")!.recipe,
+);
 
-export const PickPhase: Story = {};
+export const EmptyState: Story = {};
 
-export const RecipePhase: Story = {
-  args: { initialRecipe: regressionRecipe },
+export const ReplayPipeline_StepDataset: Story = {
+  args: { initialRecipe: replayRecipe, initialStep: "dataset" },
+};
+
+export const ComparePipeline_StepEnrich: Story = {
+  args: { initialRecipe: compareRecipe, initialStep: "enrich" },
+};
+
+export const RegressionPipeline_StepEnvironment: Story = {
+  args: { initialRecipe: regressionRecipe, initialStep: "environment" },
+};
+
+export const SuitePipeline_StepVersions: Story = {
+  args: { initialRecipe: suiteRecipe, initialStep: "versions" },
 };

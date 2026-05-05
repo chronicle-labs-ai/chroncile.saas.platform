@@ -16,7 +16,6 @@ import {
   Trash2,
   User,
   X,
-  type LucideIcon,
 } from "lucide-react";
 
 import { cx } from "../utils/cx";
@@ -48,7 +47,6 @@ import type {
   DatasetCluster,
   DatasetSnapshot,
   RemoveTraceFromDatasetHandler,
-  TraceStatus,
   TraceSummary,
 } from "./types";
 
@@ -64,8 +62,8 @@ import type {
  *      sits above the details (matches `StreamEventDetail`'s
  *      `<TraceStrip>`).
  *   3. Details — Linear-style label/value rows for trace metadata
- *      (cluster, split, status, source, events, duration, started,
- *      added by, dataset).
+ *      (cluster, split, source, events, duration, started, added by,
+ *      dataset).
  *   4. Footer — "Open in timeline" + "Remove from dataset" actions
  *      when the matching handlers are wired.
  *
@@ -75,6 +73,8 @@ import type {
  */
 
 const DEFAULT_INSPECTOR_WIDTH = 440;
+const DEFAULT_INSPECTOR_MIN_WIDTH = 280;
+const DEFAULT_INSPECTOR_MAX_WIDTH = 720;
 
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
@@ -106,8 +106,17 @@ export interface DatasetTraceDetailDrawerProps {
   /** Optional secondary CTA — e.g. "Open in timeline" — that lets the
    *  parent navigate from the drawer to the full timeline tab. */
   onJumpToTimeline?: (traceId: string) => void;
-  /** Inspector width in pixels. Defaults to {@link DEFAULT_INSPECTOR_WIDTH}. */
+  /** Inspector width in pixels. Defaults to {@link DEFAULT_INSPECTOR_WIDTH}.
+   *  When `onWidthChange` is provided the drawer renders a draggable
+   *  splitter on its left edge so users can resize the panel. */
   width?: number;
+  /** Receives the new pixel width during a splitter drag. When omitted,
+   *  the splitter is hidden and the drawer is fixed at `width`. */
+  onWidthChange?: (next: number) => void;
+  /** Minimum pixel width the splitter will allow. */
+  minWidth?: number;
+  /** Maximum pixel width the splitter will allow. */
+  maxWidth?: number;
   className?: string;
 }
 
@@ -119,6 +128,9 @@ export function DatasetTraceDetailDrawer({
   onRemoveTrace,
   onJumpToTimeline,
   width = DEFAULT_INSPECTOR_WIDTH,
+  onWidthChange,
+  minWidth = DEFAULT_INSPECTOR_MIN_WIDTH,
+  maxWidth = DEFAULT_INSPECTOR_MAX_WIDTH,
   className,
 }: DatasetTraceDetailDrawerProps) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -241,19 +253,136 @@ export function DatasetTraceDetailDrawer({
 
   const showFooterActions = !!(onJumpToTimeline || onRemoveTrace);
 
+  /* ── Resize splitter ──────────────────────────────────────────
+   *
+   *  Pointer-event-driven splitter on the left edge of the drawer.
+   *  Tracks the gesture relative to the pointer-down origin (rather
+   *  than reading raw clientX each move) so the panel resizes 1:1
+   *  with cursor movement. While dragging:
+   *    - the width transition is suppressed (no easing lag)
+   *    - the document body cursor is forced to col-resize so the
+   *      cursor doesn't flicker between resize and pointer when the
+   *      mouse drifts off the 6 px handle
+   *    - text selection is suppressed via user-select: none on body
+   */
+  const [dragging, setDragging] = React.useState(false);
+  const dragOriginRef = React.useRef<{
+    pointerX: number;
+    startWidth: number;
+  } | null>(null);
+
+  const handleResizePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!onWidthChange || event.button !== 0) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragOriginRef.current = {
+      pointerX: event.clientX,
+      startWidth: width,
+    };
+    setDragging(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  const handleResizePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const origin = dragOriginRef.current;
+    if (!origin || !onWidthChange) return;
+    /* Drawer is on the right edge; dragging the splitter LEFT
+       (negative delta) should grow the panel. */
+    const delta = origin.pointerX - event.clientX;
+    const next = Math.max(
+      minWidth,
+      Math.min(maxWidth, origin.startWidth + delta),
+    );
+    if (next !== width) onWidthChange(next);
+  };
+
+  const endResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragOriginRef.current) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragOriginRef.current = null;
+    setDragging(false);
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  };
+
+  const handleResizeKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onWidthChange) return;
+    const STEP = event.shiftKey ? 32 : 8;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      onWidthChange(Math.min(maxWidth, width + STEP));
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      onWidthChange(Math.max(minWidth, width - STEP));
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      onWidthChange(maxWidth);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      onWidthChange(minWidth);
+    }
+  };
+
+  React.useEffect(() => {
+    /* Defensive cleanup so a remount mid-drag (or HMR) can't leave
+       the body locked into resize mode. */
+    return () => {
+      if (dragOriginRef.current) {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+  }, []);
+
   return (
     <aside
       aria-label="Trace detail"
       aria-hidden={!visible}
       data-state={visible ? "open" : "closed"}
       className={cx(
-        "shrink-0 self-stretch overflow-hidden border-l border-hairline bg-l-surface-bar",
-        "transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none",
+        "relative shrink-0 self-stretch overflow-hidden border-l border-hairline bg-l-surface-bar",
+        /* Suppress the width transition mid-drag so the panel
+           tracks the cursor 1:1 instead of easing behind it. */
+        dragging
+          ? "transition-[opacity] duration-200 ease-out motion-reduce:transition-none"
+          : "transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none",
         visible ? "opacity-100" : "pointer-events-none opacity-0",
         className,
       )}
       style={{ width: visible ? width : 0 }}
     >
+      {onWidthChange && visible ? (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize trace inspector"
+          aria-valuenow={width}
+          aria-valuemin={minWidth}
+          aria-valuemax={maxWidth}
+          tabIndex={0}
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={endResize}
+          onPointerCancel={endResize}
+          onKeyDown={handleResizeKeyDown}
+          className={cx(
+            /* Generous 6 px hit area sitting flush at the left edge,
+               with a 1 px visible hairline that highlights on hover
+               and during a drag. Touch users get the full 6 px. */
+            "absolute inset-y-0 left-0 z-30 w-1.5 cursor-col-resize touch-none",
+            "transition-colors duration-fast ease-out motion-reduce:transition-none",
+            "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-px",
+            "before:bg-transparent before:transition-colors before:duration-fast motion-reduce:before:transition-none",
+            "[@media(hover:hover)]:hover:before:bg-l-border-strong",
+            "focus-visible:outline-none focus-visible:before:bg-ember focus-visible:before:w-0.5",
+            dragging ? "before:!bg-ember before:!w-0.5" : null,
+          )}
+        />
+      ) : null}
+
       {/* Inner pane is a fixed width so children don't reflow as the
          outer width animates. */}
       <div className="flex h-full flex-col bg-l-surface-bar text-l-ink" style={{ width }}>
@@ -351,20 +480,6 @@ export function DatasetTraceDetailDrawer({
                     ) : (
                       <span className="text-l-ink-dim">—</span>
                     )
-                  }
-                />
-                <DetailRow
-                  label="Status"
-                  icon={
-                    <StatusIcon
-                      status={renderTrace.status}
-                      size={12}
-                    />
-                  }
-                  value={
-                    <span className={statusToneClass(renderTrace.status)}>
-                      {statusLabel(renderTrace.status)}
-                    </span>
                   }
                 />
                 <DetailRow
@@ -948,44 +1063,4 @@ function cssEscape(value: string): string {
     return CSS.escape(value);
   }
   return value.replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`);
-}
-
-const STATUS_ICON: Record<TraceStatus, LucideIcon> = {
-  ok: Activity,
-  warn: Activity,
-  error: Activity,
-};
-
-function StatusIcon({ status, size }: { status: TraceStatus; size: number }) {
-  const Icon = STATUS_ICON[status];
-  return (
-    <Icon
-      size={size}
-      strokeWidth={1.75}
-      className={statusToneClass(status)}
-      aria-hidden
-    />
-  );
-}
-
-function statusToneClass(status: TraceStatus): string {
-  switch (status) {
-    case "ok":
-      return "text-l-status-done";
-    case "warn":
-      return "text-l-status-inprogress";
-    case "error":
-      return "text-l-p-urgent";
-  }
-}
-
-function statusLabel(status: TraceStatus): string {
-  switch (status) {
-    case "ok":
-      return "OK";
-    case "warn":
-      return "Warn";
-    case "error":
-      return "Error";
-  }
 }

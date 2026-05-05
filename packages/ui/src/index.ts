@@ -19,6 +19,7 @@ export * from "./connectors";
 export * from "./connections";
 export * from "./stream-timeline";
 export * from "./datasets";
+export * from "./environments";
 export * from "./agents";
 export * from "./backtests";
 
@@ -30,11 +31,7 @@ export {
   themeScript,
   THEME_STORAGE_KEY,
 } from "./theme";
-export type {
-  Theme,
-  ThemeProviderProps,
-  ThemeToggleProps,
-} from "./theme";
+export type { Theme, ThemeProviderProps, ThemeToggleProps } from "./theme";
 
 // Tokens (TS mirrors)
 export * as tokens from "./tokens";

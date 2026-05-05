@@ -10,6 +10,8 @@
 "use client";
 
 import * as React from "react";
+import { ArrowLeft } from "lucide-react";
+
 import { Eyebrow } from "../primitives/eyebrow";
 import { Mono } from "../typography/mono";
 import { cx } from "../utils/cx";
@@ -17,8 +19,10 @@ import { cx } from "../utils/cx";
 import { RunStatusPill } from "./atoms";
 import type { BacktestRunStatus, BacktestStage } from "./types";
 
+type SwitchableStage = Exclude<BacktestStage, "list">;
+
 interface StageDef {
-  id: BacktestStage;
+  id: SwitchableStage;
   label: string;
   number: string;
 }
@@ -34,6 +38,8 @@ export interface BacktestNavProps {
   stage: BacktestStage;
   /** Click handler for a stage tab. */
   onStageChange?: (stage: BacktestStage) => void;
+  /** Click handler for the "back to all backtests" affordance. */
+  onBackToList?: () => void;
   /** Display name of the current run (or "new backtest" while
    *  configuring). Shown after the breadcrumb. */
   runName: string;
@@ -47,6 +53,7 @@ export interface BacktestNavProps {
 export function BacktestNav({
   stage,
   onStageChange,
+  onBackToList,
   runName,
   runStatus,
   workspace = "chronicle",
@@ -57,28 +64,55 @@ export function BacktestNav({
   return (
     <div
       className={cx(
-        "flex items-center justify-between gap-4 border-b border-hairline bg-surface-00 px-4 py-2.5",
+        "flex items-center justify-between gap-4 border-b border-l-border-faint bg-l-surface px-4 py-2.5",
         className,
       )}
     >
       {/* Left: brand + breadcrumb + run status */}
       <div className="flex min-w-0 items-center gap-2">
-        <BrandMark />
-        <Eyebrow className="text-ink-dim">{workspace}</Eyebrow>
+        {onBackToList ? (
+          <button
+            type="button"
+            onClick={onBackToList}
+            title="Back to all backtests"
+            className="inline-flex size-7 items-center justify-center rounded-md border border-l-border-faint text-l-ink-dim transition-colors hover:border-l-border-strong hover:text-l-ink-lo"
+          >
+            <ArrowLeft className="size-3.5" strokeWidth={1.6} />
+          </button>
+        ) : (
+          <BrandMark />
+        )}
+        <Eyebrow className="text-l-ink-dim">{workspace}</Eyebrow>
         <BreadcrumbSeparator />
-        <Eyebrow className="text-ink-lo">backtests</Eyebrow>
+        {onBackToList ? (
+          <button
+            type="button"
+            onClick={onBackToList}
+            className="inline-flex items-center rounded-[2px] px-1 py-0.5 transition-colors hover:bg-l-wash-3"
+          >
+            <Eyebrow className="text-l-ink-lo">backtests</Eyebrow>
+          </button>
+        ) : (
+          <Eyebrow className="text-l-ink-lo">backtests</Eyebrow>
+        )}
         <BreadcrumbSeparator />
-        <span className="truncate text-body-sm font-medium text-ink-hi">{runName}</span>
+        <span className="truncate text-body-sm font-medium text-l-ink-hi">{runName}</span>
         {runStatus ? (
           <RunStatusPill
-            tone={runStatus === "running" ? "live" : runStatus === "done" ? "done" : "paused"}
+            tone={
+              runStatus === "running"
+                ? "live"
+                : runStatus === "done"
+                  ? "done"
+                  : "paused"
+            }
             className="ml-1"
           />
         ) : null}
       </div>
 
       {/* Center: stage switcher */}
-      <div className="flex items-center gap-0.5 rounded-md border border-hairline bg-surface-01 p-0.5">
+      <div className="flex items-center gap-0.5 rounded-md border border-l-border-faint bg-l-wash-1 p-0.5">
         {STAGES.map((s, idx) => {
           const isActive = s.id === stage;
           const isDone = idx < stageIndex;
@@ -91,8 +125,8 @@ export function BacktestNav({
               className={cx(
                 "group inline-flex items-center gap-1.5 rounded-xs px-2.5 py-1 transition-colors",
                 isActive
-                  ? "bg-surface-03 text-ink-hi"
-                  : "text-ink-lo hover:bg-surface-02 hover:text-ink",
+                  ? "bg-l-wash-5 text-l-ink-hi"
+                  : "text-l-ink-lo hover:bg-l-wash-3 hover:text-l-ink",
               )}
             >
               <Mono
@@ -127,7 +161,7 @@ export function BacktestNav({
       <button
         type="button"
         title="Docs"
-        className="inline-flex size-7 items-center justify-center rounded-md border border-hairline text-ink-dim transition-colors hover:border-hairline-strong hover:text-ink-lo"
+        className="inline-flex size-7 items-center justify-center rounded-md border border-l-border-faint text-l-ink-dim transition-colors hover:border-l-border-strong hover:text-l-ink-lo"
       >
         <svg
           width="14"
@@ -148,7 +182,7 @@ export function BacktestNav({
 
 function BreadcrumbSeparator() {
   return (
-    <span aria-hidden className="text-ink-faint">
+    <span aria-hidden className="text-l-ink-dim">
       /
     </span>
   );

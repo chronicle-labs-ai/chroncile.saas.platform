@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
-import { SidebarInset, SidebarProvider, SiteHeader, Toaster } from "ui";
-
+import {
+  SidebarInset,
+  SidebarProvider,
+  SiteBreadcrumbProvider,
+  SiteHeader,
+  Toaster,
+} from "ui";
 import {
   authWithReason,
   loginErrorCodeFromAuthReason,
@@ -60,30 +65,32 @@ export default async function DashboardLayout({
 
   return (
     <DashboardLinkRouterProvider>
-      <div className="[--header-height:3.5rem]">
-        <SidebarProvider className="flex flex-col">
-          <SiteHeader />
-          <div className="flex flex-1">
-            <DashboardSidebar
-              user={{
-                name: user.name || user.email || "Chronicle user",
-                email: user.email || "",
-                avatar: user.image,
-              }}
-              workspace={{
-                name: user.tenantName || "Chronicle",
-                plan: user.role || "Workspace",
-              }}
-              organizations={user.organizations}
-              primaryTenantId={user.primaryTenantId}
-              activeWorkosOrganizationId={user.workosOrganizationId}
-            />
-            <SidebarInset>
-              <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </div>
+      <SiteBreadcrumbProvider>
+        <div className="[--header-height:3.5rem]">
+          <SidebarProvider className="flex flex-col">
+            <SiteHeader />
+            <div className="flex flex-1">
+              <DashboardSidebar
+                user={{
+                  name: user.name || user.email || "Chronicle user",
+                  email: user.email || "",
+                  avatar: user.image,
+                }}
+                workspace={{
+                  name: user.tenantName || "Chronicle",
+                  plan: user.role || "Workspace",
+                }}
+                organizations={user.organizations}
+                primaryTenantId={user.primaryTenantId}
+                activeWorkosOrganizationId={user.workosOrganizationId}
+              />
+              <SidebarInset>
+                <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
+        </div>
+      </SiteBreadcrumbProvider>
       <Toaster />
     </DashboardLinkRouterProvider>
   );

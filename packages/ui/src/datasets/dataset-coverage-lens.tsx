@@ -19,7 +19,6 @@ import type { DatasetCluster, TraceSummary } from "./types";
  *
  *   - Source distribution (which integrations dominate?)
  *   - Cluster distribution (which failure modes are well-covered?)
- *   - Status mix (how much of the set is broken?)
  *   - Split balance (is train / val / test ratio sane?)
  *
  * Each row is a single horizontal stacked bar — no nested charts, no
@@ -50,7 +49,6 @@ export interface DatasetCoverageLensProps {
 export type CoverageBucketSelection =
   | { kind: "source"; value: string }
   | { kind: "cluster"; value: string }
-  | { kind: "status"; value: TraceSummary["status"] }
   | { kind: "split"; value: NonNullable<TraceSummary["split"]> | "unassigned" };
 
 export function DatasetCoverageLens({
@@ -125,7 +123,7 @@ export function DatasetCoverageLens({
 /* ── Group renderer ──────────────────────────────────────── */
 
 interface CoverageGroup {
-  id: "source" | "cluster" | "status" | "split";
+  id: "source" | "cluster" | "split";
   title: string;
   buckets: CoverageBucket[];
   /** Optional warning emitted when a critical bucket is empty
@@ -150,8 +148,8 @@ interface CoverageBucket {
    *  dot. The Source group uses this slot to render a `<CompanyLogo>`
    *  so each row carries the brand mark instead of a generic dot —
    *  GitHub becomes the octocat, Stripe becomes the Stripe S, etc.
-   *  Other groups (cluster / status / split) leave it unset and fall
-   *  back to the colored dot. */
+   *  Other groups (cluster / split) leave it unset and fall back to
+   *  the colored dot. */
   iconNode?: React.ReactNode;
   selection: CoverageBucketSelection;
   warn?: boolean;
@@ -328,27 +326,6 @@ function buildCoverageGroups(
       };
     });
 
-  /* Status — fixed buckets so empty ones still appear. */
-  const statusCounts = countBy(traces, (t) => t.status);
-  const statusBuckets: CoverageBucket[] = (
-    [
-      ["ok", "OK", "bg-l-status-done", "bg-l-status-done"],
-      ["warn", "Warn", "bg-l-status-inprogress", "bg-l-status-inprogress"],
-      ["error", "Error", "bg-l-p-urgent", "bg-l-p-urgent"],
-    ] as const
-  ).map(([value, label, bar, dot]) => {
-    const count = statusCounts.get(value) ?? 0;
-    return {
-      key: `status:${value}`,
-      label,
-      count,
-      ratio: count / total,
-      bar,
-      dot,
-      selection: { kind: "status", value },
-    };
-  });
-
   /* Split — fixed buckets including Unassigned. */
   const splitBuckets: CoverageBucket[] = (
     [
@@ -390,7 +367,6 @@ function buildCoverageGroups(
   return [
     { id: "source", title: "Source", buckets: sourceBuckets },
     { id: "cluster", title: "Cluster", buckets: clusterBuckets },
-    { id: "status", title: "Status", buckets: statusBuckets },
     {
       id: "split",
       title: "Split",

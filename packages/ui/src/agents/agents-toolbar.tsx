@@ -1,28 +1,52 @@
 "use client";
 
 import * as React from "react";
-import { Hash, LayoutGrid, List } from "lucide-react";
+import { Filter, Hash, PanelRight } from "lucide-react";
 
 import { cx } from "../utils/cx";
-import { Button } from "../primitives/button";
-import { Chip } from "../primitives/chip";
 import { Input } from "../primitives/input";
 
 import type { AgentRunStatus } from "./types";
 
 /*
- * AgentsToolbar — secondary control strip below the hero + KPI band:
+ * AgentsToolbar — calm controls strip above the grouped Linear-style
+ * agent list:
  *
- *   [ search ]   [ group: Purpose · Framework · Flat ]   [list/grid]  [Hashes ↗]
+ *   [ search ]   [filter] [panel] [Hashes]
  *
- * Health filters used to live here as primary chips. They have moved
- * up to the KPI strip (`AgentsKpiStrip`), where each health bucket
- * doubles as a click-to-filter tile. Framework grouping replaces the
- * old framework-as-a-chip pattern.
+ * Scope (`all` · `active` · `idle`) lives on the toolbar via the
+ * `selectedScope` prop; the chips themselves render in the facet rail
+ * to keep the toolbar visually quiet — the toolbar exposes the state
+ * so the manager can wire one ↔ the other.
+ *
+ * Mirrors `DatasetsToolbar` so both surfaces feel like the same
+ * product. KPI strip + grid view + group-by chips were retired to cut
+ * the tab's noise: health rolls into a single dot in the row, and
+ * grouping is fixed (framework/category) inside the manager.
  */
 
-export type AgentsView = "list" | "grid";
+const TOOLBAR_ICON_BUTTON_CN = cx(
+  "relative inline-flex size-8 shrink-0 items-center justify-center rounded-[10px]",
+  "border border-l-border-faint bg-l-wash-1 text-l-ink-lo",
+  "transition-colors duration-fast ease-out motion-reduce:transition-none",
+  "hover:bg-l-wash-3 hover:text-l-ink",
+  "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+  "disabled:cursor-not-allowed disabled:opacity-40"
+);
 
+export type AgentsScope = "all" | "active" | "idle";
+
+export const AGENT_SCOPE_FILTERS: readonly {
+  value: AgentsScope;
+  label: string;
+}[] = [
+  { value: "all", label: "All agents" },
+  { value: "active", label: "Active" },
+  { value: "idle", label: "Idle" },
+];
+
+/* Health tags retained as a typed surface for the row's status dot.
+ * Filtering is no longer chip-based — it's facet-rail driven. */
 export type AgentHealthFilter = "healthy" | "drifting" | "errored";
 
 export const AGENT_HEALTH_FILTERS: readonly AgentHealthFilter[] = [
@@ -31,28 +55,20 @@ export const AGENT_HEALTH_FILTERS: readonly AgentHealthFilter[] = [
   "errored",
 ];
 
-export type AgentsGroupBy = "purpose" | "framework" | "flat";
-
-export const AGENT_GROUP_BY_OPTIONS: readonly AgentsGroupBy[] = [
-  "purpose",
-  "framework",
-  "flat",
-];
-
-const GROUP_BY_LABEL: Record<AgentsGroupBy, string> = {
-  purpose: "Purpose",
-  framework: "Framework",
-  flat: "Flat",
-};
-
 export interface AgentsToolbarProps {
   query: string;
   onQueryChange: (next: string) => void;
-  view: AgentsView;
-  onViewChange: (next: AgentsView) => void;
-  groupBy: AgentsGroupBy;
-  onGroupByChange: (next: AgentsGroupBy) => void;
+  /** Selected scope. Kept for parent-level filtering; the toolbar
+   *  itself doesn't render scope chips (they live in the facet rail). */
+  selectedScope?: AgentsScope;
+  onScopeChange?: (scope: AgentsScope) => void;
+  /** Total agent count rendered as a faint counter in the search
+   *  placeholder (e.g. "Search 18 agents"). */
   totalCount?: number;
+  /** Whether the right-side facet panel is currently visible. */
+  panelOpen?: boolean;
+  onPanelToggle?: () => void;
+  /** Optional jump-out for the global hash search surface. */
   onOpenHashSearch?: () => void;
   className?: string;
 }
@@ -60,26 +76,17 @@ export interface AgentsToolbarProps {
 export function AgentsToolbar({
   query,
   onQueryChange,
-  view,
-  onViewChange,
-  groupBy,
-  onGroupByChange,
   totalCount,
+  panelOpen,
+  onPanelToggle,
   onOpenHashSearch,
   className,
 }: AgentsToolbarProps) {
   return (
-    <div
-      className={cx(
-        "flex flex-wrap items-center gap-3 rounded-[2px] border border-l-border-faint bg-l-wash-1 px-3 py-2",
-        className,
-      )}
-    >
-      <div className="flex min-w-[220px] flex-1 items-center gap-2">
+    <div className={cx("flex flex-wrap items-center gap-2", className)}>
+      <div className="ml-auto flex items-center gap-2">
         <Input
-          type="search"
           search
-          aria-label="Search agents"
           placeholder={
             totalCount != null
               ? `Search ${totalCount} agents`
@@ -87,81 +94,50 @@ export function AgentsToolbar({
           }
           value={query}
           onChange={(e) => onQueryChange(e.currentTarget.value)}
-          className="max-w-[320px]"
+          className="max-w-[240px]"
+          wrapperClassName="hidden w-[240px] xl:block"
         />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span
-          aria-hidden
-          className="font-sans text-[11px] text-l-ink-dim"
+        <button
+          type="button"
+          aria-label="Filter agents"
+          title="Filter"
+          className={TOOLBAR_ICON_BUTTON_CN}
         >
-          Group by
-        </span>
-        {AGENT_GROUP_BY_OPTIONS.map((option) => (
-          <Chip
-            key={option}
-            active={groupBy === option}
-            onClick={() => onGroupByChange(option)}
-          >
-            {GROUP_BY_LABEL[option]}
-          </Chip>
-        ))}
-      </div>
-
-      <div className="ml-auto flex items-center gap-2">
-        <div
-          className="inline-flex overflow-hidden rounded-[2px] border border-hairline-strong"
-          role="group"
-          aria-label="Layout"
+          <Filter className="size-4" strokeWidth={1.75} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label={panelOpen ? "Hide side panel" : "Show side panel"}
+          title={panelOpen ? "Hide side panel" : "Show side panel"}
+          aria-pressed={panelOpen ?? undefined}
+          data-active={panelOpen || undefined}
+          onClick={onPanelToggle}
+          className={cx(
+            TOOLBAR_ICON_BUTTON_CN,
+            "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink"
+          )}
         >
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={view === "list"}
-            data-active={view === "list" || undefined}
-            onClick={() => onViewChange("list")}
-            className={cx(
-              "flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center text-l-ink-dim touch-manipulation",
-              "transition-colors duration-fast",
-              "hover:bg-l-surface-hover",
-              "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
-            )}
-          >
-            <List className="size-3.5" strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            aria-label="Grid view"
-            aria-pressed={view === "grid"}
-            data-active={view === "grid" || undefined}
-            onClick={() => onViewChange("grid")}
-            className={cx(
-              "flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center border-l border-hairline-strong text-l-ink-dim touch-manipulation",
-              "transition-colors duration-fast",
-              "hover:bg-l-surface-hover",
-              "data-[active=true]:bg-l-wash-3 data-[active=true]:text-l-ink",
-            )}
-          >
-            <LayoutGrid className="size-3.5" strokeWidth={1.75} />
-          </button>
-        </div>
+          <PanelRight className="size-4" strokeWidth={1.75} aria-hidden />
+        </button>
         {onOpenHashSearch ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            onPress={onOpenHashSearch}
-            leadingIcon={<Hash className="size-3.5" strokeWidth={1.75} />}
+          <button
+            type="button"
+            aria-label="Open hash search"
+            title="Hash search"
+            onClick={onOpenHashSearch}
+            className={TOOLBAR_ICON_BUTTON_CN}
           >
-            Hash search
-          </Button>
+            <Hash className="size-4" strokeWidth={1.75} aria-hidden />
+          </button>
         ) : null}
       </div>
     </div>
   );
 }
 
-/* Helper: classify an agent against the health filters. */
+/* Health classifier — used by the row's status dot and the facet
+ * rail. The toolbar no longer renders chips for these, but consumers
+ * (KPI strip, drift timeline) still rely on the predicate. */
 export function matchesHealthFilter(
   agent: {
     successRate: number;
@@ -181,5 +157,6 @@ export function matchesHealthFilter(
   }
 }
 
-// Re-export RunStatus to avoid the chip needing its own import.
+/* Re-export `AgentRunStatus` to avoid downstream needing its own
+ * import path. Mirrors the historical surface. */
 export type { AgentRunStatus };

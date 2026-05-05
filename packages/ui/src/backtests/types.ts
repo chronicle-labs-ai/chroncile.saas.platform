@@ -10,11 +10,50 @@
 
 /* ── Stage state machine ───────────────────────────────────── */
 
-export type BacktestStage = "configure" | "running" | "results";
-export type BacktestRunStatus = "running" | "done" | "paused";
+/**
+ * `list`      — manager landing page: table of past / scheduled /
+ *               draft backtests + "+ New backtest".
+ * `configure` — the directional pipeline (steps 01..04) for a
+ *               single run.
+ * `running`   — live progress for a launched run.
+ * `results`   — verdict, metrics, divergences for a finished run.
+ */
+export type BacktestStage = "list" | "configure" | "running" | "results";
+export type BacktestRunStatus =
+  | "running"
+  | "done"
+  | "paused"
+  | "scheduled"
+  | "draft"
+  | "failed";
 
-/** Phases inside the Configure stage. */
-export type BacktestConfigurePhase = "pick" | "recipe";
+/**
+ * Phases inside the Configure stage. The configure flow is now a
+ * directional pipeline:
+ *
+ *   pick → dataset → enrich → environment → versions → launch
+ *
+ * Each preset (`replay`, `compare`, `regression`, `suite`) seeds
+ * different defaults and may auto-skip steps (Replay skips Enrich).
+ */
+export type BacktestConfigurePhase =
+  | "pick"
+  | "dataset"
+  | "enrich"
+  | "environment"
+  | "versions";
+
+/** Ordered list of pipeline steps shown in the stepper rail. */
+export const BACKTEST_PIPELINE_STEPS = [
+  "dataset",
+  "enrich",
+  "environment",
+  "versions",
+] as const satisfies readonly BacktestConfigurePhase[];
+
+/** Concrete subset of `BacktestConfigurePhase` covering only the
+ *  4 pipeline steps (excludes `"pick"`). */
+export type BacktestPipelineStep = (typeof BACKTEST_PIPELINE_STEPS)[number];
 
 /* ── Agents under test ─────────────────────────────────────── */
 
@@ -99,12 +138,15 @@ export interface BacktestGraderPreviewRow {
 /* ── Data composition ──────────────────────────────────────── */
 
 /**
- * `composed` = a tray of production trace sources + generated
- * scenarios, optionally saved later as a reusable dataset.
- * `dataset`  = the user picked a saved dataset; `dataset` /
- *              `datasetLabel` are populated.
+ * `composed`   = a tray of production trace sources + generated
+ *                scenarios, optionally saved later as a reusable
+ *                dataset.
+ * `dataset`    = the user picked a saved dataset; `dataset` /
+ *                `datasetLabel` are populated.
+ * `production` = the Replay preset — pipes a production traffic
+ *                window straight through, no enrichment.
  */
-export type BacktestDataKind = "composed" | "dataset";
+export type BacktestDataKind = "composed" | "dataset" | "production";
 
 export interface BacktestDataSource {
   id: string;
@@ -121,12 +163,37 @@ export interface BacktestDataSource {
   };
 }
 
+/**
+ * Cluster bucket emitted by the data-science layer when the system
+ * looks for missing scenarios in a dataset:
+ *
+ *   captured  — clusters already represented in the dataset.
+ *   adjacent  — small variations / mutations of captured clusters.
+ *   emerging  — new patterns observed in production but not yet
+ *               in the dataset.
+ *   edge      — rare/long-tail cases worth probing.
+ */
+export type BacktestScenarioBucket =
+  | "captured"
+  | "adjacent"
+  | "emerging"
+  | "edge";
+
 export interface BacktestDataScenario {
   id: string;
   /** The "expansion move" the scenario was generated from. */
   kind: "adversarial" | "nonEnglish" | "toolFailure" | "longTurn";
   label: string;
   count: number;
+  /** Discovery bucket — drives the column the scenario lives in
+   *  on the Enrich step. Optional so older composed-data flows
+   *  still type-check. */
+  bucket?: BacktestScenarioBucket;
+  /** 0..1 confidence that this scenario surfaces a coverage gap. */
+  confidence?: number;
+  /** Whether the user has accepted this scenario into the run.
+   *  Defaults to true when omitted (legacy composed scenarios). */
+  accepted?: boolean;
 }
 
 export interface BacktestData {
@@ -142,16 +209,46 @@ export interface BacktestData {
   savedAs?: string | null;
 }
 
+/* ── Environments ──────────────────────────────────────────── */
+
+/**
+ * Reference to the environment the run will execute in. Mirrors
+ * the shape used by `EnvironmentsManager` (`SandboxEnvironment`)
+ * but without the heavy detail snapshot — the recipe only needs
+ * the identity + status to render summary chrome.
+ */
+export interface BacktestEnvironmentRef {
+  id: string;
+  label: string;
+  /** Optional snapshot identifier (matches
+   *  `EnvironmentDataSnapshot.id`) so we can verify the
+   *  environment is seeded with the same dataset. */
+  snapshotId?: string;
+  /** Optional snapshot label — usually the source dataset slug. */
+  snapshotLabel?: string;
+  /** Mirror of `SandboxRuntimeStatus` strings ("started",
+   *  "stopped", …). Kept loose so callers don't need to import
+   *  the environments package. */
+  status?: string;
+  /** Whether this environment is a freshly cloned ephemeral
+   *  sandbox or a saved long-lived environment. */
+  ephemeral?: boolean;
+}
+
 /* ── Recipes (the main Configure value) ────────────────────── */
 
 /** Job preset that seeds the recipe — one of the 4 starting cards. */
-export type BacktestJobMode = "compare" | "regression" | "bug" | "suite";
+export type BacktestJobMode =
+  | "replay"
+  | "compare"
+  | "regression"
+  | "suite";
 
 /** Job preset id — the values rendered as the 4 picker cards. */
-export type BacktestJobId = "compare" | "regression" | "bug" | "suite";
+export type BacktestJobId = "replay" | "compare" | "regression" | "suite";
 
 /** Glyph name used by the JobsPicker icons. */
-export type BacktestJobIcon = "compare" | "shield" | "bug" | "suite";
+export type BacktestJobIcon = "replay" | "compare" | "shield" | "suite";
 
 export interface BacktestJobPreset {
   id: BacktestJobId;
@@ -173,11 +270,53 @@ export interface BacktestRecipe {
   agents: readonly BacktestAgent[];
   data: BacktestData;
   graders: readonly BacktestGrader[];
+  /** Optional environment the run targets. Pipeline step 03 sets
+   *  this; consumers without an environment fall back to the
+   *  default ephemeral sandbox. */
+  environment?: BacktestEnvironmentRef;
   /** Free-text run name shown in the recipe header + top nav. */
   name: string;
-  /** Optional pinned trace seed; used by the "reproduce a bug"
-   *  preset to surface a banner above the recipe. */
+  /** Optional pinned trace seed; used by the Replay preset to
+   *  reproduce a single trace as the focal point of the run. */
   seed?: string;
+}
+
+/* ── List view (manager landing) ───────────────────────────── */
+
+/**
+ * Compact projection of a backtest run rendered on the list view.
+ * Combines the recipe identity (mode, environment, agents, dataset)
+ * with run lifecycle metadata (status, verdict, divergences).
+ *
+ * `draft` rows have no run yet; `scheduled` rows are queued; `done`
+ * + `failed` rows are historical.
+ */
+export interface BacktestRunSummary {
+  id: string;
+  /** Display name of the run (matches `BacktestRecipe.name`). */
+  name: string;
+  mode: BacktestJobMode;
+  status: BacktestRunStatus;
+  /** ISO timestamp of the most recent state change — drives "ago". */
+  updatedAt: string;
+  /** Optional ISO timestamp the run is scheduled to start. */
+  scheduledFor?: string;
+  /** Display label for the dataset / production window seed. */
+  datasetLabel: string;
+  /** Display label for the environment the run targets. */
+  environmentLabel?: string;
+  /** Agent ids participating in the run; the first is the baseline. */
+  agentIds: readonly string[];
+  /** Total cases × agents; null while still drafting. */
+  totalRuns?: number;
+  /** Verdict copy shown in the verdict column for `done` rows. */
+  verdict?: string;
+  /** CSS color (token) used for the run row's identity dot. */
+  hue?: string;
+  /** Divergences observed (only set when status is `done` / `failed`). */
+  divergences?: number;
+  /** Owner / actor who started the run. */
+  owner?: string;
 }
 
 /* ── Running stage ─────────────────────────────────────────── */

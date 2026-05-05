@@ -12,14 +12,18 @@
 
 import type {
   BacktestAgent,
+  BacktestDataScenario,
   BacktestDataset,
   BacktestDivergence,
+  BacktestEnvironmentRef,
   BacktestGrader,
   BacktestJobPreset,
   BacktestLiveCase,
   BacktestMetric,
   BacktestProposedGrader,
   BacktestRecipe,
+  BacktestRunSummary,
+  BacktestScenarioBucket,
 } from "./types";
 
 /* ── Candidate agents ──────────────────────────────────────── */
@@ -606,6 +610,120 @@ export function buildProposedGraders(data: BacktestRecipe["data"]): readonly Bac
   return list;
 }
 
+/* ── Environments — seeded refs for the pipeline step ──────── */
+
+/**
+ * Lightweight seed of `BacktestEnvironmentRef` values used by the
+ * presets and the environment picker step. Keys are referenced by
+ * the presets directly. The shape mirrors `SandboxEnvironment` but
+ * carries only the identity / snapshot fields the recipe needs.
+ */
+export const BACKTEST_ENVIRONMENTS_SEED: readonly BacktestEnvironmentRef[] = [
+  {
+    id: "env_acme_refunds",
+    label: "Acme Support Sandbox",
+    snapshotId: "snap_refunds_2026_05_04",
+    snapshotLabel: "refund-escalations-v2",
+    status: "started",
+    ephemeral: false,
+  },
+  {
+    id: "env_acme_billing",
+    label: "Acme Billing Replay",
+    snapshotId: "snap_billing_edge_2026_04_22",
+    snapshotLabel: "billing-edge-cases-v3",
+    status: "started",
+    ephemeral: false,
+  },
+  {
+    id: "env_acme_research",
+    label: "Research Web Sandbox",
+    snapshotId: "snap_research_2026_05_01",
+    snapshotLabel: "long-research-loops-v1",
+    status: "stopped",
+    ephemeral: false,
+  },
+];
+
+/** Quick lookup map used by presets. */
+const ENV_REFS = {
+  refunds: BACKTEST_ENVIRONMENTS_SEED[0]!,
+  billing: BACKTEST_ENVIRONMENTS_SEED[1]!,
+  research: BACKTEST_ENVIRONMENTS_SEED[2]!,
+};
+
+/** Lookup helper used by the env-picker step. */
+export function findEnvironmentRef(id: string): BacktestEnvironmentRef | undefined {
+  return BACKTEST_ENVIRONMENTS_SEED.find((e) => e.id === id);
+}
+
+/* ── Scenario discovery buckets (Enrich step) ──────────────── */
+
+export interface BacktestScenarioBucketMeta {
+  id: BacktestScenarioBucket;
+  label: string;
+  description: string;
+  hue: string;
+  /** Visual progress glyph variant — mirrors framer prototype. */
+  glyph: "filled" | "three-quarter" | "half" | "dotted";
+}
+
+export const BACKTEST_SCENARIO_BUCKETS: readonly BacktestScenarioBucketMeta[] = [
+  {
+    id: "captured",
+    label: "Captured",
+    description: "from real traces",
+    hue: "var(--c-ember)",
+    glyph: "filled",
+  },
+  {
+    id: "adjacent",
+    label: "Adjacent",
+    description: "variations of captured",
+    hue: "var(--c-event-violet)",
+    glyph: "three-quarter",
+  },
+  {
+    id: "emerging",
+    label: "Emerging",
+    description: "new patterns in prod",
+    hue: "var(--c-event-amber)",
+    glyph: "half",
+  },
+  {
+    id: "edge",
+    label: "Edge",
+    description: "rare / long-tail",
+    hue: "var(--c-ink-dim)",
+    glyph: "dotted",
+  },
+];
+
+/** Deterministic catalog of *proposed* discovery scenarios that the
+ *  Enrich step lists for the user to accept/decline. Counts are case
+ *  totals once accepted. */
+export const BACKTEST_DISCOVERY_PROPOSALS: readonly BacktestDataScenario[] = [
+  { id: "ds_captured_a",  bucket: "captured", kind: "longTurn",    label: "refund.standard",            count: 234, confidence: 0.96, accepted: true },
+  { id: "ds_captured_b",  bucket: "captured", kind: "toolFailure", label: "refund.late_request",        count: 89,  confidence: 0.93, accepted: true },
+  { id: "ds_captured_c",  bucket: "captured", kind: "longTurn",    label: "refund.partial",             count: 156, confidence: 0.91, accepted: true },
+  { id: "ds_adjacent_a",  bucket: "adjacent", kind: "adversarial", label: "refund.with_promo",          count: 45,  confidence: 0.82, accepted: true },
+  { id: "ds_adjacent_b",  bucket: "adjacent", kind: "adversarial", label: "refund.duplicate_charge",    count: 23,  confidence: 0.78, accepted: false },
+  { id: "ds_emerging_a",  bucket: "emerging", kind: "longTurn",    label: "refund.subscription_paused", count: 12,  confidence: 0.71, accepted: false },
+  { id: "ds_emerging_b",  bucket: "emerging", kind: "toolFailure", label: "refund.bnpl_partial",        count: 7,   confidence: 0.66, accepted: false },
+  { id: "ds_edge_a",      bucket: "edge",     kind: "toolFailure", label: "refund.race_condition",      count: 3,   confidence: 0.42, accepted: false },
+  { id: "ds_edge_b",      bucket: "edge",     kind: "adversarial", label: "refund.fraud_flagged",       count: 2,   confidence: 0.38, accepted: false },
+  { id: "ds_edge_c",      bucket: "edge",     kind: "nonEnglish",  label: "refund.es_locale",           count: 4,   confidence: 0.34, accepted: false },
+];
+
+/** Lookup helper for the bucket meta (color, glyph, copy). */
+export function bucketMeta(
+  bucket: BacktestScenarioBucket,
+): BacktestScenarioBucketMeta {
+  const meta = BACKTEST_SCENARIO_BUCKETS.find((m) => m.id === bucket);
+  if (!meta) throw new Error(`Unknown scenario bucket: ${bucket}`);
+  return meta;
+}
+
 /* ── Job presets (Phase 1 of Configure) ────────────────────── */
 
 function asAgent(id: string): BacktestAgent {
@@ -616,12 +734,43 @@ function asAgent(id: string): BacktestAgent {
 
 export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
   {
+    id: "replay",
+    title: "Replay production",
+    sub: "Run prod traffic through every candidate.",
+    why: "Skip enrichment — pipe a window of production traces straight through every agent version, side-by-side.",
+    icon: "replay",
+    hue: "var(--c-event-teal)",
+    recipe: {
+      mode: "replay",
+      agents: [asAgent("support-v3"), asAgent("support-v4.0"), asAgent("support-v4.1")],
+      data: {
+        kind: "production",
+        sources: [
+          {
+            id: "s1",
+            kind: "prod",
+            label: "recent prod · 7d",
+            count: 482,
+            filters: { window: "7d", clusters: ["Refund → escalate", "Escalate w/ tool"] },
+          },
+        ],
+        scenarios: [],
+        savedAs: null,
+      },
+      graders: [
+        { id: "g_outcome", kind: "rubric", label: "Outcome matches labeled", weight: "high", source: "proposed", evidence: "482 production traces with outcome labels" },
+      ],
+      environment: ENV_REFS.refunds,
+      name: "replay · prod 7d across versions",
+    },
+  },
+  {
     id: "compare",
     title: "Compare versions",
     sub: "Which of my builds is better?",
-    why: "Run two or more agents on the same traces and see where they diverge.",
+    why: "Pick a dataset, enrich it with discovery to fill coverage gaps, then run two or more candidates side-by-side.",
     icon: "compare",
-    hue: "var(--c-event-teal)",
+    hue: "var(--c-event-violet)",
     recipe: {
       mode: "compare",
       agents: [asAgent("support-v3"), asAgent("support-v4.0")],
@@ -643,6 +792,7 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
         { id: "g_outcome", kind: "rubric", label: "Outcome matches labeled", weight: "high", source: "proposed", evidence: "412 traces have outcome labels" },
         { id: "g_policy", kind: "classifier", label: "No policy violations", weight: "high", source: "proposed", evidence: "matched refund-policy.md in repo" },
       ],
+      environment: ENV_REFS.refunds,
       name: "compare v3 vs v4.0",
     },
   },
@@ -650,7 +800,7 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
     id: "regression",
     title: "Check for regressions",
     sub: "Did my change break anything?",
-    why: "Replay recent production traffic through your new build — Chronicle surfaces cases whose behaviour changed.",
+    why: "Replay recent production traffic enriched with adjacent + edge cases — Chronicle surfaces cases whose behaviour changed.",
     icon: "shield",
     hue: "var(--c-event-amber)",
     recipe: {
@@ -678,50 +828,8 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
         { id: "g_policy", kind: "classifier", label: "No policy violations", weight: "high", source: "proposed", evidence: "matched refund-policy.md in repo" },
         { id: "g_tools", kind: "assertion", label: "Expected tool called", weight: "med", source: "proposed", evidence: "14 distinct tools appear in these traces" },
       ],
+      environment: ENV_REFS.refunds,
       name: "regression v4 vs prod",
-    },
-  },
-  {
-    id: "bug",
-    title: "Reproduce a bug",
-    sub: "Can I break this across versions?",
-    why: "Start from a pinned trace — Chronicle finds the cluster of similar cases and runs every agent against them.",
-    icon: "bug",
-    hue: "var(--c-event-red)",
-    recipe: {
-      mode: "bug",
-      agents: [
-        asAgent("support-v3"),
-        asAgent("support-v4.0"),
-        asAgent("support-v4.1"),
-        asAgent("support-v4.2"),
-      ],
-      data: {
-        kind: "composed",
-        sources: [
-          {
-            id: "s1",
-            kind: "prod",
-            label: "similar to tr_6b1",
-            count: 47,
-            filters: {
-              window: "30d",
-              clusters: ["Refund → escalate (over-refund)"],
-              seed: "tr_6b1",
-            },
-          },
-        ],
-        scenarios: [
-          { id: "sc1", kind: "adversarial", label: "adversarial refund phrasings", count: 20 },
-        ],
-        savedAs: null,
-      },
-      graders: [
-        { id: "g_outcome", kind: "rubric", label: "Outcome matches labeled", weight: "high", source: "proposed", evidence: "47/47 similar traces labeled" },
-        { id: "g_policy", kind: "classifier", label: "No policy violations", weight: "high", source: "proposed", evidence: "over-refund policy violated in 6 of these traces" },
-      ],
-      name: "reproduce: over-refund on refund→escalate",
-      seed: 'tr_6b1 · "I was charged twice for the same order"',
     },
   },
   {
@@ -749,10 +857,54 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
         { id: "g_similarity", kind: "embedding", label: "Response ≈ golden answer", weight: "med", source: "dataset", evidence: "from dataset spec" },
         { id: "g_tools", kind: "assertion", label: "Expected tool called", weight: "med", source: "dataset", evidence: "from dataset spec" },
       ],
+      environment: ENV_REFS.refunds,
       name: "suite · refund-escalations-v2",
     },
   },
 ];
+
+/**
+ * Hydrate a `BacktestRecipe` from a `BacktestRunSummary` by cloning
+ * the matching preset and overlaying the run's specifics (name,
+ * agents, environment, dataset hint). Used by the manager when the
+ * user opens a previously saved / running run from the list view —
+ * the row carries enough metadata to render Configure / Running /
+ * Results without fetching the full backend recipe.
+ */
+export function hydrateRecipeFromRun(
+  run: BacktestRunSummary,
+): BacktestRecipe {
+  const preset = BACKTEST_JOB_PRESETS.find((p) => p.id === run.mode);
+  // Fallback to the first preset if `run.mode` is unknown — keeps
+  // the type-safe contract (`BacktestRecipe`, not `null`).
+  const base = cloneRecipe((preset ?? BACKTEST_JOB_PRESETS[0]!).recipe);
+
+  const agents: BacktestAgent[] = run.agentIds
+    .map((id) => findCandidate(id))
+    .filter((a): a is BacktestAgent => Boolean(a))
+    .map((a, idx) => ({ ...a, role: idx === 0 ? "baseline" : "candidate" }));
+
+  let environment: BacktestEnvironmentRef | undefined = base.environment;
+  if (run.environmentLabel) {
+    const envByLabel = BACKTEST_ENVIRONMENTS_SEED.find(
+      (e) => e.label === run.environmentLabel,
+    );
+    environment = envByLabel
+      ? { ...envByLabel }
+      : {
+          id: `env_run_${run.id}`,
+          label: run.environmentLabel,
+          status: "started",
+        };
+  }
+
+  return {
+    ...base,
+    name: run.name,
+    agents: agents.length > 0 ? agents : base.agents,
+    environment,
+  };
+}
 
 /** Convenience: produce a deep copy of the recipe inside a job preset
  *  so consumers can mutate without poisoning other consumers. */
@@ -766,19 +918,79 @@ export function cloneRecipe(recipe: BacktestRecipe): BacktestRecipe {
       scenarios: recipe.data.scenarios.map((s) => ({ ...s })),
     },
     graders: recipe.graders.map((g) => ({ ...g })),
+    environment: recipe.environment ? { ...recipe.environment } : undefined,
   };
 }
 
-/** Convenience helper: derive total case count for a recipe. */
+/** Whether a scenario should be counted toward the case total — the
+ *  Enrich step toggles `accepted`; legacy composed scenarios omit
+ *  the field and are treated as accepted. */
+export function isAcceptedScenario(s: BacktestDataScenario): boolean {
+  return s.accepted !== false;
+}
+
+/** Convenience helper: derive total case count for a recipe. Only
+ *  accepted scenarios contribute. */
 export function recipeCaseCount(recipe: BacktestRecipe): number {
   const traces = recipe.data.sources.reduce((acc, s) => acc + (s.count || 0), 0);
-  const gen = recipe.data.scenarios.reduce((acc, s) => acc + (s.count || 0), 0);
+  const gen = recipe.data.scenarios
+    .filter(isAcceptedScenario)
+    .reduce((acc, s) => acc + (s.count || 0), 0);
   return traces + gen;
+}
+
+/** Convenience helper: count of accepted enrichment scenarios across
+ *  all buckets, used by the launch-dock summary. */
+export function recipeEnrichmentCount(recipe: BacktestRecipe): number {
+  return recipe.data.scenarios.filter(isAcceptedScenario).length;
 }
 
 /** Convenience helper: total agent count. */
 export function recipeAgentCount(recipe: BacktestRecipe): number {
   return recipe.agents.length;
+}
+
+/* ── Pipeline-step completion checks ───────────────────────── */
+
+/**
+ * Whether the dataset step has been satisfied for the given recipe.
+ * - Replay (`production`) — needs a window-style source.
+ * - Suite (`dataset`) — needs a saved dataset id.
+ * - Composed — needs at least one trace source.
+ */
+export function isDatasetStepDone(recipe: BacktestRecipe): boolean {
+  const d = recipe.data;
+  if (d.kind === "dataset") return Boolean(d.dataset);
+  return d.sources.length > 0;
+}
+
+/** Whether the enrich step has been touched. Returns true for Replay
+ *  by definition (the step is skipped). For other modes we only
+ *  require the user has reviewed the proposals — accepting zero is
+ *  a valid review outcome. */
+export function isEnrichStepDone(recipe: BacktestRecipe): boolean {
+  if (recipe.mode === "replay") return true;
+  return recipe.data.scenarios.length > 0;
+}
+
+/** Whether the environment step has been satisfied. */
+export function isEnvironmentStepDone(recipe: BacktestRecipe): boolean {
+  return Boolean(recipe.environment?.id);
+}
+
+/** Whether the versions step has been satisfied (1+ agent). */
+export function isVersionsStepDone(recipe: BacktestRecipe): boolean {
+  return recipe.agents.length > 0;
+}
+
+/** Whether the recipe is ready to launch — all required steps done. */
+export function isRecipeLaunchable(recipe: BacktestRecipe): boolean {
+  return (
+    isDatasetStepDone(recipe) &&
+    isEnrichStepDone(recipe) &&
+    isEnvironmentStepDone(recipe) &&
+    isVersionsStepDone(recipe)
+  );
 }
 
 /* ── Recent-runs strip on the Jobs picker ──────────────────── */
@@ -805,6 +1017,97 @@ export const BACKTEST_RECENT_RUNS: readonly BacktestRecentRun[] = [
     hue: "var(--c-event-violet)",
     ago: "18h ago",
     verdict: "clean",
+  },
+];
+
+/* ── List view fixture (BacktestsList) ─────────────────────── */
+
+/** Mock seed of run rows shown on the manager landing page. Mixes
+ *  done / running / scheduled / draft so all status branches render
+ *  in stories. Wire to the backend run registry when available. */
+export const BACKTEST_RUNS_SEED: readonly BacktestRunSummary[] = [
+  {
+    id: "run_186ac0",
+    name: "regression v4 vs prod · 30d",
+    mode: "regression",
+    status: "done",
+    updatedAt: "2026-05-04T08:42:00Z",
+    datasetLabel: "prod · 30d focused clusters",
+    environmentLabel: "Acme Support Sandbox",
+    agentIds: ["support-v3", "support-v4.0", "support-v4.1"],
+    totalRuns: 3294,
+    verdict: "v4.0 won · 6 regressions held",
+    hue: "var(--c-event-amber)",
+    divergences: 184,
+    owner: "ernesto",
+  },
+  {
+    id: "run_186ab8",
+    name: "compare v3 vs v4.0 · refunds",
+    mode: "compare",
+    status: "running",
+    updatedAt: "2026-05-04T11:02:00Z",
+    datasetLabel: "refund-escalations-v2",
+    environmentLabel: "Acme Support Sandbox",
+    agentIds: ["support-v3", "support-v4.0"],
+    totalRuns: 824,
+    hue: "var(--c-event-teal)",
+    owner: "alex",
+  },
+  {
+    id: "run_186aa1",
+    name: "replay · prod 7d across versions",
+    mode: "replay",
+    status: "done",
+    updatedAt: "2026-05-04T03:14:00Z",
+    datasetLabel: "prod · 7d",
+    environmentLabel: "Acme Support Sandbox",
+    agentIds: ["support-v3", "support-v4.0", "support-v4.1"],
+    totalRuns: 1446,
+    verdict: "v4.1 led on resolution; v3 cheapest",
+    hue: "var(--c-event-teal)",
+    divergences: 92,
+    owner: "alex",
+  },
+  {
+    id: "run_18699e",
+    name: "nightly · refund-escalations-v2",
+    mode: "suite",
+    status: "scheduled",
+    updatedAt: "2026-05-03T22:00:00Z",
+    scheduledFor: "2026-05-05T07:00:00Z",
+    datasetLabel: "refund-escalations-v2",
+    environmentLabel: "Acme Support Sandbox",
+    agentIds: ["support-v4.0"],
+    hue: "var(--c-event-violet)",
+    owner: "alerts",
+  },
+  {
+    id: "run_186997",
+    name: "billing-edge regression",
+    mode: "regression",
+    status: "failed",
+    updatedAt: "2026-05-02T16:48:00Z",
+    datasetLabel: "billing-edge-cases-v3",
+    environmentLabel: "Acme Billing Replay",
+    agentIds: ["support-v4.0", "support-v4.2"],
+    totalRuns: 548,
+    verdict: "v4.2 over-refund regression",
+    hue: "var(--c-event-red)",
+    divergences: 41,
+    owner: "ernesto",
+  },
+  {
+    id: "run_186984",
+    name: "draft · suite refund-escalations-v3",
+    mode: "suite",
+    status: "draft",
+    updatedAt: "2026-05-04T10:31:00Z",
+    datasetLabel: "refund-escalations-v3 (proposed)",
+    environmentLabel: "Acme Support Sandbox",
+    agentIds: ["support-v4.0"],
+    hue: "var(--c-event-violet)",
+    owner: "alex",
   },
 ];
 

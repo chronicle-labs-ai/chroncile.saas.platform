@@ -48,6 +48,7 @@
  */
 
 import * as React from "react";
+import { ChevronRight } from "lucide-react";
 import {
   getCoreRowModel,
   getFacetedUniqueValues,
@@ -66,7 +67,10 @@ import { Checkbox } from "../primitives/checkbox";
 import { cx } from "../utils/cx";
 
 import { DataTableColumnHeader } from "./data-table/data-table-column-header";
-import { ROW_HEIGHT_PX, type DatasetTracesRowHeight } from "./data-table/data-table-row-height-menu";
+import {
+  ROW_HEIGHT_PX,
+  type DatasetTracesRowHeight,
+} from "./data-table/data-table-row-height-menu";
 import {
   buildClusterIndex,
   DatasetTracesTableRow,
@@ -77,7 +81,6 @@ import type {
   DatasetCluster,
   DatasetSnapshot,
   DatasetSplit,
-  TraceStatus,
   TraceSummary,
 } from "./types";
 
@@ -87,7 +90,6 @@ export type DatasetTracesGroupBy =
   | "cluster"
   | "split"
   | "source"
-  | "status"
   | "none";
 
 /** @deprecated alias for `DatasetTracesRowHeight`. The 2-step
@@ -99,8 +101,8 @@ export type DatasetTracesDensity = "dense" | "comfy";
 export type { DatasetTracesRowHeight };
 
 /** Toggleable column ids — mirrors `DatasetDisplayProperty`. The
- *  always-on columns (select / status / trace / chevron) aren't part
- *  of this set. */
+ *  always-on columns (select / trace / chevron) aren't part of this
+ *  set. */
 export type DatasetTracesDisplayProperty =
   | "cluster"
   | "events"
@@ -108,13 +110,8 @@ export type DatasetTracesDisplayProperty =
   | "split"
   | "traceId";
 
-export const DATASET_TRACES_DISPLAY_PROPERTIES: readonly DatasetTracesDisplayProperty[] = [
-  "cluster",
-  "events",
-  "duration",
-  "split",
-  "traceId",
-];
+export const DATASET_TRACES_DISPLAY_PROPERTIES: readonly DatasetTracesDisplayProperty[] =
+  ["cluster", "events", "duration", "split", "traceId"];
 
 interface UseDatasetTracesTableOptions {
   /** Pre-filtered, pre-text-searched traces (the same `filteredTraces`
@@ -127,7 +124,9 @@ interface UseDatasetTracesTableOptions {
   onSortingChange: React.Dispatch<React.SetStateAction<SortingState>>;
   /** Controlled column visibility — pair with `onColumnVisibilityChange`. */
   columnVisibility: VisibilityState;
-  onColumnVisibilityChange: React.Dispatch<React.SetStateAction<VisibilityState>>;
+  onColumnVisibilityChange: React.Dispatch<
+    React.SetStateAction<VisibilityState>
+  >;
   /** Controlled row selection (rowId = traceId). */
   rowSelection: RowSelectionState;
   onRowSelectionChange: React.Dispatch<React.SetStateAction<RowSelectionState>>;
@@ -145,12 +144,12 @@ export function useDatasetTracesTable({
 }: UseDatasetTracesTableOptions): Table<TraceSummary> {
   const clusterIndex = React.useMemo(
     () => buildClusterIndex(clusters),
-    [clusters],
+    [clusters]
   );
 
   const columns = React.useMemo<ColumnDef<TraceSummary>[]>(
     () => buildColumnDefs(clusterIndex),
-    [clusterIndex],
+    [clusterIndex]
   );
 
   return useReactTable({
@@ -163,11 +162,15 @@ export function useDatasetTracesTable({
     },
     enableRowSelection: true,
     enableMultiSort: true,
-    onSortingChange: onSortingChange as React.Dispatch<React.SetStateAction<SortingState>>,
-    onColumnVisibilityChange:
-      onColumnVisibilityChange as React.Dispatch<React.SetStateAction<VisibilityState>>,
-    onRowSelectionChange:
-      onRowSelectionChange as React.Dispatch<React.SetStateAction<RowSelectionState>>,
+    onSortingChange: onSortingChange as React.Dispatch<
+      React.SetStateAction<SortingState>
+    >,
+    onColumnVisibilityChange: onColumnVisibilityChange as React.Dispatch<
+      React.SetStateAction<VisibilityState>
+    >,
+    onRowSelectionChange: onRowSelectionChange as React.Dispatch<
+      React.SetStateAction<RowSelectionState>
+    >,
     getRowId: (row) => row.traceId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -185,7 +188,7 @@ const SPLIT_RANK: Record<string, number> = {
 };
 
 function buildColumnDefs(
-  clusterIndex: Map<string, DatasetCluster>,
+  clusterIndex: Map<string, DatasetCluster>
 ): ColumnDef<TraceSummary>[] {
   return [
     {
@@ -193,13 +196,6 @@ function buildColumnDefs(
       enableSorting: false,
       enableHiding: false,
       meta: { label: "Select" },
-    },
-    {
-      id: "status",
-      accessorFn: (row) => row.status,
-      enableSorting: false,
-      enableHiding: false,
-      meta: { label: "Status" },
     },
     {
       id: "trace",
@@ -216,10 +212,10 @@ function buildColumnDefs(
       enableHiding: true,
       sortingFn: (a, b) => {
         const al = a.original.clusterId
-          ? clusterIndex.get(a.original.clusterId)?.label ?? ""
+          ? (clusterIndex.get(a.original.clusterId)?.label ?? "")
           : "";
         const bl = b.original.clusterId
-          ? clusterIndex.get(b.original.clusterId)?.label ?? ""
+          ? (clusterIndex.get(b.original.clusterId)?.label ?? "")
           : "";
         return al.localeCompare(bl);
       },
@@ -250,8 +246,12 @@ function buildColumnDefs(
         const ar = SPLIT_RANK[a.original.split ?? "__none__"] ?? 99;
         const br = SPLIT_RANK[b.original.split ?? "__none__"] ?? 99;
         if (ar !== br) return ar - br;
-        const at = a.original.addedAt ? new Date(a.original.addedAt).getTime() : 0;
-        const bt = b.original.addedAt ? new Date(b.original.addedAt).getTime() : 0;
+        const at = a.original.addedAt
+          ? new Date(a.original.addedAt).getTime()
+          : 0;
+        const bt = b.original.addedAt
+          ? new Date(b.original.addedAt).getTime()
+          : 0;
         return at - bt;
       },
       meta: { label: "Split" },
@@ -277,12 +277,11 @@ function buildColumnDefs(
  *  Always-on columns get `true`; toggleable columns are `true` iff in
  *  the property set. */
 export function visibilityFromDisplayProperties(
-  props: readonly DatasetTracesDisplayProperty[],
+  props: readonly DatasetTracesDisplayProperty[]
 ): VisibilityState {
   const set = new Set(props);
   return {
     select: true,
-    status: true,
     trace: true,
     cluster: set.has("cluster"),
     events: set.has("events"),
@@ -295,7 +294,7 @@ export function visibilityFromDisplayProperties(
 
 /** Reverse: TanStack `VisibilityState` → `DatasetTracesDisplayProperty[]`. */
 export function displayPropertiesFromVisibility(
-  vis: VisibilityState,
+  vis: VisibilityState
 ): readonly DatasetTracesDisplayProperty[] {
   const out: DatasetTracesDisplayProperty[] = [];
   for (const key of DATASET_TRACES_DISPLAY_PROPERTIES) {
@@ -318,7 +317,7 @@ export function idsFromRowSelection(state: RowSelectionState): string[] {
 
 /** Translate the legacy 2-step density to the new 4-step row height. */
 export function densityToRowHeight(
-  density: DatasetTracesDensity | DatasetTracesRowHeight,
+  density: DatasetTracesDensity | DatasetTracesRowHeight
 ): DatasetTracesRowHeight {
   if (density === "dense") return "default";
   if (density === "comfy") return "comfortable";
@@ -357,7 +356,7 @@ function groupRows(
   groupBy: DatasetTracesGroupBy,
   clusterIndex: Map<string, DatasetCluster>,
   snapshot: DatasetSnapshot,
-  showEmptyGroups: boolean,
+  showEmptyGroups: boolean
 ): TraceGroup[] {
   if (groupBy === "none") {
     return [{ key: "all", label: "", rows: [...rows] }];
@@ -366,7 +365,10 @@ function groupRows(
   const buckets = new Map<string, TraceGroup>();
   const order: TraceGroup[] = [];
 
-  const ensure = (key: string, init: () => Omit<TraceGroup, "rows">): TraceGroup => {
+  const ensure = (
+    key: string,
+    init: () => Omit<TraceGroup, "rows">
+  ): TraceGroup => {
     let existing = buckets.get(key);
     if (existing) return existing;
     existing = { ...init(), rows: [] } as TraceGroup;
@@ -390,13 +392,21 @@ function groupRows(
         dot: "bg-muted-foreground",
       }));
     } else if (groupBy === "split") {
-      ensure("train", () => ({ key: "train", label: "Train", dot: "bg-event-violet" }));
+      ensure("train", () => ({
+        key: "train",
+        label: "Train",
+        dot: "bg-event-violet",
+      }));
       ensure("validation", () => ({
         key: "validation",
         label: "Validation",
         dot: "bg-event-teal",
       }));
-      ensure("test", () => ({ key: "test", label: "Test", dot: "bg-event-amber" }));
+      ensure("test", () => ({
+        key: "test",
+        label: "Test",
+        dot: "bg-event-amber",
+      }));
       ensure("__unassigned__", () => ({
         key: "__unassigned__",
         label: "Unassigned",
@@ -408,20 +418,12 @@ function groupRows(
         if (t.primarySource) sources.add(t.primarySource);
       }
       for (const source of Array.from(sources).sort()) {
-        ensure(source, () => ({ key: source, label: source, dot: "bg-event-teal" }));
+        ensure(source, () => ({
+          key: source,
+          label: source,
+          dot: "bg-event-teal",
+        }));
       }
-    } else if (groupBy === "status") {
-      ensure("ok", () => ({ key: "ok", label: "OK", dot: "bg-l-status-done" }));
-      ensure("warn", () => ({
-        key: "warn",
-        label: "Warn",
-        dot: "bg-l-status-inprogress",
-      }));
-      ensure("error", () => ({
-        key: "error",
-        label: "Error",
-        dot: "bg-l-p-urgent",
-      }));
     }
   }
 
@@ -430,7 +432,7 @@ function groupRows(
     if (groupBy === "cluster") {
       const id = trace.clusterId ?? "__none__";
       const cluster = trace.clusterId
-        ? clusterIndex.get(trace.clusterId) ?? null
+        ? (clusterIndex.get(trace.clusterId) ?? null)
         : null;
       ensure(id, () => ({
         key: id,
@@ -463,31 +465,12 @@ function groupRows(
       })).rows.push(row);
       continue;
     }
-    if (groupBy === "source") {
-      const id = trace.primarySource;
-      ensure(id, () => ({
-        key: id,
-        label: id,
-        dot: "bg-event-teal",
-      })).rows.push(row);
-      continue;
-    }
-    /* status */
-    const id = trace.status;
+    /* source */
+    const id = trace.primarySource;
     ensure(id, () => ({
       key: id,
-      label:
-        trace.status === "ok"
-          ? "OK"
-          : trace.status === "warn"
-            ? "Warn"
-            : "Error",
-      dot:
-        trace.status === "ok"
-          ? "bg-l-status-done"
-          : trace.status === "warn"
-            ? "bg-l-status-inprogress"
-            : "bg-l-p-urgent",
+      label: id,
+      dot: "bg-event-teal",
     })).rows.push(row);
   }
 
@@ -513,114 +496,112 @@ interface GroupBreakdown {
 
 function computeGroupBreakdown(
   group: TraceGroup,
-  groupBy: DatasetTracesGroupBy,
+  groupBy: DatasetTracesGroupBy
 ): GroupBreakdown | null {
   const total = group.rows.length;
   if (total <= 1) return null;
 
-  if (groupBy === "cluster" || groupBy === "source" || groupBy === "none") {
-    const counts: Record<TraceStatus, number> = { ok: 0, warn: 0, error: 0 };
-    for (const r of group.rows) counts[r.original.status] += 1;
-    const segs: GroupBreakdownSegment[] = [];
-    if (counts.ok > 0)
-      segs.push({
-        key: "ok",
-        label: "OK",
-        pct: (counts.ok / total) * 100,
-        bg: "bg-l-status-done",
-      });
-    if (counts.warn > 0)
-      segs.push({
-        key: "warn",
-        label: "Warn",
-        pct: (counts.warn / total) * 100,
-        bg: "bg-l-status-inprogress",
-      });
-    if (counts.error > 0)
-      segs.push({
-        key: "error",
-        label: "Error",
-        pct: (counts.error / total) * 100,
-        bg: "bg-l-p-urgent",
-      });
-    return { total, segments: segs };
-  }
+  /* Without trace status, the only breakdown left is split. For
+     other group-by axes the group head shows just count + add. */
+  if (groupBy === "split") return null;
 
-  if (groupBy === "split" || groupBy === "status") {
-    const counts: Record<DatasetSplit | "__none__", number> = {
-      train: 0,
-      validation: 0,
-      test: 0,
-      __none__: 0,
-    };
-    for (const r of group.rows) {
-      counts[r.original.split ?? "__none__"] += 1;
-    }
-    const segs: GroupBreakdownSegment[] = [];
-    if (counts.train > 0)
-      segs.push({
-        key: "train",
-        label: "Train",
-        pct: (counts.train / total) * 100,
-        bg: "bg-event-violet",
-      });
-    if (counts.validation > 0)
-      segs.push({
-        key: "validation",
-        label: "Validation",
-        pct: (counts.validation / total) * 100,
-        bg: "bg-event-teal",
-      });
-    if (counts.test > 0)
-      segs.push({
-        key: "test",
-        label: "Test",
-        pct: (counts.test / total) * 100,
-        bg: "bg-event-amber",
-      });
-    if (counts.__none__ > 0)
-      segs.push({
-        key: "__none__",
-        label: "Unassigned",
-        pct: (counts.__none__ / total) * 100,
-        bg: "bg-muted-foreground",
-      });
-    return { total, segments: segs };
+  const counts: Record<DatasetSplit | "__none__", number> = {
+    train: 0,
+    validation: 0,
+    test: 0,
+    __none__: 0,
+  };
+  for (const r of group.rows) {
+    counts[r.original.split ?? "__none__"] += 1;
   }
-
-  return null;
+  const segs: GroupBreakdownSegment[] = [];
+  if (counts.train > 0)
+    segs.push({
+      key: "train",
+      label: "Train",
+      pct: (counts.train / total) * 100,
+      bg: "bg-event-violet",
+    });
+  if (counts.validation > 0)
+    segs.push({
+      key: "validation",
+      label: "Validation",
+      pct: (counts.validation / total) * 100,
+      bg: "bg-event-teal",
+    });
+  if (counts.test > 0)
+    segs.push({
+      key: "test",
+      label: "Test",
+      pct: (counts.test / total) * 100,
+      bg: "bg-event-amber",
+    });
+  if (counts.__none__ > 0)
+    segs.push({
+      key: "__none__",
+      label: "Unassigned",
+      pct: (counts.__none__ / total) * 100,
+      bg: "bg-muted-foreground",
+    });
+  return { total, segments: segs };
 }
 
 interface GroupHeadProps {
+  groupKey: string;
   label: string;
   count: number;
   dot?: string;
   fill?: string;
   breakdown: GroupBreakdown | null;
   colSpan: number;
+  collapsed: boolean;
+  onToggle: (key: string) => void;
 }
 
-function GroupHead({ label, count, dot, fill, breakdown, colSpan }: GroupHeadProps) {
+function GroupHead({
+  groupKey,
+  label,
+  count,
+  dot,
+  fill,
+  breakdown,
+  colSpan,
+  collapsed,
+  onToggle,
+}: GroupHeadProps) {
   return (
     <td
       colSpan={colSpan}
-      className="flex h-7 items-center gap-2 border-b border-border bg-muted/30 px-2 align-middle"
+      className="flex h-10 items-center gap-2 border-y border-l-border-faint bg-white/[0.04] px-3 align-middle text-[13px] text-l-ink"
     >
+      <button
+        type="button"
+        onClick={() => onToggle(groupKey)}
+        aria-expanded={!collapsed}
+        aria-label={`${collapsed ? "Expand" : "Collapse"} ${label || "All"} group`}
+        className="flex size-5 shrink-0 items-center justify-center rounded-md text-l-ink-dim transition-[background-color,color] duration-fast hover:bg-l-wash-3 hover:text-l-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ember/40"
+      >
+        <ChevronRight
+          className={cx(
+            "size-3.5 transition-transform duration-fast motion-reduce:transition-none",
+            collapsed ? null : "rotate-90"
+          )}
+          strokeWidth={1.75}
+        />
+      </button>
       <span
         aria-hidden
-        className={cx("size-1.5 shrink-0 rounded-pill", dot)}
+        className={cx("size-2 shrink-0 rounded-pill", dot)}
         style={fill ? { background: fill } : undefined}
       />
-      <span className="truncate text-sm font-medium text-foreground">
-        {label || "All"}
-      </span>
-      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+      <span className="truncate font-medium">{label || "All"}</span>
+      <span className="font-mono text-[11px] tabular-nums text-l-ink-dim">
         {count}
       </span>
       {breakdown && breakdown.segments.length > 0 ? (
         <span
           aria-hidden
-          className="ml-auto flex h-1.5 w-[80px] overflow-hidden rounded-pill bg-muted"
+          className="ml-auto flex h-1.5 w-[96px] overflow-hidden rounded-pill bg-l-wash-4"
         >
           {breakdown.segments.map((s) => (
             <span
@@ -694,22 +675,23 @@ function ListHeader({
           showDuration,
           showSplit,
           showTraceId,
-          columnWidths,
+          columnWidths
         ),
       }}
       className={cx(
-        "sticky top-0 z-20 grid items-center h-10 bg-card",
-        /* Match the body row inset so column boundaries align. */
-        "px-3",
+        "sticky top-0 z-20 grid h-9 items-center bg-black",
+        /* No horizontal inset — header / rows / group heads all run
+           edge-to-edge so their bottom borders connect with the
+           scroll container's rounded outline. */
         "transition-shadow duration-fast ease-out motion-reduce:transition-none",
         scrolled
           ? "shadow-[0_1px_0_0_var(--border),0_4px_8px_-6px_rgba(0,0,0,0.45)]"
-          : null,
+          : null
       )}
     >
       <th
         scope="col"
-        className="flex h-10 items-center justify-center px-2 align-middle text-muted-foreground"
+        className="flex h-9 items-center justify-center px-2 align-middle text-l-ink-dim"
       >
         <Checkbox
           size="sm"
@@ -726,7 +708,6 @@ function ListHeader({
           onChange={() => undefined}
         />
       </th>
-      <th scope="col" aria-hidden className="h-10" />
 
       <SortHeaderCell
         table={table}
@@ -783,7 +764,7 @@ function ListHeader({
         />
       ) : null}
 
-      <th scope="col" aria-hidden className="h-10" />
+      <th scope="col" aria-hidden className="h-9" />
     </tr>
   );
 }
@@ -822,8 +803,8 @@ function SortHeaderCell({
       scope="col"
       aria-sort={ariaSort}
       className={cx(
-        "relative flex h-10 min-w-0 items-center px-2 align-middle text-left text-sm font-medium text-muted-foreground",
-        align === "right" ? "justify-end" : "justify-start",
+        "relative flex h-9 min-w-0 items-center px-3 align-middle text-left text-[12px] font-medium text-l-ink-dim",
+        align === "right" ? "justify-end" : "justify-start"
       )}
     >
       <DataTableColumnHeader
@@ -853,19 +834,18 @@ export interface DatasetTracesTableProps {
   failingTraceIdSet?: ReadonlySet<string>;
   onRowClick: (
     traceId: string,
-    event: React.MouseEvent | React.KeyboardEvent,
+    event: React.MouseEvent | React.KeyboardEvent
   ) => void;
   onCheckboxChange: (
     traceId: string,
     next: boolean,
-    event: React.MouseEvent,
+    event: React.MouseEvent
   ) => void;
   selectAllState: "none" | "indeterminate" | "all";
   onSelectAllVisible: (next: boolean) => void;
   canEdit?: boolean;
   onUpdateCluster?: (traceId: string, next: string | null) => void;
   onUpdateSplit?: (traceId: string, next: DatasetSplit | null) => void;
-  onUpdateStatus?: (traceId: string, next: TraceStatus) => void;
   /** Total count of traces in the snapshot (pre-filter). Drives the
    *  tablecn-style footer strip — `{filtered} of {total} rows`. When
    *  omitted the footer falls back to the filtered count alone. */
@@ -894,7 +874,6 @@ export function DatasetTracesTable({
   canEdit,
   onUpdateCluster,
   onUpdateSplit,
-  onUpdateStatus,
   totalCount,
   emptyPlaceholder,
   hideFooter,
@@ -905,7 +884,7 @@ export function DatasetTracesTable({
 
   const clusterIndex = React.useMemo(
     () => buildClusterIndex(snapshot.clusters),
-    [snapshot.clusters],
+    [snapshot.clusters]
   );
 
   const visibility = table.getState().columnVisibility;
@@ -922,22 +901,38 @@ export function DatasetTracesTable({
 
   const grouped = React.useMemo(
     () =>
-      groupRows(
-        sortedRows,
-        groupBy,
-        clusterIndex,
-        snapshot,
-        showEmptyGroups,
-      ),
-    [sortedRows, groupBy, clusterIndex, snapshot, showEmptyGroups],
+      groupRows(sortedRows, groupBy, clusterIndex, snapshot, showEmptyGroups),
+    [sortedRows, groupBy, clusterIndex, snapshot, showEmptyGroups]
   );
+
+  const [collapsedGroups, setCollapsedGroups] = React.useState<
+    readonly string[]
+  >([]);
+
+  React.useEffect(() => {
+    setCollapsedGroups((current) => {
+      const keys = new Set(grouped.map((group) => group.key));
+      const next = current.filter((key) => keys.has(key));
+      return next.length === current.length ? current : next;
+    });
+  }, [grouped]);
+
+  const toggleGroup = React.useCallback((key: string) => {
+    setCollapsedGroups((current) =>
+      current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key]
+    );
+  }, []);
 
   const flatItems = React.useMemo<FlatItem[]>(() => {
     const items: FlatItem[] = [];
     for (const group of grouped) {
+      const collapsed = collapsedGroups.includes(group.key);
       if (groupBy !== "none") {
         items.push({ kind: "group", group });
       }
+      if (collapsed) continue;
       if (group.rows.length === 0) {
         items.push({ kind: "empty", groupKey: group.key });
         continue;
@@ -947,7 +942,7 @@ export function DatasetTracesTable({
       }
     }
     return items;
-  }, [grouped, groupBy]);
+  }, [collapsedGroups, grouped, groupBy]);
 
   /* Roving tabindex: focused row when set, otherwise the first
      visible data row. */
@@ -976,7 +971,7 @@ export function DatasetTracesTable({
         return { ...prev, [id]: next };
       });
     },
-    [],
+    []
   );
 
   /* Sticky-header scroll feedback. A 1px sentinel at the top of the
@@ -990,14 +985,18 @@ export function DatasetTracesTable({
     if (!sentinel || !root) return;
     const obs = new IntersectionObserver(
       ([entry]) => setScrolled(entry ? !entry.isIntersecting : false),
-      { root, threshold: 0 },
+      { root, threshold: 0 }
     );
     obs.observe(sentinel);
     return () => obs.disconnect();
   }, []);
 
-  const groupHeadHeight = 28;
-  const emptyHintHeight = 32;
+  /* h-10 group head (40px) + 16px top breathing buffer so every
+     section (including the first one under the sticky header) gets
+     a clear gap without feeling cavernous. The actual `<tr>`
+     reserves 56px. */
+  const groupHeadHeight = 56;
+  const emptyHintHeight = 34;
 
   const virtualizer = useVirtualizer({
     count: flatItems.length,
@@ -1024,13 +1023,13 @@ export function DatasetTracesTable({
   React.useEffect(() => {
     if (!focusedTraceId) return;
     const idx = flatItems.findIndex(
-      (it) => it.kind === "row" && it.row.original.traceId === focusedTraceId,
+      (it) => it.kind === "row" && it.row.original.traceId === focusedTraceId
     );
     if (idx >= 0) virtualizer.scrollToIndex(idx, { align: "auto" });
   }, [focusedTraceId, flatItems, virtualizer]);
 
   const colCount =
-    4 /* select + status + trace + chevron */ +
+    3 /* select + trace + chevron */ +
     (showClusterColumn ? 1 : 0) +
     (showEvents ? 1 : 0) +
     (showDuration ? 1 : 0) +
@@ -1054,21 +1053,20 @@ export function DatasetTracesTable({
 
   const totalDataRows = flatItems.reduce(
     (acc, it) => (it.kind === "row" ? acc + 1 : acc),
-    0,
+    0
   );
   const filteredCount = sortedRows.length;
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
   return (
-    <div
-      className={cx(
-        "flex flex-1 min-h-0 flex-col gap-2.5 p-4",
-        className,
-      )}
-    >
+    <div className={cx("flex flex-1 min-h-0 flex-col gap-2.5 bg-black p-3", className)}>
       <div
         ref={scrollRef}
-        className="chron-scrollbar-hidden flex-1 min-h-0 overflow-auto rounded-md border border-border"
+        /* No outer border / radius / background — the table inherits
+           the canvas surface so it reads as part of the page rather
+           than a card-within-a-card. The inner row hairlines + sticky
+           header still provide structure. */
+        className="chron-scrollbar-hidden flex-1 min-h-0 overflow-auto"
       >
         {/* Sentinel must be first so its visibility tracks scrollTop=0. */}
         <div ref={sentinelRef} aria-hidden className="h-px" />
@@ -1077,7 +1075,7 @@ export function DatasetTracesTable({
           aria-rowcount={totalDataRows + 1}
           aria-colcount={colCount}
         >
-          <thead className="block [&_tr]:border-b">
+          <thead className="block [&_tr]:border-b [&_tr]:border-l-border-faint">
             <ListHeader
               table={table}
               showCluster={showClusterColumn}
@@ -1115,17 +1113,25 @@ export function DatasetTracesTable({
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
                     style={wrapperStyle}
-                    /* Match the data-row `px-3` so the group head's
-                       leading dot lines up with the row content area. */
-                    className="block px-3"
+                    /* Group heads span edge-to-edge of the scroll
+                       container (no horizontal inset) so they read
+                       as full-width section dividers. `pt-4`
+                       reserves a comfortable breathing buffer above
+                       every head — enough to clearly demarcate
+                       sections from the sticky header and from the
+                       prior group's last row. */
+                    className="block pt-4"
                   >
                     <GroupHead
+                      groupKey={item.group.key}
                       label={item.group.label}
                       count={item.group.rows.length}
                       dot={item.group.dot}
                       fill={item.group.fill}
                       breakdown={computeGroupBreakdown(item.group, groupBy)}
                       colSpan={colCount}
+                      collapsed={collapsedGroups.includes(item.group.key)}
+                      onToggle={toggleGroup}
                     />
                   </tr>
                 );
@@ -1138,7 +1144,7 @@ export function DatasetTracesTable({
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
                     style={wrapperStyle}
-                    className="block px-3"
+                    className="block"
                   >
                     <EmptyGroupHint colSpan={colCount} />
                   </tr>
@@ -1154,7 +1160,7 @@ export function DatasetTracesTable({
                     !showClusterColumn
                       ? null
                       : trace.clusterId
-                        ? clusterIndex.get(trace.clusterId) ?? null
+                        ? (clusterIndex.get(trace.clusterId) ?? null)
                         : null
                   }
                   rowHeightPx={rowHeight}
@@ -1177,7 +1183,6 @@ export function DatasetTracesTable({
                   clusters={canEdit ? snapshot.clusters : undefined}
                   onUpdateCluster={canEdit ? onUpdateCluster : undefined}
                   onUpdateSplit={canEdit ? onUpdateSplit : undefined}
-                  onUpdateStatus={canEdit ? onUpdateStatus : undefined}
                   style={wrapperStyle}
                 />
               );
@@ -1214,11 +1219,11 @@ function DataTableFooter({
 }: DataTableFooterProps) {
   const isFiltered = filteredCount !== totalCount;
   return (
-    <div className="flex items-center justify-between gap-4 px-2 text-sm text-muted-foreground">
+    <div className="flex items-center justify-between gap-4 px-1 text-[12px] text-l-ink-dim">
       <span aria-live="polite">
         {selectedCount} of {filteredCount} row(s) selected.
       </span>
-      <span className="font-mono text-xs tabular-nums">
+      <span className="font-mono text-[11px] tabular-nums">
         {isFiltered ? (
           <>
             {filteredCount} of {totalCount} rows

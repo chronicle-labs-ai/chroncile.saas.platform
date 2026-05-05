@@ -49,10 +49,10 @@ export const WithBulkActions: Story = {
   },
 };
 
-/* Demonstrates the left rail: saved views (with optimistic save +
- * delete) and eval-runs that mark failing rows in the active lens
- * when selected. Multi-selecting two rows opens the compare drawer
- * in place of the single-trace inspector. */
+/* Demonstrates compact saved-view chips (with optimistic save +
+ * update + delete) and eval-run chips that mark failing rows in the
+ * active lens when selected. Multi-selecting two rows opens the
+ * compare drawer in place of the single-trace inspector. */
 export const WithRailAndCompare: Story = {
   args: {
     initialView: "grid",
@@ -132,7 +132,11 @@ export const WithRailAndCompare: Story = {
           status: "regressed",
           passRate: 0.71,
           totalCount: 250,
-          failedTraceIds: ["trace_password_0", "trace_password_3", "trace_billing_1"],
+          failedTraceIds: [
+            "trace_password_0",
+            "trace_password_3",
+            "trace_billing_1",
+          ],
         },
         {
           id: "run_v014_1",

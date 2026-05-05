@@ -27,12 +27,14 @@ const compare = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "compare")
 const regression = cloneRecipe(
   BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
 );
-const bug = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "bug")!.recipe);
+const replay = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "replay")!.recipe,
+);
 const suite = cloneRecipe(BACKTEST_JOB_PRESETS.find((j) => j.id === "suite")!.recipe);
 
 export const TwoAgentsCompose: Story = { args: { recipe: compare } };
 export const ThreeAgentsRegression: Story = { args: { recipe: regression } };
-export const FourAgentsBug: Story = { args: { recipe: bug } };
+export const ReplayAcrossVersions: Story = { args: { recipe: replay } };
 export const SavedDataset: Story = { args: { recipe: suite } };
 
 export const AgentsOpen: Story = { args: { recipe: regression, open: "agents" } };

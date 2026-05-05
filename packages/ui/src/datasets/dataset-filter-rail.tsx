@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Plus, PlusCircle, X, XCircle } from "lucide-react";
+import { Check, ListFilter, Plus, PlusCircle, X } from "lucide-react";
 
 import { cx } from "../utils/cx";
 import { Button } from "../primitives/button";
@@ -16,11 +16,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "../primitives/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../primitives/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "../primitives/popover";
 import { Separator } from "../primitives/separator";
 import {
   coerceValueForOperator,
@@ -84,6 +80,22 @@ export interface DatasetFilterRailProps {
   /** Hide the "Clear" affordance. Defaults to shown when ≥1 chip. */
   showClear?: boolean;
   className?: string;
+  /** Render the "+ Filter" trigger as an icon-only square pill, matching
+   *  the dataset toolbar's icon-button row (and showing a dot when any
+   *  filter is active). The trigger is also rendered unconditionally in
+   *  this mode so it stays anchored even when no addable columns remain. */
+  compact?: boolean;
+  /**
+   * Which parts of the rail to render.
+   *
+   *   - `"all"` *(default)* — chips + add-filter trigger + clear.
+   *   - `"chips"` — only the active filter chips and the clear button.
+   *     Pair with a separately-mounted `slot="trigger"` if you want
+   *     to host the chips and the trigger in different parts of the
+   *     layout (e.g. Linear-style chip bar below a toolbar).
+   *   - `"trigger"` — only the add-filter trigger. Implies `compact`.
+   */
+  slot?: "all" | "chips" | "trigger";
 }
 
 export function DatasetFilterRail({
@@ -92,53 +104,34 @@ export function DatasetFilterRail({
   actions,
   showClear = true,
   className,
+  compact,
+  slot = "all",
 }: DatasetFilterRailProps) {
   const columnById = React.useMemo(
     () => new Map(columns.map((c) => [c.id, c] as const)),
-    [columns],
+    [columns]
   );
 
-  /* Index of multiOption filters keyed by columnId — these are
-     surfaced as faceted chips so empty / non-empty states share one
-     trigger. Non-multiOption filters (text / number) stay as
-     individual pills since they carry an operator. */
-  const facetedFilterByColumn = React.useMemo(() => {
-    const m = new Map<string, FilterState>();
-    for (const f of filters) {
-      const col = columnById.get(f.columnId);
-      if (!col || col.type !== "multiOption") continue;
-      m.set(f.columnId, f);
+  const activeMultiOptionIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (const filter of filters) {
+      const column = columnById.get(filter.columnId);
+      if (column?.type === "multiOption") ids.add(column.id);
     }
-    return m;
-  }, [filters, columnById]);
+    return ids;
+  }, [columnById, filters]);
 
-  /* Multi-option columns are always rendered as a chip — present or
-     not — so the toolbar reads as "click Status to filter." Order is
-     stable: the column-config order. */
-  const facetedColumns = React.useMemo(
-    () => columns.filter((c) => c.type === "multiOption"),
-    [columns],
-  );
-
-  /* Non-multiOption filters (text / number) keep their original
-     operator-bearing pill since they carry per-filter operator
-     semantics that don't fit the faceted shape. */
-  const customFilters = React.useMemo(
-    () =>
-      filters.filter((f) => {
-        const col = columnById.get(f.columnId);
-        return col?.type !== "multiOption";
-      }),
-    [filters, columnById],
-  );
-
-  /* Columns that aren't already surfaced as a faceted chip and aren't
-     a multiOption — these are the ones a user might want to add via
-     the "+ Filter" trigger. */
   const addableColumns = React.useMemo(
-    () => columns.filter((c) => c.type !== "multiOption"),
-    [columns],
+    () =>
+      columns.filter(
+        (column) =>
+          column.type === "multiOption" && !activeMultiOptionIds.has(column.id)
+      ),
+    [activeMultiOptionIds, columns]
   );
+
+  const showChips = slot !== "trigger";
+  const showTrigger = slot !== "chips";
 
   return (
     <div
@@ -146,55 +139,51 @@ export function DatasetFilterRail({
       aria-label="Filters"
       className={cx("flex flex-wrap items-center gap-1.5", className)}
     >
-      {facetedColumns.map((col) => {
-        const filter = facetedFilterByColumn.get(col.id) ?? null;
-        return (
-          <DatasetFacetedFilterChip
-            key={col.id}
-            column={col}
-            filter={filter}
-            onAdd={(value) =>
-              actions.addConfiguredFilter({
-                columnId: col.id,
-                operator: "isAnyOf",
-                value,
-              })
+      {showChips
+        ? filters.map((f) => {
+            const col = columnById.get(f.columnId);
+            if (!col) return null;
+            if (col.type === "multiOption") {
+              return (
+                <DatasetFacetedFilterChip
+                  key={f.id}
+                  column={col}
+                  filter={f}
+                  onAdd={(value) =>
+                    actions.addConfiguredFilter({
+                      columnId: col.id,
+                      operator: "isAnyOf",
+                      value,
+                    })
+                  }
+                  onUpdateValue={(value) => actions.updateValue(f.id, value)}
+                  onRemove={() => actions.removeFilter(f.id)}
+                />
+              );
             }
-            onUpdateValue={(value) => {
-              if (!filter) return;
-              actions.updateValue(filter.id, value);
-            }}
-            onRemove={() => {
-              if (!filter) return;
-              actions.removeFilter(filter.id);
-            }}
-          />
-        );
-      })}
+            return (
+              <DatasetFilterPill
+                key={f.id}
+                column={col}
+                filter={f}
+                onValueChange={(v) => actions.updateValue(f.id, v)}
+                onOperatorChange={(op) => actions.updateOperator(f.id, op)}
+                onRemove={() => actions.removeFilter(f.id)}
+              />
+            );
+          })
+        : null}
 
-      {customFilters.map((f) => {
-        const col = columnById.get(f.columnId);
-        if (!col) return null;
-        return (
-          <DatasetFilterPill
-            key={f.id}
-            column={col}
-            filter={f}
-            onValueChange={(v) => actions.updateValue(f.id, v)}
-            onOperatorChange={(op) => actions.updateOperator(f.id, op)}
-            onRemove={() => actions.removeFilter(f.id)}
-          />
-        );
-      })}
-
-      {addableColumns.length > 0 ? (
+      {showTrigger && (compact || addableColumns.length > 0) ? (
         <DatasetFilterAdd
           columns={addableColumns}
           onAdd={(payload) => actions.addConfiguredFilter(payload)}
+          compact={compact || slot === "trigger"}
+          isActive={filters.length > 0}
         />
       ) : null}
 
-      {showClear && filters.length > 0 ? (
+      {showChips && showClear && filters.length > 0 ? (
         <button
           type="button"
           onClick={() => actions.clearAll()}
@@ -203,10 +192,10 @@ export function DatasetFilterRail({
             "font-sans text-[11.5px] text-l-ink-dim",
             "transition-colors duration-fast ease-out motion-reduce:transition-none",
             "hover:bg-l-surface-hover hover:text-l-ink",
-            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
           )}
         >
-          Reset
+          Clear Filters
           <X className="size-3" strokeWidth={1.75} />
         </button>
       ) : null}
@@ -238,10 +227,12 @@ function DatasetFacetedFilterChip({
   onUpdateValue,
   onRemove,
 }: DatasetFacetedFilterChipProps) {
-  const options = column.options ?? [];
+  const options = React.useMemo(() => column.options ?? [], [column.options]);
   const selected = React.useMemo(() => {
     if (!filter) return new Set<string>();
-    return new Set(Array.isArray(filter.value) ? (filter.value as string[]) : []);
+    return new Set(
+      Array.isArray(filter.value) ? (filter.value as string[]) : []
+    );
   }, [filter]);
 
   const onItemSelect = React.useCallback(
@@ -260,7 +251,7 @@ function DatasetFacetedFilterChip({
         onAdd(arr);
       }
     },
-    [filter, onAdd, onUpdateValue, onRemove, options, selected],
+    [filter, onAdd, onUpdateValue, onRemove, options, selected]
   );
 
   const onReset = React.useCallback(
@@ -268,7 +259,7 @@ function DatasetFacetedFilterChip({
       event?.stopPropagation();
       if (filter) onRemove();
     },
-    [filter, onRemove],
+    [filter, onRemove]
   );
 
   return (
@@ -279,18 +270,15 @@ function DatasetFacetedFilterChip({
           size="sm"
           className={cx(
             "h-[26px] gap-1.5 px-2 text-[12px] text-l-ink-lo",
-            selected.size === 0 ? "border-dashed" : null,
+            selected.size === 0 ? "border-dashed" : null
           )}
         >
           {selected.size > 0 ? (
-            <button
-              type="button"
-              aria-label={`Clear ${column.label} filter`}
-              onClick={onReset}
-              className="inline-flex rounded-pill text-l-ink-dim hover:text-l-ink"
-            >
-              <XCircle className="size-3.5" strokeWidth={1.75} />
-            </button>
+            <Check
+              className="size-3.5 shrink-0 text-ember"
+              strokeWidth={1.75}
+              aria-hidden
+            />
           ) : (
             <PlusCircle className="size-3.5" strokeWidth={1.75} />
           )}
@@ -353,7 +341,7 @@ function DatasetFacetedFilterChip({
                         "mr-2 inline-flex size-3.5 shrink-0 items-center justify-center rounded-xs border",
                         isSelected
                           ? "bg-ember border-ember text-white"
-                          : "border-l-border-strong opacity-60",
+                          : "border-l-border-strong opacity-60"
                       )}
                     >
                       {isSelected ? (
@@ -413,7 +401,7 @@ function DatasetFilterPill({
         "border border-l-border-faint bg-l-surface-input",
         "font-sans text-[11.5px] text-l-ink",
         "transition-colors duration-fast ease-out motion-reduce:transition-none",
-        "hover:border-hairline-strong",
+        "hover:border-hairline-strong"
       )}
     >
       <span className="inline-flex items-center gap-1 pl-2 pr-1.5 text-l-ink-lo">
@@ -432,7 +420,7 @@ function DatasetFilterPill({
               "font-sans text-[10.5px] text-l-ink-dim",
               "hover:bg-l-surface-hover hover:text-l-ink",
               "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
-              "transition-colors duration-fast ease-out motion-reduce:transition-none",
+              "transition-colors duration-fast ease-out motion-reduce:transition-none"
             )}
             aria-label={`${column.label} operator`}
           >
@@ -455,7 +443,7 @@ function DatasetFilterPill({
                       "flex w-full items-center justify-between rounded-[3px] px-2 py-1.5 text-left",
                       "font-sans text-[12px] text-l-ink",
                       "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
-                      active ? "bg-l-surface-selected" : null,
+                      active ? "bg-l-surface-selected" : null
                     )}
                   >
                     <span>{meta.label}</span>
@@ -484,7 +472,7 @@ function DatasetFilterPill({
               "inline-flex items-center px-2 font-medium text-l-ink",
               "transition-colors duration-fast ease-out motion-reduce:transition-none",
               "hover:bg-l-surface-hover",
-              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
             )}
             aria-label={`${column.label} value`}
           >
@@ -515,7 +503,7 @@ function DatasetFilterPill({
           "[@media(pointer:coarse)]:px-3",
           "transition-colors duration-fast ease-out motion-reduce:transition-none",
           "hover:bg-l-p-urgent/10 hover:text-l-p-urgent",
-          "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+          "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
         )}
       >
         <X className="size-3" strokeWidth={1.75} aria-hidden />
@@ -529,9 +517,19 @@ function DatasetFilterPill({
 interface DatasetFilterAddProps {
   columns: ColumnConfig<TraceSummary>[];
   onAdd: (filter: Omit<FilterState, "id">) => void;
+  /** Render the trigger as an icon-only square pill (with a dot when
+   *  any filter is currently active). */
+  compact?: boolean;
+  /** Drives the dot indicator in compact mode. */
+  isActive?: boolean;
 }
 
-function DatasetFilterAdd({ columns, onAdd }: DatasetFilterAddProps) {
+function DatasetFilterAdd({
+  columns,
+  onAdd,
+  compact,
+  isActive,
+}: DatasetFilterAddProps) {
   const [open, setOpen] = React.useState(false);
   const [draftColumn, setDraftColumn] =
     React.useState<ColumnConfig<TraceSummary> | null>(null);
@@ -571,26 +569,50 @@ function DatasetFilterAdd({ columns, onAdd }: DatasetFilterAddProps) {
   return (
     <Popover open={open} onOpenChange={handleClose}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cx(
-            "inline-flex h-6 items-center gap-1 rounded-[3px] px-2",
-            "[@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:px-3",
-            "border border-dashed border-l-border-faint bg-transparent",
-            "font-sans text-[11.5px] text-l-ink-lo",
-            "transition-colors duration-fast ease-out motion-reduce:transition-none",
-            "hover:border-hairline-strong hover:bg-l-surface-hover hover:text-l-ink",
-            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
-          )}
-          aria-label="Add filter"
-        >
-          <Plus className="size-3" strokeWidth={1.75} aria-hidden />
-          <span>Filter</span>
-        </button>
+        {compact ? (
+          <button
+            type="button"
+            aria-label="Filter"
+            title="Filter"
+            className={cx(
+              "relative inline-flex size-8 shrink-0 items-center justify-center rounded-[10px]",
+              "border border-l-border-faint bg-l-wash-1 text-l-ink-lo",
+              "transition-colors duration-fast ease-out motion-reduce:transition-none",
+              "hover:bg-l-wash-3 hover:text-l-ink",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+              isActive ? "text-l-ink" : null
+            )}
+          >
+            <ListFilter className="size-4" strokeWidth={1.75} aria-hidden />
+            {isActive ? (
+              <span
+                aria-hidden
+                className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-ember"
+              />
+            ) : null}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={cx(
+              "inline-flex h-7 items-center gap-1.5 rounded-[5px] px-2.5",
+              "[@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:px-3",
+              "border border-l-border-faint bg-l-wash-1",
+              "font-sans text-[12px] font-medium text-l-ink-lo",
+              "transition-[background-color,border-color,color] duration-fast ease-out motion-reduce:transition-none",
+              "hover:border-l-border-hover hover:bg-l-wash-3 hover:text-l-ink",
+              "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
+            )}
+            aria-label="Filter"
+          >
+            <Plus className="size-3.5" strokeWidth={1.75} aria-hidden />
+            <span>Filter</span>
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         placement="bottom start"
-        className="w-[260px] overflow-hidden p-0"
+        className="w-[280px] overflow-hidden rounded-[10px] border-hairline-strong bg-l-surface-raised p-0 shadow-[0_18px_48px_-24px_rgba(0,0,0,0.65)]"
       >
         {draftColumn === null ? (
           <ColumnPicker columns={columns} onPick={startDraftFor} />
@@ -607,8 +629,8 @@ function DatasetFilterAdd({ columns, onAdd }: DatasetFilterAddProps) {
                   draftColumn.type,
                   draftOperator,
                   op,
-                  prev,
-                ),
+                  prev
+                )
               );
             }}
             onChangeValue={setDraftValue}
@@ -634,8 +656,7 @@ function ColumnPicker({
     const q = query.trim().toLowerCase();
     if (!q) return columns;
     return columns.filter(
-      (c) =>
-        c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q),
+      (c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
     );
   }, [query, columns]);
 
@@ -647,7 +668,7 @@ function ColumnPicker({
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
-          placeholder="Find filter…"
+          placeholder="Add Filter…"
           aria-label="Search filter columns"
         />
       </div>
@@ -666,11 +687,12 @@ function ColumnPicker({
               <button
                 type="button"
                 role="option"
+                aria-selected={false}
                 onClick={() => onPick(col)}
                 className={cx(
                   "flex w-full items-center justify-between gap-2 rounded-[3px] px-2 py-1.5 text-left",
                   "font-sans text-[12px] text-l-ink",
-                  "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+                  "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
                 )}
               >
                 <span className="flex min-w-0 items-center gap-1.5">
@@ -721,7 +743,7 @@ function DraftEditor({
             "inline-flex h-6 items-center gap-1 rounded-[3px] px-1.5 text-l-ink-dim",
             "font-sans text-[11.5px]",
             "hover:bg-l-surface-hover hover:text-l-ink",
-            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+            "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
           )}
           aria-label="Back to columns"
         >
@@ -735,11 +757,13 @@ function DraftEditor({
                 "inline-flex h-6 items-center gap-1 rounded-[3px] px-2",
                 "bg-l-surface-input font-sans text-[11.5px] text-l-ink",
                 "hover:bg-l-surface-hover",
-                "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
+                "focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember"
               )}
             >
               <span>{operatorLabel(operator)}</span>
-              <span aria-hidden className="text-l-ink-dim">⌄</span>
+              <span aria-hidden className="text-l-ink-dim">
+                ⌄
+              </span>
             </button>
           </PopoverTrigger>
           <PopoverContent placement="bottom end" className="w-[200px] p-1">
@@ -758,7 +782,7 @@ function DraftEditor({
                         "flex w-full items-center justify-between rounded-[3px] px-2 py-1.5 text-left",
                         "font-sans text-[12px] text-l-ink",
                         "hover:bg-l-surface-hover",
-                        active ? "bg-l-surface-selected" : null,
+                        active ? "bg-l-surface-selected" : null
                       )}
                     >
                       <span>{meta.label}</span>
@@ -783,7 +807,12 @@ function DraftEditor({
         <FilterValueEditor
           column={column}
           filter={
-            { id: "__draft__", columnId: column.id, operator, value } as FilterState
+            {
+              id: "__draft__",
+              columnId: column.id,
+              operator,
+              value,
+            } as FilterState
           }
           onChange={onChangeValue}
           onCommit={() => onCommit()}
@@ -876,10 +905,7 @@ function FilterValueEditor({
               type="number"
               value={lo == null ? "" : String(lo)}
               onChange={(e) =>
-                onChange([
-                  numberOrNull(e.currentTarget.value),
-                  hi ?? null,
-                ])
+                onChange([numberOrNull(e.currentTarget.value), hi ?? null])
               }
               placeholder="Min"
             />
@@ -887,10 +913,7 @@ function FilterValueEditor({
               type="number"
               value={hi == null ? "" : String(hi)}
               onChange={(e) =>
-                onChange([
-                  lo ?? null,
-                  numberOrNull(e.currentTarget.value),
-                ])
+                onChange([lo ?? null, numberOrNull(e.currentTarget.value)])
               }
               placeholder="Max"
             />
@@ -903,9 +926,7 @@ function FilterValueEditor({
             autoFocus={autoFocus}
             type="number"
             value={filter.value == null ? "" : String(filter.value)}
-            onChange={(e) =>
-              onChange(numberOrNull(e.currentTarget.value))
-            }
+            onChange={(e) => onChange(numberOrNull(e.currentTarget.value))}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -937,7 +958,7 @@ function OptionList({
   const [query, setQuery] = React.useState("");
   const filtered = React.useMemo(
     () => filterOptions(options, query),
-    [options, query],
+    [options, query]
   );
   return (
     <div className="flex flex-col">
@@ -970,7 +991,7 @@ function OptionList({
                     "flex w-full items-center justify-between gap-2 rounded-[3px] px-2 py-1.5 text-left",
                     "font-sans text-[12px] text-l-ink",
                     "hover:bg-l-surface-hover focus-visible:outline focus-visible:outline-1 focus-visible:outline-ember",
-                    selected ? "bg-l-surface-selected" : null,
+                    selected ? "bg-l-surface-selected" : null
                   )}
                 >
                   <span className="truncate">{opt.label}</span>
@@ -1033,7 +1054,7 @@ function MultiOptionList({
                     "mr-2 flex size-3.5 shrink-0 items-center justify-center rounded-[2px] border",
                     isSelected
                       ? "border-ember bg-ember"
-                      : "border-l-border-faint bg-l-surface-input",
+                      : "border-l-border-faint bg-l-surface-input"
                   )}
                 >
                   {isSelected ? (
@@ -1110,16 +1131,14 @@ function ValueSummary({
         return (
           <span className="truncate">
             {arr
-              .map((v) => column.options?.find((o) => o.value === v)?.label ?? v)
+              .map(
+                (v) => column.options?.find((o) => o.value === v)?.label ?? v
+              )
               .join(", ")}
           </span>
         );
       }
-      return (
-        <span className="truncate">
-          {arr.length} selected
-        </span>
-      );
+      return <span className="truncate">{arr.length} selected</span>;
     }
     case "text": {
       const v = (filter.value as string | undefined) ?? "";
@@ -1134,7 +1153,8 @@ function ValueSummary({
         const [lo, hi] = Array.isArray(filter.value)
           ? (filter.value as [unknown, unknown])
           : [undefined, undefined];
-        if (lo == null && hi == null) return <Placeholder>set range…</Placeholder>;
+        if (lo == null && hi == null)
+          return <Placeholder>set range…</Placeholder>;
         const loStr = lo == null || lo === "" ? "−∞" : String(lo);
         const hiStr = hi == null || hi === "" ? "∞" : String(hi);
         return (
@@ -1159,13 +1179,13 @@ function Placeholder({ children }: { children: React.ReactNode }) {
 
 function filterOptions(
   options: readonly ColumnOption[],
-  query: string,
+  query: string
 ): ColumnOption[] {
   const q = query.trim().toLowerCase();
   if (!q) return [...options];
   return options.filter(
     (o) =>
-      o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
+      o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
   );
 }
 
@@ -1178,7 +1198,7 @@ function numberOrNull(input: string): number | null {
 function hasValue(
   type: ColumnConfig<TraceSummary>["type"],
   value: unknown,
-  operator: FilterOperator,
+  operator: FilterOperator
 ): boolean {
   switch (type) {
     case "option":

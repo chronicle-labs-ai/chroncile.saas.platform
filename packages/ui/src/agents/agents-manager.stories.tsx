@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { AgentsManager } from "./agents-manager";
 import { ProductChromeFrame } from "./_story-frame";
+import { agentsManagerSeed } from "./data";
 
 const meta: Meta<typeof AgentsManager> = {
   title: "Agents/AgentsManager",
@@ -21,30 +22,16 @@ type Story = StoryObj<typeof AgentsManager>;
 
 export const Default: Story = {};
 
-export const ListView: Story = {
-  args: { initialView: "list" },
+/** Single-framework subset to show how the grouped list collapses
+ *  down when only one framework bucket is populated. */
+export const SingleFramework: Story = {
+  args: {
+    agents: agentsManagerSeed.filter(
+      (agent) => agent.framework === "vercel-ai-sdk",
+    ),
+  },
 };
 
-export const GridView: Story = {
-  args: { initialView: "grid" },
-};
-
-export const GroupByPurpose: Story = {
-  args: { initialGroupBy: "purpose", initialView: "grid" },
-};
-
-export const GroupByFramework: Story = {
-  args: { initialGroupBy: "framework", initialView: "grid" },
-};
-
-export const Flat: Story = {
-  args: { initialGroupBy: "flat", initialView: "grid" },
-};
-
-export const FlatList: Story = {
-  args: { initialGroupBy: "flat", initialView: "list" },
-};
-
-export const EmptyAll: Story = {
+export const Empty: Story = {
   args: { agents: [] },
 };

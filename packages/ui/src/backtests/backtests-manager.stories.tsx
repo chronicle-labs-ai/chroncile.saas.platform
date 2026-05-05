@@ -22,19 +22,41 @@ const meta: Meta<typeof BacktestsManager> = {
 export default meta;
 type Story = StoryObj<typeof BacktestsManager>;
 
-const regressionRecipe = cloneRecipe(
-  BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
+const replayRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "replay")!.recipe,
 );
 const compareRecipe = cloneRecipe(
   BACKTEST_JOB_PRESETS.find((j) => j.id === "compare")!.recipe,
 );
+const regressionRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
+);
+const suiteRecipe = cloneRecipe(
+  BACKTEST_JOB_PRESETS.find((j) => j.id === "suite")!.recipe,
+);
 
 export const Default: Story = {
+  args: { initialStage: "list" },
+};
+
+export const ConfigureEmpty: Story = {
   args: { initialStage: "configure" },
 };
 
-export const RecipePhase: Story = {
+export const ReplayPipeline: Story = {
+  args: { initialStage: "configure", initialRecipe: replayRecipe },
+};
+
+export const ComparePipeline: Story = {
+  args: { initialStage: "configure", initialRecipe: compareRecipe },
+};
+
+export const RegressionPipeline: Story = {
   args: { initialStage: "configure", initialRecipe: regressionRecipe },
+};
+
+export const SuitePipeline: Story = {
+  args: { initialStage: "configure", initialRecipe: suiteRecipe },
 };
 
 export const Running: Story = {

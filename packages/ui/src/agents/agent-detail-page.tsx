@@ -169,20 +169,20 @@ export function AgentDetailPage({
           <Tab id="configuration">Configuration</Tab>
           <Tab id="versions">
             Versions
-            <span className="ml-1.5 font-sans text-[11px] text-l-ink-dim">
+            <span className="ml-1.5 font-mono text-[10px] tabular-nums text-l-ink-dim">
               {versions.length}
             </span>
           </Tab>
           <Tab id="runs">
             Runs
-            <span className="ml-1.5 font-sans text-[11px] text-l-ink-dim">
+            <span className="ml-1.5 font-mono text-[10px] tabular-nums text-l-ink-dim">
               {snapshot.runs.length}
             </span>
           </Tab>
           <Tab id="drift">
             Drift
             {driftEntries.length > 0 ? (
-              <span className="ml-1.5 font-sans text-[11px] text-event-amber">
+              <span className="ml-1.5 font-mono text-[10px] tabular-nums text-event-amber">
                 {driftEntries.length}
               </span>
             ) : null}
@@ -261,135 +261,88 @@ function DetailHeader({ snapshot, onOpenHashSearch }: DetailHeaderProps) {
 
   const providerMeta = getModelProviderMeta(summary.model.provider);
 
-  // Two independent copy sessions so the feedback label can name what
-  // was actually copied. Both share the same 1.1s reset window so the
-  // affordance feels consistent.
-  const { copy: copyArtifactId, copied: copiedArtifactId } = useCopy();
-  const { copy: copyConfigHash, copied: copiedConfigHash } = useCopy();
-  const feedbackLabel = copiedArtifactId
-    ? "Artifact ID copied"
-    : copiedConfigHash
-      ? "Config hash copied"
-      : "";
+  /* Copy is preserved via `useCopy`, but the visible "copied!" flourish
+   * (a checkmark and an aria-live label next to the actions menu) was
+   * removed in the redesign. Copy still works silently — toast/feedback
+   * is owned by a global pattern in a follow-up. */
+  const { copy: copyArtifactId } = useCopy();
+  const { copy: copyConfigHash } = useCopy();
 
   const purpose = summary.purpose ?? summary.description ?? "";
-  // Highlight the first word in ember to mirror the DashboardHero
-  // "Today's signal." accent — keeps the brand voice consistent.
-  const [firstWord, ...rest] = purpose.split(" ");
-  const remainder = rest.join(" ");
 
   return (
-    <header className="flex flex-shrink-0 flex-col gap-3 border-b border-l-border-faint px-4 py-4">
-      <div className="flex items-start gap-3">
+    <header className="flex flex-shrink-0 flex-col gap-1.5 border-b border-l-border-faint px-4 py-3">
+      <div className="flex items-center gap-3">
         {providerMeta ? (
           <AgentCompanyMark
             name={providerMeta.companyName}
             domain={providerMeta.companyDomain}
-            size="md"
+            size="sm"
             alt={`${providerMeta.label} logo`}
           />
         ) : (
           <span
-            className="flex size-9 shrink-0 items-center justify-center rounded-[3px] bg-ember/10 text-ember"
+            className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ember/10 text-ember"
             aria-hidden
           >
-            <Bot className="size-4.5" strokeWidth={1.6} />
+            <Bot className="size-3.5" strokeWidth={1.6} />
           </span>
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate font-sans text-[16px] font-medium leading-tight text-l-ink">
-              {summary.name}
-            </h2>
-            {current ? (
-              <AgentVersionBadge
-                version={current.artifact.version}
-                status="current"
-              />
-            ) : null}
-            <AgentFrameworkBadge framework={summary.framework} />
-            {summary.lastDriftAt ? (
-              <span className="inline-flex items-center gap-1 rounded-pill border border-event-amber/30 bg-event-amber/10 px-2 py-[1px] font-sans text-[10.5px] text-event-amber">
-                drift
-              </span>
-            ) : null}
-          </div>
-
-          {purpose ? (
-            <p className="font-display text-[20px] font-normal leading-snug tracking-[-0.02em] text-l-ink-hi md:text-[22px]">
-              <span className="text-ember">{firstWord}</span>
-              {remainder ? <span> {remainder}</span> : null}
-            </p>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <h2 className="truncate font-sans text-[15px] font-medium leading-tight text-l-ink">
+            {summary.name}
+          </h2>
+          {current ? (
+            <AgentVersionBadge
+              version={current.artifact.version}
+              status="current"
+            />
           ) : null}
-
-          {summary.personaSummary ? (
-            <p className="max-w-3xl text-[12.5px] leading-5 text-l-ink-dim">
-              {summary.personaSummary}
-            </p>
+          {summary.lastDriftAt ? (
+            <span
+              aria-hidden
+              className="size-1.5 shrink-0 rounded-full bg-event-amber"
+              title="Drift observed"
+            />
           ) : null}
-
-          {(summary.capabilityTags ?? []).length > 0 ? (
-            <ul className="flex flex-wrap items-center gap-1.5">
-              {summary.capabilityTags!.map((tag) => (
-                <li
-                  key={tag}
-                  className="inline-flex items-center rounded-[2px] border border-l-border-faint bg-l-wash-1 px-1.5 py-[1px] font-mono text-[10.5px] tabular-nums text-l-ink-lo"
-                >
-                  {tag}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-2 font-sans text-[11px] text-l-ink-dim">
-            {summary.owner ? <span>Owner · {summary.owner}</span> : null}
-            {summary.environment ? (
-              <>
-                <span aria-hidden>·</span>
-                <span>Env · {summary.environment}</span>
-              </>
-            ) : null}
-            {summary.modelLabel ? (
-              <>
-                <span aria-hidden>·</span>
-                <span className="truncate font-mono tabular-nums text-l-ink-lo">
-                  {summary.modelLabel}
-                </span>
-              </>
-            ) : null}
-          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span
-            role="status"
-            aria-live="polite"
-            className={cx(
-              "inline-flex items-center gap-1 font-sans text-[11px] text-event-green transition-opacity duration-fast",
-              feedbackLabel ? "opacity-100" : "opacity-0",
-            )}
-          >
-            {feedbackLabel ? (
-              <>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="size-3"
+        <div className="flex shrink-0 items-center gap-1">
+          {summary.playgroundUrl ? (
+            <Button asChild variant="ghost" size="sm">
+              <a
+                href={summary.playgroundUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                aria-label="Open in playground"
+                title="Open in playground"
+              >
+                <PlayCircle
+                  className="size-3.5"
+                  strokeWidth={1.75}
                   aria-hidden
-                >
-                  <path
-                    d="M4.5 12.75l6 6 9-13.5"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                {feedbackLabel}
-              </>
-            ) : null}
-          </span>
+                />
+              </a>
+            </Button>
+          ) : null}
+          {summary.runbookUrl ? (
+            <Button asChild variant="ghost" size="sm">
+              <a
+                href={summary.runbookUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+                aria-label="Open runbook"
+                title="Open runbook"
+              >
+                <BookOpen
+                  className="size-3.5"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+              </a>
+            </Button>
+          ) : null}
           <AgentActionsMenu
             agent={summary}
             onCopyArtifactId={(value) => {
@@ -404,44 +357,11 @@ function DetailHeader({ snapshot, onOpenHashSearch }: DetailHeaderProps) {
         </div>
       </div>
 
-      {(summary.playgroundUrl || summary.runbookUrl) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {summary.playgroundUrl ? (
-            <Button
-              asChild
-              variant="primary"
-              size="sm"
-              leadingIcon={<PlayCircle className="size-3.5" strokeWidth={1.75} />}
-            >
-              <a
-                href={summary.playgroundUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Try in Playground
-                <ArrowUpRight className="ml-1 size-3" strokeWidth={1.75} aria-hidden />
-              </a>
-            </Button>
-          ) : null}
-          {summary.runbookUrl ? (
-            <Button
-              asChild
-              variant="secondary"
-              size="sm"
-              leadingIcon={<BookOpen className="size-3.5" strokeWidth={1.75} />}
-            >
-              <a
-                href={summary.runbookUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Open runbook
-                <ArrowUpRight className="ml-1 size-3" strokeWidth={1.75} aria-hidden />
-              </a>
-            </Button>
-          ) : null}
-        </div>
-      )}
+      {purpose ? (
+        <p className="max-w-3xl truncate font-sans text-[12.5px] leading-5 text-l-ink-lo">
+          {purpose}
+        </p>
+      ) : null}
     </header>
   );
 }

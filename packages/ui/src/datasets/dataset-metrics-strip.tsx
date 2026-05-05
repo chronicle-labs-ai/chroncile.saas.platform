@@ -51,8 +51,8 @@ export function DatasetMetricsStrip({
   return (
     <div
       className={cx(
-        "grid grid-cols-2 gap-2 md:grid-cols-4",
-        className,
+        "grid grid-cols-2 overflow-hidden rounded-[8px] border border-l-border-faint bg-l-wash-1/40 md:grid-cols-4",
+        className
       )}
     >
       <Tile
@@ -70,9 +70,7 @@ export function DatasetMetricsStrip({
         sub={
           clusters.length > 0
             ? `${formatNumber(
-                Math.round(
-                  traces.length / Math.max(clusters.length, 1),
-                ),
+                Math.round(traces.length / Math.max(clusters.length, 1))
               )} avg per cluster`
             : "no clusters yet"
         }
@@ -97,7 +95,10 @@ export function DatasetMetricsStrip({
       <Tile
         label="Last updated"
         value={
-          <RelativeTime iso={dataset.updatedAt ?? new Date(0).toISOString()} fallback="—" />
+          <RelativeTime
+            iso={dataset.updatedAt ?? new Date(0).toISOString()}
+            fallback="—"
+          />
         }
         sub={dataset.createdBy ? `by ${dataset.createdBy}` : undefined}
       />
@@ -113,7 +114,7 @@ interface TileProps {
 
 function Tile({ label, value, sub }: TileProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-[4px] border border-hairline-strong bg-l-surface-raised px-3 py-2.5">
+    <div className="flex min-w-0 flex-col gap-1 px-3 py-2">
       <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim">
         {label}
       </span>

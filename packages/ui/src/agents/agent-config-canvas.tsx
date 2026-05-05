@@ -18,14 +18,9 @@ import { cx } from "../utils/cx";
 import { formatStableDateTime } from "../connections/time";
 
 import { AgentConfigHashChip } from "./agent-config-hash-chip";
-import { AgentDriftTimeline } from "./agent-drift-timeline";
 import { AgentModelLabel } from "./agent-model-label";
-import { AgentPulseBar } from "./agent-pulse-bar";
-import { AgentRunsTable } from "./agent-runs-table";
 import { AgentVersionBadge } from "./agent-version-badge";
-import { AgentVersionTimeline } from "./agent-version-timeline";
 import { AgentWorkflowGraphPreview } from "./agent-workflow-graph-preview";
-import { buildDriftEntries } from "./data";
 import type {
   AgentContractPreview,
   AgentKnowledgeKind,
@@ -36,30 +31,35 @@ import type {
 } from "./types";
 
 /*
- * AgentConfigCanvas — the hybrid storytelling canvas rendered as the
- * default tab on `AgentDetailPage`. 12-column grid:
+ * AgentConfigCanvas — single-column "what is this agent" canvas. The
+ * rewrite drops the right rail (Pulse, Version timeline, Recent runs,
+ * Drift summary) because every one of those panels duplicates a
+ * dedicated tab on `AgentDetailPage` (Versions / Runs / Drift). The
+ * Configuration tab now answers exactly one question: how is this
+ * agent configured at the selected version?
  *
- *   ┌─────────────── Left rail (8 cols) ──────────────┬── Right rail (4 cols) ──┐
- *   │  Persona & Prompt                                │  Pulse · 24h            │
- *   │  Capabilities (workflow + tools + I/O contracts) │  Version timeline       │
- *   │  Knowledge & Policy                              │  Recent runs            │
- *   │  Provenance & Hashes                             │  Drift summary          │
- *   └──────────────────────────────────────────────────┴─────────────────────────┘
+ *   ┌──────────────────────────────────────────────────────┐
+ *   │  Persona & Prompt                                    │
+ *   │  Capabilities (workflow + tools + I/O contracts)     │
+ *   │  Knowledge & Policy                                  │
+ *   │  Provenance & Hashes                                 │
+ *   └──────────────────────────────────────────────────────┘
  *
- * The canvas is intentionally read-only over an `AgentVersionSummary`
- * — switching the version slot re-renders every section. No
- * collapse/expand state lives at the canvas level; sub-sections that
- * need it (Prompt, contracts) own their own.
+ * Constrained to `max-w-3xl` so long prompts don't run a 12-column
+ * grid wide on big monitors. Read-only over an `AgentVersionSummary`
+ * — switching the version slot re-renders every section.
  */
 
 export interface AgentConfigCanvasProps {
   snapshot: AgentSnapshot;
-  /** Version that drives the left rail. Right rail is fleet-level. */
+  /** Version that drives the canvas. */
   selectedVersion?: string;
   onSelectVersion?: (version: string) => void;
   selectedRunId?: string | null;
   onSelectRun?: (runId: string | null) => void;
-  /** "View all versions" / "Compare" / "View all runs" jump-outs. */
+  /** Tab-jump callbacks are accepted for API back-compat but no longer
+   *  rendered — the canvas no longer surfaces "View all" affordances
+   *  inside the configuration view. */
   onJumpToVersionsTab?: () => void;
   onJumpToRunsTab?: () => void;
   onJumpToDriftTab?: () => void;
@@ -70,12 +70,12 @@ export interface AgentConfigCanvasProps {
 export function AgentConfigCanvas({
   snapshot,
   selectedVersion,
-  onSelectVersion,
-  selectedRunId = null,
-  onSelectRun,
-  onJumpToVersionsTab,
-  onJumpToRunsTab,
-  onJumpToDriftTab,
+  onSelectVersion: _onSelectVersion,
+  selectedRunId: _selectedRunId,
+  onSelectRun: _onSelectRun,
+  onJumpToVersionsTab: _onJumpToVersionsTab,
+  onJumpToRunsTab: _onJumpToRunsTab,
+  onJumpToDriftTab: _onJumpToDriftTab,
   onOpenHashSearch,
   className,
 }: AgentConfigCanvasProps) {
@@ -93,125 +93,35 @@ export function AgentConfigCanvas({
     [versions, activeVersion],
   );
 
-  const driftEntries = React.useMemo(
-    () => buildDriftEntries(snapshot),
-    [snapshot],
-  );
-  const recentRuns = snapshot.runs.slice(0, 5);
-  const last24hRuns = React.useMemo(() => {
-    const anchor =
-      snapshot.runs[0]
-        ? Date.parse(
-            snapshot.runs[0].finishedAt ?? snapshot.runs[0].startedAt,
-          )
-        : Date.now();
-    const start = anchor - 24 * 60 * 60 * 1000;
-    return snapshot.runs.filter((r) => {
-      const ts = Date.parse(r.finishedAt ?? r.startedAt);
-      return !Number.isNaN(ts) && ts >= start && ts <= anchor;
-    });
-  }, [snapshot.runs]);
-
   return (
     <div
       className={cx(
-        "grid grid-cols-1 gap-4 xl:grid-cols-12",
+        "mx-auto flex w-full max-w-3xl flex-col gap-4",
         className,
       )}
     >
-      <div className="flex min-w-0 flex-col gap-4 xl:col-span-8">
-        {activeSummary ? (
-          <PersonaPromptSection
-            version={activeSummary}
-            onOpenHashSearch={onOpenHashSearch}
-          />
-        ) : null}
+      {activeSummary ? (
+        <PersonaPromptSection
+          summary={snapshot.summary}
+          version={activeSummary}
+          onOpenHashSearch={onOpenHashSearch}
+        />
+      ) : null}
 
-        {activeSummary ? (
-          <CapabilitiesSection version={activeSummary} />
-        ) : null}
+      {activeSummary ? (
+        <CapabilitiesSection version={activeSummary} />
+      ) : null}
 
-        {activeSummary ? (
-          <KnowledgePolicySection version={activeSummary} />
-        ) : null}
+      {activeSummary ? (
+        <KnowledgePolicySection version={activeSummary} />
+      ) : null}
 
-        {activeSummary ? (
-          <ProvenanceSection
-            version={activeSummary}
-            onOpenHashSearch={onOpenHashSearch}
-          />
-        ) : null}
-      </div>
-
-      <aside className="flex min-w-0 flex-col gap-4 xl:col-span-4">
-        <AgentPulseBar runs={last24hRuns} />
-
-        <RailSection
-          title="Versions"
-          subtitle={`${versions.length} published`}
-          action={
-            onJumpToVersionsTab ? (
-              <RailJumpButton onClick={onJumpToVersionsTab}>
-                View all
-              </RailJumpButton>
-            ) : null
-          }
-        >
-          <AgentVersionTimeline
-            versions={versions}
-            selectedVersion={activeVersion}
-            onSelectVersion={onSelectVersion}
-          />
-        </RailSection>
-
-        <RailSection
-          title="Recent runs"
-          subtitle={`${snapshot.runs.length} total`}
-          action={
-            onJumpToRunsTab ? (
-              <RailJumpButton onClick={onJumpToRunsTab}>View all</RailJumpButton>
-            ) : null
-          }
-        >
-          {recentRuns.length === 0 ? (
-            <RailEmpty message="No runs recorded yet." />
-          ) : (
-            <div className="rounded-[4px] border border-hairline-strong bg-l-surface-raised">
-              <AgentRunsTable
-                runs={recentRuns}
-                versions={versions}
-                selectedRunId={selectedRunId}
-                onSelectRun={(id) => onSelectRun?.(id)}
-                hideHeader
-                density="compact"
-              />
-            </div>
-          )}
-        </RailSection>
-
-        <RailSection
-          title="Drift"
-          subtitle={
-            driftEntries.length === 0
-              ? "no transitions"
-              : `${driftEntries.length} transition${driftEntries.length === 1 ? "" : "s"}`
-          }
-          action={
-            driftEntries.length > 0 && onJumpToDriftTab ? (
-              <RailJumpButton onClick={onJumpToDriftTab}>View all</RailJumpButton>
-            ) : null
-          }
-        >
-          {driftEntries.length === 0 ? (
-            <RailEmpty message="No drift observed in the run window." tone="ok" />
-          ) : (
-            <AgentDriftTimeline
-              entries={driftEntries.slice(0, 2)}
-              onSelectRun={(runId) => onSelectRun?.(runId)}
-            />
-          )}
-        </RailSection>
-      </aside>
+      {activeSummary ? (
+        <ProvenanceSection
+          version={activeSummary}
+          onOpenHashSearch={onOpenHashSearch}
+        />
+      ) : null}
     </div>
   );
 }
@@ -219,17 +129,24 @@ export function AgentConfigCanvas({
 /* ── Left rail · Persona & Prompt ────────────────────────── */
 
 interface PersonaPromptSectionProps {
+  /** Summary carries the canvas-level persona blurb + capability tags.
+   *  These used to live in the detail page hero; the redesign moved
+   *  them here so the header could shrink to a one-line band. */
+  summary: AgentSnapshot["summary"];
   version: AgentVersionSummary;
   onOpenHashSearch?: (hint?: string) => void;
 }
 
 function PersonaPromptSection({
+  summary,
   version,
   onOpenHashSearch,
 }: PersonaPromptSectionProps) {
   const [expanded, setExpanded] = React.useState(false);
   const instructions = version.artifact.instructions ?? "";
   const long = instructions.length > 320;
+  const persona = summary.personaSummary;
+  const tags = summary.capabilityTags ?? [];
 
   return (
     <Section
@@ -245,6 +162,25 @@ function PersonaPromptSection({
         </span>
       }
     >
+      {persona ? (
+        <p className="font-sans text-[12.5px] leading-5 text-l-ink-lo">
+          {persona}
+        </p>
+      ) : null}
+
+      {tags.length > 0 ? (
+        <ul className="flex flex-wrap items-center gap-1.5">
+          {tags.map((tag) => (
+            <li
+              key={tag}
+              className="inline-flex items-center rounded-[2px] border border-l-border-faint bg-l-wash-1 px-1.5 py-[1px] font-mono text-[10.5px] tabular-nums text-l-ink-lo"
+            >
+              {tag}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       {instructions ? (
         <div
           className={cx(
@@ -721,27 +657,21 @@ function ProvRow({
 /* ── Section primitives ──────────────────────────────────── */
 
 interface SectionProps {
-  icon: React.ReactNode;
+  /** Optional leading glyph. The redesign drops the prior 24px tile;
+   *  this prop is preserved for API back-compat but ignored. */
+  icon?: React.ReactNode;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   children: React.ReactNode;
 }
 
-function Section({ icon, title, subtitle, children }: SectionProps) {
+function Section({ icon: _icon, title, subtitle, children }: SectionProps) {
   return (
-    <section className="flex flex-col gap-2.5 rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3.5">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="flex size-6 shrink-0 items-center justify-center rounded-[3px] bg-l-wash-2 text-l-ink-lo"
-          >
-            {icon}
-          </span>
-          <h3 className="font-sans text-[13px] font-medium text-l-ink">
-            {title}
-          </h3>
-        </div>
+    <section className="flex flex-col gap-3 rounded-[4px] border border-hairline-strong bg-l-surface-raised p-3.5">
+      <header className="flex items-baseline justify-between gap-3">
+        <h3 className="font-sans text-[13px] font-medium text-l-ink">
+          {title}
+        </h3>
         {subtitle ? (
           <span className="truncate font-sans text-[11px] text-l-ink-dim">
             {subtitle}
@@ -770,77 +700,3 @@ function SubCard({
   );
 }
 
-/* ── Right rail primitives ───────────────────────────────── */
-
-interface RailSectionProps {
-  title: React.ReactNode;
-  subtitle?: React.ReactNode;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}
-
-function RailSection({ title, subtitle, action, children }: RailSectionProps) {
-  return (
-    <section className="flex flex-col gap-2">
-      <header className="flex items-baseline justify-between gap-2">
-        <div className="flex items-baseline gap-1.5">
-          <h3 className="font-sans text-[12px] font-medium text-l-ink">
-            {title}
-          </h3>
-          {subtitle ? (
-            <span className="truncate font-mono text-[10.5px] tabular-nums text-l-ink-dim">
-              {subtitle}
-            </span>
-          ) : null}
-        </div>
-        {action}
-      </header>
-      {children}
-    </section>
-  );
-}
-
-function RailJumpButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cx(
-        "inline-flex items-center gap-0.5 font-sans text-[11px] text-l-ink-lo",
-        "transition-colors duration-fast",
-        "hover:text-l-ink",
-        "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-ember",
-      )}
-    >
-      {children}
-      <ArrowUpRight className="size-2.5" strokeWidth={1.75} />
-    </button>
-  );
-}
-
-function RailEmpty({
-  message,
-  tone = "neutral",
-}: {
-  message: string;
-  tone?: "neutral" | "ok";
-}) {
-  return (
-    <div
-      className={cx(
-        "rounded-[4px] border bg-l-wash-1 p-3 text-center font-sans text-[11px]",
-        tone === "ok"
-          ? "border-event-green/30 text-event-green"
-          : "border-l-border-faint text-l-ink-dim",
-      )}
-    >
-      {message}
-    </div>
-  );
-}
