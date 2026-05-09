@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "input",
+        "tool",
+        "model",
+        "branch",
+        "output"
+      ],
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "toolName": {
+      "description": "Optional tool name reference for tool nodes.",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "label"
+  ],
+  "title": "AgentWorkflowNode",
+  "type": "object"
+}

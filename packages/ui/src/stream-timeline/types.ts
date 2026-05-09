@@ -12,53 +12,10 @@
  * `TimelineEvent` / `TimelineSpan` exports from `product/`.
  */
 
-/** A single event rendered as a mark on the timeline. */
-export interface StreamTimelineEvent {
-  id: string;
-  /** Source/system the event came from (e.g. `intercom`, `stripe`). */
-  source: string;
-  /** Event type within the source (e.g. `conversation.created`). */
-  type: string;
-  /** ISO timestamp. */
-  occurredAt: string;
-  /** Optional actor display name or id. */
-  actor?: string;
-  /** Optional human-readable preview (first line of body etc.). */
-  message?: string;
-  /** Raw payload — shown JSON-pretty in the detail panel. */
-  payload?: Record<string, unknown>;
-  /** Optional grouping (capture stream id) — currently informational. */
-  stream?: string;
-  /** Optional explicit color override; falls back to the source color. */
-  color?: string;
-  /**
-   * Trace this event belongs to. Events sharing a `traceId` are
-   * connected — they highlight together, render with arcs in
-   * connector mode, and collapse into a single row in
-   * `groupBy="trace"` mode. Optional; when absent, the viewer can
-   * derive a key via the `traceKey` callback prop.
-   */
-  traceId?: string;
-  /**
-   * Direct causal predecessor — drives solid arrows in the connector
-   * overlay. Both events must share a `traceId` (or derived trace key)
-   * for the arrow to render.
-   */
-  parentEventId?: string;
-  /**
-   * Looser, app-defined grouping key (e.g. `conversation_id`,
-   * `customer_id`). Currently informational — surfaces in the meta
-   * strip of the detail panel; reserved for richer correlation views.
-   */
-  correlationKey?: string;
-  /**
-   * Human-friendly label for the trace. Shown as the row title in
-   * `groupBy="trace"` mode and as the trace chip in the toolbar. When
-   * absent, the viewer falls back to the source/type of the trace's
-   * first event.
-   */
-  traceLabel?: string;
-}
+/* `StreamTimelineEvent` is now defined in Rust and re-exported here.
+ * The wire shape lives in `shared/generated`; UI-only helpers
+ * (`TraceKeyFn`, `RecordingStream`, etc.) stay below. */
+export type { StreamTimelineEvent } from "chronicle/types";
 
 /**
  * Resolves a trace key for an event when `event.traceId` is absent.
@@ -71,32 +28,13 @@ export type TraceKeyFn = (
 
 /* ── Dataset building ─────────────────────────────────────── */
 
-/**
- * Intended use of a dataset — drives the colored badge on the
- * picker and lets apps route additions to the right backend
- * (eval suite, training set, replay corpus, manual review queue).
- */
-export type DatasetPurpose = "eval" | "training" | "replay" | "review";
+/* `Dataset`, `DatasetPurpose`, and `DatasetSplit` are now defined in
+ * Rust and re-exported here. UI-only constructs that touch them
+ * (`AddTraceToDatasetPayload`, `TraceDatasetMembership`) stay below. */
+export type { Dataset, DatasetPurpose, DatasetSplit } from "chronicle/types";
 
-export interface Dataset {
-  id: string;
-  name: string;
-  description?: string;
-  purpose?: DatasetPurpose;
-  /** Number of traces currently in the dataset. */
-  traceCount: number;
-  /** Optional total event count across all traces. */
-  eventCount?: number;
-  /** ISO timestamp of the most recent addition. */
-  updatedAt?: string;
-  /** Display name of the dataset owner / creator. */
-  createdBy?: string;
-  /** Free-form pinned tags. */
-  tags?: readonly string[];
-}
-
-/** Train / validation / test split assignment. */
-export type DatasetSplit = "train" | "validation" | "test";
+import type { DatasetPurpose, DatasetSplit } from "chronicle/types";
+import type { StreamTimelineEvent } from "chronicle/types";
 
 /**
  * Payload fired when the user confirms adding a trace to a dataset.

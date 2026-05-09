@@ -1,18 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { use } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   AgentDetailPage,
   DashboardViewportShell,
   EmptyState,
-  agentSnapshotsByName,
   resolveLegacyAgentDetailTab,
   useSetSiteBreadcrumb,
   type AgentDetailTab,
 } from "ui";
+
+import { useAgentSnapshot } from "@/lib/data/agents";
 
 /*
  * /dashboard/agents/[name]
@@ -31,9 +32,9 @@ import {
  * links from Slack / Linear / docs continue to land on a sensible
  * surface after the IA rewrite.
  *
- * The page renders independently of `AgentsManager` so the detail
- * surface can be loaded server-side later without restructuring the
- * client.
+ * Snapshot data comes from the agents provider middleware. While the
+ * fetch is in flight we render an empty shell; on miss we render the
+ * "Agent not found" empty state.
  */
 
 interface PageProps {
@@ -44,8 +45,7 @@ export default function AgentDetailRoute({ params }: PageProps) {
   const { name } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const snapshot = agentSnapshotsByName[name];
+  const { data: snapshot, isPending } = useAgentSnapshot(name);
 
   const tabParam = searchParams.get("tab");
   const initialTab: AgentDetailTab =
@@ -76,6 +76,16 @@ export default function AgentDetailRoute({ params }: PageProps) {
       : [{ label: "Agents", href: "/dashboard/agents" }],
   );
 
+  if (!snapshot && isPending) {
+    return (
+      <DashboardViewportShell>
+        <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+          Loading agent…
+        </div>
+      </DashboardViewportShell>
+    );
+  }
+
   if (!snapshot) {
     return (
       <DashboardViewportShell>
@@ -103,9 +113,7 @@ export default function AgentDetailRoute({ params }: PageProps) {
           selectedRunId={selectedRunId}
           onSelectRun={setSelectedRunId}
           onOpenHashSearch={(hint) => {
-            const qs = hint
-              ? `?q=${encodeURIComponent(hint)}`
-              : "";
+            const qs = hint ? `?q=${encodeURIComponent(hint)}` : "";
             router.push(`/dashboard/agents/hashes${qs}`);
           }}
         />

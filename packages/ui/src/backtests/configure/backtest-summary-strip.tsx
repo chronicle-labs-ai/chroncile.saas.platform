@@ -54,14 +54,14 @@ export function BacktestSummaryStrip({
         </>
       )}
 
-      <Chip onClick={() => onJumpTo?.("dataset")}>
+      <Chip onClick={() => onJumpTo?.("coverage")}>
         <DataBody recipe={recipe} />
       </Chip>
 
       {isReplay ? null : (
         <>
           <Connective>graded by</Connective>
-          <Chip onClick={() => onJumpTo?.("dataset")} muted>
+          <Chip onClick={() => onJumpTo?.("coverage")} muted>
             <GradersBody recipe={recipe} />
           </Chip>
         </>
@@ -163,14 +163,9 @@ function EnvironmentBody({ recipe }: { recipe: BacktestRecipe }) {
 
 function dataSummary(recipe: BacktestRecipe): string {
   const d = recipe.data;
-  if (d.kind === "dataset" && d.datasetLabel) {
+  if (d.datasetLabel) {
     const cases = recipeCaseCount(recipe);
     return `${d.datasetLabel} · ${cases.toLocaleString()} cases`;
-  }
-  if (d.kind === "production") {
-    const window = d.sources[0]?.filters?.window ?? "recent";
-    const cases = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
-    return `prod · ${window} · ${cases.toLocaleString()} traces`;
   }
   const traces = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
   const gen = d.scenarios
@@ -179,5 +174,5 @@ function dataSummary(recipe: BacktestRecipe): string {
   if (traces && gen) return `${traces.toLocaleString()} traces + ${gen} gen`;
   if (traces) return `${traces.toLocaleString()} traces`;
   if (gen) return `${gen} gen`;
-  return "no cases";
+  return "pick a dataset";
 }

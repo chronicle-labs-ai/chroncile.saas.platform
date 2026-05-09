@@ -33,7 +33,13 @@ const replay = cloneRecipe(
 const empty = {
   ...regression,
   agents: [],
-  data: { ...regression.data, sources: [], scenarios: [] },
+  data: {
+    ...regression.data,
+    dataset: undefined,
+    datasetLabel: undefined,
+    sources: [],
+    scenarios: [],
+  },
   environment: undefined,
 };
 
@@ -48,14 +54,9 @@ function Stateful(initialStep: BacktestPipelineStep) {
   };
 }
 
-export const StepDatasetActive: Story = {
-  args: { recipe: regression, active: "dataset" },
-  render: Stateful("dataset"),
-};
-
-export const StepEnrichActive: Story = {
-  args: { recipe: regression, active: "enrich" },
-  render: Stateful("enrich"),
+export const StepCoverageActive: Story = {
+  args: { recipe: regression, active: "coverage" },
+  render: Stateful("coverage"),
 };
 
 export const StepEnvironmentActive: Story = {
@@ -68,12 +69,12 @@ export const StepVersionsActive: Story = {
   render: Stateful("versions"),
 };
 
-export const ReplaySkipsEnrich: Story = {
-  args: { recipe: replay, active: "dataset" },
-  render: Stateful("dataset"),
+export const ReplayCoverage: Story = {
+  args: { recipe: replay, active: "coverage" },
+  render: Stateful("coverage"),
 };
 
 export const Empty: Story = {
-  args: { recipe: empty, active: "dataset" },
-  render: Stateful("dataset"),
+  args: { recipe: empty, active: "coverage" },
+  render: Stateful("coverage"),
 };

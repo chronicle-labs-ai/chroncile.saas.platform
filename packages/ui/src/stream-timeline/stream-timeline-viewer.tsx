@@ -308,22 +308,35 @@ export function StreamTimelineViewer({
     [eventsWithMs],
   );
 
-  /* Center on the latest event the first time we receive any (and we're
-     paused). After that, leave the user's pan/zoom alone. */
-  const hasInitialCentered = React.useRef(false);
+  /* Auto-fit the visible window to the data in the timeline. Runs:
+       • when events first arrive (initial fit)
+       • when the filter set changes (the "data in the timeline" just
+         became a different slice — refit so the user sees all of it)
+     We deliberately *don't* refit on every events array change
+     (e.g. live appends from the subscription bridge) because that
+     would clobber the user's pan/zoom. The sliding window during
+     play / live mode owns the view there. */
+  const lastFitSignatureRef = React.useRef<string | null>(null);
+  const filtersSignature = React.useMemo(
+    () => JSON.stringify(filterStore.filters),
+    [filterStore.filters],
+  );
+  /* Mirror the signature in a ref so unrelated effects (the live-play
+     interval below) can read the latest value without taking it as a
+     dep and re-subscribing on every filter change. */
+  const filtersSignatureRef = React.useRef(filtersSignature);
+  filtersSignatureRef.current = filtersSignature;
   React.useEffect(() => {
     if (eventTimesMs.length === 0) {
-      hasInitialCentered.current = false;
+      lastFitSignatureRef.current = null;
       return;
     }
     if (playback !== "paused") return;
-    if (hasInitialCentered.current) return;
-    hasInitialCentered.current = true;
-    const latestMs = Math.max(...eventTimesMs);
-    const half = 30 * 60 * 1000;
-    setRange(latestMs - half, latestMs + half);
-    setPlayheadMs(latestMs);
-  }, [eventTimesMs, setRange, playback]);
+    if (lastFitSignatureRef.current === filtersSignature) return;
+    lastFitSignatureRef.current = filtersSignature;
+    fitToTimes(eventTimesMs, 0.1);
+    setPlayheadMs(Math.max(...eventTimesMs));
+  }, [eventTimesMs, filtersSignature, fitToTimes, playback]);
 
   /* Tree of rows. In `topic` mode this is the source/type hierarchy;
      in `trace` mode it's a flat list of trace rows (one per resolved
@@ -394,7 +407,10 @@ export function StreamTimelineViewer({
       const half = 10_000;
       setRange(now - half * 1.5, now + half * 0.5);
       setPlayheadMs(now);
-      hasInitialCentered.current = true;
+      /* Mark the auto-fit as satisfied for the current filter set so
+         that re-pausing doesn't immediately snap the view back to the
+         data extent — the user just told us they want the live window. */
+      lastFitSignatureRef.current = filtersSignatureRef.current;
     }
 
     const interval = window.setInterval(() => {

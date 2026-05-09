@@ -1,39 +1,61 @@
+"use client";
+
 import { DashboardViewportShell, DatasetsManager } from "ui";
+
+import {
+  useCreateDatasetAction,
+  useDatasetSnapshotIndex,
+  useDatasets,
+  useDeleteDatasetAction,
+  useUpdateDatasetAction,
+  useUpdateTracesAction,
+} from "@/lib/data/datasets";
 
 /*
  * /dashboard/datasets
  *
- * Renders the customer-facing Datasets surface — list/grid of
- * datasets with the in-component drill into a single dataset's
- * detail page (Overview / Traces / Clusters / Graph / Timeline).
+ * Datasets surface — list/grid of datasets with the in-component
+ * drill into a single dataset's detail page (Overview / Traces /
+ * Clusters / Graph / Timeline).
  *
- * `DatasetsManager` is a `"use client"` component that owns selection,
- * filter, view, CRUD-dialog and trace-drawer state internally. This
- * route is a thin server-component wrapper to match the established
- * dashboard pattern (see `/dashboard`, `/dashboard/connections`,
- * `/dashboard/timeline`).
+ * Data + mutations flow through the `DatasetsProvider` middleware so
+ * `NEXT_PUBLIC_DATA_DATASETS=mock|app|chronicle` swaps the source
+ * without changes here. The CRUD action hooks
+ * (`useCreateDatasetAction`, `useUpdateDatasetAction`,
+ * `useDeleteDatasetAction`, `useUpdateTracesAction`) return
+ * promise-shaped callbacks that drop directly into the manager's
+ * existing handler props.
  *
- * The wrapper pins the page to exactly the viewport space available
- * inside the dashboard shell — `100svh` minus the site header (the
- * `--header-height` CSS variable on `dashboard/layout.tsx`) and the
- * layout's vertical `p-4` (2rem). With a fixed height, the detail
- * page's tabs and embedded `StreamTimelineViewer` / canvas graph
- * can do their internal scrolling correctly; without it the page
- * would otherwise grow past the viewport whenever the manager
- * switches into detail view with a long Traces or Clusters tab.
- *
- * Seed data is sourced from the design system today. When the Rust
- * backend exposes paginated endpoints for datasets + their trace
- * memberships, fetch from `server/backend/fetch-from-backend.ts`
- * here and pass `datasets` / `snapshotsById` props down. CRUD
- * handlers (`onCreateDataset`, `onUpdateDataset`, `onDeleteDataset`,
- * `onAddTraceToDataset`, `onRemoveTraceFromDataset`) are already
- * wired through `DatasetsManager`'s API for the same drop-in pattern.
+ * `DatasetsManager` snapshots its `datasets` prop into internal
+ * state on first mount and never re-syncs (it owns optimistic
+ * mutations from there). We wait for the provider's first response
+ * before mounting it — otherwise the prop default (the design-system
+ * fixture) lands first and the manager freezes on those rows even
+ * after the support-flow data arrives.
  */
 export default function DatasetsPage() {
+  const { data: datasets } = useDatasets();
+  const { data: snapshotsById } = useDatasetSnapshotIndex();
+
+  const onCreateDataset = useCreateDatasetAction();
+  const onUpdateDataset = useUpdateDatasetAction();
+  const onDeleteDataset = useDeleteDatasetAction();
+  const onUpdateTraces = useUpdateTracesAction();
+
+  if (!datasets || !snapshotsById) {
+    return <DashboardViewportShell>{null}</DashboardViewportShell>;
+  }
+
   return (
     <DashboardViewportShell>
-      <DatasetsManager />
+      <DatasetsManager
+        datasets={datasets}
+        snapshotsById={snapshotsById}
+        onCreateDataset={onCreateDataset}
+        onUpdateDataset={onUpdateDataset}
+        onDeleteDataset={onDeleteDataset}
+        onUpdateTraces={onUpdateTraces}
+      />
     </DashboardViewportShell>
   );
 }

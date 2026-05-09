@@ -25,6 +25,12 @@ import type {
   BacktestRunSummary,
   BacktestScenarioBucket,
 } from "./types";
+import type {
+  DatasetCluster,
+  DatasetSnapshot,
+  TraceStatus,
+  TraceSummary,
+} from "../datasets/types";
 
 /* ── Candidate agents ──────────────────────────────────────── */
 
@@ -73,6 +79,20 @@ export const BACKTEST_DATASETS: readonly BacktestDataset[] = [
     cases: 412,
     source: "production · last 30d",
     updated: "2d ago",
+  },
+  {
+    id: "prod-7d-rolling",
+    label: "prod · last 7d",
+    cases: 482,
+    source: "production · auto-snapshot",
+    updated: "1h ago",
+  },
+  {
+    id: "prod-30d-focused",
+    label: "prod · 30d focused clusters",
+    cases: 1098,
+    source: "production · auto-snapshot",
+    updated: "1h ago",
   },
   {
     id: "flaky-ci-v1",
@@ -700,17 +720,21 @@ export const BACKTEST_SCENARIO_BUCKETS: readonly BacktestScenarioBucketMeta[] = 
 ];
 
 /** Deterministic catalog of *proposed* discovery scenarios that the
- *  Enrich step lists for the user to accept/decline. Counts are case
- *  totals once accepted. */
+ *  Coverage step lists for the user to accept/decline. Counts are
+ *  case totals once accepted. `clusterLabel` keys each proposal to
+ *  the cluster it fills the gap for; proposals without a cluster
+ *  hint are grouped under "New cluster" — patterns not yet
+ *  represented in the dataset. */
 export const BACKTEST_DISCOVERY_PROPOSALS: readonly BacktestDataScenario[] = [
-  { id: "ds_captured_a",  bucket: "captured", kind: "longTurn",    label: "refund.standard",            count: 234, confidence: 0.96, accepted: true },
-  { id: "ds_captured_b",  bucket: "captured", kind: "toolFailure", label: "refund.late_request",        count: 89,  confidence: 0.93, accepted: true },
-  { id: "ds_captured_c",  bucket: "captured", kind: "longTurn",    label: "refund.partial",             count: 156, confidence: 0.91, accepted: true },
-  { id: "ds_adjacent_a",  bucket: "adjacent", kind: "adversarial", label: "refund.with_promo",          count: 45,  confidence: 0.82, accepted: true },
-  { id: "ds_adjacent_b",  bucket: "adjacent", kind: "adversarial", label: "refund.duplicate_charge",    count: 23,  confidence: 0.78, accepted: false },
-  { id: "ds_emerging_a",  bucket: "emerging", kind: "longTurn",    label: "refund.subscription_paused", count: 12,  confidence: 0.71, accepted: false },
+  { id: "ds_captured_a",  bucket: "captured", kind: "longTurn",    label: "refund.standard",            count: 234, confidence: 0.96, accepted: false, clusterLabel: "Refund → resolve" },
+  { id: "ds_captured_b",  bucket: "captured", kind: "toolFailure", label: "refund.late_request",        count: 89,  confidence: 0.93, accepted: false, clusterLabel: "Refund → escalate" },
+  { id: "ds_captured_c",  bucket: "captured", kind: "longTurn",    label: "refund.partial",             count: 156, confidence: 0.91, accepted: false, clusterLabel: "Refund → resolve" },
+  { id: "ds_adjacent_a",  bucket: "adjacent", kind: "adversarial", label: "refund.with_promo",          count: 45,  confidence: 0.82, accepted: false, clusterLabel: "Refund → resolve" },
+  { id: "ds_adjacent_b",  bucket: "adjacent", kind: "adversarial", label: "refund.duplicate_charge",    count: 23,  confidence: 0.78, accepted: false, clusterLabel: "Refund → escalate" },
+  { id: "ds_adjacent_c",  bucket: "adjacent", kind: "toolFailure", label: "billing.invoice_pdf_path",   count: 18,  confidence: 0.74, accepted: false, clusterLabel: "Escalate w/ tool" },
+  { id: "ds_emerging_a",  bucket: "emerging", kind: "longTurn",    label: "refund.subscription_paused", count: 12,  confidence: 0.71, accepted: false, clusterLabel: "Refund → escalate" },
   { id: "ds_emerging_b",  bucket: "emerging", kind: "toolFailure", label: "refund.bnpl_partial",        count: 7,   confidence: 0.66, accepted: false },
-  { id: "ds_edge_a",      bucket: "edge",     kind: "toolFailure", label: "refund.race_condition",      count: 3,   confidence: 0.42, accepted: false },
+  { id: "ds_edge_a",      bucket: "edge",     kind: "toolFailure", label: "refund.race_condition",      count: 3,   confidence: 0.42, accepted: false, clusterLabel: "Refund → escalate" },
   { id: "ds_edge_b",      bucket: "edge",     kind: "adversarial", label: "refund.fraud_flagged",       count: 2,   confidence: 0.38, accepted: false },
   { id: "ds_edge_c",      bucket: "edge",     kind: "nonEnglish",  label: "refund.es_locale",           count: 4,   confidence: 0.34, accepted: false },
 ];
@@ -737,25 +761,27 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
     id: "replay",
     title: "Replay production",
     sub: "Run prod traffic through every candidate.",
-    why: "Skip enrichment — pipe a window of production traces straight through every agent version, side-by-side.",
+    why: "Pick a saved dataset of production traces and pipe it through every agent version, side-by-side.",
     icon: "replay",
     hue: "var(--c-event-teal)",
     recipe: {
       mode: "replay",
       agents: [asAgent("support-v3"), asAgent("support-v4.0"), asAgent("support-v4.1")],
       data: {
-        kind: "production",
+        kind: "dataset",
+        dataset: "prod-7d-rolling",
+        datasetLabel: "prod · last 7d",
         sources: [
           {
-            id: "s1",
-            kind: "prod",
-            label: "recent prod · 7d",
+            id: "src_prod-7d-rolling",
+            kind: "dataset",
+            label: "prod · last 7d",
             count: 482,
-            filters: { window: "7d", clusters: ["Refund → escalate", "Escalate w/ tool"] },
+            filters: { clusters: ["Refund → escalate", "Escalate w/ tool"] },
           },
         ],
         scenarios: [],
-        savedAs: null,
+        savedAs: "prod · last 7d",
       },
       graders: [
         { id: "g_outcome", kind: "rubric", label: "Outcome matches labeled", weight: "high", source: "proposed", evidence: "482 production traces with outcome labels" },
@@ -775,18 +801,20 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
       mode: "compare",
       agents: [asAgent("support-v3"), asAgent("support-v4.0")],
       data: {
-        kind: "composed",
+        kind: "dataset",
+        dataset: "prod-7d-rolling",
+        datasetLabel: "prod · last 7d",
         sources: [
           {
-            id: "s1",
-            kind: "prod",
-            label: "recent prod · 7d",
+            id: "src_prod-7d-rolling",
+            kind: "dataset",
+            label: "prod · last 7d",
             count: 482,
-            filters: { window: "7d", clusters: ["Refund → escalate", "Escalate w/ tool"] },
+            filters: { clusters: ["Refund → escalate", "Escalate w/ tool"] },
           },
         ],
         scenarios: [],
-        savedAs: null,
+        savedAs: "prod · last 7d",
       },
       graders: [
         { id: "g_outcome", kind: "rubric", label: "Outcome matches labeled", weight: "high", source: "proposed", evidence: "412 traces have outcome labels" },
@@ -807,21 +835,26 @@ export const BACKTEST_JOB_PRESETS: readonly BacktestJobPreset[] = [
       mode: "regression",
       agents: [asAgent("support-v3"), asAgent("support-v4.0"), asAgent("support-v4.1")],
       data: {
-        kind: "composed",
+        kind: "dataset",
+        dataset: "prod-30d-focused",
+        datasetLabel: "prod · 30d focused clusters",
         sources: [
           {
-            id: "s1",
-            kind: "prod",
-            label: "30d · focused clusters",
+            id: "src_prod-30d-focused",
+            kind: "dataset",
+            label: "prod · 30d focused clusters",
             count: 1098,
             filters: {
-              window: "30d",
-              clusters: ["Refund → escalate", "Escalate w/ tool", "Refund → resolve"],
+              clusters: [
+                "Refund → escalate",
+                "Escalate w/ tool",
+                "Refund → resolve",
+              ],
             },
           },
         ],
         scenarios: [],
-        savedAs: null,
+        savedAs: "prod · 30d focused clusters",
       },
       graders: [
         { id: "g_outcome", kind: "rubric", label: "Outcome matches labeled", weight: "high", source: "proposed", evidence: "1,098 traces have outcome labels" },
@@ -953,24 +986,24 @@ export function recipeAgentCount(recipe: BacktestRecipe): number {
 /* ── Pipeline-step completion checks ───────────────────────── */
 
 /**
- * Whether the dataset step has been satisfied for the given recipe.
- * - Replay (`production`) — needs a window-style source.
- * - Suite (`dataset`) — needs a saved dataset id.
- * - Composed — needs at least one trace source.
+ * Whether the coverage step has been satisfied for the given recipe.
+ * Requires a saved dataset selection (`recipe.data.dataset`) — every
+ * mode now starts from a dataset. Composed-only recipes (legacy
+ * data-builder views) fall back to "any source" as a soft check.
  */
-export function isDatasetStepDone(recipe: BacktestRecipe): boolean {
+export function isCoverageStepDone(recipe: BacktestRecipe): boolean {
   const d = recipe.data;
   if (d.kind === "dataset") return Boolean(d.dataset);
   return d.sources.length > 0;
 }
 
-/** Whether the enrich step has been touched. Returns true for Replay
- *  by definition (the step is skipped). For other modes we only
- *  require the user has reviewed the proposals — accepting zero is
- *  a valid review outcome. */
-export function isEnrichStepDone(recipe: BacktestRecipe): boolean {
-  if (recipe.mode === "replay") return true;
-  return recipe.data.scenarios.length > 0;
+/**
+ * Backward-compatible alias for the old `dataset` step check. Kept so
+ * downstream callers that haven't migrated yet still type-check;
+ * delegates to `isCoverageStepDone`.
+ */
+export function isDatasetStepDone(recipe: BacktestRecipe): boolean {
+  return isCoverageStepDone(recipe);
 }
 
 /** Whether the environment step has been satisfied. */
@@ -983,11 +1016,11 @@ export function isVersionsStepDone(recipe: BacktestRecipe): boolean {
   return recipe.agents.length > 0;
 }
 
-/** Whether the recipe is ready to launch — all required steps done. */
+/** Whether the recipe is ready to launch — all required steps done.
+ *  Enrichment is optional (gaps can be skipped entirely). */
 export function isRecipeLaunchable(recipe: BacktestRecipe): boolean {
   return (
-    isDatasetStepDone(recipe) &&
-    isEnrichStepDone(recipe) &&
+    isCoverageStepDone(recipe) &&
     isEnvironmentStepDone(recipe) &&
     isVersionsStepDone(recipe)
   );
@@ -1130,6 +1163,255 @@ export const BACKTEST_CLUSTER_OPTIONS: readonly BacktestClusterOption[] = [
   { id: "research", label: "Research synth", count: 112, hue: "var(--c-event-amber)" },
   { id: "pr-merged", label: "PR → merged", count: 203, hue: "var(--c-event-green)" },
 ];
+
+/* ── Per-dataset cluster snapshots (Coverage step fallback) ─── */
+
+interface SyntheticClusterSeed {
+  id: string;
+  label: string;
+  color: string;
+  count: number;
+  description?: string;
+  /** Compact deterministic prompts used to render sample trace
+   *  chips. Cycled to fill the synthetic trace pool. */
+  samplePrompts: readonly string[];
+  /** Optional source label used as `TraceSummary.primarySource`. */
+  primarySource?: string;
+}
+
+const STATUS_CYCLE: readonly TraceStatus[] = [
+  "ok",
+  "ok",
+  "ok",
+  "warn",
+  "ok",
+  "warn",
+  "error",
+  "ok",
+];
+
+let syntheticTraceCounter = 0;
+
+function buildSyntheticCluster(
+  seed: SyntheticClusterSeed,
+  anchorMs: number,
+): { cluster: DatasetCluster; traces: TraceSummary[] } {
+  const traceIds: string[] = [];
+  const traces: TraceSummary[] = [];
+  const promptCount = seed.samplePrompts.length;
+  for (let i = 0; i < seed.count; i++) {
+    const traceId = `bt_${seed.id}_${(syntheticTraceCounter++).toString(16)}`;
+    traceIds.push(traceId);
+    if (i < promptCount) {
+      const startedAt = new Date(
+        anchorMs - (i + 1) * 11 * 60 * 1000,
+      ).toISOString();
+      traces.push({
+        traceId,
+        label: seed.samplePrompts[i]!,
+        primarySource: seed.primarySource ?? "intercom",
+        sources: [seed.primarySource ?? "intercom"],
+        eventCount: 4 + (i % 5),
+        startedAt,
+        durationMs: (12 + (i % 7)) * 60 * 1000,
+        status: STATUS_CYCLE[i % STATUS_CYCLE.length]!,
+        clusterId: seed.id,
+      });
+    }
+  }
+  return {
+    cluster: {
+      id: seed.id,
+      label: seed.label,
+      color: seed.color,
+      traceIds,
+      description: seed.description,
+    },
+    traces,
+  };
+}
+
+function buildSyntheticSnapshot(
+  datasetId: string,
+  seeds: readonly SyntheticClusterSeed[],
+): { clusters: DatasetCluster[]; traces: TraceSummary[] } {
+  const dataset = BACKTEST_DATASETS.find((d) => d.id === datasetId);
+  if (!dataset) {
+    throw new Error(`Unknown backtest dataset: ${datasetId}`);
+  }
+  const anchorMs = Date.parse("2026-05-04T11:00:00Z");
+  const clusters: DatasetCluster[] = [];
+  const traces: TraceSummary[] = [];
+  for (const seed of seeds) {
+    const built = buildSyntheticCluster(seed, anchorMs);
+    clusters.push(built.cluster);
+    traces.push(...built.traces);
+  }
+  return { clusters, traces };
+}
+
+const PROD_7D_PARTS = buildSyntheticSnapshot("prod-7d-rolling", [
+  {
+    id: "cl_refund_escalate",
+    label: "Refund → escalate",
+    color: "var(--c-event-orange)",
+    count: 156,
+    description: "Refund requests that escalated to a human after tool retries.",
+    samplePrompts: [
+      "charged twice for pro plan — refund?",
+      "invoice PDF shows wrong billing address",
+      "why is my team being charged for deleted seats?",
+    ],
+  },
+  {
+    id: "cl_refund_resolve",
+    label: "Refund → resolve",
+    color: "var(--c-event-teal)",
+    count: 184,
+    description: "Refund threads the agent resolved end-to-end.",
+    samplePrompts: [
+      "cancel my plan and refund last month",
+      "pro-rate the refund for our cancelled seats",
+      "downgrade and refund the difference",
+    ],
+  },
+  {
+    id: "cl_escalate_tool",
+    label: "Escalate w/ tool",
+    color: "var(--c-event-orange)",
+    count: 98,
+    description: "Cases that needed a tool call before escalation.",
+    samplePrompts: [
+      "update billing address before refunding",
+      "verify ID before applying refund",
+    ],
+  },
+  {
+    id: "cl_research_synth",
+    label: "Research synth",
+    color: "var(--c-event-amber)",
+    count: 44,
+    description: "Long research-style threads with citations.",
+    samplePrompts: [
+      "summarize current state of post-training 2026",
+      "compare model cards across providers",
+    ],
+  },
+]);
+
+const PROD_30D_PARTS = buildSyntheticSnapshot("prod-30d-focused", [
+  {
+    id: "cl_refund_escalate_30",
+    label: "Refund → escalate",
+    color: "var(--c-event-orange)",
+    count: 348,
+    samplePrompts: [
+      "charged twice — escalate to billing",
+      "refund denied · please review",
+    ],
+  },
+  {
+    id: "cl_refund_resolve_30",
+    label: "Refund → resolve",
+    color: "var(--c-event-teal)",
+    count: 412,
+    samplePrompts: [
+      "cancel my plan and refund last month",
+      "downgrade my plan with prorated refund",
+    ],
+  },
+  {
+    id: "cl_escalate_tool_30",
+    label: "Escalate w/ tool",
+    color: "var(--c-event-orange)",
+    count: 218,
+    samplePrompts: [
+      "invoice PDF shows wrong billing address",
+      "update card on file before retry",
+    ],
+  },
+  {
+    id: "cl_flaky_ci_30",
+    label: "Flaky CI detect",
+    color: "var(--c-event-violet)",
+    count: 80,
+    samplePrompts: [
+      "tests pass locally but fail in CI",
+      "retried the failing job and it passed",
+    ],
+  },
+  {
+    id: "cl_stale_doc_30",
+    label: "Stale doc crawl",
+    color: "var(--c-event-red)",
+    count: 40,
+    samplePrompts: [
+      "find pricing for Opus via the docs",
+    ],
+  },
+]);
+
+const REFUND_V2_PARTS = buildSyntheticSnapshot("refund-escal-v2", [
+  {
+    id: "cl_refund_escalate_v2",
+    label: "Refund → escalate",
+    color: "var(--c-event-orange)",
+    count: 168,
+    samplePrompts: [
+      "charged twice for pro plan — refund?",
+      "double-charged on annual renewal",
+    ],
+  },
+  {
+    id: "cl_refund_resolve_v2",
+    label: "Refund → resolve",
+    color: "var(--c-event-teal)",
+    count: 142,
+    samplePrompts: [
+      "cancel my plan and refund last month",
+      "pro-rate the refund for our cancelled seats",
+    ],
+  },
+  {
+    id: "cl_escalate_tool_v2",
+    label: "Escalate w/ tool",
+    color: "var(--c-event-orange)",
+    count: 102,
+    samplePrompts: [
+      "invoice PDF shows wrong billing address",
+    ],
+  },
+]);
+
+function partsToSnapshot(
+  datasetId: string,
+  parts: { clusters: DatasetCluster[]; traces: TraceSummary[] },
+): DatasetSnapshot {
+  const dataset = BACKTEST_DATASETS.find((d) => d.id === datasetId)!;
+  return {
+    dataset: {
+      id: dataset.id,
+      name: dataset.label,
+      description: dataset.source,
+      traceCount: dataset.cases,
+    },
+    traces: parts.traces,
+    clusters: parts.clusters,
+    edges: [],
+  };
+}
+
+/**
+ * Per-dataset snapshot fallback used by `StepCoverage` when the host
+ * doesn't pass `availableDatasetSnapshots`. Keys match
+ * `BACKTEST_DATASETS` ids. Synthesized clusters are deterministic so
+ * Storybook visual snapshots stay byte-stable.
+ */
+export const BACKTEST_DATASET_SNAPSHOTS: Record<string, DatasetSnapshot> = {
+  "prod-7d-rolling": partsToSnapshot("prod-7d-rolling", PROD_7D_PARTS),
+  "prod-30d-focused": partsToSnapshot("prod-30d-focused", PROD_30D_PARTS),
+  "refund-escal-v2": partsToSnapshot("refund-escal-v2", REFUND_V2_PARTS),
+};
 
 /* ── Scenario expansion moves (DataBuilder · Gen tab) ──────── */
 

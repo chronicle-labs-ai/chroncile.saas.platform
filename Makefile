@@ -2,7 +2,8 @@
 	docker-up doppler-check doppler-login doppler-setup doppler-sync \
 	doppler-sync-backend doppler-sync-frontend doppler-sync-env-manager \
 	doppler-sync-dev doppler-sync-stg doppler-sync-prd \
-	dev dev-all tunnel tunnel-stop
+	dev dev-all tunnel tunnel-stop \
+	gen-contracts gen-contracts-check
 
 BACKEND_DIR := backend
 FRONTEND_DIR := apps/frontend
@@ -92,6 +93,17 @@ tunnel:
 
 tunnel-stop:
 	./scripts/stop-tunnel.sh
+
+# Regenerate every wire contract from the Rust crates (ts-rs + JSON
+# Schema + Zod). Run this whenever you touch a `#[derive(TS, JsonSchema)]`
+# struct so committed types stay in sync.
+gen-contracts:
+	yarn gen:contracts
+
+# Same as `gen-contracts` but fails if the working tree drifts.
+# Useful before pushing if you're not sure whether you regenerated.
+gen-contracts-check:
+	yarn gen:contracts:check
 
 dev: doppler-sync-dev tunnel
 	@echo ""

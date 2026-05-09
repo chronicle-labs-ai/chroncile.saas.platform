@@ -277,6 +277,11 @@
   --z-base: 0;
   --z-raised: 1;
   --z-sticky: 100;
+  /* Site header sits one tier above sticky surfaces (sidebar rails,
+     sticky table heads). Same context, but the header is global
+     chrome — it must always paint on top so its bottom hairline
+     never gets clipped by a fixed sibling that shares z-sticky. */
+  --z-header: 110;
   --z-overlay: 200;       /* full-screen overlays / backdrops */
   --z-modal: 210;         /* dialogs, drawers (above overlay) */
   --z-popover: 220;       /* dropdowns, comboboxes, autocompletes */

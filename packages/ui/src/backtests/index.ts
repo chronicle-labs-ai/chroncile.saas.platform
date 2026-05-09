@@ -48,11 +48,17 @@ export type { BacktestSummaryStripProps } from "./configure/backtest-summary-str
 export { BacktestStepper } from "./configure/backtest-stepper";
 export type { BacktestStepperProps, BacktestStepStatus } from "./configure/backtest-stepper";
 
-export { StepDataset } from "./configure/steps/step-dataset";
-export type { StepDatasetProps } from "./configure/steps/step-dataset";
+export { StepCoverage } from "./configure/steps/step-coverage";
+export type { StepCoverageProps } from "./configure/steps/step-coverage";
 
-export { StepEnrich } from "./configure/steps/step-enrich";
-export type { StepEnrichProps } from "./configure/steps/step-enrich";
+export { ClusterDensityList } from "./configure/coverage/cluster-density-list";
+export type { ClusterDensityListProps } from "./configure/coverage/cluster-density-list";
+
+export { EnrichmentProposals } from "./configure/coverage/enrichment-proposals";
+export type { EnrichmentProposalsProps } from "./configure/coverage/enrichment-proposals";
+
+export { SavedDatasetPicker } from "./configure/coverage/saved-dataset-picker";
+export type { SavedDatasetPickerProps } from "./configure/coverage/saved-dataset-picker";
 
 export { StepEnvironment } from "./configure/steps/step-environment";
 export type { StepEnvironmentProps } from "./configure/steps/step-environment";
@@ -87,6 +93,7 @@ export type { BacktestResultsProps } from "./results/backtest-results";
 export {
   BACKTEST_CANDIDATES,
   BACKTEST_DATASETS,
+  BACKTEST_DATASET_SNAPSHOTS,
   BACKTEST_LIBRARY_GRADERS,
   BACKTEST_METRICS,
   BACKTEST_DIVERGENCES,
@@ -107,8 +114,8 @@ export {
   findEnvironmentRef,
   hydrateRecipeFromRun,
   isAcceptedScenario,
+  isCoverageStepDone,
   isDatasetStepDone,
-  isEnrichStepDone,
   isEnvironmentStepDone,
   isVersionsStepDone,
   isRecipeLaunchable,

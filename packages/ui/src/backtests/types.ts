@@ -28,31 +28,31 @@ export type BacktestRunStatus =
   | "failed";
 
 /**
- * Phases inside the Configure stage. The configure flow is now a
+ * Phases inside the Configure stage. The configure flow is a
  * directional pipeline:
  *
- *   pick → dataset → enrich → environment → versions → launch
+ *   pick → coverage → environment → versions → launch
  *
- * Each preset (`replay`, `compare`, `regression`, `suite`) seeds
- * different defaults and may auto-skip steps (Replay skips Enrich).
+ * `coverage` is the merged STEP 01 — it picks a saved dataset,
+ * surfaces the dataset's clusters with density + samples, and lets
+ * the user accept enrichment proposals to fill coverage gaps in a
+ * single panel.
  */
 export type BacktestConfigurePhase =
   | "pick"
-  | "dataset"
-  | "enrich"
+  | "coverage"
   | "environment"
   | "versions";
 
 /** Ordered list of pipeline steps shown in the stepper rail. */
 export const BACKTEST_PIPELINE_STEPS = [
-  "dataset",
-  "enrich",
+  "coverage",
   "environment",
   "versions",
 ] as const satisfies readonly BacktestConfigurePhase[];
 
 /** Concrete subset of `BacktestConfigurePhase` covering only the
- *  4 pipeline steps (excludes `"pick"`). */
+ *  3 pipeline steps (excludes `"pick"`). */
 export type BacktestPipelineStep = (typeof BACKTEST_PIPELINE_STEPS)[number];
 
 /* ── Agents under test ─────────────────────────────────────── */
@@ -142,11 +142,11 @@ export interface BacktestGraderPreviewRow {
  *                scenarios, optionally saved later as a reusable
  *                dataset.
  * `dataset`    = the user picked a saved dataset; `dataset` /
- *                `datasetLabel` are populated.
- * `production` = the Replay preset — pipes a production traffic
- *                window straight through, no enrichment.
+ *                `datasetLabel` are populated. All pipeline modes
+ *                (replay, compare, regression, suite) seed the
+ *                recipe with `kind: "dataset"`.
  */
-export type BacktestDataKind = "composed" | "dataset" | "production";
+export type BacktestDataKind = "composed" | "dataset";
 
 export interface BacktestDataSource {
   id: string;
@@ -194,6 +194,13 @@ export interface BacktestDataScenario {
   /** Whether the user has accepted this scenario into the run.
    *  Defaults to true when omitted (legacy composed scenarios). */
   accepted?: boolean;
+  /** Display label of the cluster this scenario fills the gap for.
+   *  When unset the proposal is treated as "new cluster" — a pattern
+   *  not yet represented in the dataset. */
+  clusterLabel?: string;
+  /** Optional cluster id (matches `DatasetCluster.id`) when the
+   *  proposal targets a specific known cluster. */
+  clusterId?: string;
 }
 
 export interface BacktestData {

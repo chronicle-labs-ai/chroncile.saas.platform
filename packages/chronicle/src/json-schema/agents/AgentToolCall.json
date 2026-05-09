@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "argsHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "argsPreview": {
+      "additionalProperties": true,
+      "description": "Optional small preview of the tool args.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "callId": {
+      "type": "string"
+    },
+    "durationMs": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "error": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stack": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "finishedAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resultHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resultPreview": {
+      "additionalProperties": true,
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "startedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "started",
+        "success",
+        "error"
+      ],
+      "type": "string"
+    },
+    "toolName": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "callId",
+    "startedAt",
+    "status",
+    "toolName"
+  ],
+  "title": "AgentToolCall",
+  "type": "object"
+}

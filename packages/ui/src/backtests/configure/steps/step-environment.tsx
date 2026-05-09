@@ -64,7 +64,6 @@ export function StepEnvironment({
   const datasetSlug = React.useMemo(() => {
     const d = recipe.data;
     if (d.kind === "dataset") return d.dataset ?? d.datasetLabel ?? null;
-    if (d.kind === "production") return null;
     return d.savedAs ?? null;
   }, [recipe.data]);
 

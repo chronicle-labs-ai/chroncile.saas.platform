@@ -4,9 +4,9 @@ use std::fmt;
 use std::str::FromStr;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub enum UserRole {
     #[serde(rename = "owner")]
     Owner,
@@ -54,9 +54,9 @@ impl fmt::Display for UserRole {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct Tenant {
     pub id: String,
     pub name: String,
@@ -77,8 +77,8 @@ pub struct Tenant {
 // User.tenant_id == Tenant.id check in the WorkosAuthUser extractor.
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/saas/")]
 pub enum MembershipStatus {
     #[serde(rename = "pending")]
     Pending,
@@ -116,9 +116,9 @@ impl fmt::Display for MembershipStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct TenantMembership {
     pub id: String,
     pub user_id: String,
@@ -138,9 +138,9 @@ pub struct CreateTenantMembershipInput {
     pub status: MembershipStatus,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct User {
     pub id: String,
     pub email: String,
@@ -165,9 +165,9 @@ pub struct User {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct AgentEndpointConfig {
     pub id: String,
     pub tenant_id: String,
@@ -181,8 +181,8 @@ pub struct AgentEndpointConfig {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/saas/")]
 pub enum RunStatus {
     #[serde(rename = "pending")]
     Pending,
@@ -235,9 +235,9 @@ impl FromStr for RunStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct Run {
     pub id: String,
     pub tenant_id: String,
@@ -255,9 +255,9 @@ pub struct Run {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct AuditLog {
     pub id: String,
     pub tenant_id: String,
@@ -270,9 +270,9 @@ pub struct AuditLog {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct Connection {
     pub id: String,
     pub tenant_id: String,
@@ -287,9 +287,9 @@ pub struct Connection {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct IntegrationSync {
     pub id: String,
     pub tenant_id: String,
@@ -325,9 +325,9 @@ pub struct CreateUserInput {
     pub created_via: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/saas/")]
 pub struct Invitation {
     pub id: String,
     pub tenant_id: String,

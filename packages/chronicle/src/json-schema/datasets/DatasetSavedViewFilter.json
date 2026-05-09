@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "columnId": {
+      "type": "string"
+    },
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "operator": {
+      "type": "string"
+    },
+    "value": {
+      "description": "Filter value — typed loosely so this module doesn't depend on `product/filters` types. Mirrors `unknown` on the TS side."
+    }
+  },
+  "required": [
+    "columnId",
+    "operator",
+    "value"
+  ],
+  "title": "DatasetSavedViewFilter",
+  "type": "object"
+}

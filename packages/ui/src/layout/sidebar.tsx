@@ -142,6 +142,27 @@ export interface SidebarProps extends React.ComponentPropsWithoutRef<"aside"> {
    *     by a hairline divider only. Quieter, Linear/Vercel-style.
    */
   tone?: "raised" | "canvas";
+  /**
+   * CSS length to push the fixed rail down from the top of the
+   * viewport. Use this when a sticky site header sits above the
+   * sidebar — pass the same value the header reserves (e.g.
+   * `"var(--header-height)"` or `"3.5rem"`). The rail's height is
+   * automatically reduced by the same amount so it terminates at
+   * the viewport bottom instead of overflowing past it.
+   *
+   * Defaults to `"0px"` — the rail occupies the full viewport,
+   * matching the legacy shadcn behaviour for surfaces that don't
+   * stack a header above the sidebar (env-manager, primitive
+   * stories, etc.).
+   *
+   * Implemented as an inline `style` on the fixed `<aside>` rather
+   * than as Tailwind utilities. Arbitrary `top-[…]` / `h-[calc(…)]`
+   * utilities lose the JIT cascade race against the primitive's
+   * own named utilities (`inset-y-0`, `h-svh`) — inline styles
+   * sidestep that pitfall and make the geometry contract explicit
+   * to the next reader.
+   */
+  headerOffset?: string;
 }
 
 function SidebarRoot({
@@ -149,13 +170,30 @@ function SidebarRoot({
   variant = "sidebar",
   collapsible = "offcanvas",
   tone = "raised",
+  headerOffset,
   className,
+  style,
   children,
   ...props
 }: SidebarProps) {
   const context = React.useContext(SidebarContext);
   const open = context?.isMobile ? context.openMobile : (context?.open ?? true);
   const staticVariant = variant === "static";
+
+  /*
+   * Geometry for the fixed rail. We deliberately use an inline style
+   * for `top` and `height` instead of Tailwind utilities — see the
+   * `headerOffset` prop docs above for why. When no offset is
+   * passed we fall back to "fill the viewport" so consumers that
+   * never had a header above the sidebar (env-manager, isolated
+   * stories) keep their existing behaviour.
+   */
+  const offset = headerOffset ?? "0px";
+  const fixedAsideStyle: React.CSSProperties = {
+    top: offset,
+    height: `calc(100svh - ${offset})`,
+    ...style,
+  };
 
   /*
    * Tone surface:
@@ -234,7 +272,12 @@ function SidebarRoot({
       />
       <aside
         className={cn(
-          "fixed inset-y-0 z-sticky hidden h-svh w-[var(--sidebar-width)] transition-[left,right,width] duration-[220ms] ease-out motion-reduce:transition-none md:flex",
+          // `top` + `height` come from the inline `fixedAsideStyle`
+          // below — see the `headerOffset` prop. We deliberately
+          // omit `inset-y-0` / `h-svh` here so a consumer-supplied
+          // header offset is the single source of truth for the
+          // rail's vertical bounds.
+          "fixed z-sticky hidden w-[var(--sidebar-width)] transition-[left,right,width] duration-[220ms] ease-out motion-reduce:transition-none md:flex",
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]/sidebar:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]/sidebar:right-[calc(var(--sidebar-width)*-1)]",
@@ -248,6 +291,7 @@ function SidebarRoot({
             "group-data-[side=left]/sidebar:border-r group-data-[side=right]/sidebar:border-l",
           className,
         )}
+        style={fixedAsideStyle}
         {...props}
       >
         <div

@@ -1,29 +1,58 @@
 import type {
   AgentEndpointResponse,
   AuditLogListResponse,
-  AuthResponse,
   ConnectionListResponse,
   ConnectionResponse,
   CreateRunRequest,
   DashboardActivityResponse,
   DashboardStatsResponse,
   FeatureAccessResponse,
-  ForgotPasswordRequest,
-  ForgotPasswordResponse,
   ListRunsResponse,
-  LoginRequest,
   SandboxAiChatRequest,
   SandboxAiChatResponse,
-  ResetPasswordRequest,
-  ResetPasswordResponse,
   RunDetailResponse,
   RunResponse,
-  SignupRequest,
   TenantResponse,
   UpdateAgentEndpointRequest,
   UpdateRunStatusRequest,
   UpdateStripeRequest,
-} from "shared/generated";
+} from "chronicle/types";
+
+/*
+ * Legacy SaaS auth shapes — the Rust impl behind these endpoints
+ * was replaced by WorkOS. The methods below are kept as scaffolding
+ * for any future first-party auth surface; the request/response
+ * shapes live here as TS-only contracts until they re-land in
+ * `chronicle/types/saas` (or wherever the next iteration places
+ * them). When that happens, swap these for `chronicle/types`
+ * imports and delete the locals.
+ */
+export interface AuthResponse {
+  token: string;
+  user: { id: string; email: string; tenantId: string };
+}
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+export interface SignupRequest {
+  email: string;
+  password: string;
+  name?: string;
+}
+export interface ForgotPasswordRequest {
+  email: string;
+}
+export interface ForgotPasswordResponse {
+  ok: true;
+}
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+export interface ResetPasswordResponse {
+  ok: true;
+}
 
 export interface NangoProviderSummary {
   provider: string;

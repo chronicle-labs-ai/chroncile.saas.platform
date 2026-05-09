@@ -76,23 +76,35 @@ export function TimelineDashboard({
   className,
   disableRebase = false,
 }: TimelineDashboardProps = {}) {
-  /* Capture a stable mount timestamp via lazy `useState` so re-anchor
-     math stays idempotent across re-renders (calling `Date.now()`
-     directly inside `useMemo` violates the hooks purity rule). */
-  const [mountedAtMs] = React.useState(() => Date.now());
+  /* SSR + hydration safety: the seed re-anchor is a *client-only*
+     concern. Rendering with `Date.now()` during SSR produces a
+     different timestamp than the client's first render, which
+     trips React's hydration mismatch on the playhead label.
+     Render the deterministic seed anchor on first paint, then
+     swap to "now" inside an effect once we're on the client. */
+  const [mountedAtMs, setMountedAtMs] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    setMountedAtMs(Date.now());
+  }, []);
 
   /* Rebase the seed so the demo data feels current. Keep the
-     caller-supplied events untouched (they own the timestamps). */
+     caller-supplied events untouched (they own the timestamps).
+     Until the effect resolves `mountedAtMs`, fall back to the
+     fixed seed anchor — server + client agree on this branch. */
   const events = React.useMemo(() => {
     if (eventsProp) return eventsProp;
-    if (disableRebase) return streamTimelineSeed;
+    if (disableRebase || mountedAtMs === null) return streamTimelineSeed;
     /* Anchor the latest event 5 minutes ago so the playhead has room
        to sweep forward before reaching "now". */
     return rebaseEvents(streamTimelineSeed, mountedAtMs - 5 * 60 * 1000);
   }, [eventsProp, disableRebase, mountedAtMs]);
 
+  /* Pre-data-arrival fallback only — once events land the viewer
+     auto-fits to their actual extents, so this center / half-width is
+     just there to give SSR + first paint a stable, sensible window
+     before the auto-fit takes over. */
   const initialCenterMs = React.useMemo(() => {
-    if (eventsProp || disableRebase) {
+    if (eventsProp || disableRebase || mountedAtMs === null) {
       return STREAM_TIMELINE_MOCK_ANCHOR_MS - 15 * 60 * 1000;
     }
     return mountedAtMs - 15 * 60 * 1000;

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "key": {
+      "enum": [
+        "runs",
+        "connections",
+        "auditLog",
+        "agentEndpointConfig",
+        "sandbox",
+        "workflowFilters"
+      ],
+      "type": "string"
+    },
+    "limit": {
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "source": {
+      "enum": [
+        "default",
+        "plan",
+        "globalOverride",
+        "tenantOverride",
+        "userOverride"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "enabled",
+    "key",
+    "source"
+  ],
+  "title": "EntitlementSnapshot",
+  "type": "object"
+}

@@ -398,6 +398,7 @@ const preset: Config = {
         base: "var(--z-base)",
         raised: "var(--z-raised)",
         sticky: "var(--z-sticky)",
+        header: "var(--z-header)",
         overlay: "var(--z-overlay)",
         modal: "var(--z-modal)",
         popover: "var(--z-popover)",

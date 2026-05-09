@@ -88,8 +88,8 @@ export function DatasetCoverageLens({
         <DatasetMetricsStrip
           snapshot={{
             dataset: { id: "__coverage__", name: "" } as never,
-            traces,
-            clusters,
+            traces: [...traces],
+            clusters: [...clusters],
             edges: [],
           }}
         />

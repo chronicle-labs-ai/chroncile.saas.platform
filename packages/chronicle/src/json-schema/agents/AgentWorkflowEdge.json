@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "from": {
+      "type": "string"
+    },
+    "label": {
+      "description": "Optional short label rendered along the edge.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "to": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "from",
+    "to"
+  ],
+  "title": "AgentWorkflowEdge",
+  "type": "object"
+}

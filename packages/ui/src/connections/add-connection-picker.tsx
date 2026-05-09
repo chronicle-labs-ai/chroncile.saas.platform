@@ -42,8 +42,10 @@ import { type Connection } from "./data";
 export interface AddConnectionPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Source ids already wired up — rendered as "Connected" + Open existing. */
-  connectedIds?: readonly SourceId[];
+  /** Source ids already wired up — rendered as "Connected" + Open existing.
+   *  Accepts `string` so callers can pass the wire-shape `Connection.source`
+   *  field (which is a free-form string) without an `as` cast. */
+  connectedIds?: readonly string[];
   /** Override the catalog. Defaults to the full onboarding `SOURCES`. */
   sources?: readonly Source[];
   /**

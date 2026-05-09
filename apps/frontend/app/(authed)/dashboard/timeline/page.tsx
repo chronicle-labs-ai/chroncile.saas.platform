@@ -1,12 +1,15 @@
-import { DashboardViewportShell, TimelineDashboard } from "ui";
+import { DashboardViewportShell } from "ui";
+
+import { TimelineDashboardClient } from "./timeline-client";
 
 /*
  * /dashboard/timeline
  *
- * Renders the customer-facing event timeline. The `TimelineDashboard`
- * client component owns playback / selection / filter / dataset
- * state; this route is a thin wrapper to match the established
- * dashboard pattern (see `/dashboard` and `/dashboard/connections`).
+ * Renders the customer-facing event timeline. The
+ * `TimelineDashboardClient` component pulls events + datasets from
+ * the data middleware (mock / app / chronicle) and feeds them into
+ * the design-system `<TimelineDashboard />`. Live updates ride the
+ * provider's subscription bridge — no per-page subscribe call.
  *
  * The wrapper pins the page to exactly the viewport space available
  * inside the dashboard shell — `100svh` minus the site header (the
@@ -15,18 +18,11 @@ import { DashboardViewportShell, TimelineDashboard } from "ui";
  * timeline's internal `overflow-hidden` + per-section scroll regions
  * can do their job; without it the page would otherwise grow past
  * the viewport whenever the rows list is long.
- *
- * Seed data is sourced from the design system today and re-anchored
- * to recent wall-clock time inside `TimelineDashboard`. When the
- * Rust backend exposes a paginated `/api/events` route that returns
- * `StreamTimelineEvent`-shaped rows, fetch from
- * `server/backend/fetch-from-backend.ts` here and pass `events` /
- * `initialDatasets` props down.
  */
 export default function TimelineDashboardPage() {
   return (
     <DashboardViewportShell>
-      <TimelineDashboard />
+      <TimelineDashboardClient />
     </DashboardViewportShell>
   );
 }

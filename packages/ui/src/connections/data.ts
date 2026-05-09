@@ -1,122 +1,35 @@
 /*
- * Connections catalog — runtime + management types for the dashboard
- * "Connections" surface. Builds on top of the onboarding `Source`
- * model (which describes the *kinds* of connectors we support) and
- * adds the operational state of an actual *live* connection in the
- * tenant's workspace: health, last event, scopes granted, backfill
- * history, recent deliveries, and event-type subscriptions.
+ * Connections — runtime + management surface for the dashboard.
+ *
+ * Wire shapes now live in `chronicle/types/connections` (auto-derived
+ * from the matching Rust crate). This file re-exports them for
+ * ergonomic imports inside the design system and keeps the
+ * Storybook fixtures + filter helpers below.
  *
  * Stays separate from `../onboarding/data.ts` (catalog) and
  * `../connectors/data.ts` (per-vendor scope/event reference) — those
  * are static design-time data; this file describes the per-tenant
- * runtime that the dashboard panels render.
+ * runtime the dashboard panels render.
  */
 
-import type { ConnectorErrorKind } from "../connectors/state-error";
-import type { BackfillRunConfig } from "../onboarding/step-connect";
-import type { SourceId } from "../onboarding/data";
+import type {
+  Connection,
+  ConnectionBackfillRecord,
+  ConnectionDelivery,
+  ConnectionEventTypeSub,
+  ConnectionHealth,
+} from "chronicle/types/connections";
 
-/* ── Connection ────────────────────────────────────────────── */
-
-/**
- * Operational state of a live connection. Drives the
- * `ConnectionHealthBadge` colour, the row's right-side hint, and
- * whether the action menu shows "Reauth" / "Retry" / "Resume".
- */
-export type ConnectionHealth =
-  | "live"
-  | "paused"
-  | "error"
-  | "expired"
-  | "testing"
-  | "disconnected";
-
-export interface Connection {
-  /** Stable id (e.g. `conn_3PJz4Z…`). */
-  id: string;
-  /** Catalog source id (joins with `SOURCES`). */
-  source: SourceId;
-  /** Workspace alias for the connection. Defaults to `source.name`. */
-  name: string;
-  health: ConnectionHealth;
-  /** ISO timestamp the connection was first authorized. */
-  connectedAt: string;
-  /** ISO timestamp of the most recent event observed. */
-  lastEventAt: string;
-  /** Rolling 24-hour event count. */
-  eventsLast24h: number;
-  /** Granted scope ids — joins with `connectors/data.ts` scope catalogs. */
-  scopes: string[];
-  /** Optional point-of-contact email for the install. */
-  ownerEmail?: string;
-  /** 24-bucket sparkline values (events/hour). */
-  spark?: number[];
-  /** Populated when `health === "error"`; classifies the failure. */
-  errorKind?: ConnectorErrorKind;
-  /** Populated when `health === "expired"`; ISO of token expiry. */
-  expiresAt?: string;
-  /** Populated when `health === "error"`; raw payload string for inspector. */
-  errorPayload?: string;
-  /**
-   * ISO timestamp of the last manual "Test connection" run. Surfaces in
-   * the Overview summary so customers can tell whether a green badge
-   * came from a real probe or from buffered ingest. Optional — older
-   * connections that pre-date the field render a `—` cell.
-   */
-  lastTestedAt?: string;
-  /**
-   * Outcome of the last `Test connection` run. `pending` means the
-   * test is in flight; the row's button stays in a wait state.
-   */
-  lastTestStatus?: "ok" | "fail" | "pending";
-  /**
-   * Previous-period (24h) event count, used to compute a trend delta
-   * on the card view ("+12% vs prev 24h"). Optional.
-   */
-  prevEventsLast24h?: number;
-}
-
-/* ── Backfill history ──────────────────────────────────────── */
-
-/**
- * One historical backfill run. Distinct from `BackfillRun` (which is
- * the "currently running" state inside the onboarding store) — this
- * is the persisted log row.
- */
-export interface ConnectionBackfillRecord extends BackfillRunConfig {
-  id: string;
-  /** ISO. */
-  startedAt: string;
-  /** ISO; absent while still running. */
-  finishedAt?: string;
-  status: "running" | "done" | "failed";
-}
-
-/* ── Event-type subscriptions ──────────────────────────────── */
-
-/**
- * Per-event-type toggle row (e.g. Stripe `charge.succeeded`).
- * Renders inside the drawer's Event-types tab.
- */
-export interface ConnectionEventTypeSub {
-  id: string;
-  /** Optional Stripe-style object hint (`charge`, `customer`, …). */
-  object?: string;
-  enabled: boolean;
-  /** Whether this row was on by default at install time. */
-  defaultOn?: boolean;
-}
-
-/* ── Recent deliveries (Activity tab) ──────────────────────── */
-
-export interface ConnectionDelivery {
-  /** ISO timestamp. */
-  ts: string;
-  method?: string;
-  preview: string;
-  /** HTTP status; <200 or >=300 tints the row red. */
-  status: number;
-}
+export type {
+  Connection,
+  ConnectionBackfillRecord,
+  ConnectionBackfillStatus,
+  ConnectionDelivery,
+  ConnectionEventTypeSub,
+  ConnectionHealth,
+  ConnectionTestStatus,
+  ConnectorErrorKind,
+} from "chronicle/types/connections";
 
 /* ── Seed data ─────────────────────────────────────────────── */
 

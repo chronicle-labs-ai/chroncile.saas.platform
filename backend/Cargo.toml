@@ -32,6 +32,7 @@ members = [
     "crates/timeline-core",
     "crates/timeline-widget",
     "bin/chronicle-mcp",
+    "bin/gen-contracts",
     "bin/server",
     "bin/workos-import",
 ]
@@ -158,6 +159,9 @@ dotenvy = "0.15"
 
 # Type generation
 ts-rs = { version = "10", features = ["chrono-impl", "serde-json-impl"] }
+# JSON Schema generation. Exported alongside ts-rs by `bin/gen-contracts`
+# so we can codegen Zod runtime validators for the same Rust types.
+schemars = { version = "0.8", features = ["chrono", "preserve_order"] }
 
 # Testing
 insta = { version = "1", features = ["json"] }

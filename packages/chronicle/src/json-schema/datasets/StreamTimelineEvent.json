@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "A single event rendered as a mark on the stream timeline. The full shape lives next to dataset shapes because `DatasetSnapshot.events` is the only consumer that ships over the wire today.",
+  "properties": {
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "color": {
+      "description": "Optional explicit color override; falls back to the source color.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlationKey": {
+      "description": "Looser, app-defined grouping key (e.g. `conversation_id`).",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "occurredAt": {
+      "description": "ISO timestamp.",
+      "format": "date-time",
+      "type": "string"
+    },
+    "parentEventId": {
+      "description": "Direct causal predecessor.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "description": "Raw payload — shown JSON-pretty in the detail panel."
+    },
+    "source": {
+      "description": "Source/system the event came from (e.g. `intercom`, `stripe`).",
+      "type": "string"
+    },
+    "stream": {
+      "description": "Optional grouping (capture stream id) — currently informational.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "traceId": {
+      "description": "Trace this event belongs to.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "traceLabel": {
+      "description": "Human-friendly label for the trace.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "type": {
+      "description": "Event type within the source (e.g. `conversation.created`).",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "occurredAt",
+    "source",
+    "type"
+  ],
+  "title": "StreamTimelineEvent",
+  "type": "object"
+}

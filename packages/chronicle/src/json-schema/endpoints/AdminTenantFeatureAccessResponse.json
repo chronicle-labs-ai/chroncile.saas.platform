@@ -1,0 +1,304 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "access": {
+      "properties": {
+        "entitlements": {
+          "items": {
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "key": {
+                "enum": [
+                  "runs",
+                  "connections",
+                  "auditLog",
+                  "agentEndpointConfig",
+                  "sandbox",
+                  "workflowFilters"
+                ],
+                "type": "string"
+              },
+              "limit": {
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "source": {
+                "enum": [
+                  "default",
+                  "plan",
+                  "globalOverride",
+                  "tenantOverride",
+                  "userOverride"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "enabled",
+              "key",
+              "source"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "flags": {
+          "items": {
+            "properties": {
+              "definition": {
+                "properties": {
+                  "createdAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "defaultEnabled": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "expiresAt": {
+                    "format": "date-time",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "flagType": {
+                    "enum": [
+                      "release",
+                      "ops",
+                      "experiment",
+                      "entitlement"
+                    ],
+                    "type": "string"
+                  },
+                  "key": {
+                    "enum": [
+                      "sandbox",
+                      "auditLog",
+                      "agentEndpointConfig",
+                      "workflowFilters"
+                    ],
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "updatedAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "createdAt",
+                  "defaultEnabled",
+                  "description",
+                  "enabled",
+                  "flagType",
+                  "key",
+                  "owner",
+                  "updatedAt"
+                ],
+                "type": "object"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "key": {
+                "enum": [
+                  "sandbox",
+                  "auditLog",
+                  "agentEndpointConfig",
+                  "workflowFilters"
+                ],
+                "type": "string"
+              },
+              "overrideEnabled": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "source": {
+                "enum": [
+                  "default",
+                  "plan",
+                  "globalOverride",
+                  "tenantOverride",
+                  "userOverride"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "definition",
+              "enabled",
+              "key",
+              "source"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "planId": {
+          "enum": [
+            "free",
+            "starter",
+            "pro",
+            "enterprise",
+            "customEnterprise"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "entitlements",
+        "flags",
+        "planId"
+      ],
+      "type": "object"
+    },
+    "overrides": {
+      "items": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "flagKey": {
+            "enum": [
+              "sandbox",
+              "auditLog",
+              "agentEndpointConfig",
+              "workflowFilters"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rolloutPercentage": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "scopeId": {
+            "type": "string"
+          },
+          "scopeType": {
+            "enum": [
+              "global",
+              "tenant",
+              "user"
+            ],
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "variant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "createdAt",
+          "enabled",
+          "flagKey",
+          "id",
+          "scopeId",
+          "scopeType",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "tenant": {
+      "properties": {
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "stripeCustomerId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stripePriceId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stripeSubscriptionStatus": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "workosOrganizationId": {
+          "description": "Linked WorkOS Organization id. Populated lazily during the WorkOS importer (Phase 1) or eagerly via `provisionWorkspace` (Phase 2).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "createdAt",
+        "id",
+        "name",
+        "slug",
+        "updatedAt"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "access",
+    "overrides"
+  ],
+  "title": "AdminTenantFeatureAccessResponse",
+  "type": "object"
+}

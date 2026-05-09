@@ -31,7 +31,9 @@
     "test:ai-sdk-capture": "yarn workspace @chroniclelabs/ai-sdk test",
     "test:ai-sdk-live-node": "yarn workspace @chroniclelabs/ai-sdk test:live-node",
     "test:e2e": "npx playwright test",
-    "test:all": "yarn test:rust && yarn test:contracts && yarn test:e2e"
+    "test:all": "yarn test:rust && yarn test:contracts && yarn test:e2e",
+    "gen:contracts": "cd backend && cargo run -p gen-contracts --quiet && cd .. && yarn workspace chronicle gen:zod",
+    "gen:contracts:check": "yarn gen:contracts && (git diff --exit-code -- packages/chronicle/src/types packages/chronicle/src/json-schema packages/chronicle/src/schemas && [ -z \"$(git status --porcelain -- packages/chronicle/src/types packages/chronicle/src/json-schema packages/chronicle/src/schemas)\" ] || (echo 'gen:contracts produced untracked drift'; git status --short -- packages/chronicle/src/types packages/chronicle/src/json-schema packages/chronicle/src/schemas; exit 1))"
   },
   "workspaces": [
     "apps/*",

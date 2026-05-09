@@ -2,7 +2,7 @@ import type {
   FeatureAccessSnapshot,
   FeatureFlagDefinition,
   FeatureFlagOverride,
-} from "shared/generated";
+} from "chronicle/types";
 
 // ── Environment ──────────────────────────────────────────────────────────────
 

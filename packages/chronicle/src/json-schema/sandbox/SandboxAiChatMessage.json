@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "content": {
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "user",
+        "assistant"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "content",
+    "role"
+  ],
+  "title": "SandboxAiChatMessage",
+  "type": "object"
+}

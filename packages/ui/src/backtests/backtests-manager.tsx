@@ -44,6 +44,7 @@ import type {
 import type { Dataset } from "../stream-timeline/types";
 import type { AgentSummary } from "../agents/types";
 import type { SandboxEnvironment } from "../environments/types";
+import type { DatasetSnapshot } from "../datasets/types";
 
 export interface BacktestsManagerProps {
   /** Initial stage. Defaults to `list`. */
@@ -65,10 +66,14 @@ export interface BacktestsManagerProps {
   /** Real datasets the host app provides for step 01. Falls back to
    *  internal mock catalog when not passed. */
   availableDatasets?: readonly Dataset[];
-  /** Real environments the host app provides for step 03. Falls back
+  /** Per-dataset snapshot lookup so STEP 01 can surface clusters and
+   *  density for the selected dataset. Falls back to the
+   *  deterministic `BACKTEST_DATASET_SNAPSHOTS` map. */
+  availableDatasetSnapshots?: Record<string, DatasetSnapshot>;
+  /** Real environments the host app provides for step 02. Falls back
    *  to `BACKTEST_ENVIRONMENTS_SEED` when not passed. */
   availableEnvironments?: readonly SandboxEnvironment[];
-  /** Real agents the host app provides for step 04. Falls back to
+  /** Real agents the host app provides for step 03. Falls back to
    *  `BACKTEST_CANDIDATES` when not passed. */
   availableAgents?: readonly AgentSummary[];
   /** Notified when the user launches a full run. */
@@ -93,6 +98,7 @@ export function BacktestsManager({
   workspace = "chronicle",
   hideNav = false,
   availableDatasets,
+  availableDatasetSnapshots,
   availableEnvironments,
   availableAgents,
   onLaunch,
@@ -216,6 +222,7 @@ export function BacktestsManager({
             onModeChange={(presetRecipe) => setRecipe(presetRecipe)}
             onBackToList={() => setStage("list")}
             availableDatasets={availableDatasets}
+            availableDatasetSnapshots={availableDatasetSnapshots}
             availableEnvironments={availableEnvironments}
             availableAgents={availableAgents}
           />

@@ -238,13 +238,9 @@ export function AppSidebar({
   return (
     <Sidebar
       tone="canvas"
+      headerOffset="var(--header-height)"
       {...props}
-      className={[
-        "top-[var(--header-height)] h-[calc(100svh-var(--header-height))]",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={className}
     >
       <SidebarHeader>
         <WorkspaceMenu
@@ -735,7 +731,12 @@ export function SiteHeader() {
     <header
       data-slot="site-header"
       className={[
-        "sticky top-0 z-sticky flex w-full items-center bg-page",
+        // `z-header` sits one tier above `z-sticky` so the sticky
+        // rail (and any future `z-sticky` table heads) can never
+        // paint into the header's seam — even when DOM order or
+        // arbitrary-utility cascade quirks would otherwise let a
+        // sibling win the paint race.
+        "sticky top-0 z-header flex w-full items-center bg-page",
         // Inset hairline keeps the seam crisp without doubling against
         // nearby strokes (the sidebar's right edge, breadcrumb dividers).
         "shadow-[inset_0_-1px_0_0_var(--c-hairline)]",

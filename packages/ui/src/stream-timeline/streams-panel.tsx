@@ -70,10 +70,15 @@ export function StreamsPanel({
   const [streamsToRecord, setStreamsToRecord] = React.useState<Set<StreamId>>(
     () => new Set(streams.filter((s) => s.enabled).map((s) => s.id)),
   );
-  const [now, setNow] = React.useState(() => Date.now());
+  /* `now` is only consulted while recording (to compute "elapsed
+     since startedAt"). Initialise lazily inside the effect so SSR
+     and the first client render agree — calling `Date.now()`
+     during the render pass would trip React's hydration check. */
+  const [now, setNow] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (recordingState.kind !== "Recording") return;
+    setNow(Date.now());
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [recordingState.kind]);
@@ -163,7 +168,7 @@ export function StreamsPanel({
         </span>
 
         <div className="ml-auto flex items-center gap-s-2">
-          <RecordingStateBadge state={recordingState} now={now} />
+          <RecordingStateBadge state={recordingState} now={now ?? 0} />
           {isRecording ? (
             <Button
               variant="critical"

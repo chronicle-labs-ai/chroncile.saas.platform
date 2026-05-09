@@ -4,8 +4,8 @@ use std::fmt;
 use std::str::FromStr;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, Hash, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, Hash, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/feature-access/")]
 pub enum PlanId {
     #[serde(rename = "free")]
     #[default]
@@ -53,8 +53,8 @@ impl FromStr for PlanId {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/feature-access/")]
 pub enum FeatureFlagKey {
     #[serde(rename = "sandbox")]
     Sandbox,
@@ -107,8 +107,8 @@ impl FromStr for FeatureFlagKey {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/feature-access/")]
 pub enum EntitlementKey {
     #[serde(rename = "runs")]
     Runs,
@@ -171,8 +171,8 @@ impl FromStr for EntitlementKey {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/feature-access/")]
 pub enum FeatureFlagType {
     #[serde(rename = "release")]
     Release,
@@ -215,8 +215,8 @@ impl FromStr for FeatureFlagType {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/feature-access/")]
 pub enum FeatureFlagScope {
     #[serde(rename = "global")]
     Global,
@@ -255,8 +255,8 @@ impl FromStr for FeatureFlagScope {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/feature-access/")]
 pub enum FeatureValueSource {
     #[serde(rename = "default")]
     Default,
@@ -270,9 +270,9 @@ pub enum FeatureValueSource {
     UserOverride,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/feature-access/")]
 pub struct FeatureFlagDefinition {
     pub key: FeatureFlagKey,
     pub flag_type: FeatureFlagType,
@@ -296,9 +296,9 @@ pub struct UpsertFeatureFlagDefinitionInput {
     pub expires_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/feature-access/")]
 pub struct FeatureFlagOverride {
     pub id: String,
     pub flag_key: FeatureFlagKey,
@@ -323,9 +323,9 @@ pub struct UpsertFeatureFlagOverrideInput {
     pub rollout_percentage: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/feature-access/")]
 pub struct FeatureFlagSnapshot {
     pub key: FeatureFlagKey,
     pub enabled: bool,
@@ -334,9 +334,9 @@ pub struct FeatureFlagSnapshot {
     pub override_enabled: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/feature-access/")]
 pub struct EntitlementSnapshot {
     pub key: EntitlementKey,
     pub enabled: bool,
@@ -344,9 +344,9 @@ pub struct EntitlementSnapshot {
     pub source: FeatureValueSource,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/feature-access/")]
 pub struct FeatureAccessSnapshot {
     pub plan_id: PlanId,
     pub flags: Vec<FeatureFlagSnapshot>,

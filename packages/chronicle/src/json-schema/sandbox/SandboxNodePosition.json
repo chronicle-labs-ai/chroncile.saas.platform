@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "x": {
+      "format": "double",
+      "type": "number"
+    },
+    "y": {
+      "format": "double",
+      "type": "number"
+    }
+  },
+  "required": [
+    "x",
+    "y"
+  ],
+  "title": "SandboxNodePosition",
+  "type": "object"
+}

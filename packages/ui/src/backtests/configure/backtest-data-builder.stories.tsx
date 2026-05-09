@@ -31,9 +31,14 @@ const emptyData: BacktestData = {
   savedAs: null,
 };
 
-const composedData = cloneRecipe(
-  BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
-).data;
+const composedData: BacktestData = {
+  ...cloneRecipe(
+    BACKTEST_JOB_PRESETS.find((j) => j.id === "regression")!.recipe,
+  ).data,
+  kind: "composed",
+  dataset: undefined,
+  datasetLabel: undefined,
+};
 
 const datasetData = cloneRecipe(
   BACKTEST_JOB_PRESETS.find((j) => j.id === "suite")!.recipe,

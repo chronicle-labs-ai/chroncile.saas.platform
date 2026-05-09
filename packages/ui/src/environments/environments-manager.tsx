@@ -918,7 +918,7 @@ function buildTraceDatasetSnapshot(
       traceId: seed.id,
       label: seed.title,
       primarySource: seed.sources[0] ?? "unknown",
-      sources: seed.sources,
+      sources: [...seed.sources],
       eventCount: seed.events,
       startedAt,
       durationMs: Math.max(2_500, seed.events * 850),

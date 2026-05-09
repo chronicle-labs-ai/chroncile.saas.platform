@@ -1,26 +1,26 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxDateRange {
     pub start: String,
     pub end: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct EventSourceConfig {
     pub date_range: SandboxDateRange,
     pub source_filter: Vec<String>,
     pub event_type_filter: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct FilterRule {
     pub id: String,
     pub field: String,
@@ -28,15 +28,15 @@ pub struct FilterRule {
     pub value: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct FilterConfig {
     pub rules: Vec<FilterRule>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/sandbox/")]
 pub enum SandboxOutputType {
     #[serde(rename = "sse")]
     Sse,
@@ -48,8 +48,8 @@ pub enum SandboxOutputType {
     Console,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/sandbox/")]
 pub enum SandboxFileFormat {
     #[serde(rename = "jsonl")]
     Jsonl,
@@ -57,9 +57,9 @@ pub enum SandboxFileFormat {
     Csv,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct OutputConfig {
     pub output_type: SandboxOutputType,
     pub webhook_url: String,
@@ -88,9 +88,9 @@ impl Default for OutputConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct GeneratorConfig {
     pub source_types: Vec<String>,
     pub event_types: Vec<String>,
@@ -111,9 +111,9 @@ impl Default for GeneratorConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(tag = "nodeType")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub enum SandboxNodeData {
     #[serde(rename = "event-source")]
     EventSource {
@@ -142,43 +142,43 @@ impl SandboxNodeData {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxNodePosition {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxNodeDto {
     pub id: String,
     pub position: SandboxNodePosition,
     pub data: SandboxNodeData,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxEdgeDto {
     pub id: String,
     pub source: String,
     pub target: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct GraphEditPreview {
     pub nodes: Vec<SandboxNodeDto>,
     pub edges: Vec<SandboxEdgeDto>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(tag = "type")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub enum GraphEditCommand {
     #[serde(rename = "add_node")]
     AddNode { node: SandboxNodeDto },
@@ -198,33 +198,33 @@ pub enum GraphEditCommand {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct GraphEditValidationError {
     pub command_index: Option<usize>,
     pub path: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxValidationIssue {
     pub path: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxValidationResponse {
     pub ok: bool,
     pub issues: Vec<SandboxValidationIssue>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "generated/")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, schemars::JsonSchema)]
+#[ts(export, export_to = "types/sandbox/")]
 pub enum SandboxAiChatRole {
     #[serde(rename = "user")]
     User,
@@ -232,9 +232,9 @@ pub enum SandboxAiChatRole {
     Assistant,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/sandbox/")]
 pub struct SandboxAiChatMessage {
     pub role: SandboxAiChatRole,
     pub content: String,

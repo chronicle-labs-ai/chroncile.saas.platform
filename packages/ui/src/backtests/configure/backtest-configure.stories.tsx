@@ -37,12 +37,12 @@ const suiteRecipe = cloneRecipe(
 
 export const EmptyState: Story = {};
 
-export const ReplayPipeline_StepDataset: Story = {
-  args: { initialRecipe: replayRecipe, initialStep: "dataset" },
+export const ReplayPipeline_StepCoverage: Story = {
+  args: { initialRecipe: replayRecipe, initialStep: "coverage" },
 };
 
-export const ComparePipeline_StepEnrich: Story = {
-  args: { initialRecipe: compareRecipe, initialStep: "enrich" },
+export const ComparePipeline_StepCoverage: Story = {
+  args: { initialRecipe: compareRecipe, initialStep: "coverage" },
 };
 
 export const RegressionPipeline_StepEnvironment: Story = {

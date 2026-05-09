@@ -3,7 +3,7 @@
  *
  * Directional pipeline:
  *
- *   dataset → enrich → environment → versions → launch
+ *   coverage → environment → versions → launch
  *
  * The host (`BacktestsManager`) seeds `initialRecipe` from a preset
  * picked on the list view, so this surface lands the user directly
@@ -11,8 +11,10 @@
  *
  * Visual chrome mirrors `DatasetsManager` — full-width
  * `bg-l-surface` page, big display hero header, Linear-density
- * panels in `bg-l-wash-1` with `border-l-border-faint`. The Replay
- * preset auto-skips the Enrich step.
+ * panels in `bg-l-wash-1` with `border-l-border-faint`. STEP 01
+ * (Coverage) merges the previous Dataset + Discover gaps panels
+ * into one: pick a saved dataset, scope by cluster density, and
+ * fill any coverage gaps inline.
  */
 
 "use client";
@@ -31,8 +33,7 @@ import {
 import {
   BACKTEST_JOB_PRESETS,
   cloneRecipe,
-  isDatasetStepDone,
-  isEnrichStepDone,
+  isCoverageStepDone,
   isEnvironmentStepDone,
   isVersionsStepDone,
 } from "../data";
@@ -47,14 +48,14 @@ import type {
 import type { Dataset } from "../../stream-timeline/types";
 import type { AgentSummary } from "../../agents/types";
 import type { SandboxEnvironment } from "../../environments/types";
+import type { DatasetSnapshot } from "../../datasets/types";
 
 import { BacktestStepper } from "./backtest-stepper";
 import { BacktestSummaryStrip } from "./backtest-summary-strip";
 import { BacktestLaunchDock } from "./backtest-launch-dock";
 import { BacktestQuickCheckDrawer } from "./backtest-quick-check-drawer";
 import { JobIcon } from "../job-meta";
-import { StepDataset } from "./steps/step-dataset";
-import { StepEnrich } from "./steps/step-enrich";
+import { StepCoverage } from "./steps/step-coverage";
 import { StepEnvironment } from "./steps/step-environment";
 import { StepVersions } from "./steps/step-versions";
 
@@ -77,6 +78,10 @@ export interface BacktestConfigureProps {
    *  passed by the host app so the steps can render real options.
    *  Steps fall back to internal mocks when these are empty. */
   availableDatasets?: readonly Dataset[];
+  /** Per-dataset snapshot lookup so STEP 01 can surface clusters and
+   *  density for the selected dataset. Falls back to the deterministic
+   *  `BACKTEST_DATASET_SNAPSHOTS` map when not provided. */
+  availableDatasetSnapshots?: Record<string, DatasetSnapshot>;
   availableEnvironments?: readonly SandboxEnvironment[];
   availableAgents?: readonly AgentSummary[];
   className?: string;
@@ -84,12 +89,13 @@ export interface BacktestConfigureProps {
 
 export function BacktestConfigure({
   initialRecipe = null,
-  initialStep = "dataset",
+  initialStep = "coverage",
   onRecipeChange,
   onLaunch,
   onModeChange,
   onBackToList,
   availableDatasets,
+  availableDatasetSnapshots,
   availableEnvironments,
   availableAgents,
   className,
@@ -118,7 +124,7 @@ export function BacktestConfigure({
   const handleModePick = (job: BacktestJobPreset) => {
     const next = cloneRecipe(job.recipe);
     setRecipe(next);
-    setStep("dataset");
+    setStep("coverage");
     onModeChange?.(next);
   };
 
@@ -147,6 +153,7 @@ export function BacktestConfigure({
       onBackToList={onBackToList}
       onLaunch={onLaunch}
       availableDatasets={availableDatasets}
+      availableDatasetSnapshots={availableDatasetSnapshots}
       availableEnvironments={availableEnvironments}
       availableAgents={availableAgents}
       className={className}
@@ -163,6 +170,7 @@ interface PipelineProps {
   onBackToList?: () => void;
   onLaunch?: (recipe: BacktestRecipe) => void;
   availableDatasets?: readonly Dataset[];
+  availableDatasetSnapshots?: Record<string, DatasetSnapshot>;
   availableEnvironments?: readonly SandboxEnvironment[];
   availableAgents?: readonly AgentSummary[];
   className?: string;
@@ -177,6 +185,7 @@ function Pipeline({
   onBackToList,
   onLaunch,
   availableDatasets,
+  availableDatasetSnapshots,
   availableEnvironments,
   availableAgents,
   className,
@@ -212,12 +221,7 @@ function Pipeline({
     setQuickProgress(0);
   };
 
-  const visibleSteps = React.useMemo<readonly BacktestPipelineStep[]>(() => {
-    if (recipe.mode === "replay") {
-      return BACKTEST_PIPELINE_STEPS.filter((s) => s !== "enrich");
-    }
-    return BACKTEST_PIPELINE_STEPS;
-  }, [recipe.mode]);
+  const visibleSteps = BACKTEST_PIPELINE_STEPS;
 
   const stepIndex = visibleSteps.indexOf(step);
   const prevStep = stepIndex > 0 ? visibleSteps[stepIndex - 1] : null;
@@ -250,17 +254,12 @@ function Pipeline({
       />
 
       <div className="flex-1 min-h-0 overflow-auto rounded-md border border-l-border-faint bg-l-wash-1">
-        {step === "dataset" ? (
-          <StepDataset
+        {step === "coverage" ? (
+          <StepCoverage
             recipe={recipe}
             onChange={updateRecipe}
             availableDatasets={availableDatasets}
-          />
-        ) : null}
-        {step === "enrich" ? (
-          <StepEnrich
-            recipe={recipe}
-            onChange={updateRecipe}
+            availableDatasetSnapshots={availableDatasetSnapshots}
           />
         ) : null}
         {step === "environment" ? (
@@ -390,11 +389,10 @@ function describeRecipe(recipe: BacktestRecipe): string {
   const versions = recipe.agents.length;
   const env = recipe.environment?.label ?? "no environment yet";
   const dataset =
-    recipe.data.kind === "dataset"
-      ? (recipe.data.datasetLabel ?? "saved dataset")
-      : recipe.data.kind === "production"
-        ? `production · ${recipe.data.sources[0]?.filters?.window ?? "recent"}`
-        : `${cases.toLocaleString()} traces composed`;
+    recipe.data.datasetLabel ??
+    (cases > 0
+      ? `${cases.toLocaleString()} traces composed`
+      : "no dataset yet");
   const enrichClause = enriched > 0 ? ` · enriched with ${enriched}` : "";
   return `Configure a ${recipe.mode} backtest. ${dataset}${enrichClause}, seeded in ${env}, replayed across ${versions} ${versions === 1 ? "version" : "versions"}.`;
 }
@@ -516,8 +514,7 @@ function EmptyConfigure({
 }
 
 const STEP_LABEL: Record<BacktestPipelineStep, string> = {
-  dataset: "Dataset",
-  enrich: "Discover gaps",
+  coverage: "Coverage",
   environment: "Environment",
   versions: "Agent versions",
 };
@@ -531,10 +528,8 @@ function isStepReady(
   recipe: BacktestRecipe,
 ): boolean {
   switch (step) {
-    case "dataset":
-      return isDatasetStepDone(recipe);
-    case "enrich":
-      return isEnrichStepDone(recipe);
+    case "coverage":
+      return isCoverageStepDone(recipe);
     case "environment":
       return isEnvironmentStepDone(recipe);
     case "versions":

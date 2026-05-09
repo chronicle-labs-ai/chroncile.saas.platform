@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "authHeaderName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "authType": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "basicUsername": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "endpointUrl": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "title": "UpdateAgentEndpointRequest",
+  "type": "object"
+}

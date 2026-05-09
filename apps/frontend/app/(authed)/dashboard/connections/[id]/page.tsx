@@ -8,28 +8,28 @@ import {
   CONNECTION_DETAIL_TABS,
   ConnectionDetailPage,
   EmptyState,
-  connectionBackfillsSeed,
-  connectionDeliveriesSeed,
-  connectionEventSubsSeed,
-  connectionsSeed,
   type ConnectionDetailTab,
 } from "ui";
+
+import {
+  useConnectionBackfills,
+  useConnectionDeliveries,
+  useConnectionEventSubs,
+  useConnections,
+} from "@/lib/data/connections";
 
 /*
  * /dashboard/connections/[id]
  *
  * Full-page detail view for a single connection. Hosts all six tabs
- * (Overview, Scopes, Secret, Backfills, Activity, Event types) which
- * are too cramped for the drawer's 720px width. Customers land here
- * via:
- *
- *   1. cmd-click on a row in the manager (browser opens in new tab)
- *   2. "View full details" link in the drawer header
- *   3. "Configure on detail page" links from the drawer's hidden-tab
- *      hint strip (which preserves the chosen tab via `?tab=`)
- *
+ * (Overview, Scopes, Secret, Backfills, Activity, Event types).
  * Wires `?tab=...` so deep-links from email / Slack land on the right
  * tab without manual interaction.
+ *
+ * Connection + auxiliary data (backfills / deliveries / event subs)
+ * flow through the connections provider hooks. Flipping
+ * `NEXT_PUBLIC_DATA_CONNECTIONS=chronicle` swaps to live data without
+ * touching this file.
  */
 
 const KNOWN_TABS = new Set<string>(CONNECTION_DETAIL_TABS.map((t) => t.id));
@@ -49,10 +49,24 @@ export default function ConnectionDetailRoute({ params }: PageProps) {
       : "overview";
 
   const [tab, setTab] = React.useState<ConnectionDetailTab>(initialTab);
+
+  const { data: connections, isPending } = useConnections();
+  const { data: backfillsByConnection } = useConnectionBackfills();
+  const { data: deliveriesByConnection } = useConnectionDeliveries();
+  const { data: eventSubsByConnection } = useConnectionEventSubs();
+
   const connection = React.useMemo(
-    () => connectionsSeed.find((c) => c.id === id) ?? null,
-    [id],
+    () => connections?.find((c) => c.id === id) ?? null,
+    [connections, id],
   );
+
+  if (!connection && isPending) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+        Loading connection…
+      </div>
+    );
+  }
 
   if (!connection) {
     return (
@@ -75,9 +89,9 @@ export default function ConnectionDetailRoute({ params }: PageProps) {
         params.set("tab", next);
         router.replace(`?${params.toString()}`, { scroll: false });
       }}
-      backfills={connectionBackfillsSeed[id] ?? []}
-      deliveries={connectionDeliveriesSeed[id] ?? []}
-      events={connectionEventSubsSeed[id] ?? []}
+      backfills={backfillsByConnection?.[id] ?? []}
+      deliveries={deliveriesByConnection?.[id] ?? []}
+      events={eventSubsByConnection?.[id] ?? []}
       workspace="Chronicle"
       onBack={() => router.push("/dashboard/connections")}
     />

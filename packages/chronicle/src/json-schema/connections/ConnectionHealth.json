@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Operational state of a live connection. Drives the `ConnectionHealthBadge` colour, the row's right-side hint, and whether the action menu shows \"Reauth\" / \"Retry\" / \"Resume\".",
+  "enum": [
+    "live",
+    "paused",
+    "error",
+    "expired",
+    "testing",
+    "disconnected"
+  ],
+  "title": "ConnectionHealth",
+  "type": "string"
+}

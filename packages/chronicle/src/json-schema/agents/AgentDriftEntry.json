@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "after": {
+      "additionalProperties": true,
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "artifactId": {
+      "type": "string"
+    },
+    "before": {
+      "additionalProperties": true,
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "observedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "summary": {
+      "description": "Short verb summarizing the change.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "artifactId",
+    "observedAt",
+    "runId",
+    "summary"
+  ],
+  "title": "AgentDriftEntry",
+  "type": "object"
+}

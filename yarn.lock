@@ -6150,6 +6150,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.100.9":
+  version: 5.100.9
+  resolution: "@tanstack/query-core@npm:5.100.9"
+  checksum: 10c0/119bcfa78f416562d64d6584c9354a0f6eec030818a1010428d4fbe8a8599075b3e45cacca09b166726aea9a159b09c5d24a5a0f55581f43cda007a48b5b4414
+  languageName: node
+  linkType: hard
+
+"@tanstack/query-devtools@npm:5.100.9":
+  version: 5.100.9
+  resolution: "@tanstack/query-devtools@npm:5.100.9"
+  checksum: 10c0/6b74744b642f4fdf23d9787798022391a19992f9897c7cb6eace7195a48cda9227f7886c6f03719ebc7ae2c17054a2c724f960d07dab76a117f45905f49c5277
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query-devtools@npm:^5":
+  version: 5.100.9
+  resolution: "@tanstack/react-query-devtools@npm:5.100.9"
+  dependencies:
+    "@tanstack/query-devtools": "npm:5.100.9"
+  peerDependencies:
+    "@tanstack/react-query": ^5.100.9
+    react: ^18 || ^19
+  checksum: 10c0/d7baa06ae5f11a3bb2511bf35f643cb446ff932daa7d541c10b55096b82bf214c2b490d447c07138b648011f72de9ab7de03caaeaf4d33caa416815bb963b924
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5":
+  version: 5.100.9
+  resolution: "@tanstack/react-query@npm:5.100.9"
+  dependencies:
+    "@tanstack/query-core": "npm:5.100.9"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10c0/7e9af3334f6eada6fd0e030d19d77f62a2809d91a991caec68811e1e86aef9c93b8cb8fecfcf7efd9517fb1148f0df60fc4103d44cdd38accba991e70b6bb138
+  languageName: node
+  linkType: hard
+
 "@tanstack/react-table@npm:^8.21.3":
   version: 8.21.3
   resolution: "@tanstack/react-table@npm:8.21.3"
@@ -7761,6 +7798,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"chronicle@workspace:*, chronicle@workspace:packages/chronicle":
+  version: 0.0.0-use.local
+  resolution: "chronicle@workspace:packages/chronicle"
+  dependencies:
+    json-schema-to-zod: "npm:^2"
+    tsx: "npm:^4.21.0"
+    typescript: "npm:^5.8.0"
+    zod: "npm:~3.23.0"
+  languageName: unknown
+  linkType: soft
+
 "citty@npm:^0.1.6":
   version: 0.1.6
   resolution: "citty@npm:0.1.6"
@@ -8411,6 +8459,7 @@ __metadata:
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
     autoprefixer: "npm:^10.4.0"
+    chronicle: "workspace:*"
     eslint: "npm:^9.0.0"
     eslint-config-next: "npm:^15.1.7"
     next: "npm:^15.1.7"
@@ -8423,7 +8472,6 @@ __metadata:
     react-email: "npm:^6.0.3"
     react-hook-form: "npm:^7.71.2"
     resend: "npm:^6.9.3"
-    shared: "workspace:*"
     swr: "npm:^2.2.5"
     tailwindcss: "npm:^3.4.0"
     tsx: "npm:^4.21.0"
@@ -9651,11 +9699,14 @@ __metadata:
   resolution: "frontend@workspace:apps/frontend"
   dependencies:
     "@daytonaio/sdk": "npm:^0.171.0"
+    "@tanstack/react-query": "npm:^5"
+    "@tanstack/react-query-devtools": "npm:^5"
     "@types/node": "npm:^22.0.0"
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
     "@workos-inc/node": "npm:^9.1.1"
     autoprefixer: "npm:^10.4.0"
+    chronicle: "workspace:*"
     eslint: "npm:^9.0.0"
     eslint-config-next: "npm:^16.1.6"
     jose: "npm:^6.2.3"
@@ -9664,9 +9715,12 @@ __metadata:
     postcss: "npm:^8.4.0"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
+    seeds: "workspace:*"
     tailwindcss: "npm:^3.4.0"
+    tsx: "npm:^4.21.0"
     typescript: "npm:^5.8.0"
     ui: "workspace:*"
+    zod: "npm:~3.23.0"
   languageName: unknown
   linkType: soft
 
@@ -10667,6 +10721,15 @@ __metadata:
   version: 3.0.1
   resolution: "json-buffer@npm:3.0.1"
   checksum: 10c0/0d1c91569d9588e7eef2b49b59851f297f3ab93c7b35c7c221e288099322be6b562767d11e4821da500f3219542b9afd2e54c5dc573107c1126ed1080f8e96d7
+  languageName: node
+  linkType: hard
+
+"json-schema-to-zod@npm:^2":
+  version: 2.8.1
+  resolution: "json-schema-to-zod@npm:2.8.1"
+  bin:
+    json-schema-to-zod: dist/cjs/cli.js
+  checksum: 10c0/cb6513960ea15de440182523c1b1df25b10877c80b98493ae6e3c1be96e675940b82bfd30b2e68c29ea11503301287086d062e19fc7b3dfa758e168eb5e7a134
   languageName: node
   linkType: hard
 
@@ -12055,7 +12118,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "platform-api@workspace:packages/platform-api"
   dependencies:
-    shared: "workspace:*"
+    chronicle: "workspace:*"
     typescript: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -13094,6 +13157,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"seeds@workspace:*, seeds@workspace:packages/seeds":
+  version: 0.0.0-use.local
+  resolution: "seeds@workspace:packages/seeds"
+  dependencies:
+    chronicle: "workspace:*"
+    typescript: "npm:^5.8.0"
+    ui: "workspace:*"
+    zod: "npm:~3.23.0"
+  languageName: unknown
+  linkType: soft
+
 "selderee@npm:^0.11.0":
   version: 0.11.0
   resolution: "selderee@npm:0.11.0"
@@ -13157,14 +13231,6 @@ __metadata:
   checksum: 10c0/ca5c3ccbba479d07c30460e367e66337cec825560b11e8ba9c5ebe13a2a0d6021ae34eddf94ff3dfe17a3104dc1f191519cb6c48378b503e5c3f36393938776a
   languageName: node
   linkType: hard
-
-"shared@workspace:*, shared@workspace:packages/shared":
-  version: 0.0.0-use.local
-  resolution: "shared@workspace:packages/shared"
-  dependencies:
-    typescript: "npm:^5.8.0"
-  languageName: unknown
-  linkType: soft
 
 "sharp@npm:^0.34.3, sharp@npm:^0.34.4":
   version: 0.34.5
@@ -14253,6 +14319,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^4.3.0"
     autoprefixer: "npm:^10.4.0"
     boneyard-js: "npm:^1.8.1"
+    chronicle: "workspace:*"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     cmdk: "npm:^1.1.1"
@@ -14859,5 +14926,12 @@ __metadata:
   version: 4.3.6
   resolution: "zod@npm:4.3.6"
   checksum: 10c0/860d25a81ab41d33aa25f8d0d07b091a04acb426e605f396227a796e9e800c44723ed96d0f53a512b57be3d1520f45bf69c0cb3b378a232a00787a2609625307
+  languageName: node
+  linkType: hard
+
+"zod@npm:~3.23.0":
+  version: 3.23.8
+  resolution: "zod@npm:3.23.8"
+  checksum: 10c0/8f14c87d6b1b53c944c25ce7a28616896319d95bc46a9660fe441adc0ed0a81253b02b5abdaeffedbeb23bdd25a0bf1c29d2c12dd919aef6447652dd295e3e69
   languageName: node
   linkType: hard

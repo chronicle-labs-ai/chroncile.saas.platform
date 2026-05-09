@@ -4,34 +4,37 @@ import { useRouter } from "next/navigation";
 
 import { AgentsManager, DashboardViewportShell } from "ui";
 
+import {
+  useAgents,
+  usePinLatestAgentAction,
+} from "@/lib/data/agents";
+
 /*
  * /dashboard/agents
  *
- * Renders the agents manager — a list/grid of every registered agent
- * with search + health filters. Mirrors `/dashboard/connections` and
- * `/dashboard/datasets` in shape: the design-system component owns
- * all interactive state, and this route is a thin wrapper.
+ * Renders the agents manager — list/grid of every registered agent
+ * with search + health filters. Data flows through the
+ * `AgentsProvider` middleware so flipping
+ * `NEXT_PUBLIC_DATA_AGENTS=mock|app|chronicle` swaps the data source
+ * without touching this file.
  *
- * Detail navigation: when the user opens an agent inside the manager,
- * the manager renders `AgentDetailPage` inline. Deep links
- * (`/dashboard/agents/[name]`, `/dashboard/agents/hashes`) are still
- * available for direct entry.
- *
- * Seed data is sourced from the design system today. When the agent
- * registry exposes an HTTP API (see
- * `agent-versioning-excersize/src/registry-server.ts`), fetch the
- * manifest list here on the server and pass an `agents` prop down.
+ * The manager renders against the live list when it arrives; while
+ * the first request is in flight it defaults to its built-in seed
+ * so the page never flashes empty (seed defaults are kept in
+ * `packages/ui` for exactly this reason).
  */
 export default function AgentsManagerPage() {
   const router = useRouter();
+  const { data: agents } = useAgents();
+  const pinLatest = usePinLatestAgentAction();
 
   return (
     <DashboardViewportShell>
       <AgentsManager
+        agents={agents}
+        onPinLatest={pinLatest}
         onOpenHashSearch={(hint) => {
-          const qs = hint
-            ? `?q=${encodeURIComponent(hint)}`
-            : "";
+          const qs = hint ? `?q=${encodeURIComponent(hint)}` : "";
           router.push(`/dashboard/agents/hashes${qs}`);
         }}
       />

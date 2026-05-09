@@ -606,6 +606,14 @@ export const DEMO_EVENTS: readonly DemoEvent[] = [
 ];
 
 /** Lookup helper used across components. */
-export function getSource(id: SourceId): Source | undefined {
+/**
+ * Look up a catalog source by id. Accepts plain `string` (rather
+ * than the strict `SourceId` union) because the wire shape of
+ * `chronicle/types/connections/Connection.source` is `string` —
+ * it joins with the catalog at runtime, and the catalog gracefully
+ * returns `undefined` for unknown ids. Components downstream
+ * already handle the missing case.
+ */
+export function getSource(id: string): Source | undefined {
   return SOURCES.find((s) => s.id === id);
 }

@@ -1,19 +1,18 @@
 /*
- * BacktestStepper — directional 4-node pipeline rail rendered above
+ * BacktestStepper — directional 3-node pipeline rail rendered above
  * the active configure step. Mirrors the Linear-density chrome used
  * by `AgentsFacetRail` and `DatasetMetricsStrip`:
  *
- *   01 Dataset → 02 Enrich → 03 Environment → 04 Versions
+ *   01 Coverage → 02 Environment → 03 Versions
  *
  * Each node carries a step number, label, and a one-line completion
  * summary derived from the recipe (e.g. "refund-escalations-v2 ·
- * 412 cases", "3 buckets enriched", "Acme Support Sandbox").
+ * 412 cases · 3 of 4 clusters", "Acme Support Sandbox").
  *
  * Steps can be:
  *   - active     → ember accent, highlighted background
  *   - done       → ink-hi text, ember dot
  *   - todo       → ink-dim text, ring outline
- *   - skipped    → ink-faint, dashed connector ("not needed for replay")
  *
  * The component is presentational; the parent owns navigation.
  */
@@ -26,8 +25,7 @@ import { Check } from "lucide-react";
 import { cx } from "../../utils/cx";
 import { Eyebrow } from "../../primitives/eyebrow";
 import {
-  isDatasetStepDone,
-  isEnrichStepDone,
+  isCoverageStepDone,
   isEnvironmentStepDone,
   isVersionsStepDone,
   recipeAgentCount,
@@ -37,7 +35,7 @@ import {
 import type { BacktestPipelineStep, BacktestRecipe } from "../types";
 import { BACKTEST_PIPELINE_STEPS } from "../types";
 
-export type BacktestStepStatus = "todo" | "active" | "done" | "skipped";
+export type BacktestStepStatus = "todo" | "active" | "done";
 
 export interface BacktestStepperProps {
   recipe: BacktestRecipe;
@@ -65,15 +63,12 @@ export function BacktestStepper({
     return BACKTEST_PIPELINE_STEPS.map((id, idx) => {
       const number = `0${idx + 1}`;
       const isActive = id === active;
-      const skipped = isStepSkipped(id, recipe);
-      const done = !skipped && isStepDone(id, recipe);
-      const status: BacktestStepStatus = skipped
-        ? "skipped"
-        : isActive
-          ? "active"
-          : done
-            ? "done"
-            : "todo";
+      const done = isStepDone(id, recipe);
+      const status: BacktestStepStatus = isActive
+        ? "active"
+        : done
+          ? "done"
+          : "todo";
       return {
         id,
         number,
@@ -112,8 +107,7 @@ export function BacktestStepper({
 }
 
 const STEP_TITLE: Record<BacktestPipelineStep, string> = {
-  dataset: "Dataset",
-  enrich: "Discover gaps",
+  coverage: "Coverage",
   environment: "Environment",
   versions: "Agent versions",
 };
@@ -125,21 +119,18 @@ function StepperNode({
   node: StepNode;
   onClick: () => void;
 }) {
-  const interactive = node.status !== "skipped";
   return (
     <button
       type="button"
       role="tab"
       aria-selected={node.status === "active"}
-      onClick={interactive ? onClick : undefined}
-      disabled={!interactive}
+      onClick={onClick}
       className={cx(
         "group relative flex flex-1 min-w-0 flex-col items-start gap-1 px-3 py-2.5 text-left",
         "transition-colors duration-fast",
         node.status === "active" && "bg-l-wash-3",
         node.status === "todo" && "hover:bg-l-wash-3",
         node.status === "done" && "hover:bg-l-wash-3",
-        node.status === "skipped" && "cursor-not-allowed opacity-60",
       )}
     >
       <div className="flex items-center gap-2">
@@ -149,7 +140,6 @@ function StepperNode({
             node.status === "active" && "text-ember",
             node.status === "done" && "text-l-ink-lo",
             node.status === "todo" && "text-l-ink-dim",
-            node.status === "skipped" && "text-l-ink-dim",
           )}
         >
           STEP {node.number}
@@ -162,17 +152,11 @@ function StepperNode({
             node.status === "active" && "text-l-ink-hi",
             node.status === "done" && "text-l-ink-hi",
             node.status === "todo" && "text-l-ink-lo",
-            node.status === "skipped" && "text-l-ink-dim line-through",
           )}
         >
           {node.title}
         </span>
-        <span
-          className={cx(
-            "truncate font-mono text-[11px] tabular-nums text-l-ink-dim",
-            node.status === "skipped" && "text-l-ink-dim",
-          )}
-        >
+        <span className="truncate font-mono text-[11px] tabular-nums text-l-ink-dim">
           {node.summary}
         </span>
       </div>
@@ -207,16 +191,6 @@ function StepGlyph({
       </span>
     );
   }
-  if (status === "skipped") {
-    return (
-      <span
-        aria-hidden
-        className="grid size-4 shrink-0 place-items-center rounded-full border border-dashed border-l-border-strong font-mono text-[9px] uppercase text-l-ink-dim"
-      >
-        —
-      </span>
-    );
-  }
   return (
     <span
       aria-hidden
@@ -229,14 +203,12 @@ function StepGlyph({
 
 function Connector({
   from,
-  to,
+  to: _to,
 }: {
   from: BacktestStepStatus;
   to: BacktestStepStatus;
 }) {
-  const dashed = from === "skipped" || to === "skipped";
-  const lit =
-    !dashed && (from === "done" || from === "active");
+  const lit = from === "done" || from === "active";
   return (
     <span
       aria-hidden
@@ -245,11 +217,7 @@ function Connector({
       <span
         className={cx(
           "block h-px w-3",
-          dashed
-            ? "border-t border-dashed border-l-border-strong"
-            : lit
-              ? "bg-ember/45"
-              : "bg-l-wash-3",
+          lit ? "bg-ember/45" : "bg-l-wash-3",
         )}
       />
     </span>
@@ -263,22 +231,13 @@ function isStepDone(
   recipe: BacktestRecipe,
 ): boolean {
   switch (step) {
-    case "dataset":
-      return isDatasetStepDone(recipe);
-    case "enrich":
-      return isEnrichStepDone(recipe);
+    case "coverage":
+      return isCoverageStepDone(recipe);
     case "environment":
       return isEnvironmentStepDone(recipe);
     case "versions":
       return isVersionsStepDone(recipe);
   }
-}
-
-function isStepSkipped(
-  step: BacktestPipelineStep,
-  recipe: BacktestRecipe,
-): boolean {
-  return step === "enrich" && recipe.mode === "replay";
 }
 
 /* ── Step summary copy ─────────────────────────────────────── */
@@ -288,11 +247,8 @@ function stepSummary(
   recipe: BacktestRecipe,
 ): string {
   switch (step) {
-    case "dataset":
-      return datasetSummary(recipe);
-    case "enrich":
-      if (recipe.mode === "replay") return "skipped for replay";
-      return enrichSummary(recipe);
+    case "coverage":
+      return coverageSummary(recipe);
     case "environment":
       return environmentSummary(recipe);
     case "versions":
@@ -300,34 +256,16 @@ function stepSummary(
   }
 }
 
-function datasetSummary(recipe: BacktestRecipe): string {
+function coverageSummary(recipe: BacktestRecipe): string {
   const d = recipe.data;
-  if (d.kind === "dataset" && d.datasetLabel) {
-    const cases = recipeCaseCount(recipe);
-    return `${d.datasetLabel} · ${cases.toLocaleString()} cases`;
+  const cases = recipeCaseCount(recipe);
+  const enriched = recipeEnrichmentCount(recipe);
+  const enrichClause = enriched > 0 ? ` · +${enriched} gen` : "";
+  if (d.datasetLabel) {
+    return `${d.datasetLabel} · ${cases.toLocaleString()} cases${enrichClause}`;
   }
-  if (d.kind === "production") {
-    const window = d.sources[0]?.filters?.window ?? "recent";
-    const cases = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
-    return `prod · ${window} · ${cases.toLocaleString()} traces`;
-  }
-  const traces = d.sources.reduce((acc, s) => acc + (s.count || 0), 0);
-  if (traces === 0) return "pick a dataset";
-  return `${traces.toLocaleString()} traces composed`;
-}
-
-function enrichSummary(recipe: BacktestRecipe): string {
-  const accepted = recipeEnrichmentCount(recipe);
-  const total = recipe.data.scenarios.length;
-  if (total === 0) return "review proposed scenarios";
-  const buckets = new Set(
-    recipe.data.scenarios
-      .filter((s) => s.accepted !== false)
-      .map((s) => s.bucket)
-      .filter(Boolean),
-  ).size;
-  if (accepted === 0) return "0 accepted of " + total;
-  return `${accepted} scenarios · ${buckets} bucket${buckets === 1 ? "" : "s"}`;
+  if (cases === 0) return "pick a dataset";
+  return `${cases.toLocaleString()} traces composed${enrichClause}`;
 }
 
 function environmentSummary(recipe: BacktestRecipe): string {

@@ -26,6 +26,7 @@ import {
   type StreamPlaybackState,
   type StreamTimelineGroupBy,
 } from "../stream-timeline";
+import { STREAM_TIMELINE_MOCK_ANCHOR_MS } from "../stream-timeline/data";
 import {
   useDataTableFilters,
   type ColumnConfig,
@@ -661,9 +662,9 @@ export function DatasetDetailPage({
      mutation applies to the entire selection. Otherwise it applies
      to that single trace. Mirrors Linear / Notion / Figma behavior. */
   const resolveMutationTargets = React.useCallback(
-    (traceId: string): readonly string[] => {
+    (traceId: string): string[] => {
       if (selectedIdSet.has(traceId) && selectedIds.length > 1) {
-        return selectedIds;
+        return [...selectedIds];
       }
       return [traceId];
     },
@@ -1238,7 +1239,7 @@ export function DatasetDetailPage({
               if (!onUpdateTraces || selectedIds.length === 0) return;
               onUpdateTraces({
                 datasetId: snapshot.dataset.id,
-                traceIds: selectedIds,
+                traceIds: [...selectedIds],
                 patch: { clusterId: next },
               });
             }}
@@ -1246,7 +1247,7 @@ export function DatasetDetailPage({
               if (!onUpdateTraces || selectedIds.length === 0) return;
               onUpdateTraces({
                 datasetId: snapshot.dataset.id,
-                traceIds: selectedIds,
+                traceIds: [...selectedIds],
                 patch: { split: next },
               });
             }}
@@ -1316,7 +1317,7 @@ export function DatasetDetailPage({
                   if (!onUpdateTraces || selectedIds.length === 0) return;
                   onUpdateTraces({
                     datasetId: snapshot.dataset.id,
-                    traceIds: selectedIds,
+                    traceIds: [...selectedIds],
                     patch: { clusterId: next },
                   });
                 }}
@@ -1324,7 +1325,7 @@ export function DatasetDetailPage({
                   if (!onUpdateTraces || selectedIds.length === 0) return;
                   onUpdateTraces({
                     datasetId: snapshot.dataset.id,
-                    traceIds: selectedIds,
+                    traceIds: [...selectedIds],
                     patch: { split: next },
                   });
                 }}
@@ -3228,9 +3229,14 @@ function TimelineLens({
   const datasets = datasetsForAdd ?? [snapshot.dataset];
 
   /* Capture a stable mount timestamp so the initial range stays
-     idempotent across re-renders. Mirrors `TimelineDashboard`'s
-     pattern at `/dashboard/timeline`. */
-  const [mountedAtMs] = React.useState(() => Date.now());
+     idempotent across re-renders. Deferred via `useEffect` so SSR
+     and the first client render agree (calling `Date.now()` during
+     render trips React's hydration check). Mirrors
+     `TimelineDashboard`'s pattern at `/dashboard/timeline`. */
+  const [mountedAtMs, setMountedAtMs] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    setMountedAtMs(Date.now());
+  }, []);
 
   const [playback, setPlayback] = React.useState<StreamPlaybackState>("paused");
   const [groupBy, setGroupBy] = React.useState<StreamTimelineGroupBy>("trace");
@@ -3255,8 +3261,12 @@ function TimelineLens({
      paint. */
   const { initialCenterMs, initialHalfWidthMs } = React.useMemo(() => {
     if (events.length === 0) {
+      /* Pre-mount fallback uses the seed anchor so SSR + first
+         client render produce identical HTML. The effect-driven
+         `mountedAtMs` swap re-renders once we're on the client. */
+      const base = mountedAtMs ?? STREAM_TIMELINE_MOCK_ANCHOR_MS;
       return {
-        initialCenterMs: mountedAtMs - 15 * 60 * 1000,
+        initialCenterMs: base - 15 * 60 * 1000,
         initialHalfWidthMs: 20 * 60 * 1000,
       };
     }

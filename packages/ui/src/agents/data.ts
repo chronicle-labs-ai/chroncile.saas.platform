@@ -128,7 +128,7 @@ function buildArtifact(seed: ArtifactSeed): AgentArtifact {
           `provider:${artifactId}:${JSON.stringify(seed.providerOptions)}`,
         )
       : undefined,
-    tools: seed.tools,
+    tools: [...seed.tools],
     policy: seed.policy,
     metadata: seed.metadata,
     provenance: {
@@ -142,7 +142,9 @@ function buildArtifact(seed: ArtifactSeed): AgentArtifact {
     configHash: fakeSha256(`config:${artifactId}:${seed.instructions}:${seed.model.label}:${seed.tools.map((t) => t.name).join(",")}`),
     inputContractPreview: seed.inputContractPreview,
     outputContractPreview: seed.outputContractPreview,
-    knowledgeSources: seed.knowledgeSources,
+    knowledgeSources: seed.knowledgeSources
+      ? [...seed.knowledgeSources]
+      : undefined,
     workflowGraphPreview: seed.workflowGraphPreview,
   };
 }
@@ -1069,7 +1071,7 @@ function buildRun(
               "cf-ray": `9f413036ea${runIndex.toString(16).padStart(4, "0")}55da-LAX`,
             },
           },
-    toolCalls,
+    toolCalls: [...toolCalls],
     trace: {
       userId: pick(USER_IDS),
       environment: pick(ENVIRONMENTS),
@@ -1218,7 +1220,9 @@ function buildSummary(
       (artifact.metadata?.environment as string | undefined) ?? undefined,
     purpose: storytelling?.purpose,
     personaSummary: storytelling?.personaSummary,
-    capabilityTags: storytelling?.capabilityTags,
+    capabilityTags: storytelling?.capabilityTags
+      ? [...storytelling.capabilityTags]
+      : undefined,
     category: storytelling?.category,
     playgroundUrl: storytelling?.playgroundUrl,
     runbookUrl: storytelling?.runbookUrl,

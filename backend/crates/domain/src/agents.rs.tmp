@@ -1,0 +1,128 @@
+//! Agents — wire shapes for the Agent Versioning surface.
+//!
+//! Source-of-truth derivation: see `packages/ui/src/agents/types.ts`.
+//! Every shape that a dashboard component reads goes through here so
+//! the chronicle backend, the `chronicle` data provider, and the
+//! design-system components agree on a single set of names + types.
+//!
+//! Naming + serialization conventions match `domain::datasets`:
+//! `#[serde(rename_all = "camelCase")]` on structs,
+//! `#[serde(rename_all = "kebab-case")]` on framework / status
+//! enums (those have multi-word kebab-case spellings on the wire),
+//! `#[serde(rename_all = "lowercase")]` on the simple short-tag enums.
+
+use chrono::{DateTime, Utc};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use ts_rs::TS;
+
+/* ── Hash domains ────────────────────────────────────────── */
+
+/// The 13 hash domains the wrapper tracks. The first eight describe the
+/// artifact (config-time); the last five describe a run (observed at
+/// call-time).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "generated/")]
+pub enum HashDomain {
+    #[serde(rename = "agent.root")]
+    AgentRoot,
+    #[serde(rename = "prompt")]
+    Prompt,
+    #[serde(rename = "model.contract")]
+    ModelContract,
+    #[serde(rename = "provider.options")]
+    ProviderOptions,
+    #[serde(rename = "tool.contract")]
+    ToolContract,
+    #[serde(rename = "runtime.policy")]
+    RuntimePolicy,
+    #[serde(rename = "dependency")]
+    Dependency,
+    #[serde(rename = "knowledge.contract")]
+    KnowledgeContract,
+    #[serde(rename = "workflow.graph")]
+    WorkflowGraph,
+    #[serde(rename = "effective.run")]
+    EffectiveRun,
+    #[serde(rename = "provider.observation")]
+    ProviderObservation,
+    #[serde(rename = "operational")]
+    Operational,
+    #[serde(rename = "output")]
+    Output,
+}
+
+/* ── Framework registry ─────────────────────────────────── */
+
+/// Framework label. Multi-word kebab-case to match the existing TS
+/// union (`vercel-ai-sdk`, `openai-agents-python`, etc.).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "generated/")]
+pub enum AgentFramework {
+    VercelAiSdk,
+    OpenaiAgents,
+    Langchain,
+    Mastra,
+    LangchainPython,
+    Llamaindex,
+    Crewai,
+    Smolagents,
+    PydanticAi,
+    Strands,
+    GoogleAdk,
+    OpenaiAgentsPython,
+    Autogen,
+}
+
+/* ── Run status ──────────────────────────────────────────── */
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, export_to = "generated/")]
+pub enum AgentRunStatus {
+    Started,
+    Success,
+    Error,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, export_to = "generated/")]
+pub enum AgentRunOperation {
+    Generate,
+    Stream,
+}
+
+/* ── Tool + policy ──────────────────────────────────────── */
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct AgentToolDefinition {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub input_schema_hash: Option<String>,
+    /// Optional small input-schema preview rendered in the Tools tab.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "Record<string, unknown>")]
+    pub input_schema_preview: Option<HashMap<String, serde_json::Value>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "Record<string, unknown>")]
+    pub metadata: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct AgentPolicy {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub max_steps: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
