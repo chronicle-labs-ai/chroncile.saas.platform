@@ -25,12 +25,19 @@ import {
 import { getDataConfig } from "./config";
 import { getQueryClient } from "./query-client";
 import { bridgeAgents, type AgentsProvider } from "./agents";
+import { bridgeBacktests, type BacktestsProvider } from "./backtests";
 import { bridgeConnections, type ConnectionsProvider } from "./connections";
 import { bridgeDatasets, type DatasetsProvider } from "./datasets";
+import {
+  bridgeEnvironments,
+  type EnvironmentsProvider,
+} from "./environments";
 import { bridgeTimeline, type TimelineProvider } from "./timeline";
 import { createAgentsProvider } from "./agents/index";
+import { createBacktestsProvider } from "./backtests/index";
 import { createConnectionsProvider } from "./connections/index";
 import { createDatasetsProvider } from "./datasets/index";
+import { createEnvironmentsProvider } from "./environments/index";
 import { createTimelineProvider } from "./timeline/index";
 
 const DevtoolsLazy = React.lazy(() =>
@@ -44,6 +51,8 @@ export interface DataProviderContextValue {
   datasets: DatasetsProvider;
   connections: ConnectionsProvider;
   timeline: TimelineProvider;
+  backtests: BacktestsProvider;
+  environments: EnvironmentsProvider;
 }
 
 const DataProviderContext = React.createContext<DataProviderContextValue | null>(
@@ -77,6 +86,8 @@ export function DataProviderProvider({
       datasets: createDatasetsProvider(),
       connections: createConnectionsProvider(),
       timeline: createTimelineProvider(),
+      backtests: createBacktestsProvider(),
+      environments: createEnvironmentsProvider(),
     };
   }, []);
 
@@ -85,11 +96,15 @@ export function DataProviderProvider({
     const tearDatasets = bridgeDatasets(client, value.datasets);
     const tearConnections = bridgeConnections(client, value.connections);
     const tearTimeline = bridgeTimeline(client, value.timeline);
+    const tearBacktests = bridgeBacktests(client, value.backtests);
+    const tearEnvironments = bridgeEnvironments(client, value.environments);
     return () => {
       tearAgents();
       tearDatasets();
       tearConnections();
       tearTimeline();
+      tearBacktests();
+      tearEnvironments();
     };
   }, [client, value]);
 

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Row projection of `\"BacktestArtifact\"`.",
+  "enum": [
+    "agent-log",
+    "verifier-log",
+    "trajectory",
+    "screenshot",
+    "reward-json",
+    "reward-txt",
+    "tar",
+    "other"
+  ],
+  "title": "BacktestArtifactKind",
+  "type": "string"
+}

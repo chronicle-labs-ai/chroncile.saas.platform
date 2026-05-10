@@ -1,0 +1,454 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "User-submitted job configuration. Persisted into `BacktestJob.recipe` (the inline `BacktestRecipe`) plus a few orchestrator-level columns (`nConcurrent`, `sandboxDriver`, `retryConfig`).",
+  "properties": {
+    "nConcurrent": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "recipe": {
+      "properties": {
+        "agents": {
+          "description": "1..N agents under test. The first is treated as the comparison baseline by `BacktestResults`.",
+          "items": {
+            "properties": {
+              "hue": {
+                "description": "CSS color token / hex. Used by `CandidateHueDot`.",
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "notes": {
+                "description": "Tag rendered next to the label, e.g. \"current production\".",
+                "type": "string"
+              },
+              "role": {
+                "description": "Defaults to `candidate`; the Results table treats the first baseline as the reference column.",
+                "enum": [
+                  "baseline",
+                  "candidate"
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "hue",
+              "id",
+              "label",
+              "notes"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "data": {
+          "properties": {
+            "dataset": {
+              "description": "Populated only when `kind == \"dataset\"`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "datasetLabel": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "kind": {
+              "enum": [
+                "composed",
+                "dataset"
+              ],
+              "type": "string"
+            },
+            "savedAs": {
+              "default": null,
+              "description": "Optional name the user wants to save this composed dataset as. `null` (vs absent) tells the UI the user opted out of saving.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "scenarios": {
+              "items": {
+                "properties": {
+                  "accepted": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "bucket": {
+                    "description": "Cluster bucket emitted by the data-science layer when looking for missing scenarios in a dataset.",
+                    "enum": [
+                      "captured",
+                      "adjacent",
+                      "emerging",
+                      "edge"
+                    ],
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clusterId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "clusterLabel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "confidence": {
+                    "format": "double",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "count": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": "integer"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "adversarial",
+                      "nonEnglish",
+                      "toolFailure",
+                      "longTurn"
+                    ],
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "count",
+                  "id",
+                  "kind",
+                  "label"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "sources": {
+              "items": {
+                "properties": {
+                  "count": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": "integer"
+                  },
+                  "filters": {
+                    "properties": {
+                      "clusters": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      },
+                      "outcome": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "seed": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "window": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "prod",
+                      "dataset"
+                    ],
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "count",
+                  "id",
+                  "kind",
+                  "label"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "kind",
+            "scenarios",
+            "sources"
+          ],
+          "type": "object"
+        },
+        "environment": {
+          "description": "Optional environment the run targets. Pipeline step 03 sets this; consumers without an environment fall back to the default ephemeral sandbox.",
+          "properties": {
+            "ephemeral": {
+              "description": "Whether this environment is a freshly cloned ephemeral sandbox or a saved long-lived environment.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "snapshotId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "snapshotLabel": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "status": {
+              "description": "Mirror of `SandboxRuntimeStatus` strings (\"started\", \"stopped\", …). Kept loose so callers don't need to import the environments package.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "graders": {
+          "items": {
+            "properties": {
+              "evidence": {
+                "description": "Optional human-readable explanation of why this grader was proposed.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "rubric",
+                  "classifier",
+                  "metric",
+                  "embedding",
+                  "assertion"
+                ],
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "source": {
+                "description": "Grader source — where this grader came from when it was added to the recipe. Determines the chip copy (\"proposed\" vs \"library\" vs \"custom\" vs \"dataset\").",
+                "enum": [
+                  "proposed",
+                  "library",
+                  "custom",
+                  "dataset"
+                ],
+                "type": "string"
+              },
+              "weight": {
+                "description": "Grader weight bucket — `low | med | high` matches the segmented control in the GraderBuilder tray.",
+                "enum": [
+                  "low",
+                  "med",
+                  "high"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "source",
+              "weight"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "enum": [
+            "replay",
+            "compare",
+            "regression",
+            "suite"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "Free-text run name shown in the recipe header + top nav.",
+          "type": "string"
+        },
+        "seed": {
+          "description": "Optional pinned trace seed; used by the Replay preset to reproduce a single trace as the focal point of the run.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "agents",
+        "data",
+        "graders",
+        "mode",
+        "name"
+      ],
+      "type": "object"
+    },
+    "retryConfig": {
+      "description": "Retry policy applied to transient trial failures (network errors, sandbox-create timeouts). Mirrors Harbor's `RetryConfig`. Pass `null` on the wire (`None` here) to fall back to defaults.",
+      "properties": {
+        "excludeExceptions": {
+          "description": "Exception kinds that explicitly should not be retried even if otherwise matched by `include_exceptions`.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "includeExceptions": {
+          "description": "When set, only exception kinds in this list trigger a retry. `None` means \"retry every transient kind\".",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "maxRetries": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "maxWaitSec": {
+          "format": "double",
+          "type": "number"
+        },
+        "minWaitSec": {
+          "format": "double",
+          "type": "number"
+        },
+        "waitMultiplier": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "maxRetries",
+        "maxWaitSec",
+        "minWaitSec",
+        "waitMultiplier"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "sandboxDriver": {
+      "description": "Sandbox driver picked at submit time. Echoed onto the `BacktestJob.sandboxDriver` column. The orchestrator reads this to pick the implementation behind the `Sandbox` trait (Phase 1).",
+      "oneOf": [
+        {
+          "description": "Local Docker daemon. Useful for CI + dev loops.",
+          "enum": [
+            "docker"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Daytona cloud sandboxes. Default for production.",
+          "enum": [
+            "daytona"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "In-process echo sandbox; powers CLI smoke tests + unit tests without container infra.",
+          "enum": [
+            "mock"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "scheduledFor": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "nConcurrent",
+    "recipe",
+    "sandboxDriver"
+  ],
+  "title": "JobConfig",
+  "type": "object"
+}

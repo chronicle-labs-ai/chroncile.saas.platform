@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Sandbox driver picked at submit time. Echoed onto the `BacktestJob.sandboxDriver` column. The orchestrator reads this to pick the implementation behind the `Sandbox` trait (Phase 1).",
+  "oneOf": [
+    {
+      "description": "Local Docker daemon. Useful for CI + dev loops.",
+      "enum": [
+        "docker"
+      ],
+      "type": "string"
+    },
+    {
+      "description": "Daytona cloud sandboxes. Default for production.",
+      "enum": [
+        "daytona"
+      ],
+      "type": "string"
+    },
+    {
+      "description": "In-process echo sandbox; powers CLI smoke tests + unit tests without container infra.",
+      "enum": [
+        "mock"
+      ],
+      "type": "string"
+    }
+  ],
+  "title": "SandboxDriver"
+}

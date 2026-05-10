@@ -26,11 +26,15 @@ export interface DataConfig {
   datasets: DataMode;
   connections: DataMode;
   timeline: DataMode;
+  backtests: DataMode;
+  environments: DataMode;
   seeds: {
     agents: string;
     datasets: string;
     connections: string;
     timeline: string;
+    backtests: string;
+    environments: string;
   };
   /** Optional jitter (ms) applied to mock-impl reads/writes so the
    *  UX feels like a real network. `0` disables. */
@@ -42,16 +46,26 @@ const DEFAULT_CONFIG: DataConfig = Object.freeze({
   datasets: "mock" as DataMode,
   connections: "mock" as DataMode,
   timeline: "mock" as DataMode,
+  backtests: "mock" as DataMode,
+  environments: "mock" as DataMode,
   seeds: {
     agents: "default",
     datasets: "default",
     connections: "default",
     timeline: "default",
+    backtests: "default",
+    environments: "default",
   },
   mockLatencyMs: 0,
 });
 
-type Domain = "agents" | "datasets" | "connections" | "timeline";
+type Domain =
+  | "agents"
+  | "datasets"
+  | "connections"
+  | "timeline"
+  | "backtests"
+  | "environments";
 
 /* Critical: Next.js / Turbopack only inline `process.env.LITERAL_KEY`
    into client bundles. Dynamic lookups like `process.env[someExpr]`
@@ -64,12 +78,16 @@ const ENV_DATA: Record<Domain, string | undefined> = {
   datasets: process.env.NEXT_PUBLIC_DATA_DATASETS,
   connections: process.env.NEXT_PUBLIC_DATA_CONNECTIONS,
   timeline: process.env.NEXT_PUBLIC_DATA_TIMELINE,
+  backtests: process.env.NEXT_PUBLIC_DATA_BACKTESTS,
+  environments: process.env.NEXT_PUBLIC_DATA_ENVIRONMENTS,
 };
 const ENV_SEED: Record<Domain, string | undefined> = {
   agents: process.env.NEXT_PUBLIC_DATA_SEED_AGENTS,
   datasets: process.env.NEXT_PUBLIC_DATA_SEED_DATASETS,
   connections: process.env.NEXT_PUBLIC_DATA_SEED_CONNECTIONS,
   timeline: process.env.NEXT_PUBLIC_DATA_SEED_TIMELINE,
+  backtests: process.env.NEXT_PUBLIC_DATA_SEED_BACKTESTS,
+  environments: process.env.NEXT_PUBLIC_DATA_SEED_ENVIRONMENTS,
 };
 
 const URL_KEY = (kind: "data" | "seed", domain: Domain) =>
@@ -137,11 +155,18 @@ export function getDataConfig(): DataConfig {
     datasets: readMode("datasets", DEFAULT_CONFIG.datasets),
     connections: readMode("connections", DEFAULT_CONFIG.connections),
     timeline: readMode("timeline", DEFAULT_CONFIG.timeline),
+    backtests: readMode("backtests", DEFAULT_CONFIG.backtests),
+    environments: readMode("environments", DEFAULT_CONFIG.environments),
     seeds: {
       agents: readSeed("agents", DEFAULT_CONFIG.seeds.agents),
       datasets: readSeed("datasets", DEFAULT_CONFIG.seeds.datasets),
       connections: readSeed("connections", DEFAULT_CONFIG.seeds.connections),
       timeline: readSeed("timeline", DEFAULT_CONFIG.seeds.timeline),
+      backtests: readSeed("backtests", DEFAULT_CONFIG.seeds.backtests),
+      environments: readSeed(
+        "environments",
+        DEFAULT_CONFIG.seeds.environments,
+      ),
     },
     mockLatencyMs: readMockLatency(),
   });

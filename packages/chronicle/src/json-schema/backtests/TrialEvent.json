@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Event emitted by the orchestrator on its broadcast channel; the SSE handler at `/api/platform/backtests/jobs/:id/stream` re-emits these to the dashboard + CLI. Variants match the dashboard's `BacktestsEvent` plus per-trial fine grain.",
+  "oneOf": [
+    {
+      "description": "The job moved into `running` (or back into `running` after a pause).",
+      "properties": {
+        "job_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "job-started"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id",
+        "kind"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "A trial transitioned phases (queued → running → verifying → done).",
+      "properties": {
+        "job_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "trial-phase-changed"
+          ],
+          "type": "string"
+        },
+        "phase": {
+          "description": "Phase of execution emitted on the SSE stream as the trial progresses. Distinct from `TrialStatus` — `TrialPhase` is fine-grained progress inside the lifecycle, `TrialStatus` is the persisted summary.",
+          "enum": [
+            "queued",
+            "environment-start",
+            "environment-ready",
+            "agent-setup",
+            "agent-running",
+            "verifier-running",
+            "artifact-collection",
+            "cleanup",
+            "done"
+          ],
+          "type": "string"
+        },
+        "trial_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id",
+        "kind",
+        "phase",
+        "trial_id"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "A trial wrote a final reward set; the dashboard's metrics table updates incrementally.",
+      "properties": {
+        "job_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "trial-rewards-recorded"
+          ],
+          "type": "string"
+        },
+        "rewards": {
+          "additionalProperties": {
+            "format": "double",
+            "type": "number"
+          },
+          "type": "object"
+        },
+        "trial_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id",
+        "kind",
+        "rewards",
+        "trial_id"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "A trial reached a terminal status.",
+      "properties": {
+        "exception": {
+          "description": "Captured exception info for a failed trial. Mirrors Harbor's `ExceptionInfo` — kind for routing/retry, message for humans.",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "message"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "job_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "trial-finished"
+          ],
+          "type": "string"
+        },
+        "status": {
+          "description": "Lifecycle state of a single `BacktestTrial` (one (case × agent) cell).",
+          "enum": [
+            "pending",
+            "setup",
+            "running",
+            "verifying",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ],
+          "type": "string"
+        },
+        "trial_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id",
+        "kind",
+        "status",
+        "trial_id"
+      ],
+      "type": "object"
+    },
+    {
+      "description": "The job reached a terminal status. Carries a verdict so the list view can render without an extra fetch.",
+      "properties": {
+        "job_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "job-finished"
+          ],
+          "type": "string"
+        },
+        "status": {
+          "description": "Lifecycle state of an entire `BacktestJob`. Maps 1:1 onto the `status` column in `migrations/013_create_backtest_runtime.sql`.",
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ],
+          "type": "string"
+        },
+        "verdict": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "job_id",
+        "kind",
+        "status"
+      ],
+      "type": "object"
+    }
+  ],
+  "title": "TrialEvent"
+}

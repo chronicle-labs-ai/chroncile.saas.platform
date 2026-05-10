@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Per-metric row rendered in the Results metrics table. `rows` keys match `BacktestAgent.id`.",
+  "properties": {
+    "baseline": {
+      "description": "Baseline value the comparison column anchors against.",
+      "format": "double",
+      "type": "number"
+    },
+    "higher": {
+      "description": "Whether higher numbers are better — drives the delta tone.",
+      "type": "boolean"
+    },
+    "id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "rows": {
+      "additionalProperties": {
+        "format": "double",
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "unit": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "baseline",
+    "higher",
+    "id",
+    "label",
+    "rows",
+    "unit"
+  ],
+  "title": "BacktestMetric",
+  "type": "object"
+}

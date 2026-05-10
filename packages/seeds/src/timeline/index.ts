@@ -7,18 +7,25 @@
  */
 
 import { resolveSeed } from "../types";
+import { chronicleDemoTimelineSeed } from "./chronicle-demo";
 import { defaultTimelineSeed } from "./default";
 import { emptyTimelineSeed } from "./empty";
 import { supportFlowTimelineSeed } from "./support-flow";
 import type { TimelineSeed, TimelineSeedData } from "./types";
 
 export type { TimelineSeed, TimelineSeedData };
-export { defaultTimelineSeed, emptyTimelineSeed, supportFlowTimelineSeed };
+export {
+  chronicleDemoTimelineSeed,
+  defaultTimelineSeed,
+  emptyTimelineSeed,
+  supportFlowTimelineSeed,
+};
 
 export const TIMELINE_SEEDS: readonly TimelineSeed[] = [
   defaultTimelineSeed,
   emptyTimelineSeed,
   supportFlowTimelineSeed,
+  chronicleDemoTimelineSeed,
 ];
 
 export function resolveTimelineSeed(id: string | undefined): TimelineSeed {

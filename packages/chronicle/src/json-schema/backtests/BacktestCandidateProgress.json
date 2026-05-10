@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "agent": {
+      "properties": {
+        "hue": {
+          "description": "CSS color token / hex. Used by `CandidateHueDot`.",
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "notes": {
+          "description": "Tag rendered next to the label, e.g. \"current production\".",
+          "type": "string"
+        },
+        "role": {
+          "description": "Defaults to `candidate`; the Results table treats the first baseline as the reference column.",
+          "enum": [
+            "baseline",
+            "candidate"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "hue",
+        "id",
+        "label",
+        "notes"
+      ],
+      "type": "object"
+    },
+    "avgDuration": {
+      "type": "string"
+    },
+    "divergencePct": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "done": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "errorPct": {
+      "format": "double",
+      "type": "number"
+    },
+    "isBaseline": {
+      "type": "boolean"
+    },
+    "passPct": {
+      "format": "double",
+      "type": "number"
+    },
+    "pct": {
+      "format": "double",
+      "type": "number"
+    },
+    "spent": {
+      "type": "string"
+    },
+    "total": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "agent",
+    "avgDuration",
+    "done",
+    "errorPct",
+    "isBaseline",
+    "passPct",
+    "pct",
+    "spent",
+    "total"
+  ],
+  "title": "BacktestCandidateProgress",
+  "type": "object"
+}

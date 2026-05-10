@@ -7,6 +7,7 @@
 
 import { resolveSeed, type Seed } from "../types";
 
+import { chronicleDemoConnectionsSeed } from "./chronicle-demo";
 import { defaultConnectionsSeed } from "./default";
 import { emptyConnectionsSeed } from "./empty";
 import { supportFlowConnectionsSeed } from "./support-flow";
@@ -14,6 +15,7 @@ import type { ConnectionsSeed, ConnectionsSeedData } from "./types";
 
 export type { ConnectionsSeed, ConnectionsSeedData };
 export {
+  chronicleDemoConnectionsSeed,
   defaultConnectionsSeed,
   emptyConnectionsSeed,
   supportFlowConnectionsSeed,
@@ -23,6 +25,7 @@ export const CONNECTIONS_SEEDS: readonly ConnectionsSeed[] = [
   defaultConnectionsSeed,
   emptyConnectionsSeed,
   supportFlowConnectionsSeed,
+  chronicleDemoConnectionsSeed,
 ];
 
 export function resolveConnectionsSeed(id: string | undefined): ConnectionsSeed {

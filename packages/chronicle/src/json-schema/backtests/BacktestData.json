@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "dataset": {
+      "description": "Populated only when `kind == \"dataset\"`.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "datasetLabel": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kind": {
+      "enum": [
+        "composed",
+        "dataset"
+      ],
+      "type": "string"
+    },
+    "savedAs": {
+      "default": null,
+      "description": "Optional name the user wants to save this composed dataset as. `null` (vs absent) tells the UI the user opted out of saving.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scenarios": {
+      "items": {
+        "properties": {
+          "accepted": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "bucket": {
+            "description": "Cluster bucket emitted by the data-science layer when looking for missing scenarios in a dataset.",
+            "enum": [
+              "captured",
+              "adjacent",
+              "emerging",
+              "edge"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clusterId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clusterLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "count": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "adversarial",
+              "nonEnglish",
+              "toolFailure",
+              "longTurn"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "count",
+          "id",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "sources": {
+      "items": {
+        "properties": {
+          "count": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "filters": {
+            "properties": {
+              "clusters": {
+                "items": {
+                  "type": "string"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              },
+              "outcome": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "seed": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "window": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "prod",
+              "dataset"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "count",
+          "id",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "kind",
+    "scenarios",
+    "sources"
+  ],
+  "title": "BacktestData",
+  "type": "object"
+}

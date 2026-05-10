@@ -257,9 +257,15 @@ fn build_saas_state_postgres(
     launch_config: &config::LaunchConfig,
     runtime_config: SaasRuntimeConfig,
 ) -> SaasAppState {
-    use chronicle_infra::postgres::{repositories::*, PgFeatureFlagRepo};
+    use chronicle_api::routes::saas::backtests::{
+        dev_fixtures, BacktestService,
+    };
+    use chronicle_infra::postgres::{
+        backtests_repositories::*, repositories::*, PgFeatureFlagRepo,
+    };
+    use chronicle_orchestrator::SandboxFactory;
 
-    SaasAppState::new(
+    let state = SaasAppState::new(
         &launch_config.security.workos_client_id,
         Arc::new(PgTenantRepo::new(pool.clone())),
         Arc::new(PgUserRepo::new(pool.clone())),
@@ -277,7 +283,53 @@ fn build_saas_state_postgres(
         event_store,
         event_stream,
         runtime_config,
-    )
+    );
+
+    let backtests = Arc::new(
+        BacktestService::new(
+            Arc::new(PgBacktestJobRepo::new(pool.clone())),
+            Arc::new(PgBacktestTrialRepo::new(pool.clone())),
+            Arc::new(PgBacktestArtifactRepo::new(pool)),
+            build_agent_runner(),
+            chronicle_orchestrator::build_default_grader(),
+            SandboxFactory::Default,
+        )
+        .with_availability(dev_fixtures()),
+    );
+    state.with_backtests(backtests)
+}
+
+/// Pick the agent runner based on env vars. Search order:
+///
+/// 1. `CHRONICLE_AGENT_SCRIPT` — bash command run as the agent. Most
+///    flexible; this is what production deployments will use until
+///    a real `HttpAgentRunner` lands (Phase 2.5).
+/// 2. `CHRONICLE_AGENT_RUNNER=echo` — built-in demo that copies the
+///    instruction back to `/work/output.txt`. Useful for end-to-end
+///    smoke tests.
+/// 3. (default) `MockAgentRunner::always_ok()` — does nothing; used
+///    for the in-memory dev path.
+fn build_agent_runner() -> Arc<dyn chronicle_orchestrator::AgentRunner> {
+    use chronicle_orchestrator::{MockAgentRunner, ScriptAgentRunner};
+
+    if let Ok(script) = std::env::var("CHRONICLE_AGENT_SCRIPT") {
+        if !script.trim().is_empty() {
+            tracing::info!(
+                "agent runner: ScriptAgentRunner from CHRONICLE_AGENT_SCRIPT"
+            );
+            return Arc::new(ScriptAgentRunner::new(script).with_name("script-agent-env"));
+        }
+    }
+    match std::env::var("CHRONICLE_AGENT_RUNNER").as_deref().unwrap_or("") {
+        "echo" => {
+            tracing::info!("agent runner: ScriptAgentRunner::echo()");
+            Arc::new(ScriptAgentRunner::echo())
+        }
+        _ => {
+            tracing::info!("agent runner: MockAgentRunner::always_ok()");
+            Arc::new(MockAgentRunner::always_ok())
+        }
+    }
 }
 
 fn build_saas_state_memory(
@@ -286,9 +338,13 @@ fn build_saas_state_memory(
     launch_config: &config::LaunchConfig,
     runtime_config: SaasRuntimeConfig,
 ) -> SaasAppState {
-    use chronicle_infra::memory::{repositories::*, InMemoryFeatureFlagRepo};
+    use chronicle_api::routes::saas::backtests::{dev_fixtures, BacktestService};
+    use chronicle_infra::memory::{
+        backtests_repositories::*, repositories::*, InMemoryFeatureFlagRepo,
+    };
+    use chronicle_orchestrator::SandboxFactory;
 
-    SaasAppState::new(
+    let state = SaasAppState::new(
         &launch_config.security.workos_client_id,
         Arc::new(InMemoryTenantRepo::default()),
         Arc::new(InMemoryUserRepo::default()),
@@ -306,7 +362,24 @@ fn build_saas_state_memory(
         event_store,
         event_stream,
         runtime_config,
-    )
+    );
+
+    // Memory-mode backtests: in-process repos. Agent runner picked
+    // via `CHRONICLE_AGENT_SCRIPT` / `CHRONICLE_AGENT_RUNNER` env
+    // vars (see `build_agent_runner`); sandbox driver picked per-job
+    // from the recipe.
+    let backtests = Arc::new(
+        BacktestService::new(
+            Arc::new(InMemoryBacktestJobRepo::default()),
+            Arc::new(InMemoryBacktestTrialRepo::default()),
+            Arc::new(InMemoryBacktestArtifactRepo::default()),
+            build_agent_runner(),
+            chronicle_orchestrator::build_default_grader(),
+            SandboxFactory::Default,
+        )
+        .with_availability(dev_fixtures()),
+    );
+    state.with_backtests(backtests)
 }
 
 async fn maybe_run_saas_migrations(launch_config: &config::LaunchConfig) -> Result<()> {

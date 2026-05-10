@@ -45,9 +45,14 @@ import {
   datasetsSeed as uiTimelineDatasetsSeed,
   streamTimelineSeed as uiStreamTimelineSeed,
 } from "../../ui/src/stream-timeline/data";
+import { chronicleDemoAgentsSeed } from "../src/agents/chronicle-demo";
 import { supportFlowAgentsSeed } from "../src/agents/support-flow";
+import { chronicleDemoBacktestsSeed } from "../src/backtests/chronicle-demo";
+import { chronicleDemoConnectionsSeed } from "../src/connections/chronicle-demo";
 import { supportFlowConnectionsSeed } from "../src/connections/support-flow";
+import { chronicleDemoDatasetsSeed } from "../src/datasets/chronicle-demo";
 import { supportFlowDatasetsSeed } from "../src/datasets/support-flow";
+import { chronicleDemoTimelineSeed } from "../src/timeline/chronicle-demo";
 import { supportFlowTimelineSeed } from "../src/timeline/support-flow";
 import { z } from "zod";
 
@@ -183,6 +188,103 @@ const probes: Probe[] = [
         label: "timeline:support-flow datasets",
         schema: z.array(DatasetSchema),
         value: sf.datasets,
+      },
+    ];
+  })(),
+  /* ── chronicle-demo scenario probes (compose the per-domain seeds and
+        validate the resulting payload as one block) ─────────────── */
+  ...(() => {
+    const conn = chronicleDemoConnectionsSeed.build();
+    const agents = chronicleDemoAgentsSeed.build();
+    const datasets = chronicleDemoDatasetsSeed.build();
+    const timeline = chronicleDemoTimelineSeed.build();
+    return [
+      {
+        label: "chronicle-demo:connections connections",
+        schema: z.array(ConnectionSchema),
+        value: conn.connections,
+      },
+      {
+        label: "chronicle-demo:connections backfills",
+        schema: z.record(z.array(ConnectionBackfillRecordSchema)),
+        value: conn.backfillsByConnection,
+      },
+      {
+        label: "chronicle-demo:connections deliveries",
+        schema: z.record(z.array(ConnectionDeliverySchema)),
+        value: conn.deliveriesByConnection,
+      },
+      {
+        label: "chronicle-demo:connections eventSubs",
+        schema: z.record(z.array(ConnectionEventTypeSubSchema)),
+        value: conn.eventSubsByConnection,
+      },
+      {
+        label: "chronicle-demo:agents summaries",
+        schema: z.array(AgentSummarySchema),
+        value: agents.summaries,
+      },
+      {
+        label: "chronicle-demo:agents snapshotsByName",
+        schema: z.record(AgentSnapshotSchema),
+        value: agents.snapshotsByName,
+      },
+      {
+        label: "chronicle-demo:agents hashIndex",
+        schema: z.array(HashIndexEntrySchema),
+        value: agents.hashIndex,
+      },
+      {
+        label: "chronicle-demo:datasets datasets",
+        schema: z.array(DatasetSchema),
+        value: datasets.datasets,
+      },
+      {
+        label: "chronicle-demo:datasets snapshotsById",
+        schema: z.record(DatasetSnapshotSchema),
+        value: datasets.snapshotsById,
+      },
+      {
+        label: "chronicle-demo:timeline events",
+        schema: z.array(StreamTimelineEventSchema),
+        value: timeline.events,
+      },
+      {
+        label: "chronicle-demo:timeline datasets",
+        schema: z.array(DatasetSchema),
+        value: timeline.datasets,
+      },
+    ];
+  })(),
+  /* ── backtests scenario probes — only the Chronicle-typed slices
+        (`Dataset`, `DatasetSnapshot`, `AgentSummary`) have Zod
+        schemas; the BacktestRecipe / Divergence / Metric shapes are
+        UI-only types and rely on TypeScript at compile time.
+
+        We only probe the `chronicle-demo` backtests seed here. The
+        `default` and `support-flow` backtests seeds value-import
+        from `"ui"` (which transitively pulls boneyard's `./react`
+        entry — fine inside Next.js / Vite, broken under bare tsx).
+        Their Chronicle-typed slices are already validated by the
+        `default:*` and `support-flow:*` probes above, so there's
+        nothing extra to learn from rebuilding them here. ─────── */
+  ...(() => {
+    const cd = chronicleDemoBacktestsSeed.build();
+    return [
+      {
+        label: "chronicle-demo:backtests availableDatasets",
+        schema: z.array(DatasetSchema),
+        value: cd.availableDatasets,
+      },
+      {
+        label: "chronicle-demo:backtests availableDatasetSnapshots",
+        schema: z.record(DatasetSnapshotSchema),
+        value: cd.availableDatasetSnapshots,
+      },
+      {
+        label: "chronicle-demo:backtests availableAgents",
+        schema: z.array(AgentSummarySchema),
+        value: cd.availableAgents,
       },
     ];
   })(),

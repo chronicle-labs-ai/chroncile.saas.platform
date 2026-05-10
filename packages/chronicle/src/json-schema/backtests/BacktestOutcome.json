@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "enum": [
+    "resolved",
+    "escalated",
+    "failed",
+    "partial",
+    "merged",
+    "pr_opened"
+  ],
+  "title": "BacktestOutcome",
+  "type": "string"
+}

@@ -7,18 +7,25 @@
 
 import { resolveSeed, type Seed } from "../types";
 
+import { chronicleDemoAgentsSeed } from "./chronicle-demo";
 import { defaultAgentsSeed } from "./default";
 import { emptyAgentsSeed } from "./empty";
 import { supportFlowAgentsSeed } from "./support-flow";
 import type { AgentsSeed, AgentsSeedData } from "./types";
 
 export type { AgentsSeed, AgentsSeedData };
-export { defaultAgentsSeed, emptyAgentsSeed, supportFlowAgentsSeed };
+export {
+  chronicleDemoAgentsSeed,
+  defaultAgentsSeed,
+  emptyAgentsSeed,
+  supportFlowAgentsSeed,
+};
 
 export const AGENTS_SEEDS: readonly AgentsSeed[] = [
   defaultAgentsSeed,
   emptyAgentsSeed,
   supportFlowAgentsSeed,
+  chronicleDemoAgentsSeed,
 ];
 
 export function resolveAgentsSeed(id: string | undefined): AgentsSeed {

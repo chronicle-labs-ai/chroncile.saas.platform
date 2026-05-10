@@ -20,6 +20,8 @@ chronicle_stripe = { workspace = true }
 chronicle_store = { workspace = true }
 chronicle_query = { workspace = true }
 chronicle_link = { workspace = true }
+chronicle_orchestrator = { workspace = true }
+chronicle_sandbox = { workspace = true }
 
 tokio = { workspace = true }
 async-trait = { workspace = true }

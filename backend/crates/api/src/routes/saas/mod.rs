@@ -1,6 +1,7 @@
 pub mod admin;
 pub mod audit;
 pub mod auth;
+pub mod backtests;
 pub mod connections;
 pub mod dashboard;
 pub(crate) mod error;
@@ -238,6 +239,27 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/team/members/:user_id/role",
             patch(team::update_member_role),
         )
+        // ── Backtests (Phase 3) ────────────────────────────────
+        .route(
+            "/api/platform/backtests/availability",
+            get(backtests::availability::get_availability),
+        )
+        .route(
+            "/api/platform/backtests/jobs",
+            get(backtests::routes::list_jobs).post(backtests::routes::create_job),
+        )
+        .route(
+            "/api/platform/backtests/jobs/:id",
+            get(backtests::routes::get_job),
+        )
+        .route(
+            "/api/platform/backtests/jobs/:id/cancel",
+            post(backtests::routes::cancel_job),
+        )
+        .route(
+            "/api/platform/backtests/jobs/:id/stream",
+            get(backtests::sse::stream_job_events),
+        )
         .layer(axum_mw::from_fn_with_state(
             state.clone(),
             |axum::extract::State(state): axum::extract::State<SaasAppState>,
@@ -250,6 +272,30 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
                     .and_then(|h| h.strip_prefix("Bearer "))
                     .map(str::to_string)
                 {
+                    // Dev-mode bypass: when CHRONICLE_DEV_TOKEN is set
+                    // *and* the inbound bearer matches, synthesize an
+                    // AuthUser for a dev tenant. Skips WorkOS entirely
+                    // so local CLI testing works without a JWT. This
+                    // env var must be unset in any production
+                    // deployment — the dashboard wiring guards on its
+                    // own anyway.
+                    if let Ok(dev_token) = std::env::var("CHRONICLE_DEV_TOKEN") {
+                        if !dev_token.is_empty() && token == dev_token {
+                            req.extensions_mut().insert(
+                                chronicle_auth::types::AuthUser {
+                                    id: "dev_user".to_string(),
+                                    email: "dev@chronicle.local".to_string(),
+                                    name: Some("Dev User".to_string()),
+                                    role: "owner".to_string(),
+                                    tenant_id: "dev_tenant".to_string(),
+                                    tenant_name: "Dev Tenant".to_string(),
+                                    tenant_slug: "dev".to_string(),
+                                },
+                            );
+                            return next.run(req).await;
+                        }
+                    }
+
                     if let Ok(claims) = state.workos_jwt.verify(&token).await {
                         if let (Ok(Some(user_row)), Some(org_id)) = (
                             state.users.find_by_workos_user_id(&claims.sub).await,

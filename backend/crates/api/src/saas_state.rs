@@ -11,6 +11,7 @@ use chronicle_interfaces::{
 use chronicle_nango::NangoClient;
 
 use crate::feature_access::FeatureAccessService;
+use crate::routes::saas::backtests::BacktestService;
 use crate::runtime_config::SaasRuntimeConfig;
 
 #[derive(Clone)]
@@ -37,6 +38,11 @@ pub struct SaasAppState {
     pub event_stream: Arc<StreamBackend>,
     pub feature_access: Arc<FeatureAccessService>,
     pub config: Arc<SaasRuntimeConfig>,
+    /// Optional backtest service. `None` in builds that don't ship the
+    /// orchestrator (memory-only smoke runs, gen-contracts binary).
+    /// Populated through `with_backtests` so existing call sites stay
+    /// untouched.
+    pub backtests: Option<Arc<BacktestService>>,
 }
 
 impl SaasAppState {
@@ -82,7 +88,17 @@ impl SaasAppState {
                 config.feature_access.clone(),
             )),
             config: Arc::new(config),
+            backtests: None,
         }
+    }
+
+    /// Attach a `BacktestService`. Non-breaking — existing `new(...)`
+    /// callers that don't pass one still compile. Returns `Self` so
+    /// the binary's runtime builder can chain it onto the construct.
+    #[must_use]
+    pub fn with_backtests(mut self, service: Arc<BacktestService>) -> Self {
+        self.backtests = Some(service);
+        self
     }
 }
 

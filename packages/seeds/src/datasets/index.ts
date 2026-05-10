@@ -6,6 +6,7 @@
 
 import { resolveSeed, type Seed } from "../types";
 
+import { chronicleDemoDatasetsSeed } from "./chronicle-demo";
 import { defaultDatasetsSeed } from "./default";
 import { emptyDatasetsSeed } from "./empty";
 import { powerUserDatasetsSeed } from "./power-user";
@@ -14,6 +15,7 @@ import type { DatasetsSeed, DatasetsSeedData } from "./types";
 
 export type { DatasetsSeed, DatasetsSeedData };
 export {
+  chronicleDemoDatasetsSeed,
   defaultDatasetsSeed,
   emptyDatasetsSeed,
   powerUserDatasetsSeed,
@@ -25,6 +27,7 @@ export const DATASETS_SEEDS: readonly DatasetsSeed[] = [
   emptyDatasetsSeed,
   powerUserDatasetsSeed,
   supportFlowDatasetsSeed,
+  chronicleDemoDatasetsSeed,
 ];
 
 export function resolveDatasetsSeed(id: string | undefined): DatasetsSeed {

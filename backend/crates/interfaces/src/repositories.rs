@@ -1,12 +1,46 @@
 use async_trait::async_trait;
 use chronicle_domain::{
-    AgentEndpointConfig, AuditLog, Connection, CreateConnectionInput, CreateInvitationInput,
+    AgentEndpointConfig, AuditLog, BacktestArtifactKind, BacktestArtifactRecord, BacktestJobMode,
+    BacktestJobRecord, BacktestTrialRecord, Connection, CreateBacktestJobInput,
+    CreateBacktestTrialInput, CreateConnectionInput, CreateInvitationInput,
     CreatePasswordResetTokenInput, CreateRunInput, CreateTenantInput, CreateTenantMembershipInput,
-    CreateUserInput, FeatureFlagDefinition, FeatureFlagKey, FeatureFlagOverride,
-    FeatureFlagScope, IntegrationSync, Invitation, MembershipStatus, PasswordResetToken, Run,
-    Tenant, TenantMembership, UpsertFeatureFlagDefinitionInput, UpsertFeatureFlagOverrideInput,
-    User, UserRole,
+    CreateUserInput, FeatureFlagDefinition, FeatureFlagKey, FeatureFlagOverride, FeatureFlagScope,
+    IntegrationSync, Invitation, JobStatus, MembershipStatus, PasswordResetToken, Run, Tenant,
+    TenantMembership, TrialException, TrialStatus, UpsertFeatureFlagDefinitionInput,
+    UpsertFeatureFlagOverrideInput, User, UserRole,
 };
+use std::collections::HashMap;
+
+/// Internal marker for the eight per-phase timing columns on
+/// `BacktestTrial`. Lives on the interface side because no caller
+/// outside the orchestrator + repo touches it; not exported to TS.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TrialTimingMarker {
+    EnvSetupStarted,
+    EnvSetupFinished,
+    AgentSetupStarted,
+    AgentSetupFinished,
+    AgentRunStarted,
+    AgentRunFinished,
+    VerifierStarted,
+    VerifierFinished,
+}
+
+impl TrialTimingMarker {
+    /// The matching DB column name on `"BacktestTrial"`.
+    pub fn column(&self) -> &'static str {
+        match self {
+            Self::EnvSetupStarted => "envSetupStartedAt",
+            Self::EnvSetupFinished => "envSetupFinishedAt",
+            Self::AgentSetupStarted => "agentSetupStartedAt",
+            Self::AgentSetupFinished => "agentSetupFinishedAt",
+            Self::AgentRunStarted => "agentRunStartedAt",
+            Self::AgentRunFinished => "agentRunFinishedAt",
+            Self::VerifierStarted => "verifierStartedAt",
+            Self::VerifierFinished => "verifierFinishedAt",
+        }
+    }
+}
 
 pub type RepoResult<T> = Result<T, RepoError>;
 
@@ -257,4 +291,140 @@ pub trait FeatureFlagRepository: Send + Sync {
         scope_type: FeatureFlagScope,
         scope_id: &str,
     ) -> RepoResult<()>;
+}
+
+/* ── Backtests ──────────────────────────────────────────── */
+
+/// Persistence for `"BacktestJob"` rows. The orchestrator owns the
+/// lifecycle: create at submit, transition to `running` on first
+/// trial-pickup, write summary counts as trials finish, mark terminal
+/// when the job's TrialQueue drains. The API layer reads through this
+/// trait too — list, detail, cancel.
+#[async_trait]
+pub trait BacktestJobRepository: Send + Sync {
+    async fn create(&self, input: CreateBacktestJobInput) -> RepoResult<BacktestJobRecord>;
+
+    async fn find_by_id(&self, id: &str) -> RepoResult<Option<BacktestJobRecord>>;
+
+    /// Tenant-scoped list. `mode` is an optional filter for the dashboard
+    /// "by job mode" tabs; `status` filters the lifecycle.
+    async fn list_by_tenant(
+        &self,
+        tenant_id: &str,
+        mode: Option<BacktestJobMode>,
+        status: Option<JobStatus>,
+        limit: usize,
+        offset: usize,
+    ) -> RepoResult<Vec<BacktestJobRecord>>;
+
+    async fn count_by_tenant(&self, tenant_id: &str) -> RepoResult<usize>;
+
+    /// Move the job into a new lifecycle state. `started_at` /
+    /// `finished_at` are written when the new status is `running` /
+    /// `succeeded`/`failed`/`cancelled` respectively (callers pass `None`
+    /// to leave the column unchanged).
+    async fn update_status(
+        &self,
+        id: &str,
+        status: JobStatus,
+        started_at: Option<chrono::DateTime<chrono::Utc>>,
+        finished_at: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> RepoResult<BacktestJobRecord>;
+
+    /// Lazy summary refresh — bumped by the orchestrator after each
+    /// trial reaches a terminal status. `total_trials` is set on the
+    /// first call (when the queue size is known) and left alone after.
+    async fn update_summary(
+        &self,
+        id: &str,
+        total_trials: Option<u32>,
+        completed_trials: u32,
+        failed_trials: u32,
+        exception_kind: Option<&str>,
+    ) -> RepoResult<BacktestJobRecord>;
+
+    /// Set the final verdict copy rendered on the dashboard list view.
+    async fn set_verdict(&self, id: &str, verdict: &str) -> RepoResult<BacktestJobRecord>;
+}
+
+/// Persistence for `"BacktestTrial"` rows + their `"BacktestTrialReward"`
+/// children. Rewards travel with their trial (only ever inserted /
+/// queried per trial) so they live on the same trait — analogous to how
+/// Harbor's `Trial` owns its `VerifierResult`.
+#[async_trait]
+pub trait BacktestTrialRepository: Send + Sync {
+    async fn create(&self, input: CreateBacktestTrialInput) -> RepoResult<BacktestTrialRecord>;
+
+    async fn find_by_id(&self, id: &str) -> RepoResult<Option<BacktestTrialRecord>>;
+
+    async fn list_by_job(&self, job_id: &str) -> RepoResult<Vec<BacktestTrialRecord>>;
+
+    /// Per-status filter for the orchestrator's resume path
+    /// (e.g. picking up `Pending` trials from a previous process).
+    async fn list_by_job_status(
+        &self,
+        job_id: &str,
+        status: TrialStatus,
+    ) -> RepoResult<Vec<BacktestTrialRecord>>;
+
+    /// Stamp a per-phase timing column. Each marker maps unambiguously
+    /// to a single `*StartedAt`/`*FinishedAt` column on `BacktestTrial`.
+    /// Decoupled from `TrialPhase` (which is SSE-grained and includes
+    /// non-timed events like `Queued` / `ArtifactCollection`).
+    async fn record_timing(&self, id: &str, marker: TrialTimingMarker) -> RepoResult<()>;
+
+    /// Update the lifecycle status without touching timestamps. Used
+    /// for transient transitions (e.g. `Pending` → `Setup`) where the
+    /// per-phase columns are managed separately.
+    async fn update_status(&self, id: &str, status: TrialStatus) -> RepoResult<()>;
+
+    /// Move the trial to a terminal status, writing duration + optional
+    /// exception in a single round-trip. Idempotent — the orchestrator
+    /// shielded-cleanup path may call this from cancellation handlers.
+    async fn mark_terminal(
+        &self,
+        id: &str,
+        status: TrialStatus,
+        duration_ms: Option<u32>,
+        exception: Option<TrialException>,
+    ) -> RepoResult<BacktestTrialRecord>;
+
+    /// Record the sandbox the orchestrator created for this trial.
+    /// Stored even after teardown so the CLI / inspector can correlate
+    /// provider audit logs.
+    async fn set_sandbox_id(&self, id: &str, sandbox_id: &str) -> RepoResult<()>;
+
+    /// Bump the retry counter; called before a re-attempt re-enters the
+    /// queue.
+    async fn bump_attempt(&self, id: &str) -> RepoResult<u32>;
+
+    /// Bulk-upsert reward rows for a single trial. Matches Harbor's
+    /// `VerifierResult.rewards: dict[str, float]` shape — pass the full
+    /// map; existing keys are replaced.
+    async fn record_rewards(
+        &self,
+        trial_id: &str,
+        rewards: &HashMap<String, f64>,
+        grader_id: Option<&str>,
+    ) -> RepoResult<()>;
+
+    /// Read all rewards for a trial as a flat map.
+    async fn list_rewards(&self, trial_id: &str) -> RepoResult<HashMap<String, f64>>;
+}
+
+/// Persistence for `"BacktestArtifact"` rows. Artifacts are append-only
+/// pointers to logs / trajectories / screenshots / reward files. The
+/// orchestrator inserts; the dashboard + CLI list.
+#[async_trait]
+pub trait BacktestArtifactRepository: Send + Sync {
+    async fn create(
+        &self,
+        trial_id: &str,
+        kind: BacktestArtifactKind,
+        path: &str,
+        size_bytes: Option<u64>,
+        content_type: Option<&str>,
+    ) -> RepoResult<BacktestArtifactRecord>;
+
+    async fn list_by_trial(&self, trial_id: &str) -> RepoResult<Vec<BacktestArtifactRecord>>;
 }

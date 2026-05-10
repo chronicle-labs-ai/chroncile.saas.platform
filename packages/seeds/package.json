@@ -11,7 +11,9 @@
     "./datasets": "./src/datasets/index.ts",
     "./agents": "./src/agents/index.ts",
     "./connections": "./src/connections/index.ts",
-    "./timeline": "./src/timeline/index.ts"
+    "./timeline": "./src/timeline/index.ts",
+    "./backtests": "./src/backtests/index.ts",
+    "./environments": "./src/environments/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

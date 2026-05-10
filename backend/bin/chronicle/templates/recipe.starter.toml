@@ -1,0 +1,99 @@
+# Chronicle backtest recipe — starter template.
+#
+# Edit this file, then submit with:
+#   chronicle jobs run recipe.toml --follow
+#
+# Each trial spins up a real Daytona sandbox, runs the agent script,
+# runs `tests/test.sh` as the verifier, and parses the reward written
+# under /tmp/chronicle/logs/verifier/. Set DAYTONA_API_KEY on the
+# backend before running.
+
+name = "my-eval"
+
+# Bounded parallelism for trials in this run. Defaults to 4.
+n-concurrent = 2
+
+# Sandbox driver. Options: daytona | docker | mock.
+# `daytona` provisions real cloud sandboxes (requires DAYTONA_API_KEY
+# on the backend). Use `mock` for offline smoke tests.
+sandbox-driver = "daytona"
+
+# Optional sandbox image (overrides driver default).
+# sandbox-image = "alpine:3.19"
+
+# Local path on the orchestrator host that contains the test.sh used
+# by the verifier. `chronicle recipes init` populates this with the
+# tests/ directory it scaffolds alongside this recipe.
+tests-dir = "{{TESTS_DIR}}"
+
+# Optional retry policy.
+# [retry-config]
+# max-retries = 2
+# min-wait-sec = 1.0
+# max-wait-sec = 30.0
+# wait-multiplier = 2.0
+# exclude-exceptions = ["AgentExitedNonZero", "VerifierFailed"]
+
+# ── Recipe (the user-authored eval definition) ────────────────────
+
+[recipe]
+mode = "compare"
+name = "my-eval"
+
+# ── Graders (LLM-as-judge) ────────────────────────────────────────
+#
+# Rubric graders run AFTER the verifier (test.sh). Each grader emits
+# one reward key (`grader_<id>`) merged into the trial's reward map,
+# alongside whatever your test.sh wrote to reward.txt / reward.json.
+#
+# Set ANTHROPIC_API_KEY on the backend to use the real LLM judge.
+# Without it, the orchestrator falls back to MockGrader (returns 1.0
+# for every grader) so dev runs still complete end-to-end.
+#
+# Comment out the `[[recipe.graders]]` block to disable rubric scoring
+# entirely — empty list = test.sh-only reward contract.
+
+[[recipe.graders]]
+id = "task-completion"
+label = "Task Completion"
+kind = "rubric"
+weight = "high"
+source = "custom"
+evidence = """
+Did the agent's output correctly and helpfully address the
+instruction? Score 1.0 if the output is fully correct and useful,
+0.5 if partially correct, 0.0 if wrong, missing, or unhelpful.
+"""
+
+[recipe.data]
+kind = "dataset"
+dataset = "ds_demo"
+dataset-label = "Demo Dataset"
+sources = []
+scenarios = []
+
+[[recipe.agents]]
+id = "agent_v1"
+label = "Agent v1"
+notes = "current production"
+hue = "#3b82f6"
+role = "baseline"
+
+[[recipe.agents]]
+id = "agent_v2"
+label = "Agent v2"
+notes = "candidate"
+hue = "#10b981"
+role = "candidate"
+
+# ── Cases (one trial per case × agent) ────────────────────────────
+
+[[cases]]
+case-id = "case_001"
+case-cluster = "smoke"
+instruction = "Solve this problem: write a function that returns 42."
+
+[[cases]]
+case-id = "case_002"
+case-cluster = "smoke"
+instruction = "Compute the sum of the first 10 primes."

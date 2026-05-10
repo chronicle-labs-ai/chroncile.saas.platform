@@ -9,6 +9,8 @@ import {
   type SandboxRuntimeStatus,
 } from "ui";
 
+import { useEnvironments } from "@/lib/data/environments";
+
 /*
  * /dashboard/environments
  *
@@ -16,9 +18,15 @@ import {
  * where agents operate with seeded data, MCP servers, CLIs, agent
  * identities, scenarios, and injected failure states.
  *
- * Sandbox lifecycle (start/stop), live stats polling, and the Terminal
- * lens shell all proxy through `/api/sandbox/*` against a Daytona
- * sandbox keyed per environment.
+ * The catalog of environments now flows through the seed-driven data
+ * middleware (`@/lib/data/environments`), so flipping
+ * `NEXT_PUBLIC_DATA_SEED_ENVIRONMENTS` swaps the manager's list
+ * without touching this file.
+ *
+ * Sandbox lifecycle (start/stop), live stats polling, and the
+ * Terminal lens shell still proxy through `/api/sandbox/*` against
+ * a Daytona sandbox keyed per environment — those calls don't go
+ * through the data middleware.
  */
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
@@ -105,9 +113,12 @@ const stopSandbox = (environmentId: string) =>
   controlSandbox(environmentId, "stop");
 
 export default function EnvironmentsPage() {
+  const environments = useEnvironments();
+
   return (
     <DashboardViewportShell>
       <EnvironmentsManager
+        environments={environments.data}
         onExecute={executeSandboxCommand}
         onFetchStats={fetchSandboxStats}
         onStartSandbox={startSandbox}

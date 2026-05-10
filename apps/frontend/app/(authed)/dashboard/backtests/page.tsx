@@ -1,56 +1,60 @@
+"use client";
+
+import { BacktestsManager, DashboardViewportShell } from "ui";
+
 import {
-  BACKTEST_DATASET_SNAPSHOTS,
-  BacktestsManager,
-  DashboardViewportShell,
-  agentsManagerSeed,
-  datasetsSeed,
-  environmentsSeed,
-} from "ui";
+  useBacktestsAvailability,
+  useBacktestsRuns,
+  useBacktestsScene,
+} from "@/lib/data/backtests";
 
 /*
  * /dashboard/backtests
  *
- * Renders the customer-facing Backtests / Replay surface — a 3-stage
- * flow (Configure → Running → Results) for testing agent versions
- * against a saved dataset.
+ * Renders the customer-facing Backtests / Replay surface — a 4-stage
+ * flow (List → Configure → Running → Results).
  *
- * Configure is now a directional 3-step pipeline:
+ * This page is now a thin `"use client"` wrapper over the backtests
+ * data middleware (`@/lib/data/backtests`). Three React Query hooks
+ * feed `BacktestsManager`:
  *
- *   01 Coverage → 02 Environment → 03 Agent versions
+ *   - `useBacktestsRuns()`         — list rows
+ *   - `useBacktestsAvailability()` — Configure pickers (datasets,
+ *                                    snapshots, environments, agents)
+ *   - `useBacktestsScene()`        — optional pre-baked Results entry
  *
- * STEP 01 (Coverage) merges the previous Dataset + Discover gaps
- * panels — the user picks a saved dataset, scopes the run by
- * cluster density, and accepts any enrichment proposals to fill
- * coverage gaps inline.
+ * Most seeds (`default`, `empty`, `support-flow`) leave `scene`
+ * `null` so the manager lands on its list view. The `chronicle-demo`
+ * seed pre-bakes a completed Run that lands directly on Results so
+ * the demo's failure-reveal beat (script 2:05 - 2:35) renders
+ * without click-through.
  *
- * Each step bridges to a real primitive: datasets reuse `Dataset`
- * shapes from the design system seeds (with cluster snapshots from
- * `BACKTEST_DATASET_SNAPSHOTS` until the backend exposes per-dataset
- * snapshots), environments reuse `SandboxEnvironment`, and versions
- * reuse `AgentSummary`. When the Rust backend exposes registries for
- * any of these, swap the seeds for live data.
- *
- * `BacktestsManager` is a `"use client"` component that owns the
- * stage state machine, the active recipe, and all editor / drawer
- * state internally. This route is a thin server-component wrapper
- * to match the established dashboard pattern.
- *
- * The wrapper pins the page to exactly the viewport space available
- * inside the dashboard shell — `100svh` minus the site header (the
- * `--header-height` CSS variable on `dashboard/layout.tsx`) and the
- * layout's vertical `p-4` (2rem). With a fixed height, the manager's
- * own top nav stays anchored and the stage body owns its scroll —
- * the live trace feed in Running and the divergences list in
- * Results would otherwise grow past the viewport.
+ * Every prop on `BacktestsManager` is optional with internal
+ * fallbacks, so the manager renders cleanly during the brief moment
+ * before queries resolve. Wire to the backend run registry by flipping
+ * `NEXT_PUBLIC_DATA_BACKTESTS` from `mock` to `app` / `chronicle`
+ * once those impls land.
  */
 export default function BacktestsPage() {
+  const runsQuery = useBacktestsRuns();
+  const availabilityQuery = useBacktestsAvailability();
+  const sceneQuery = useBacktestsScene();
+
+  const availability = availabilityQuery.data;
+  const scene = sceneQuery.data;
+
   return (
     <DashboardViewportShell>
       <BacktestsManager
-        availableDatasets={datasetsSeed}
-        availableDatasetSnapshots={BACKTEST_DATASET_SNAPSHOTS}
-        availableEnvironments={environmentsSeed}
-        availableAgents={agentsManagerSeed}
+        runs={runsQuery.data}
+        availableDatasets={availability?.datasets}
+        availableDatasetSnapshots={availability?.datasetSnapshots}
+        availableEnvironments={availability?.environments}
+        availableAgents={availability?.agents}
+        initialStage={scene?.initialStage}
+        initialRecipe={scene?.initialRecipe ?? null}
+        divergences={scene?.divergences}
+        metrics={scene?.metrics}
       />
     </DashboardViewportShell>
   );

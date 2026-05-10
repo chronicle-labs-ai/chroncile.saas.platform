@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Retry policy applied to transient trial failures (network errors, sandbox-create timeouts). Mirrors Harbor's `RetryConfig`. Pass `null` on the wire (`None` here) to fall back to defaults.",
+  "properties": {
+    "excludeExceptions": {
+      "description": "Exception kinds that explicitly should not be retried even if otherwise matched by `include_exceptions`.",
+      "items": {
+        "type": "string"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "includeExceptions": {
+      "description": "When set, only exception kinds in this list trigger a retry. `None` means \"retry every transient kind\".",
+      "items": {
+        "type": "string"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "maxRetries": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "maxWaitSec": {
+      "format": "double",
+      "type": "number"
+    },
+    "minWaitSec": {
+      "format": "double",
+      "type": "number"
+    },
+    "waitMultiplier": {
+      "format": "double",
+      "type": "number"
+    }
+  },
+  "required": [
+    "maxRetries",
+    "maxWaitSec",
+    "minWaitSec",
+    "waitMultiplier"
+  ],
+  "title": "RetryConfig",
+  "type": "object"
+}

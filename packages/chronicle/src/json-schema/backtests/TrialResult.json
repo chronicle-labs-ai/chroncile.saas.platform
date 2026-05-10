@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Final result of a single trial. Multi-key reward shape mirrors the `BacktestTrialReward` table (one row per key) and Harbor's `VerifierResult.rewards: dict[str, float]`.",
+  "properties": {
+    "durationMs": {
+      "description": "Aggregate trial duration (`agent_run_finished_at - env_setup_started_at`) once a terminal status is reached.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "exception": {
+      "description": "Captured exception info for a failed trial. Mirrors Harbor's `ExceptionInfo` — kind for routing/retry, message for humans.",
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "message"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "rewards": {
+      "additionalProperties": {
+        "format": "double",
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "status": {
+      "description": "Lifecycle state of a single `BacktestTrial` (one (case × agent) cell).",
+      "enum": [
+        "pending",
+        "setup",
+        "running",
+        "verifying",
+        "succeeded",
+        "failed",
+        "cancelled"
+      ],
+      "type": "string"
+    },
+    "timings": {
+      "description": "Per-phase timing bookkeeping. Each pair is `(started_at, finished_at)`; `None` until that phase starts/ends.",
+      "properties": {
+        "agentRunFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agentRunStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agentSetupFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agentSetupStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "envSetupFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "envSetupStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verifierFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verifierStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "trialId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rewards",
+    "status",
+    "timings",
+    "trialId"
+  ],
+  "title": "TrialResult",
+  "type": "object"
+}

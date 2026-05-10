@@ -1,0 +1,91 @@
+# Chronicle backtest recipe — trace dataset variant.
+#
+# This recipe runs one trial per trace in a Chronicle dataset. The
+# orchestrator pulls the dataset's snapshot, projects each trace into
+# (instruction, expected_outcome) pairs, and the LLM-judge grades the
+# agent's output against the ORIGINAL agent's response (`gold trace`).
+#
+#   chronicle jobs run recipe.toml --follow
+#
+# Each trial spins up a real Daytona sandbox, runs the agent script,
+# runs `tests/test.sh` as the verifier, and runs each rubric grader
+# below against the agent output + the gold-trace response from the
+# dataset. Set DAYTONA_API_KEY + ANTHROPIC_API_KEY on the backend
+# before running.
+
+name = "trace-replay-eval"
+
+# Bounded parallelism for trials in this run. With many traces in
+# the dataset, keep this small to avoid Daytona quota exhaustion.
+n-concurrent = 2
+
+# Sandbox driver. Options: daytona | docker | mock.
+sandbox-driver = "daytona"
+
+# Local path on the orchestrator host that contains the test.sh used
+# by the verifier. `chronicle recipes init` populates this with the
+# tests/ directory it scaffolds alongside this recipe.
+tests-dir = "{{TESTS_DIR}}"
+
+# ── Recipe ────────────────────────────────────────────────────────
+
+[recipe]
+mode = "compare"
+name = "trace-replay-eval"
+
+# ── Graders (LLM-as-judge) ────────────────────────────────────────
+#
+# This rubric grader sees:
+#   * The instruction extracted from the trace's first user message.
+#   * The agent's output (whatever it wrote to /tmp/chronicle/work/output.txt).
+#   * The EXPECTED OUTCOME — a JSON-serialized "gold trace" of how the
+#     original agent handled the same instruction (subsequent events
+#     after the user message). Use this to ground the rubric.
+
+[[recipe.graders]]
+id = "trace-fidelity"
+label = "Trace Fidelity"
+kind = "rubric"
+weight = "high"
+source = "custom"
+evidence = """
+You will be shown the ORIGINAL agent's response to a customer (in the
+EXPECTED OUTCOME JSON). Score how well the candidate agent's output
+matches the spirit of that response — same intent, similar accuracy,
+similar tone — without requiring identical wording. Score 1.0 if the
+agent's output achieves the same outcome, 0.5 if partial / sloppy,
+0.0 if wrong, harmful, or off-topic.
+"""
+
+# ── Data: pull cases from a Chronicle dataset snapshot ────────────
+#
+# When `cases` is omitted (see below), the backend auto-derives one
+# case per trace from this dataset. Switch to `[[cases]]` for ad-hoc
+# evaluations.
+
+[recipe.data]
+kind = "dataset"
+dataset = "{{DATASET_ID}}"
+dataset-label = "Auto-derived from dataset snapshot"
+sources = []
+scenarios = []
+
+# ── Agents under test ─────────────────────────────────────────────
+
+[[recipe.agents]]
+id = "agent_v1"
+label = "Agent v1"
+notes = "current production"
+hue = "#3b82f6"
+role = "baseline"
+
+# ── Cases ─────────────────────────────────────────────────────────
+#
+# Intentionally empty: the backend derives cases from the dataset
+# above. Uncomment + populate below to override per-trace projection.
+#
+# [[cases]]
+# case-id = "case_001"
+# case-cluster = "smoke"
+# instruction = "..."
+# expected-outcome = "..."

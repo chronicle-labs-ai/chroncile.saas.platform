@@ -59,4 +59,14 @@ export const qk = {
       ] as const,
     datasets: () => ["timeline", "datasets"] as const,
   },
+  backtests: {
+    all: ["backtests"] as const,
+    list: () => ["backtests", "list"] as const,
+    availability: () => ["backtests", "availability"] as const,
+    scene: () => ["backtests", "scene"] as const,
+  },
+  environments: {
+    all: ["environments"] as const,
+    list: () => ["environments", "list"] as const,
+  },
 } as const;

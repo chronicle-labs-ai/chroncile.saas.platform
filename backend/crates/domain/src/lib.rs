@@ -5,6 +5,7 @@
 
 pub mod agents;
 pub mod api_types;
+pub mod backtests;
 pub mod chronicle;
 pub mod connections;
 pub mod datasets;
@@ -27,6 +28,7 @@ pub mod test_utils;
 
 pub use agents::*;
 pub use api_types::*;
+pub use backtests::*;
 pub use chronicle::*;
 pub use connections::{
     Connection as DashboardConnection,
