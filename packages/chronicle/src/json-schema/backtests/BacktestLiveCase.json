@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "agentId": {
+      "type": "string"
+    },
+    "cluster": {
+      "type": "string"
+    },
+    "durationSec": {
+      "format": "double",
+      "type": "number"
+    },
+    "id": {
+      "type": "string"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "mixed",
+        "fail",
+        "running"
+      ],
+      "type": "string"
+    },
+    "ts": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agentId",
+    "cluster",
+    "durationSec",
+    "id",
+    "prompt",
+    "status",
+    "ts"
+  ],
+  "title": "BacktestLiveCase",
+  "type": "object"
+}

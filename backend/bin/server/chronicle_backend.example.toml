@@ -1,0 +1,89 @@
+# Optional Chronicle backend launch config.
+#
+# Start with:
+#   cargo run -p chronicle_backend -- --config bin/server/chronicle_backend.example.toml
+# Inspect the resolved config with:
+#   cargo run -p chronicle_backend -- --config bin/server/chronicle_backend.example.toml --print-config
+
+[server]
+host = "0.0.0.0"
+port = 8080
+rust_log = "info,tower_http=debug"
+
+[storage.events]
+backend = "postgres"
+# database_url = "postgres://postgres:postgres@localhost/chronicle_events"
+run_migrations = true
+
+[storage.saas]
+backend = "postgres"
+# database_url = "postgres://postgres:postgres@localhost/chronicle_saas"
+run_migrations = true
+
+[stream]
+channel_capacity = 10000
+buffer_capacity = 100000
+
+[events]
+default_tenant_id = "demo_tenant"
+
+[feature_access.plan_price_ids]
+starter = []
+pro = []
+enterprise = []
+customEnterprise = []
+
+[security]
+auth_secret = "dev-secret-change-in-production-min-32-chars!!"
+# service_secret = "replace-me"
+
+[urls]
+app_url = "https://app.chronicle-labs.com"
+
+[integrations.nango]
+# secret_key = "nango_sk_xxx"
+base_url = "https://api.nango.dev"
+# webhook_secret = "nango_webhook_secret"
+intercom_integration_id = "intercom"
+slack_integration_id = "slack"
+front_integration_id = "front"
+
+[integrations.resend]
+# api_key = "re_xxx"
+# from_address = "Chronicle Labs <noreply@example.com>"
+
+[integrations.resend.templates]
+# team-invite = "tmpl_123"
+
+[integrations.sentry]
+dsn = "https://962563178590206d935ae42ee0af131d@o4511003800109056.ingest.us.sentry.io/4511003805351936"
+environment = "development"
+traces_sample_rate = 1.0
+
+[integrations.helix]
+# Only used when storage.events.backend = "helix"
+endpoint = "http://localhost"
+port = 6969
+# api_key = "helix-dev-key"
+project_dir = "backend/helix/event-graph"
+
+[webhooks]
+# stripe_secret = "whsec_xxx"
+
+[webhooks.source_secrets]
+# intercom = "secret"
+# github = "secret"
+
+[health]
+environment = "local"
+# git_sha = "abc123"
+# git_tag = "v0.1.0"
+
+[simulation]
+enabled = false
+mode = "scenario"
+events_per_second = 2.0
+scenarios = ["all"]
+sources = ["mock-connector"]
+loop_forever = true
+tenant_id = "demo_tenant"

@@ -1,0 +1,65 @@
+//! Datasets — wire shapes for the Datasets surface.
+//!
+//! These types are the single source of truth for every dataset-shaped
+//! payload that crosses the HTTP boundary. The frontend's
+//! `packages/ui` collapses to thin re-exports of the ts-rs files
+//! emitted alongside this module; the `chronicle` data-provider
+//! parses Chronicle responses through Zod schemas generated from the
+//! same definitions.
+//!
+//! Source-of-truth derivation — for the existing TS shapes see
+//! `packages/ui/src/datasets/types.ts` (and the
+//! `Dataset` / `DatasetPurpose` / `DatasetSplit` slice of
+//! `packages/ui/src/stream-timeline/types.ts`). Field names use
+//! `#[serde(rename_all = "camelCase")]` so the TS bindings keep the
+//! `traceCount` / `failedTraceIds` / etc. spellings the dashboard
+//! components consume today.
+
+use chrono::{DateTime, Utc};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+/* ── Dataset (the parent record) ──────────────────────────── */
+
+/// Intended use of a dataset — drives the colored badge on the
+/// picker and lets apps route additions to the right backend
+/// (eval suite, training set, replay corpus, manual review queue).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, export_to = "generated/")]
+pub enum DatasetPurpose {
+    Eval,
+    Training,
+    Replay,
+    Review,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "generated/")]
+pub struct Dataset {
+    pub id: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub purpose: Option<DatasetPurpose>,
+    /// Number of traces currently in the dataset.
+    pub trace_count: u32,
+    /// Optional total event count across all traces.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub event_count: Option<u32>,
+    /// ISO timestamp of the most recent addition.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub updated_at: Option<DateTime<Utc>>,
+    /// Display name of the dataset owner / creator.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub created_by: Option<String>,
+    /// Free-form pinned tags.
+    #[serde(default, skip_serializing_if = "Option::is_none")]

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Phase of execution emitted on the SSE stream as the trial progresses. Distinct from `TrialStatus` — `TrialPhase` is fine-grained progress inside the lifecycle, `TrialStatus` is the persisted summary.",
+  "enum": [
+    "queued",
+    "environment-start",
+    "environment-ready",
+    "agent-setup",
+    "agent-running",
+    "verifier-running",
+    "artifact-collection",
+    "cleanup",
+    "done"
+  ],
+  "title": "TrialPhase",
+  "type": "string"
+}

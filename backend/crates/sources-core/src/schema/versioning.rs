@@ -15,7 +15,7 @@ pub trait SchemaMigration: Send + Sync {
     fn migrate(&self, payload: serde_json::Value) -> Result<serde_json::Value, MigrationError>;
 
     /// Source version
-    fn from_version(&self) -> u32;
+    fn source_version(&self) -> u32;
 
     /// Target version
     fn to_version(&self) -> u32;
@@ -163,7 +163,7 @@ impl SchemaVersionRegistry {
             let migration = self
                 .migrations
                 .iter()
-                .find(|m| m.from_version() == current_version)
+                .find(|m| m.source_version() == current_version)
                 .ok_or_else(|| MigrationError::MigrationFailed {
                     from: current_version,
                     to: current_version + 1,
@@ -221,7 +221,7 @@ impl FieldRenameMigration {
 }
 
 impl SchemaMigration for FieldRenameMigration {
-    fn from_version(&self) -> u32 {
+    fn source_version(&self) -> u32 {
         self.from_version
     }
 
@@ -289,4 +289,3 @@ mod tests {
         assert!(migrated.get("old_field").is_none());
     }
 }
-

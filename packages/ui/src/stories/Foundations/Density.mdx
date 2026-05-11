@@ -1,0 +1,98 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Foundations/Density" />
+
+# Density — the unified Linear-aligned chrome
+
+The Chronicle design system runs on a **single density**: the
+Linear-inspired "Midnight Command Center" surface stack with
+sans-medium 12 – 13 px copy, 28 / 32 / 36 px tall controls,
+hairline 1 px borders, and ember as the single hot signal.
+
+There is no longer a brand-density flavor — the `--c-*`
+namespace is now the unified Linear-aligned token system, and
+the historical `--l-*` parallel namespace was retired. Every
+primitive renders the same chrome regardless of where it's
+rendered (auth, onboarding, dashboard, env-manager).
+
+Both light and dark themes still flip via `data-theme="dark"`
+and `data-theme="light"`. The Linear named tokens
+(`--color-pitch-black`, `--color-porcelain`, `--color-neon-lime`,
+…) are reference values and stay stable across themes; the
+semantic `--c-surface-*` / `--c-ink-*` aliases above flip with
+the cascade.
+
+---
+
+## Anatomy
+
+- **Surfaces** — `bg-pitch-black` (canvas) → `bg-graphite`
+  (default card) → `bg-deep-slate` (elevated card) →
+  `bg-charcoal-grey` (input / hover).
+- **Ink** — `text-porcelain` (titles) → `text-light-steel`
+  (body) → `text-storm-cloud` (labels) → `text-fog-grey`
+  (metadata).
+- **Buttons** — 28 / 32 / 36 px tall, sans-medium,
+  `tracking-normal`, inline `<Kbd>` shortcut hints.
+- **AppShell** — full-bleed canvas, 44 px topbar, 224 px nav,
+  no outer card. Optional `filterBar` slot between topbar and
+  content.
+- **Sidebar** — workspace switcher pinned top → `Workspace` →
+  `Views` → `Saved Filters` → `Sources`. Active row gets an
+  ember left bar.
+
+---
+
+## Reaching for tokens
+
+In Tailwind, the semantic surface and ink utilities point at
+the canonical Linear hexes:
+
+```tsx
+<div className="bg-surface-01 border border-hairline p-s-5">
+  <h2 className="text-ink-hi font-display">Section title</h2>
+  <p className="text-ink-lo">Body copy.</p>
+</div>
+```
+
+You can also reach for Linear's named utilities directly when
+you want the specific hex by name:
+
+```tsx
+<div className="bg-pitch-black border border-charcoal-grey p-s-5">
+  <button className="bg-ember text-porcelain rounded-md px-s-3 h-8">
+    Run replay
+  </button>
+</div>
+```
+
+The TS mirrors live in `tokens/`:
+
+```ts
+import {
+  surfaceTokens,
+  inkTokens,
+  brandTokens,
+  linearTokens,
+} from "ui/tokens";
+
+surfaceTokens.surface01; // "var(--c-surface-01)" — semantic alias
+linearTokens.graphite;   // "var(--color-graphite)" — Linear named
+brandTokens.ember;       // "var(--c-ember)" — Chronicle signal
+```
+
+---
+
+## The one-hot-surface rule
+
+Ember (`--c-ember`, `#d8430a`) is the Chronicle signal. **Only
+one element on screen** should glow ember at a time:
+
+- The selected row in the timeline.
+- The active item in a sidebar.
+- The signal call-to-action ("Inject", "Run replay", "Block deploy").
+
+Everything else stays neutral. If the whole UI glows, nothing
+glows. Linear's neon lime (`--color-neon-lime`) is exposed as
+a secondary accent; reach for it sparingly when ember is
+already bound to another role on the same surface.

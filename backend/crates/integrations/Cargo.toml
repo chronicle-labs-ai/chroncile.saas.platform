@@ -1,9 +1,14 @@
 [package]
-name = "chronicle-integrations"
+name = "chronicle_integrations"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
+chronicle_domain = { workspace = true }
+chronicle_interfaces = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -13,8 +18,6 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 reqwest = { workspace = true }
 chrono = { workspace = true }
-hmac = { workspace = true }
-sha2 = { workspace = true }
 hex = { workspace = true }
 aes-gcm = { workspace = true }
 

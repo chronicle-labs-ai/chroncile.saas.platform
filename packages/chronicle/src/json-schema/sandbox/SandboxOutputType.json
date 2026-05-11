@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "enum": [
+    "sse",
+    "webhook",
+    "file",
+    "console"
+  ],
+  "title": "SandboxOutputType",
+  "type": "string"
+}

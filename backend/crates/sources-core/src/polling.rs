@@ -96,4 +96,3 @@ pub trait PollingFetcher: Send + Sync {
     /// Check if the source is healthy and accessible
     async fn health_check(&self, context: &IngestContext) -> Result<(), PollingError>;
 }
-

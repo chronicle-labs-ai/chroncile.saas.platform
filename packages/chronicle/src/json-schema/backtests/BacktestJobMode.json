@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "enum": [
+    "replay",
+    "compare",
+    "regression",
+    "suite"
+  ],
+  "title": "BacktestJobMode",
+  "type": "string"
+}

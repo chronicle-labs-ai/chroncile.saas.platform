@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { backendFetch } from "@/lib/backend-client";
+import { prisma } from "@/backend/data/db";
+import { backendFetch } from "@/backend/integrations/backend-client";
 
 export async function GET(
   _req: Request,
@@ -13,7 +13,12 @@ export async function GET(
   }
 
   try {
-    const res = await backendFetch(env.flyAppUrl, `/api/platform/admin/tenants/${tenantId}/users`, undefined, env.serviceSecret);
+    const res = await backendFetch(
+      env.flyAppUrl,
+      `/api/platform/admin/tenants/${tenantId}/users`,
+      undefined,
+      env.serviceSecret
+    );
     if (!res.ok) return NextResponse.json({ users: [] });
     return NextResponse.json(await res.json());
   } catch {

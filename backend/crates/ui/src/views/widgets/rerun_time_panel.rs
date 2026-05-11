@@ -18,8 +18,7 @@ use crate::types::EventDto;
 
 // Import types from timeline-core
 use chronicle_timeline_core::{
-    format_duration, DisplayTimezone, PlaybackState, TimeView,
-    TopicPath, TopicTree, TopicTreeNode,
+    format_duration, DisplayTimezone, PlaybackState, TimeView, TopicPath, TopicTree, TopicTreeNode,
 };
 
 // ----------------------------------------------------------------------------
@@ -65,7 +64,6 @@ pub struct RerunTimePanelResponse {
 // ----------------------------------------------------------------------------
 // Density Graph (for row density visualization)
 // ----------------------------------------------------------------------------
-
 
 /// Bucket for density calculation
 #[derive(Clone, Copy, Default)]
@@ -379,7 +377,10 @@ impl RerunTimePanel {
                     Vec2::new(available_width, self.config.header_height),
                 );
                 let content_rect = Rect::from_min_size(
-                    Pos2::new(full_rect.left(), full_rect.top() + self.config.header_height),
+                    Pos2::new(
+                        full_rect.left(),
+                        full_rect.top() + self.config.header_height,
+                    ),
                     Vec2::new(available_width, content_height.max(96.0)),
                 );
                 let timeline_header_rect = Rect::from_min_size(
@@ -404,7 +405,10 @@ impl RerunTimePanel {
 
                 // Event count
                 painter.text(
-                    pos2(self.config.label_width - spacing::MD, header_rect.center().y),
+                    pos2(
+                        self.config.label_width - spacing::MD,
+                        header_rect.center().y,
+                    ),
                     Align2::RIGHT_CENTER,
                     format!("{}", events.len()),
                     typography::mono_small(),
@@ -434,7 +438,8 @@ impl RerunTimePanel {
                         self.events_for_node(node, &events_by_path, &events_by_source);
                     let event_count = all_node_events.len();
                     let show_density = node.children.is_empty() || !node.expanded;
-                    let node_events: &[&EventDto] = if show_density { &all_node_events } else { &[] };
+                    let node_events: &[&EventDto] =
+                        if show_density { &all_node_events } else { &[] };
                     let (event_clicked, chevron_clicked) = self.render_row(
                         ui,
                         &painter,
@@ -747,13 +752,14 @@ impl RerunTimePanel {
 
         let timeline_rect = Rect::from_min_size(
             Pos2::new(rect.left() + self.config.label_width, rect.top()),
-            Vec2::new(rect.width() - self.config.label_width, self.config.row_height),
+            Vec2::new(
+                rect.width() - self.config.label_width,
+                self.config.row_height,
+            ),
         );
         self.paint_row_density_simple(painter, &timeline_rect, axis, events);
 
-        if let Some((event_id, _)) =
-            self.find_hovered_event(ui, &timeline_rect, axis, events)
-        {
+        if let Some((event_id, _)) = self.find_hovered_event(ui, &timeline_rect, axis, events) {
             self.hovered_event = Some(event_id.clone());
         }
 
@@ -793,7 +799,12 @@ impl RerunTimePanel {
         density_graph.smooth();
 
         // Paint using simplified mesh-based waveform (no normalization)
-        self.paint_density_graph_simple(painter, &density_graph, rect.y_range(), colors::ACCENT_TEAL);
+        self.paint_density_graph_simple(
+            painter,
+            &density_graph,
+            rect.y_range(),
+            colors::ACCENT_TEAL,
+        );
     }
 
     /// Paint density graph as symmetric waveform (simplified version)
@@ -946,7 +957,11 @@ impl RerunTimePanel {
             let tick_time = DateTime::from_timestamp_millis(tick_ms).unwrap_or(start);
             let x = rect.left() + axis.x_from_time(tick_time) as f32;
             if rect.x_range().contains(x) {
-                painter.vline(x, (rect.bottom() - 8.0)..=rect.bottom(), Stroke::new(1.0, tick_color));
+                painter.vline(
+                    x,
+                    (rect.bottom() - 8.0)..=rect.bottom(),
+                    Stroke::new(1.0, tick_color),
+                );
                 let label = if duration_secs <= 60.0 {
                     tick_time.format("%S").to_string()
                 } else if duration_secs <= 3600.0 {
@@ -968,8 +983,7 @@ impl RerunTimePanel {
                 for i in 1..minor_count {
                     let minor_ms = tick_ms - major_ms + (minor_interval * i as i64);
                     if minor_ms > start_ms && minor_ms < end_ms {
-                        let minor_time =
-                            DateTime::from_timestamp_millis(minor_ms).unwrap_or(start);
+                        let minor_time = DateTime::from_timestamp_millis(minor_ms).unwrap_or(start);
                         let minor_x = rect.left() + axis.x_from_time(minor_time) as f32;
                         if rect.x_range().contains(minor_x) {
                             painter.vline(
@@ -1005,8 +1019,14 @@ impl RerunTimePanel {
                 y += zig;
                 row += 1;
             }
-            painter.add(egui::Shape::line(points_left, Stroke::new(1.0, colors::TIMELINE_SEPARATOR)));
-            painter.add(egui::Shape::line(points_right, Stroke::new(1.0, colors::TIMELINE_SEPARATOR)));
+            painter.add(egui::Shape::line(
+                points_left,
+                Stroke::new(1.0, colors::TIMELINE_SEPARATOR),
+            ));
+            painter.add(egui::Shape::line(
+                points_right,
+                Stroke::new(1.0, colors::TIMELINE_SEPARATOR),
+            ));
         }
     }
 
@@ -1066,7 +1086,8 @@ impl RerunTimePanel {
             let path = TopicPath::from_event(&event.source, &event.event_type);
             ui.horizontal(|ui| {
                 let (rect, _) = ui.allocate_exact_size(egui::vec2(6.0, 6.0), Sense::hover());
-                ui.painter().rect_filled(rect, rounding::NONE, colors::TIMELINE_DOT);
+                ui.painter()
+                    .rect_filled(rect, rounding::NONE, colors::TIMELINE_DOT);
                 ui.label(
                     egui::RichText::new(path.display())
                         .color(colors::TEXT_PRIMARY)
@@ -1160,7 +1181,11 @@ impl RerunTimePanel {
                                 .font(typography::caption())
                                 .strong(),
                         )
-                        .fill(if is_live { colors::BG_ACTIVE } else { colors::BG_CONTROL });
+                        .fill(if is_live {
+                            colors::BG_ACTIVE
+                        } else {
+                            colors::BG_CONTROL
+                        });
 
                         if ui.add(live_btn).clicked() {
                             self.playback_state = PlaybackState::Following;
@@ -1194,7 +1219,10 @@ impl RerunTimePanel {
 
                         ui.add_space(spacing::SM);
 
-                        if ui.button(egui::RichText::new("⏮").font(typography::small())).clicked() {
+                        if ui
+                            .button(egui::RichText::new("⏮").font(typography::small()))
+                            .clicked()
+                        {
                             if let Some(first) = events.first() {
                                 self.playhead = first.occurred_at;
                                 self.playback_state = PlaybackState::Paused;
@@ -1202,7 +1230,10 @@ impl RerunTimePanel {
                             }
                         }
 
-                        if ui.button(egui::RichText::new("⏭").font(typography::small())).clicked() {
+                        if ui
+                            .button(egui::RichText::new("⏭").font(typography::small()))
+                            .clicked()
+                        {
                             if let Some(last) = events.last() {
                                 self.playhead = last.occurred_at;
                                 self.playback_state = PlaybackState::Paused;
@@ -1221,7 +1252,9 @@ impl RerunTimePanel {
                             .width(70.0)
                             .show_ui(ui, |ui| {
                                 for &tz in DisplayTimezone::all() {
-                                    if ui.selectable_label(self.timezone == tz, tz.label()).clicked()
+                                    if ui
+                                        .selectable_label(self.timezone == tz, tz.label())
+                                        .clicked()
                                     {
                                         self.timezone = tz;
                                     }
@@ -1355,10 +1388,7 @@ impl CollapsedTimeAxis {
 
         let ranges = build_time_ranges(&times);
 
-        Self {
-            ranges,
-            gap_width,
-        }
+        Self { ranges, gap_width }
     }
 
     fn layout(&self, width: f32) -> AxisLayout {
@@ -1453,10 +1483,8 @@ impl AxisLayout {
     fn time_from_x(&self, x: f32) -> DateTime<Utc> {
         for seg in &self.segments {
             if x <= seg.x_end {
-                let t = ((x - seg.x_start) / (seg.x_end - seg.x_start).max(1.0))
-                    .clamp(0.0, 1.0);
-                let time_ms =
-                    seg.start_ms + ((seg.end_ms - seg.start_ms).max(1) as f32 * t) as i64;
+                let t = ((x - seg.x_start) / (seg.x_end - seg.x_start).max(1.0)).clamp(0.0, 1.0);
+                let time_ms = seg.start_ms + ((seg.end_ms - seg.start_ms).max(1) as f32 * t) as i64;
                 return DateTime::from_timestamp_millis(time_ms).unwrap_or_else(Utc::now);
             }
         }

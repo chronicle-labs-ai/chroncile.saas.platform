@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Reference to the environment a run will execute in. Mirrors the shape used by `EnvironmentsManager` (`SandboxEnvironment`) but without the heavy detail snapshot — the recipe only needs the identity + status to render summary chrome.",
+  "properties": {
+    "ephemeral": {
+      "description": "Whether this environment is a freshly cloned ephemeral sandbox or a saved long-lived environment.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "snapshotId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "snapshotLabel": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "description": "Mirror of `SandboxRuntimeStatus` strings (\"started\", \"stopped\", …). Kept loose so callers don't need to import the environments package.",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "label"
+  ],
+  "title": "BacktestEnvironmentRef",
+  "type": "object"
+}

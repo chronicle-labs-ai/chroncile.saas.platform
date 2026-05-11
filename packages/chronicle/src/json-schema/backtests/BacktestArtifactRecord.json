@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "contentType": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "description": "Row projection of `\"BacktestArtifact\"`.",
+      "enum": [
+        "agent-log",
+        "verifier-log",
+        "trajectory",
+        "screenshot",
+        "reward-json",
+        "reward-txt",
+        "tar",
+        "other"
+      ],
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    },
+    "sizeBytes": {
+      "format": "uint64",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "trialId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "createdAt",
+    "id",
+    "kind",
+    "path",
+    "trialId"
+  ],
+  "title": "BacktestArtifactRecord",
+  "type": "object"
+}

@@ -56,7 +56,7 @@ impl TimeScrubber {
 
         // Draw background - industrial dark
         painter.rect_filled(rect, rounding::SM, colors::BG_BASE);
-        
+
         // Draw subtle border
         painter.rect_stroke(rect, rounding::SM, strokes::border());
 
@@ -117,7 +117,9 @@ impl TimeScrubber {
                 );
 
                 // Show tooltip
-                response.clone().on_hover_text(hover_time.format("%H:%M:%S%.3f").to_string());
+                response
+                    .clone()
+                    .on_hover_text(hover_time.format("%H:%M:%S%.3f").to_string());
             }
         }
 

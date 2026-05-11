@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "contextPointers": true,
+    "eventId": {
+      "type": "string"
+    },
+    "eventSnapshot": true,
+    "invocationId": {
+      "type": "string"
+    },
+    "mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "workflowId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "eventId",
+    "invocationId"
+  ],
+  "title": "CreateRunRequest",
+  "type": "object"
+}

@@ -3,11 +3,11 @@
 //! Feature-gated Kafka streaming backend using rdkafka.
 //! This is a placeholder that will be fully implemented when needed.
 
-mod producer;
 mod consumer;
+mod producer;
 
-pub use producer::KafkaProducer;
 pub use consumer::KafkaConsumer;
+pub use producer::KafkaProducer;
 
 /// Kafka stream combining producer and consumer
 #[derive(Clone)]
@@ -23,11 +23,7 @@ impl KafkaStream {
     /// - `brokers`: Comma-separated list of broker addresses
     /// - `topic`: Topic to produce/consume from
     /// - `group_id`: Consumer group ID
-    pub async fn new(
-        brokers: &str,
-        topic: &str,
-        group_id: &str,
-    ) -> Result<Self, KafkaError> {
+    pub async fn new(brokers: &str, topic: &str, group_id: &str) -> Result<Self, KafkaError> {
         let producer = KafkaProducer::new(brokers, topic)?;
         let consumer = KafkaConsumer::new(brokers, topic, group_id)?;
 

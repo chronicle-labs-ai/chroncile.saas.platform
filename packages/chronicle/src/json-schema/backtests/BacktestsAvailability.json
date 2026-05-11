@@ -1,0 +1,653 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Returned by `GET /api/platform/backtests/availability`. Matches the frontend's `BacktestsAvailability`. Datasets, environments, and agents come from their respective domain crates' types — the IDs in these slices are what the recipe references.",
+  "properties": {
+    "agents": {
+      "items": {
+        "properties": {
+          "capabilityTags": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "environment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "framework": {
+            "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+            "enum": [
+              "vercel-ai-sdk",
+              "openai-agents",
+              "langchain",
+              "mastra",
+              "langchain-python",
+              "llamaindex",
+              "crewai",
+              "smolagents",
+              "pydantic-ai",
+              "strands",
+              "google-adk",
+              "openai-agents-python",
+              "autogen"
+            ],
+            "type": "string"
+          },
+          "lastDriftAt": {
+            "description": "Last drift event, if any.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastRunAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestVersion": {
+            "type": "string"
+          },
+          "model": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "modelId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "provider": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "label"
+            ],
+            "type": "object"
+          },
+          "modelLabel": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "personaSummary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "playgroundUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "purpose": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "runbookUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "successRate": {
+            "format": "double",
+            "type": "number"
+          },
+          "totalRuns": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "versionCount": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "framework",
+          "latestVersion",
+          "model",
+          "modelLabel",
+          "name",
+          "successRate",
+          "totalRuns",
+          "versionCount"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "datasetSnapshots": {
+      "additionalProperties": {
+        "properties": {
+          "clusters": {
+            "items": {
+              "properties": {
+                "color": {
+                  "description": "CSS color for the cluster (e.g. `\"var(--c-event-teal)\"`).",
+                  "type": "string"
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "similarityCenter": {
+                  "description": "Optional pre-computed centroid hint in normalized [0..1] space.",
+                  "items": {
+                    "format": "double",
+                    "type": "number"
+                  },
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "traceIds": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "color",
+                "id",
+                "label",
+                "traceIds"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "dataset": {
+            "properties": {
+              "createdBy": {
+                "description": "Display name of the dataset owner / creator.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "eventCount": {
+                "description": "Optional total event count across all traces.",
+                "format": "uint32",
+                "minimum": 0.0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "purpose": {
+                "description": "Intended use of a dataset — drives the colored badge on the picker and lets apps route additions to the right backend (eval suite, training set, replay corpus, manual review queue).",
+                "enum": [
+                  "eval",
+                  "training",
+                  "replay",
+                  "review"
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tags": {
+                "description": "Free-form pinned tags.",
+                "items": {
+                  "type": "string"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              },
+              "traceCount": {
+                "description": "Number of traces currently in the dataset.",
+                "format": "uint32",
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              "updatedAt": {
+                "description": "ISO timestamp of the most recent addition.",
+                "format": "date-time",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "traceCount"
+            ],
+            "type": "object"
+          },
+          "edges": {
+            "items": {
+              "properties": {
+                "fromTraceId": {
+                  "type": "string"
+                },
+                "toTraceId": {
+                  "type": "string"
+                },
+                "weight": {
+                  "description": "Similarity weight in [0..1].",
+                  "format": "double",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fromTraceId",
+                "toTraceId",
+                "weight"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "events": {
+            "description": "Optional pre-built event index used by the Timeline tab.",
+            "items": {
+              "description": "A single event rendered as a mark on the stream timeline. The full shape lives next to dataset shapes because `DatasetSnapshot.events` is the only consumer that ships over the wire today.",
+              "properties": {
+                "actor": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "color": {
+                  "description": "Optional explicit color override; falls back to the source color.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "correlationKey": {
+                  "description": "Looser, app-defined grouping key (e.g. `conversation_id`).",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "occurredAt": {
+                  "description": "ISO timestamp.",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "parentEventId": {
+                  "description": "Direct causal predecessor.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "payload": {
+                  "description": "Raw payload — shown JSON-pretty in the detail panel."
+                },
+                "source": {
+                  "description": "Source/system the event came from (e.g. `intercom`, `stripe`).",
+                  "type": "string"
+                },
+                "stream": {
+                  "description": "Optional grouping (capture stream id) — currently informational.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "traceId": {
+                  "description": "Trace this event belongs to.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "traceLabel": {
+                  "description": "Human-friendly label for the trace.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "Event type within the source (e.g. `conversation.created`).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "occurredAt",
+                "source",
+                "type"
+              ],
+              "type": "object"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "traces": {
+            "items": {
+              "properties": {
+                "addedAt": {
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "addedBy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "clusterId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "durationMs": {
+                  "format": "uint32",
+                  "minimum": 0.0,
+                  "type": "integer"
+                },
+                "embedding": {
+                  "description": "Pre-computed 2D embedding in normalized `[-1, 1]` space.",
+                  "items": {
+                    "format": "double",
+                    "type": "number"
+                  },
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "eventCount": {
+                  "format": "uint32",
+                  "minimum": 0.0,
+                  "type": "integer"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "primarySource": {
+                  "type": "string"
+                },
+                "sources": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "split": {
+                  "description": "Train / validation / test split assignment.",
+                  "enum": [
+                    "train",
+                    "validation",
+                    "test"
+                  ],
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startedAt": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "status": {
+                  "description": "Health status of a trace as judged by the dataset owner.",
+                  "enum": [
+                    "ok",
+                    "warn",
+                    "error"
+                  ],
+                  "type": "string"
+                },
+                "traceId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "durationMs",
+                "eventCount",
+                "label",
+                "primarySource",
+                "sources",
+                "startedAt",
+                "status",
+                "traceId"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "clusters",
+          "dataset",
+          "edges",
+          "traces"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "datasets": {
+      "items": {
+        "properties": {
+          "createdBy": {
+            "description": "Display name of the dataset owner / creator.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "eventCount": {
+            "description": "Optional total event count across all traces.",
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "purpose": {
+            "description": "Intended use of a dataset — drives the colored badge on the picker and lets apps route additions to the right backend (eval suite, training set, replay corpus, manual review queue).",
+            "enum": [
+              "eval",
+              "training",
+              "replay",
+              "review"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "description": "Free-form pinned tags.",
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "traceCount": {
+            "description": "Number of traces currently in the dataset.",
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "updatedAt": {
+            "description": "ISO timestamp of the most recent addition.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "traceCount"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "environments": {
+      "description": "Environment row identities + status. Detailed snapshot lives behind `GET /api/platform/environments/:id`.",
+      "items": {
+        "description": "Reference to the environment a run will execute in. Mirrors the shape used by `EnvironmentsManager` (`SandboxEnvironment`) but without the heavy detail snapshot — the recipe only needs the identity + status to render summary chrome.",
+        "properties": {
+          "ephemeral": {
+            "description": "Whether this environment is a freshly cloned ephemeral sandbox or a saved long-lived environment.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snapshotLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "description": "Mirror of `SandboxRuntimeStatus` strings (\"started\", \"stopped\", …). Kept loose so callers don't need to import the environments package.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "agents",
+    "datasetSnapshots",
+    "datasets",
+    "environments"
+  ],
+  "title": "BacktestsAvailability",
+  "type": "object"
+}

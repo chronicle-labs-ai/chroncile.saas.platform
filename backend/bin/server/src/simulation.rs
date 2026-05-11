@@ -1,20 +1,18 @@
 //! Simulation Mode
 //!
 //! Spawns a background Tokio task that generates and streams realistic events
-//! through the existing store + stream pipeline. Controlled via SIM_* environment
-//! variables. Orthogonal to the storage backend choice.
+//! through the existing store + stream pipeline. Controlled via launch config
+//! or the legacy `SIM_*` environment variables. Orthogonal to the storage backend
+//! choice.
 
 use std::sync::Arc;
 use std::time::Duration;
 
-use chrono::Utc;
-use chronicle_infra::{StoreBackend, StreamBackend};
-use chronicle_mock_connector::{
-    all_scenarios, generate_random_events, ConversationScenario,
-};
-use chronicle_source_mock_stripe::MockStripeGenerator;
-use chronicle_sources_core::{EventGenerator, GeneratorConfig};
 use chronicle_domain::EventEnvelope;
+use chronicle_infra::{StoreBackend, StreamBackend};
+use chronicle_mock_connector::{all_scenarios, generate_random_events, ConversationScenario};
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use tokio::task::JoinHandle;
 
 // ---------------------------------------------------------------------------
@@ -22,7 +20,8 @@ use tokio::task::JoinHandle;
 // ---------------------------------------------------------------------------
 
 /// Simulation timing mode.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SimMode {
     /// Play back pre-built scenarios with realistic inter-event timing.
     Scenario,
@@ -33,7 +32,7 @@ pub enum SimMode {
 }
 
 impl SimMode {
-    fn from_str(s: &str) -> Self {
+    pub(crate) fn from_str(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "random" => Self::Random,
             "mixed" => Self::Mixed,
@@ -42,8 +41,15 @@ impl SimMode {
     }
 }
 
-/// Configuration for the simulation mode, parsed from environment variables.
-#[derive(Debug, Clone)]
+impl Default for SimMode {
+    fn default() -> Self {
+        Self::Scenario
+    }
+}
+
+/// Configuration for the simulation mode.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct SimulationConfig {
     /// Whether simulation is enabled (`SIM_MODE=true`).
     pub enabled: bool,
@@ -63,14 +69,14 @@ pub struct SimulationConfig {
 
 impl SimulationConfig {
     /// Parse configuration from SIM_* environment variables.
+    #[allow(dead_code)]
     pub fn from_env() -> Self {
         let enabled = std::env::var("SIM_MODE")
             .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
             .unwrap_or(false);
 
-        let mode = SimMode::from_str(
-            &std::env::var("SIM_TIMING").unwrap_or_else(|_| "scenario".into()),
-        );
+        let mode =
+            SimMode::from_str(&std::env::var("SIM_TIMING").unwrap_or_else(|_| "scenario".into()));
 
         let events_per_second: f64 = std::env::var("SIM_RATE")
             .unwrap_or_else(|_| "2.0".into())
@@ -95,8 +101,7 @@ impl SimulationConfig {
             .map(|v| !v.eq_ignore_ascii_case("false") && v != "0")
             .unwrap_or(true);
 
-        let tenant_id = std::env::var("SIM_TENANT")
-            .unwrap_or_else(|_| "demo_tenant".into());
+        let tenant_id = std::env::var("SIM_TENANT").unwrap_or_else(|_| "demo_tenant".into());
 
         Self {
             enabled,
@@ -106,6 +111,20 @@ impl SimulationConfig {
             sources,
             loop_forever,
             tenant_id,
+        }
+    }
+}
+
+impl Default for SimulationConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            mode: SimMode::Scenario,
+            events_per_second: 2.0,
+            scenarios: vec!["all".to_string()],
+            sources: vec!["mock-connector".to_string()],
+            loop_forever: true,
+            tenant_id: "demo_tenant".to_string(),
         }
     }
 }
@@ -189,16 +208,6 @@ async fn run_random_mode(
     stream: &Arc<StreamBackend>,
     config: &SimulationConfig,
 ) {
-    let include_stripe = config.sources.contains(&"mock-stripe".to_string());
-    let stripe_gen = if include_stripe {
-        Some(MockStripeGenerator::new())
-    } else {
-        None
-    };
-    let stripe_config = GeneratorConfig::new()
-        .with_rate(config.events_per_second)
-        .with_tenant(&config.tenant_id);
-
     let interval = Duration::from_secs_f64(1.0 / config.events_per_second.max(0.01));
     let mut timer = tokio::time::interval(interval);
     let mut count: u64 = 0;
@@ -210,26 +219,13 @@ async fn run_random_mode(
     loop {
         timer.tick().await;
 
-        // Alternate between mock-connector and stripe if both are enabled
-        let event = if include_stripe && stripe_gen.is_some() && count % 3 == 0 {
-            // Every 3rd event comes from Stripe
-            match stripe_gen.as_ref().unwrap().generate_event(&stripe_config).await {
-                Ok(e) => e,
-                Err(err) => {
-                    tracing::error!(error = %err, "Failed to generate Stripe event");
-                    continue;
-                }
-            }
-        } else {
-            // Use pre-generated mock-connector events, cycling through them
-            let mut e = mock_events[mock_idx % mock_events.len()].clone();
-            // Give each event a fresh timestamp so it appears as a new event
-            e = e.with_occurred_at(Utc::now());
-            // Assign a unique source_event_id to avoid dedup collisions
-            e.source_event_id = format!("sim_random_{}_{}", count, mock_idx);
-            mock_idx += 1;
-            e
-        };
+        // Use pre-generated mock-connector events, cycling through them.
+        let mut event = mock_events[mock_idx % mock_events.len()].clone();
+        // Give each event a fresh timestamp so it appears as a new event
+        event = event.with_occurred_at(Utc::now());
+        // Assign a unique source_event_id to avoid dedup collisions
+        event.source_event_id = format!("sim_random_{}_{}", count, mock_idx);
+        mock_idx += 1;
 
         publish_event(store, stream, event).await;
         count += 1;
@@ -245,16 +241,6 @@ async fn run_mixed_mode(
     stream: &Arc<StreamBackend>,
     config: &SimulationConfig,
 ) {
-    let include_stripe = config.sources.contains(&"mock-stripe".to_string());
-    let stripe_gen = if include_stripe {
-        Some(MockStripeGenerator::new())
-    } else {
-        None
-    };
-    let stripe_config = GeneratorConfig::new()
-        .with_rate(config.events_per_second)
-        .with_tenant(&config.tenant_id);
-
     loop {
         let scenarios = build_scenario_pool(config);
         if scenarios.is_empty() {
@@ -281,19 +267,7 @@ async fn run_mixed_mode(
                     let sleep_dur = delta.to_std().unwrap_or(Duration::from_millis(500));
                     // Cap to 5 seconds to keep the mixed mode lively
                     let capped = sleep_dur.min(Duration::from_secs(5));
-
-                    // Inject a Stripe event in the gap if the source is enabled
-                    if include_stripe && capped > Duration::from_secs(1) {
-                        tokio::time::sleep(capped / 2).await;
-                        if let Some(ref gen) = stripe_gen {
-                            if let Ok(stripe_event) = gen.generate_event(&stripe_config).await {
-                                publish_event(store, stream, stripe_event).await;
-                            }
-                        }
-                        tokio::time::sleep(capped / 2).await;
-                    } else {
-                        tokio::time::sleep(capped).await;
-                    }
+                    tokio::time::sleep(capped).await;
                 }
 
                 publish_event(store, stream, event.clone()).await;

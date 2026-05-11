@@ -83,8 +83,7 @@ impl FilterPanel {
             query = query.with_sources(self.selected_sources.iter().cloned());
         }
 
-        if !self.selected_types.is_empty()
-            && self.selected_types.len() < self.available_types.len()
+        if !self.selected_types.is_empty() && self.selected_types.len() < self.available_types.len()
         {
             query = query.with_event_types(self.selected_types.iter().cloned());
         }
@@ -102,8 +101,7 @@ impl FilterPanel {
             query = query.with_sources(self.selected_sources.iter().cloned());
         }
 
-        if !self.selected_types.is_empty()
-            && self.selected_types.len() < self.available_types.len()
+        if !self.selected_types.is_empty() && self.selected_types.len() < self.available_types.len()
         {
             query = query.with_event_types(self.selected_types.iter().cloned());
         }
@@ -141,4 +139,3 @@ pub fn capitalize_source_id(source_id: &str) -> String {
         .collect::<Vec<_>>()
         .join(" ")
 }
-

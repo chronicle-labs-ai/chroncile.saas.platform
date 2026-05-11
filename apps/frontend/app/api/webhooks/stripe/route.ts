@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getBackendUrl } from "platform-api";
 
 export const dynamic = "force-dynamic";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+const BACKEND_URL = getBackendUrl();
 
 export async function POST(request: NextRequest) {
   const body = await request.text();

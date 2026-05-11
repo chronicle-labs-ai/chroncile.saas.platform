@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "activeConnections": {
+      "format": "uint",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "completedRuns": {
+      "format": "uint",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "failedRuns": {
+      "format": "uint",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "pendingRuns": {
+      "format": "uint",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "totalConnections": {
+      "format": "uint",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "totalRuns": {
+      "format": "uint",
+      "minimum": 0.0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "activeConnections",
+    "completedRuns",
+    "failedRuns",
+    "pendingRuns",
+    "totalConnections",
+    "totalRuns"
+  ],
+  "title": "DashboardStatsResponse",
+  "type": "object"
+}

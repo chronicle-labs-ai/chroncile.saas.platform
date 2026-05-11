@@ -38,4 +38,3 @@ pub fn mono() -> FontId {
 pub fn mono_small() -> FontId {
     FontId::monospace(10.0)
 }
-

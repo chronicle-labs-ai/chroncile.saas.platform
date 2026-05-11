@@ -1,7 +1,10 @@
 [package]
-name = "chronicle-domain"
+name = "chronicle_domain"
 version.workspace = true
 edition.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 serde = { workspace = true }
@@ -10,7 +13,9 @@ chrono = { workspace = true }
 ulid = { workspace = true }
 thiserror = { workspace = true }
 ts-rs = { workspace = true }
+schemars = { workspace = true }
 mcap = "0.9"
+chronicle_core = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }

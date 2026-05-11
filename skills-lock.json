@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "react-email": {
+      "source": "resend/react-email",
+      "sourceType": "github",
+      "computedHash": "9b8a308f7c8d5df05b0cf00e45348bffbd427d78dee3eef0b898e4b3da3e56d1"
+    },
+    "resend": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "computedHash": "dca928180e73ee3dd3bfe1c921b96198c2b7d6733c06bf35c40fa343b4037a55"
+    }
+  }
+}

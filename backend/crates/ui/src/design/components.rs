@@ -80,4 +80,3 @@ pub fn metric(ui: &mut egui::Ui, value: &str, label: &str) {
         );
     });
 }
-

@@ -120,4 +120,3 @@ impl EventEnvelopeBuilder {
         .with_pii(self.pii)
     }
 }
-

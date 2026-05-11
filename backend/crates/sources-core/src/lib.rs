@@ -33,10 +33,11 @@ pub use bidirectional::BidirectionalSource;
 pub use catalog::{EventCatalog, EventTypeDefinition};
 pub use context::IngestContext;
 pub use error::{ConfigError, SourceError};
-pub use generator::{EventGenerator, GeneratorConfig, GeneratorError, GeneratorHandle, GeneratorStatus};
+pub use generator::{
+    EventGenerator, GeneratorConfig, GeneratorError, GeneratorHandle, GeneratorStatus,
+};
 pub use mapping::{FieldMapper, FieldMapping, MappingTarget, Transform};
 pub use oauth::OAuthProvider;
 pub use polling::PollingFetcher;
 pub use schema::{SchemaMigration, SchemaVersion, SchemaVersionRegistry};
 pub use webhook::WebhookHandler;
-

@@ -101,15 +101,14 @@ impl SignatureVerifier for DefaultSignatureVerifier {
 
         type HmacSha1 = Hmac<Sha1>;
 
-        let mut mac =
-            HmacSha1::new_from_slice(secret.as_bytes()).map_err(|_| WebhookError::InvalidSignature)?;
+        let mut mac = HmacSha1::new_from_slice(secret.as_bytes())
+            .map_err(|_| WebhookError::InvalidSignature)?;
 
         mac.update(body);
 
         // Handle hex-encoded signature (with or without "sha1=" prefix)
         let sig_hex = signature.strip_prefix("sha1=").unwrap_or(signature);
-        let expected =
-            hex::decode(sig_hex).map_err(|_| WebhookError::InvalidSignature)?;
+        let expected = hex::decode(sig_hex).map_err(|_| WebhookError::InvalidSignature)?;
 
         mac.verify_slice(&expected)
             .map_err(|_| WebhookError::InvalidSignature)
@@ -128,11 +127,9 @@ impl SignatureVerifier for DefaultSignatureVerifier {
 
         // Handle hex-encoded signature (with or without "sha256=" prefix)
         let sig_hex = signature.strip_prefix("sha256=").unwrap_or(signature);
-        let expected =
-            hex::decode(sig_hex).map_err(|_| WebhookError::InvalidSignature)?;
+        let expected = hex::decode(sig_hex).map_err(|_| WebhookError::InvalidSignature)?;
 
         mac.verify_slice(&expected)
             .map_err(|_| WebhookError::InvalidSignature)
     }
 }
-

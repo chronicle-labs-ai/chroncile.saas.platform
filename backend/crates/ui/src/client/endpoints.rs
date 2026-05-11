@@ -77,7 +77,10 @@ impl ApiClient {
         let body = serde_json::json!({ "count": count });
 
         self.http
-            .post(&format!("/api/connections/{}/generate", connection_id), &body)
+            .post(
+                &format!("/api/connections/{}/generate", connection_id),
+                &body,
+            )
             .await
     }
 
@@ -144,4 +147,3 @@ impl ApiClient {
         Ok(resp.events)
     }
 }
-

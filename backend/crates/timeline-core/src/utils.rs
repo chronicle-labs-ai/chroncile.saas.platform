@@ -31,8 +31,16 @@ pub fn format_duration_precise(duration: Duration) -> String {
 /// Format a time delta relative to now
 pub fn format_relative_time(duration: Duration) -> String {
     let total_secs = duration.num_seconds().abs();
-    let prefix = if duration.num_seconds() < 0 { "" } else { "in " };
-    let suffix = if duration.num_seconds() < 0 { " ago" } else { "" };
+    let prefix = if duration.num_seconds() < 0 {
+        ""
+    } else {
+        "in "
+    };
+    let suffix = if duration.num_seconds() < 0 {
+        " ago"
+    } else {
+        ""
+    };
 
     let formatted = if total_secs < 60 {
         format!("{}s", total_secs)

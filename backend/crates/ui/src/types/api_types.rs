@@ -80,4 +80,3 @@ pub struct GenerateResponse {
     pub generated: usize,
     pub message: String,
 }
-

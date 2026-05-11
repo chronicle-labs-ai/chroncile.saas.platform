@@ -87,4 +87,3 @@ pub struct SourceCatalogResponse {
     pub source_id: String,
     pub events: Vec<EventTypeMeta>,
 }
-

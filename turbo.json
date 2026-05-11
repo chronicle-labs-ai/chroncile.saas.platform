@@ -28,6 +28,24 @@
     },
     "generate-types": {
       "cache": false
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
+    },
+    "build-storybook": {
+      "outputs": ["storybook-static/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "bones:build": {
+      "cache": false,
+      "outputs": ["src/bones/**"]
+    },
+    "bones:watch": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

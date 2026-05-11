@@ -23,8 +23,9 @@ impl EventsManagerApp {
                 ConnectionAction::CreateConnection(service, name) => {
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        let result = rt
-                            .block_on(async { client.create_connection(&service, Some(&name)).await });
+                        let result = rt.block_on(async {
+                            client.create_connection(&service, Some(&name)).await
+                        });
                         match result {
                             Ok(_) => {
                                 self.load_connections();
@@ -157,4 +158,3 @@ impl EventsManagerApp {
         }
     }
 }
-

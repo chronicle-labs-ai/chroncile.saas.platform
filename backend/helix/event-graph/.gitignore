@@ -1,0 +1,4 @@
+.helix/
+target/
+*.log
+queries.rs

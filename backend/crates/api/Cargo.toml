@@ -1,19 +1,27 @@
 [package]
-name = "chronicle-api"
+name = "chronicle_api"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
-chronicle-domain = { workspace = true }
-chronicle-interfaces = { workspace = true }
-chronicle-infra = { workspace = true }
-chronicle-mock-connector = { workspace = true }
-chronicle-sources-core = { workspace = true }
-chronicle-sources-registry = { workspace = true }
-chronicle-source-mock-stripe = { workspace = true }
-chronicle-auth = { workspace = true }
-chronicle-integrations = { workspace = true }
-pipedream-connect = { workspace = true }
+chronicle_domain = { workspace = true }
+chronicle_interfaces = { workspace = true }
+chronicle_infra = { workspace = true }
+chronicle_mock_connector = { workspace = true }
+chronicle_sources_core = { workspace = true }
+chronicle_sources_registry = { workspace = true }
+chronicle_auth = { workspace = true }
+chronicle_nango = { workspace = true }
+chronicle_core = { workspace = true }
+chronicle_stripe = { workspace = true }
+chronicle_store = { workspace = true }
+chronicle_query = { workspace = true }
+chronicle_link = { workspace = true }
+chronicle_orchestrator = { workspace = true }
+chronicle_sandbox = { workspace = true }
 
 tokio = { workspace = true }
 async-trait = { workspace = true }
@@ -33,10 +41,17 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 parking_lot = { workspace = true }
 dashmap = { workspace = true }
-
-# Cryptography (for webhook signature verification)
 hmac = { workspace = true }
 sha1 = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
+base64 = { workspace = true }
+reqwest = { workspace = true }
+rand = { workspace = true }
+urlencoding = "2.1"
+
+# Cryptography (for webhook signature verification)
 cuid2 = { workspace = true }
+
+[dev-dependencies]
+wiremock = { workspace = true }

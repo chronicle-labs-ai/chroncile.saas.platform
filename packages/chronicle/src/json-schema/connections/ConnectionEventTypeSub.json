@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Per-event-type toggle row (e.g. Stripe `charge.succeeded`). Renders inside the drawer's Event-types tab.",
+  "properties": {
+    "defaultOn": {
+      "description": "Whether this row was on by default at install time.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "id": {
+      "type": "string"
+    },
+    "object": {
+      "description": "Optional Stripe-style object hint (`charge`, `customer`, …).",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "enabled",
+    "id"
+  ],
+  "title": "ConnectionEventTypeSub",
+  "type": "object"
+}

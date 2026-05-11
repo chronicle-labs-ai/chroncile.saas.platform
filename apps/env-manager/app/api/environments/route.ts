@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { ensurePermanentEnvsExist } from "@/lib/sync";
+import { prisma } from "@/backend/data/db";
+import { ensurePermanentEnvsExist } from "@/backend/environments/sync";
+import { syncLocalEnvironment } from "@/backend/environments/local-env";
 
 export async function GET() {
-  await ensurePermanentEnvsExist();
+  await Promise.all([ensurePermanentEnvsExist(), syncLocalEnvironment()]);
 
   const environments = await prisma.environment.findMany({
-    orderBy: [
-      { type: "asc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ type: "asc" }, { createdAt: "desc" }],
   });
   return NextResponse.json(environments);
 }

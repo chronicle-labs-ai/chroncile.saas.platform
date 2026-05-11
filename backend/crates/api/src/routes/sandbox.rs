@@ -111,12 +111,10 @@ pub async fn create_sandbox_session(
                 );
             }
             "name" => {
-                session_name = Some(
-                    field
-                        .text()
-                        .await
-                        .map_err(|e| ApiError::BadRequest(format!("Failed to read name: {}", e)))?,
-                );
+                session_name =
+                    Some(field.text().await.map_err(|e| {
+                        ApiError::BadRequest(format!("Failed to read name: {}", e))
+                    })?);
             }
             _ => {
                 // Ignore unknown fields
@@ -125,7 +123,8 @@ pub async fn create_sandbox_session(
     }
 
     // Validate we have the file
-    let mcap_data = mcap_data.ok_or_else(|| ApiError::BadRequest("Missing 'file' field".to_string()))?;
+    let mcap_data =
+        mcap_data.ok_or_else(|| ApiError::BadRequest("Missing 'file' field".to_string()))?;
 
     // Parse the MCAP file
     let player = BagPlayer::from_bytes(&mcap_data)
@@ -301,4 +300,3 @@ pub async fn stream_sandbox(
             .text("ping"),
     ))
 }
-

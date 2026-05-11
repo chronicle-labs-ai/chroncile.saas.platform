@@ -1,533 +1,242 @@
-/* ============================================
-   CHRONICLE LABS — Shared Design System
-   Import in each app's globals.css BEFORE the
-   @tailwind directives (CSS spec / Turbopack).
-   ============================================ */
+/* ─────────────────────────────────────────────────────────────
+   Chronicle Labs — Design System globals
+   Import in each app's root CSS (or layout) BEFORE any Tailwind
+   directives so tokens are available to utilities and component
+   layers alike.
+   ───────────────────────────────────────────────────────────── */
 
-/* ============================================
-   DESIGN TOKENS
-   ============================================ */
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./glass.css";
+@import "./auth.css";
+@import "./connectors.css";
 
-:root {
-  /* === BASE PALETTE === */
-  --black: #000000;
-  --bg-void: #050607;
-  --bg-base: #0a0c0f;
-  --bg-surface: #0f1215;
-  --bg-elevated: #141719;
-  --bg-hover: #1a1d21;
-  --bg-active: #1f2328;
+/* ============================================================
+   BRAND SURFACES
+   The signature light-source + glass-slat treatment now lives in
+   `./glass.css` under the `.cg-*` namespace and is driven by the
+   React primitives in `../surfaces/` (GlassScene, LightSource,
+   GlassPane, GlassStack + the six recipes). The legacy
+   `.chron-lightsource` and `.chron-slats` CSS-only overlays were
+   supplanted by that system.
+   ============================================================ */
 
-  /* Borders */
-  --border-dim: #1a1d21;
-  --border-default: #252a30;
-  --border-bright: #353c45;
-
-  /* === TEXT HIERARCHY === */
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --text-tertiary: #5f6368;
-  --text-disabled: #3c4043;
-
-  /* === SEMANTIC COLORS === */
-  --critical: #ff3b3b;
-  --critical-dim: #661717;
-  --critical-bg: #1a0a0a;
-
-  --caution: #ffb800;
-  --caution-dim: #664a00;
-  --caution-bg: #1a1400;
-
-  --nominal: #00ff88;
-  --nominal-dim: #006633;
-  --nominal-bg: #001a0d;
-
-  --data: #00d4ff;
-  --data-dim: #005566;
-  --data-bg: #001419;
-
-  /* === TYPOGRAPHY === */
-  --font-mono: 'IBM Plex Mono', 'Consolas', 'Monaco', monospace;
-  --font-sans: 'Helvetica Neue LT Pro', 'Helvetica Neue', 'Helvetica', -apple-system, system-ui, sans-serif;
-
-  /* === SIZING === */
-  --radius-none: 0;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-
-  /* === TRANSITIONS === */
-  --transition-instant: 50ms ease;
-  --transition-fast: 100ms ease;
-  --transition-base: 150ms ease;
+.chron-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.chron-ambient::before {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  top: -60%;
+  left: -60%;
+  background: var(--grad-lightsource-45);
+  opacity: 0.22;
+  filter: blur(120px);
+  transform: rotate(-20deg);
+}
+.chron-ambient::after {
+  content: "";
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  bottom: -40%;
+  right: -40%;
+  background: var(--grad-lightsource);
+  opacity: 0.18;
+  filter: blur(130px);
+  transform: rotate(-20deg);
 }
 
-/* ============================================
-   BASE RESET & DEFAULTS
-   ============================================ */
+/* ============================================================
+   LIVE STATUS DOT — pulses green with subtle glow, quieter in light
+   ============================================================ */
 
-*, *::before, *::after {
+.chron-status-live {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.1em;
+  color: var(--c-event-green);
+  text-transform: uppercase;
+}
+.chron-status-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-event-green);
+  box-shadow: 0 0 10px var(--c-event-green);
+  animation: chron-pulse 1.6s infinite;
+}
+[data-theme="light"] .chron-status-live::before {
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+}
+@keyframes chron-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ============================================================
+   COMPANY LOGOS — invert monochrome-dark brand marks on dark theme
+   Logo.dev returns each brand's primary mark; for many developer-tool
+   brands (GitHub, Vercel, OpenAI, Cursor, X, …) that mark is pure
+   black on transparent and disappears against our dark product
+   canvas. `<CompanyLogo>` / `<BrandIcon>` tag those marks with
+   `data-brand-tone="dark-mark"` from a curated allowlist
+   (`MONOCHROME_DARK_MARK_BRANDS`). We invert them under the dark
+   theme so the silhouette flips to white. The `hue-rotate(180deg)`
+   is a no-op for pure black/white but preserves any subtle tint for
+   near-monochrome marks (e.g. Pydantic's red accent). Light theme
+   renders the original — a black mark on a light surface is fine.
+
+   Components that wrap the logo in their own contrasting tile
+   (e.g. `<AgentCompanyMark>`) opt out via `themeAware={false}`,
+   otherwise the inversion would flip a black mark to white on a
+   white tile and re-hide it.
+   ============================================================ */
+
+[data-theme="dark"] img[data-brand-tone="dark-mark"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* ============================================================
+   SCROLLBAR — thin, hairline-colored
+   Opt-in via `.chron-scrollbar` on small scrollable surfaces
+   (code blocks, drawers, inspectors). The page scrollbar stays
+   the OS default — replacing the document scrollbar globally
+   breaks platform conventions and clashes with extensions / OS
+   accent colors. See Emil's UI-polish guidance.
+   ============================================================ */
+
+.chron-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.chron-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chron-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--c-hairline-strong);
+  border-radius: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .chron-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--c-ink-dim);
+  }
+}
+.chron-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-hairline-strong) transparent;
+}
+
+/* Opt-in via `.chron-scrollbar-hidden` to keep a surface scrollable
+   while removing the visual scrollbar entirely — used inside dense
+   inspectors and table containers where the rail/divider already
+   communicates extent and a track would add noise. */
+.chron-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chron-scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+
+::selection {
+  background: rgba(216, 67, 10, 0.3);
+  color: var(--c-ink-hi);
+}
+[data-theme="light"] ::selection {
+  background: rgba(216, 67, 10, 0.25);
+  color: var(--c-ink-hi);
+}
+
+/* ============================================================
+   REDUCED MOTION
+   Per Emil: every animation needs `prefers-reduced-motion`
+   support, but resort to `!important` only when there's no
+   other way. We override `animation` and `transition` with a
+   high-specificity attribute selector so component-level
+   styles still win when they explicitly opt-out (e.g. crucial
+   feedback transitions). No `!important` cascade arms race.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *:where(:not([data-motion="essential"])),
+  *::before,
+  *::after {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+    animation-iteration-count: 1;
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+    scroll-behavior: auto;
+  }
+}
+
+/* ============================================================
+   THEME-CHANGE TRANSITION GUARD
+   When `data-theme` flips, every transitioning property would
+   animate from its old colour to its new one — producing a
+   noticeable cross-theme bleed across the whole tree. The
+   ThemeProvider toggles this attribute around the change so
+   the swap is instant. Restored on the next animation frame.
+   ============================================================ */
+
+html[data-theme-changing] *,
+html[data-theme-changing] *::before,
+html[data-theme-changing] *::after {
+  transition: none !important;
+}
+
+/* ============================================================
+   BASE RESET
+   Consumers import this file exactly once near the top of their
+   app's CSS. Tailwind utilities still work on top.
+   ============================================================ */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html {
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--c-page);
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+  /* Product body weight. 300 reads as anemic at 14 px on dark
+     surfaces (Emil's Typography rule #6 — light weights are for
+     large display, not UI body). Use `.display` / `.font-light`
+     explicitly for marketing / decks. */
+  font-weight: 400;
+  font-feature-settings: "cv01", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-}
-
-body {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--text-primary);
-  background: var(--bg-base);
-  margin: 0;
-  padding: 0;
-}
-
-/* Subtle grid overlay */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 20px 20px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ============================================
-   TYPOGRAPHY UTILITIES
-   ============================================ */
-
-.font-mono {
-  font-family: var(--font-mono);
-}
-
-.font-sans {
-  font-family: var(--font-sans);
-}
-
-.label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.data-value {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-
-/* ============================================
-   STATUS INDICATORS
-   ============================================ */
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-dot--critical {
-  background: var(--critical);
-  box-shadow: 0 0 8px var(--critical);
-}
-
-.status-dot--caution {
-  background: var(--caution);
-  box-shadow: 0 0 8px var(--caution);
-}
-
-.status-dot--nominal {
-  background: var(--nominal);
-  box-shadow: 0 0 8px var(--nominal);
-}
-
-.status-dot--data {
-  background: var(--data);
-  box-shadow: 0 0 8px var(--data);
-}
-
-.status-dot--offline {
-  background: var(--text-disabled);
-}
-
-.status-dot--pulse {
-  animation: chronicle-pulse 2s ease-in-out infinite;
-}
-
-@keyframes chronicle-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* ============================================
-   COMPONENT CLASSES
-   ============================================ */
-
-/* --- Panel --- */
-.panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-dim);
-  border-radius: var(--radius-md);
-}
-
-.panel--elevated {
-  background: var(--bg-elevated);
-  border-color: var(--border-default);
-}
-
-.panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-dim);
-  background: var(--bg-elevated);
-}
-
-.panel__title {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.panel__content {
-  padding: 16px;
-}
-
-/* --- Button --- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  outline: none;
-}
-
-.btn:focus-visible {
-  outline: 1px solid var(--data);
-  outline-offset: 1px;
-}
-
-.btn--primary {
-  background: var(--data);
-  color: var(--black);
-  border-color: var(--data);
-}
-
-.btn--primary:hover {
-  background: transparent;
-  color: var(--data);
-}
-
-.btn--primary:active {
-  background: var(--data-dim);
-  color: var(--data);
-}
-
-.btn--secondary {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  border-color: var(--border-default);
-}
-
-.btn--secondary:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-bright);
-}
-
-.btn--critical {
-  background: var(--critical);
-  color: var(--black);
-  border-color: var(--critical);
-}
-
-.btn--critical:hover {
-  background: transparent;
-  color: var(--critical);
-}
-
-.btn--ghost {
-  background: transparent;
-  color: var(--text-secondary);
-  border-color: transparent;
-}
-
-.btn--ghost:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.btn--sm {
-  padding: 4px 10px;
-  font-size: 10px;
-}
-
-.btn--lg {
-  padding: 12px 24px;
-  font-size: 13px;
-}
-
-/* --- Input --- */
-.input {
-  width: 100%;
-  padding: 10px 12px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  color: var(--text-primary);
-  background: var(--bg-base);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  transition: border-color var(--transition-fast);
-}
-
-.input::placeholder {
-  color: var(--text-disabled);
-}
-
-.input:hover {
-  border-color: var(--border-bright);
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--data);
-}
-
-.input--search {
-  padding-left: 36px;
-}
-
-/* --- Badge --- */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: var(--radius-sm);
-  border: 1px solid;
-}
-
-.badge--critical {
-  background: var(--critical-bg);
-  color: var(--critical);
-  border-color: var(--critical-dim);
-}
-
-.badge--caution {
-  background: var(--caution-bg);
-  color: var(--caution);
-  border-color: var(--caution-dim);
-}
-
-.badge--nominal {
-  background: var(--nominal-bg);
-  color: var(--nominal);
-  border-color: var(--nominal-dim);
-}
-
-.badge--data {
-  background: var(--data-bg);
-  color: var(--data);
-  border-color: var(--data-dim);
-}
-
-.badge--neutral {
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  border-color: var(--border-default);
-}
-
-/* --- Data Table --- */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.data-table th {
-  padding: 8px 12px;
-  text-align: left;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-default);
-}
-
-.data-table td {
-  padding: 10px 12px;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.data-table tr:hover td {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-/* --- Metric --- */
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metric__label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.metric__value {
-  font-family: var(--font-mono);
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.metric__value--critical { color: var(--critical); }
-.metric__value--caution { color: var(--caution); }
-.metric__value--nominal { color: var(--nominal); }
-.metric__value--data { color: var(--data); }
-
-.metric__delta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.metric__delta--up { color: var(--nominal); }
-.metric__delta--down { color: var(--critical); }
-.metric__delta--neutral { color: var(--text-tertiary); }
-
-/* --- Progress Bar --- */
-.progress-bar {
-  height: 4px;
-  background: var(--bg-hover);
-  border-radius: var(--radius-none);
-  overflow: hidden;
-}
-
-.progress-bar__fill {
-  height: 100%;
-  background: var(--data);
-  transition: width var(--transition-base);
-}
-
-.progress-bar__fill--critical { background: var(--critical); }
-.progress-bar__fill--caution { background: var(--caution); }
-.progress-bar__fill--nominal { background: var(--nominal); }
-
-/* ============================================
-   SCROLLBAR
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-base);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-default);
-  border-radius: 0;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-bright);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-default) var(--bg-base);
-}
-
-/* ============================================
-   SELECTION
-   ============================================ */
-
-::selection {
-  background: var(--data-dim);
-  color: var(--text-primary);
-}
-
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-
-.divider {
-  height: 1px;
-  background: var(--border-dim);
-  border: none;
-  margin: 0;
-}
-
-.divider--vertical {
-  width: 1px;
-  height: 100%;
-}
-
-.text-critical { color: var(--critical); }
-.text-caution { color: var(--caution); }
-.text-nominal { color: var(--nominal); }
-.text-data { color: var(--data); }
-
-.bg-critical { background: var(--critical-bg); }
-.bg-caution { background: var(--caution-bg); }
-.bg-nominal { background: var(--nominal-bg); }
-.bg-data { background: var(--data-bg); }
-
-/* ============================================
-   REDUCED MOTION
-   ============================================ */
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  transition:
+    background-color 220ms var(--ease-out),
+    color 220ms var(--ease-out);
 }

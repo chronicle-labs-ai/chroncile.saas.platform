@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 .pnp
 .pnp.js
 
@@ -12,6 +13,7 @@ dist/
 build/
 .next/
 out/
+storybook-static/
 
 # Misc
 .DS_Store
@@ -25,10 +27,17 @@ yarn-error.log*
 
 # Local env files
 .env
+.env.*
 .env*.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
+!.env.*.example
+
+# Local logs
+*.log
+!package-lock.log
 
 # Vercel
 .vercel
@@ -58,3 +67,13 @@ next-env.d.ts
 .agents/
 .cursor/
 .yarn/install-state.gz
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Tau² benchmark workspace
+benchmarks/tau2/.venv/
+benchmarks/tau2/vendor/
+benchmarks/tau2/output/
+benchmarks/tau2/reports/

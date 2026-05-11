@@ -122,4 +122,3 @@ pub mod compat {
     pub const TEXT_SECONDARY: Color32 = super::TEXT_SECONDARY;
     pub const TEXT_MUTED: Color32 = super::TEXT_MUTED;
 }
-

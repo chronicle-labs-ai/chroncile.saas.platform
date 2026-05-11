@@ -1,0 +1,19 @@
+[package]
+name = "chronicle_stripe"
+description = "First-class Stripe connector for Chronicle. Converts Stripe webhook JSON to typed Chronicle events with automatic entity ref extraction."
+version.workspace = true
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+chronicle_core = { path = "../chronicle_core" }
+
+chrono.workspace = true
+hex.workspace = true
+hmac.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true

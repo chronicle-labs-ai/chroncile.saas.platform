@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "hue": {
+      "description": "CSS color token / hex. Used by `CandidateHueDot`.",
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "notes": {
+      "description": "Tag rendered next to the label, e.g. \"current production\".",
+      "type": "string"
+    },
+    "role": {
+      "description": "Defaults to `candidate`; the Results table treats the first baseline as the reference column.",
+      "enum": [
+        "baseline",
+        "candidate"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "hue",
+    "id",
+    "label",
+    "notes"
+  ],
+  "title": "BacktestAgent",
+  "type": "object"
+}

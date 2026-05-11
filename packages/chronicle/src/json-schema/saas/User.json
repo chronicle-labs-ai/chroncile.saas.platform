@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "authProvider": {
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "createdVia": {
+      "description": "Free-form provenance tag. One of `self_serve`, `invite`, `scim`, `import`. Used by the F.2 admin user-detail surface and to bucket audit reports across provisioning paths.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "email": {
+      "type": "string"
+    },
+    "emailVerifiedAt": {
+      "description": "Mirror of WorkOS `emailVerified` state. Mirrored at JIT-create and SCIM-sync time so audit code can answer \"did this person ever verify their email?\" without round-tripping to WorkOS.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "password": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "writeOnly": true
+    },
+    "role": {
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ],
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "workosUserId": {
+      "description": "Linked WorkOS user id (`user_…`). Populated by the importer for pre-existing accounts and at JIT-create time for new accounts.",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "authProvider",
+    "createdAt",
+    "email",
+    "id",
+    "role",
+    "tenantId",
+    "updatedAt"
+  ],
+  "title": "User",
+  "type": "object"
+}

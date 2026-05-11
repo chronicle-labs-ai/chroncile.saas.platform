@@ -1,6 +1,6 @@
 use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
-    Aes256Gcm, AeadCore, Nonce,
+    AeadCore, Aes256Gcm, Nonce,
 };
 use thiserror::Error;
 
@@ -53,8 +53,7 @@ impl EncryptionService {
     }
 
     pub fn decrypt(&self, encrypted_hex: &str) -> Result<String, EncryptionError> {
-        let combined = hex::decode(encrypted_hex)
-            .map_err(|_| EncryptionError::InvalidFormat)?;
+        let combined = hex::decode(encrypted_hex).map_err(|_| EncryptionError::InvalidFormat)?;
 
         if combined.len() < NONCE_SIZE {
             return Err(EncryptionError::InvalidFormat);
@@ -100,7 +99,10 @@ mod tests {
         let enc1 = service.encrypt(plaintext).unwrap();
         let enc2 = service.encrypt(plaintext).unwrap();
 
-        assert_ne!(enc1, enc2, "AES-GCM with random nonces should produce different ciphertexts");
+        assert_ne!(
+            enc1, enc2,
+            "AES-GCM with random nonces should produce different ciphertexts"
+        );
 
         assert_eq!(service.decrypt(&enc1).unwrap(), plaintext);
         assert_eq!(service.decrypt(&enc2).unwrap(), plaintext);

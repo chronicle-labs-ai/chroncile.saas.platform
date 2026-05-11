@@ -32,13 +32,11 @@ impl EventsManagerApp {
 
         // Check if this event's stream is being recorded
         let recording_streams = self.timeline_view.recording_stream_ids();
-        
+
         // If event has a stream_id, check if it's in the recording streams
         // Events from live API have stream_id = "live_api" or None
         let should_record = match &event.stream_id {
-            Some(stream_id) => {
-                recording_streams.iter().any(|s| s.as_str() == stream_id)
-            }
+            Some(stream_id) => recording_streams.iter().any(|s| s.as_str() == stream_id),
             None => {
                 // Events without stream_id are assumed to be from live API
                 recording_streams.iter().any(|s| s.as_str() == "live_api")
@@ -118,10 +116,8 @@ impl EventsManagerApp {
     /// Convert EventDto to EventEnvelope for recording
     fn dto_to_envelope(dto: &EventDto) -> Result<EventEnvelope, RecordingError> {
         // Convert payload to RawValue
-        let payload_str = serde_json::to_string(&dto.payload)
-            .map_err(RecordingError::Json)?;
-        let payload = RawValue::from_string(payload_str)
-            .map_err(RecordingError::Json)?;
+        let payload_str = serde_json::to_string(&dto.payload).map_err(RecordingError::Json)?;
+        let payload = RawValue::from_string(payload_str).map_err(RecordingError::Json)?;
 
         // Parse actor type
         let actor = match dto.actor_type.as_str() {
@@ -181,7 +177,7 @@ impl EventsManagerApp {
         // For now, we'll use a simpler approach
         let metadata = recorder.finish()?;
         tracing::info!("Recording finished with {} events", metadata.event_count);
-        
+
         // Re-record to get the bytes (not ideal but works for now)
         let buffer = Cursor::new(Vec::new());
         let mut recorder = BagRecorder::new(buffer)?;
@@ -199,34 +195,33 @@ impl EventsManagerApp {
     #[cfg(target_arch = "wasm32")]
     fn trigger_download(filename: &str, data: &[u8]) {
         use wasm_bindgen::JsCast;
-        
+
         let array = js_sys::Uint8Array::from(data);
         let blob_parts = js_sys::Array::new();
         blob_parts.push(&array.buffer());
-        
+
         let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
             &blob_parts,
             web_sys::BlobPropertyBag::new().type_("application/octet-stream"),
         )
         .expect("Failed to create blob");
-        
-        let url = web_sys::Url::create_object_url_with_blob(&blob)
-            .expect("Failed to create object URL");
-        
+
+        let url =
+            web_sys::Url::create_object_url_with_blob(&blob).expect("Failed to create object URL");
+
         let window = web_sys::window().expect("No window");
         let document = window.document().expect("No document");
-        
+
         let a = document
             .create_element("a")
             .expect("Failed to create anchor")
             .dyn_into::<web_sys::HtmlAnchorElement>()
             .expect("Failed to cast to anchor");
-        
+
         a.set_href(&url);
         a.set_download(filename);
         a.click();
-        
+
         let _ = web_sys::Url::revoke_object_url(&url);
     }
 }
-

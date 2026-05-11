@@ -91,8 +91,8 @@ This document summarizes the current state of the Events Manager project and out
 - [x] API URL configuration via query param
 
 ### Infrastructure
-- [x] `docker-compose.yml` for Kafka + Postgres
-- [x] Environment configuration (`.env.example`)
+- [x] `deploy/docker-compose.yml` for Kafka + Postgres
+- [x] Environment configuration (`env.example`)
 - [x] README documentation
 
 ---
@@ -156,6 +156,7 @@ This document summarizes the current state of the Events Manager project and out
    - Slack events API
 
 9. **Observability**
+   - Expand beyond the current Sentry error monitoring, logs, request tracing, and Postgres query span baseline
    - OpenTelemetry tracing
    - Prometheus metrics
 
@@ -191,7 +192,7 @@ cargo test
 cargo build --features full
 
 # Start Kafka/Postgres
-docker-compose up -d
+docker compose -f deploy/docker-compose.yml up -d
 ```
 
 ### Quick Start (Both Server + Web UI)

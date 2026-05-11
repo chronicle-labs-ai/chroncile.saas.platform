@@ -8,7 +8,7 @@ mod types;
 
 use egui::{RichText, Ui};
 
-use crate::design::{colors, rounding, spacing, strokes, typography, status_badge};
+use crate::design::{colors, rounding, spacing, status_badge, strokes, typography};
 use crate::sources_cache::SourcesCache;
 use crate::types::{LaneGrouping, TimeWindowPreset};
 
@@ -215,4 +215,3 @@ impl FilterPanel {
         });
     }
 }
-

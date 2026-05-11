@@ -189,4 +189,3 @@ impl<'a, W: Write + Seek> BagRecorder<'a, W> {
         self.event_count
     }
 }
-

@@ -3,30 +3,60 @@ use chronicle_interfaces::RepoError;
 
 pub type ApiResult<T> = Result<T, ApiError>;
 
+#[derive(Debug)]
 pub struct ApiError {
     status: StatusCode,
     message: String,
 }
 
 impl ApiError {
+    fn expose_internal_details() -> bool {
+        cfg!(debug_assertions)
+            || std::env::var("EXPOSE_INTERNAL_ERRORS")
+                .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+                .unwrap_or(false)
+    }
+
     pub fn bad_request(msg: impl Into<String>) -> Self {
-        Self { status: StatusCode::BAD_REQUEST, message: msg.into() }
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            message: msg.into(),
+        }
     }
 
     pub fn unauthorized() -> Self {
-        Self { status: StatusCode::UNAUTHORIZED, message: "Invalid credentials".into() }
+        Self {
+            status: StatusCode::UNAUTHORIZED,
+            message: "Invalid credentials".into(),
+        }
     }
 
     pub fn not_found(resource: &str) -> Self {
-        Self { status: StatusCode::NOT_FOUND, message: format!("{resource} not found") }
+        Self {
+            status: StatusCode::NOT_FOUND,
+            message: format!("{resource} not found"),
+        }
+    }
+
+    pub fn forbidden(msg: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::FORBIDDEN,
+            message: msg.into(),
+        }
     }
 
     pub fn conflict(msg: impl Into<String>) -> Self {
-        Self { status: StatusCode::CONFLICT, message: msg.into() }
+        Self {
+            status: StatusCode::CONFLICT,
+            message: msg.into(),
+        }
     }
 
     pub fn internal() -> Self {
-        Self { status: StatusCode::INTERNAL_SERVER_ERROR, message: "Something went wrong. Please try again.".into() }
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: "Something went wrong. Please try again.".into(),
+        }
     }
 }
 
@@ -55,7 +85,14 @@ impl From<RepoError> for ApiError {
             }
             RepoError::Internal(detail) => {
                 tracing::error!("Internal error: {detail}");
-                Self::internal()
+                if Self::expose_internal_details() {
+                    Self {
+                        status: StatusCode::INTERNAL_SERVER_ERROR,
+                        message: format!("Internal error: {detail}"),
+                    }
+                } else {
+                    Self::internal()
+                }
             }
         }
     }
@@ -65,18 +102,28 @@ impl From<chronicle_auth::error::AuthError> for ApiError {
     fn from(err: chronicle_auth::error::AuthError) -> Self {
         match &err {
             chronicle_auth::error::AuthError::InvalidCredentials => Self::unauthorized(),
-            chronicle_auth::error::AuthError::TokenExpired => {
-                Self { status: StatusCode::UNAUTHORIZED, message: "Session expired. Please sign in again.".into() }
-            }
-            chronicle_auth::error::AuthError::InvalidToken(_) => {
-                Self { status: StatusCode::UNAUTHORIZED, message: "Invalid session. Please sign in again.".into() }
-            }
-            chronicle_auth::error::AuthError::MissingAuth => {
-                Self { status: StatusCode::UNAUTHORIZED, message: "Authentication required".into() }
-            }
+            chronicle_auth::error::AuthError::TokenExpired => Self {
+                status: StatusCode::UNAUTHORIZED,
+                message: "Session expired. Please sign in again.".into(),
+            },
+            chronicle_auth::error::AuthError::InvalidToken(_) => Self {
+                status: StatusCode::UNAUTHORIZED,
+                message: "Invalid session. Please sign in again.".into(),
+            },
+            chronicle_auth::error::AuthError::MissingAuth => Self {
+                status: StatusCode::UNAUTHORIZED,
+                message: "Authentication required".into(),
+            },
             chronicle_auth::error::AuthError::Internal(detail) => {
                 tracing::error!("Auth internal error: {detail}");
-                Self::internal()
+                if Self::expose_internal_details() {
+                    Self {
+                        status: StatusCode::INTERNAL_SERVER_ERROR,
+                        message: format!("Auth internal error: {detail}"),
+                    }
+                } else {
+                    Self::internal()
+                }
             }
         }
     }

@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Status badge tone for an eval run.",
+  "enum": [
+    "passing",
+    "regressed",
+    "running",
+    "failed"
+  ],
+  "title": "DatasetEvalRunStatus",
+  "type": "string"
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "capabilityTags": {
+      "items": {
+        "type": "string"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "category": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "environment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "framework": {
+      "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+      "enum": [
+        "vercel-ai-sdk",
+        "openai-agents",
+        "langchain",
+        "mastra",
+        "langchain-python",
+        "llamaindex",
+        "crewai",
+        "smolagents",
+        "pydantic-ai",
+        "strands",
+        "google-adk",
+        "openai-agents-python",
+        "autogen"
+      ],
+      "type": "string"
+    },
+    "lastDriftAt": {
+      "description": "Last drift event, if any.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lastRunAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "latestVersion": {
+      "type": "string"
+    },
+    "model": {
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "modelId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
+    "modelLabel": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "personaSummary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "playgroundUrl": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "purpose": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "runbookUrl": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "successRate": {
+      "format": "double",
+      "type": "number"
+    },
+    "totalRuns": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "versionCount": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "framework",
+    "latestVersion",
+    "model",
+    "modelLabel",
+    "name",
+    "successRate",
+    "totalRuns",
+    "versionCount"
+  ],
+  "title": "AgentSummary",
+  "type": "object"
+}

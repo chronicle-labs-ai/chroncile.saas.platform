@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "artifactId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "framework": {
+      "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+      "enum": [
+        "vercel-ai-sdk",
+        "openai-agents",
+        "langchain",
+        "mastra",
+        "langchain-python",
+        "llamaindex",
+        "crewai",
+        "smolagents",
+        "pydantic-ai",
+        "strands",
+        "google-adk",
+        "openai-agents-python",
+        "autogen"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "hash": {
+      "type": "string"
+    },
+    "kind": {
+      "description": "The 13 hash domains the wrapper tracks. The first eight describe the artifact (config-time); the last five describe a run (observed at call-time).",
+      "enum": [
+        "agent.root",
+        "prompt",
+        "model.contract",
+        "provider.options",
+        "tool.contract",
+        "runtime.policy",
+        "dependency",
+        "knowledge.contract",
+        "workflow.graph",
+        "effective.run",
+        "provider.observation",
+        "operational",
+        "output"
+      ],
+      "type": "string"
+    },
+    "observedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    },
+    "preview": {
+      "description": "Stringified preview of the value rendered next to the hash.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "runId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "hash",
+    "kind",
+    "observedAt",
+    "path"
+  ],
+  "title": "HashIndexEntry",
+  "type": "object"
+}

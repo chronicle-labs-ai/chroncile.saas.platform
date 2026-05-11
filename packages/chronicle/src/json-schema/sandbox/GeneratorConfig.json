@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "count": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "eventTypes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "intervalMs": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "sourceTypes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "variationLevel": {
+      "format": "double",
+      "type": "number"
+    }
+  },
+  "required": [
+    "count",
+    "eventTypes",
+    "intervalMs",
+    "sourceTypes",
+    "variationLevel"
+  ],
+  "title": "GeneratorConfig",
+  "type": "object"
+}

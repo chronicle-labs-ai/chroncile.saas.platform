@@ -1,0 +1,343 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "artifactId": {
+      "type": "string"
+    },
+    "callOptionsHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "configHash": {
+      "type": "string"
+    },
+    "durationMs": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "error": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stack": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "finishedAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "inputHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "operation": {
+      "enum": [
+        "generate",
+        "stream"
+      ],
+      "type": "string"
+    },
+    "preparedCall": {
+      "properties": {
+        "activeTools": {
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "hash": {
+          "type": "string"
+        },
+        "providerOptionsHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "hash"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "response": {
+      "properties": {
+        "bodyHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "finishReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Subset of headers preserved for the run drawer.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "modelId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "modelMetadata": {
+          "additionalProperties": true,
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "providerMetadata": {
+          "additionalProperties": true,
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "usage": {
+          "properties": {
+            "cachedInputTokens": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "inputTokens": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "outputTokens": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "reasoningTokens": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "totalTokens": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "runId": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "type": "string"
+    },
+    "startedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "started",
+        "success",
+        "error"
+      ],
+      "type": "string"
+    },
+    "toolCalls": {
+      "items": {
+        "properties": {
+          "argsHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "argsPreview": {
+            "additionalProperties": true,
+            "description": "Optional small preview of the tool args.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "callId": {
+            "type": "string"
+          },
+          "durationMs": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "stack": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resultHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resultPreview": {
+            "additionalProperties": true,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "started",
+              "success",
+              "error"
+            ],
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "callId",
+          "startedAt",
+          "status",
+          "toolName"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "trace": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "artifactId",
+    "configHash",
+    "operation",
+    "runId",
+    "schemaVersion",
+    "startedAt",
+    "status",
+    "toolCalls"
+  ],
+  "title": "AgentRun",
+  "type": "object"
+}

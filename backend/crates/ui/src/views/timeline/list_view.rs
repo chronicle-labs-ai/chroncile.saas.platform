@@ -34,7 +34,8 @@ impl TimelineView {
             })
             .collect();
         #[cfg(not(feature = "native"))]
-        let stream_colors: std::collections::HashMap<String, Color32> = std::collections::HashMap::new();
+        let stream_colors: std::collections::HashMap<String, Color32> =
+            std::collections::HashMap::new();
 
         egui::Frame::none()
             .fill(colors::BG_SURFACE)
@@ -118,12 +119,10 @@ impl TimelineView {
                                         );
                                     });
                                 })
-                            .body(|body| {
+                                .body(|body| {
                                     body_clip_rect = Some(body.max_rect());
 
-                                    let row_heights = filtered_events
-                                        .iter()
-                                        .map(calc_row_height);
+                                    let row_heights = filtered_events.iter().map(calc_row_height);
 
                                     body.heterogeneous_rows(row_heights, |mut row| {
                                         let event = &filtered_events[row.index()];
@@ -139,7 +138,8 @@ impl TimelineView {
                                         row.col(|ui| {
                                             ui.label(
                                                 RichText::new(
-                                                    event.occurred_at
+                                                    event
+                                                        .occurred_at
                                                         .format("%H:%M:%S%.3f")
                                                         .to_string(),
                                                 )
@@ -276,4 +276,3 @@ fn calc_row_height(event: &EventDto) -> f32 {
     let num_rows = 1 + num_newlines;
     num_rows as f32 * 18.0
 }
-

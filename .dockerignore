@@ -1,0 +1,17 @@
+.git
+.cursor
+.agents
+.env
+.env.*
+.next
+.turbo
+node_modules
+docs
+backend
+apps/env-manager
+apps/frontend/.env
+apps/frontend/.next
+apps/frontend/debug-webhook.log
+yarn-error.log*
+yarn-debug.log*
+npm-debug.log*

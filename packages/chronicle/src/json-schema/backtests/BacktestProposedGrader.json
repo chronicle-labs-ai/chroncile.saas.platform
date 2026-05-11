@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "confidence": {
+      "description": "0..1 — rendered as a percentage in the proposed card.",
+      "format": "double",
+      "type": "number"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "rubric",
+        "classifier",
+        "metric",
+        "embedding",
+        "assertion"
+      ],
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "preview": {
+      "items": {
+        "properties": {
+          "baseline": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "expected": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "judgment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pass": {
+            "type": "boolean"
+          },
+          "threshold": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "baseline",
+          "case",
+          "pass"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "weight": {
+      "description": "Grader weight bucket — `low | med | high` matches the segmented control in the GraderBuilder tray.",
+      "enum": [
+        "low",
+        "med",
+        "high"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "confidence",
+    "evidence",
+    "id",
+    "kind",
+    "label",
+    "preview",
+    "weight"
+  ],
+  "title": "BacktestProposedGrader",
+  "type": "object"
+}

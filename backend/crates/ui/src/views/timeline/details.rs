@@ -4,18 +4,21 @@
 
 use egui::{Align2, Color32, RichText, ScrollArea, Sense, Ui};
 
-use crate::design::{colors, rounding, spacing, strokes, typography, status_badge};
+use super::{StreamId, TimelineView};
+use crate::design::{colors, rounding, spacing, status_badge, strokes, typography};
 use crate::types::EventDto;
 #[cfg(feature = "native")]
 use crate::views::widgets::{parse_hex_color, stream_color};
-use super::{TimelineView, StreamId};
 
 // Fallback color functions for web
 #[cfg(not(feature = "native"))]
-fn parse_hex_color(_: &str) -> Option<Color32> { None }
+fn parse_hex_color(_: &str) -> Option<Color32> {
+    None
+}
 #[cfg(not(feature = "native"))]
-fn stream_color(_: usize) -> Color32 { Color32::from_rgb(100, 100, 100) }
-
+fn stream_color(_: usize) -> Color32 {
+    Color32::from_rgb(100, 100, 100)
+}
 
 impl TimelineView {
     /// Render the event details panel
@@ -79,7 +82,10 @@ impl TimelineView {
             })
             .unwrap_or_else(|| {
                 // Fallback for unknown streams
-                let name = event.stream_id.clone().unwrap_or_else(|| "Live API".to_string());
+                let name = event
+                    .stream_id
+                    .clone()
+                    .unwrap_or_else(|| "Live API".to_string());
                 (name, colors::TEXT_MUTED)
             })
     }
@@ -136,7 +142,7 @@ pub(super) fn render_event_details(ui: &mut Ui, event: &EventDto, stream_info: (
                     detail_row(ui, "EVENT ID", &event.event_id);
                     detail_row(ui, "TYPE", &event.event_type);
                     detail_row(ui, "SOURCE", &event.source);
-                    
+
                     // Stream row with color indicator
                     ui.label(
                         RichText::new("STREAM")
@@ -145,7 +151,8 @@ pub(super) fn render_event_details(ui: &mut Ui, event: &EventDto, stream_info: (
                     );
                     ui.horizontal(|ui| {
                         // Color indicator
-                        let (rect, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
+                        let (rect, _) =
+                            ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
                         ui.painter().rect_filled(rect, 2.0, stream_color);
                         ui.add_space(spacing::XS);
                         let response = ui.add(
@@ -164,7 +171,7 @@ pub(super) fn render_event_details(ui: &mut Ui, event: &EventDto, stream_info: (
                         paint_copy_feedback(ui, copy_feedback_id("stream"), &response);
                     });
                     ui.end_row();
-                    
+
                     detail_row(ui, "SUBJECT", &event.conversation_id);
                     detail_row(
                         ui,
@@ -214,8 +221,7 @@ pub(super) fn render_event_details(ui: &mut Ui, event: &EventDto, stream_info: (
                     paint_copy_feedback(ui, copy_feedback_id("payload"), &response);
                 });
             if payload_response.response.clicked() {
-                let payload_str =
-                    serde_json::to_string_pretty(&event.payload).unwrap_or_default();
+                let payload_str = serde_json::to_string_pretty(&event.payload).unwrap_or_default();
                 ui.ctx().copy_text(payload_str);
                 set_copy_feedback(ui, copy_feedback_id("payload"));
             }
@@ -266,7 +272,10 @@ fn paint_copy_feedback(ui: &Ui, id: egui::Id, response: &egui::Response) {
         if age >= 0.0 && age < duration {
             let alpha = (1.0 - (age / duration)).clamp(0.0, 1.0) as f32;
             let color = colors::SIGNAL_GREEN.gamma_multiply(0.2 + 0.8 * alpha);
-            let pos = egui::pos2(response.rect.right() - spacing::XS, response.rect.center().y);
+            let pos = egui::pos2(
+                response.rect.right() - spacing::XS,
+                response.rect.center().y,
+            );
             ui.painter().text(
                 pos,
                 Align2::RIGHT_CENTER,

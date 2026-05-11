@@ -40,4 +40,3 @@ pub fn status_frame(status_color: Color32) -> egui::Frame {
         .inner_margin(egui::Margin::symmetric(spacing::SM, spacing::XS))
         .stroke(Stroke::new(1.0, status_color.gamma_multiply(0.5)))
 }
-

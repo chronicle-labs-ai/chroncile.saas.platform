@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "evidence": {
+      "description": "Optional human-readable explanation of why this grader was proposed.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "rubric",
+        "classifier",
+        "metric",
+        "embedding",
+        "assertion"
+      ],
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "source": {
+      "description": "Grader source — where this grader came from when it was added to the recipe. Determines the chip copy (\"proposed\" vs \"library\" vs \"custom\" vs \"dataset\").",
+      "enum": [
+        "proposed",
+        "library",
+        "custom",
+        "dataset"
+      ],
+      "type": "string"
+    },
+    "weight": {
+      "description": "Grader weight bucket — `low | med | high` matches the segmented control in the GraderBuilder tray.",
+      "enum": [
+        "low",
+        "med",
+        "high"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "label",
+    "source",
+    "weight"
+  ],
+  "title": "BacktestGrader",
+  "type": "object"
+}

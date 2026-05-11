@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Grader source — where this grader came from when it was added to the recipe. Determines the chip copy (\"proposed\" vs \"library\" vs \"custom\" vs \"dataset\").",
+  "enum": [
+    "proposed",
+    "library",
+    "custom",
+    "dataset"
+  ],
+  "title": "BacktestGraderSource",
+  "type": "string"
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "configuredProps": true,
+    "connectionId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "lastSyncAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nangoSyncId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "syncCursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "syncName": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "required": [
+    "connectionId",
+    "createdAt",
+    "id",
+    "nangoSyncId",
+    "status",
+    "syncName",
+    "tenantId",
+    "updatedAt"
+  ],
+  "title": "IntegrationSync",
+  "type": "object"
+}

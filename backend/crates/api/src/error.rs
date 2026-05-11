@@ -7,6 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use chronicle_core::error::{ChronicleError, StoreError as ChronicleStoreError};
 use serde::Serialize;
 use thiserror::Error;
 
@@ -50,20 +51,34 @@ impl IntoResponse for ApiError {
             ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, "not_found", msg.clone()),
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "bad_request", msg.clone()),
             ApiError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, "unauthorized", msg.clone()),
-            ApiError::Validation(msg) => {
-                (StatusCode::UNPROCESSABLE_ENTITY, "validation_error", msg.clone())
-            }
+            ApiError::Validation(msg) => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "validation_error",
+                msg.clone(),
+            ),
             ApiError::Stream(msg) => {
                 tracing::error!(error = %msg, "stream_error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "stream_error", msg.clone())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "stream_error",
+                    msg.clone(),
+                )
             }
             ApiError::Store(msg) => {
                 tracing::error!(error = %msg, "store_error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "store_error", msg.clone())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "store_error",
+                    msg.clone(),
+                )
             }
             ApiError::Internal(msg) => {
                 tracing::error!(error = %msg, "internal_error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg.clone())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "internal_error",
+                    msg.clone(),
+                )
             }
         };
 
@@ -92,6 +107,23 @@ impl From<chronicle_domain::StoreError> for ApiError {
 impl From<serde_json::Error> for ApiError {
     fn from(err: serde_json::Error) -> Self {
         ApiError::BadRequest(format!("JSON error: {}", err))
+    }
+}
+
+impl From<ChronicleError> for ApiError {
+    fn from(err: ChronicleError) -> Self {
+        match err {
+            ChronicleError::Store(ChronicleStoreError::NotFound { entity, id }) => {
+                ApiError::NotFound(format!("{entity} not found: {id}"))
+            }
+            ChronicleError::Store(ChronicleStoreError::Duplicate { entity, id }) => {
+                ApiError::BadRequest(format!("{entity} already exists: {id}"))
+            }
+            ChronicleError::Validation(err) => ApiError::Validation(err.to_string()),
+            ChronicleError::Serialization(err) => ApiError::BadRequest(err),
+            ChronicleError::External(err) => ApiError::Internal(err),
+            ChronicleError::Store(err) => ApiError::Store(err.to_string()),
+        }
     }
 }
 

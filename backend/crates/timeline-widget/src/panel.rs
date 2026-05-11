@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use egui::Ui;
 
 use chronicle_timeline_core::{
-    PlaybackState, TimelinePanel as CorePanel, TimelinePanelConfig, TimelinePanelResponse,
-    TimelineTheme, TimeView,
+    PlaybackState, TimeView, TimelinePanel as CorePanel, TimelinePanelConfig,
+    TimelinePanelResponse, TimelineTheme,
 };
 
 use crate::types::{PlaybackStateJs, TimelineEvent, TimelineOptions};

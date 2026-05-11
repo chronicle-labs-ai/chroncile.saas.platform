@@ -36,6 +36,7 @@ crates/timeline-widget/js/pkg/
 crates/timeline-widget/js/dist/
 crates/timeline-widget/js/node_modules/
 package-lock.json
+deploy/fly.branch.toml
 
 # Rerun (vendored reference code)
 /rerun/

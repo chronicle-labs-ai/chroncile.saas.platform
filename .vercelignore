@@ -1,8 +1,0 @@
-backend/
-backend/target/
-e2e/
-scripts/
-docs/
-.cursor/
-.github/
-*.md

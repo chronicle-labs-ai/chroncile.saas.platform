@@ -16,6 +16,7 @@ pub struct ConversationScenario {
 }
 
 /// Generate a refund request scenario
+#[allow(clippy::vec_init_then_push)]
 pub fn refund_request_scenario(tenant_id: &str) -> ConversationScenario {
     let conn = MockOAuthConnection::new(tenant_id, MockService::MockZendesk);
     let mut gen = MockEventGenerator::new(conn);
@@ -71,14 +72,22 @@ pub fn refund_request_scenario(tenant_id: &str) -> ConversationScenario {
 
     // Customer replies
     events.push(
-        gen.customer_message(conv_id, customer_id, "Yes, my order number is #12345. Thank you!")
-            .with_occurred_at(base_time + Duration::minutes(20)),
+        gen.customer_message(
+            conv_id,
+            customer_id,
+            "Yes, my order number is #12345. Thank you!",
+        )
+        .with_occurred_at(base_time + Duration::minutes(20)),
     );
 
     // Agent internal note
     events.push(
-        gen.internal_note(conv_id, agent_id, "Processing refund for order #12345, damaged item")
-            .with_occurred_at(base_time + Duration::minutes(22)),
+        gen.internal_note(
+            conv_id,
+            agent_id,
+            "Processing refund for order #12345, damaged item",
+        )
+        .with_occurred_at(base_time + Duration::minutes(22)),
     );
 
     // Agent confirms refund
@@ -100,8 +109,12 @@ pub fn refund_request_scenario(tenant_id: &str) -> ConversationScenario {
 
     // Customer thanks
     events.push(
-        gen.customer_message(conv_id, customer_id, "That's all, thank you so much for your help!")
-            .with_occurred_at(base_time + Duration::minutes(45)),
+        gen.customer_message(
+            conv_id,
+            customer_id,
+            "That's all, thank you so much for your help!",
+        )
+        .with_occurred_at(base_time + Duration::minutes(45)),
     );
 
     // Resolve
@@ -119,6 +132,7 @@ pub fn refund_request_scenario(tenant_id: &str) -> ConversationScenario {
 }
 
 /// Generate an escalation scenario
+#[allow(clippy::vec_init_then_push)]
 pub fn escalation_scenario(tenant_id: &str) -> ConversationScenario {
     let conn = MockOAuthConnection::new(tenant_id, MockService::MockZendesk);
     let mut gen = MockEventGenerator::new(conn);

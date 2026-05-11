@@ -12,71 +12,92 @@ mod state;
 use chrono::{DateTime, Utc};
 use egui::{RichText, Ui};
 
-use crate::design::{colors, rounding, spacing, strokes, typography, status_badge};
+use crate::design::{colors, rounding, spacing, status_badge, strokes, typography};
 use crate::types::{EventDto, EventFilter, EventQuery, LaneGrouping, TimeRangeMapper, TimeWindow};
-use crate::views::widgets::{
-    FilterPanel, PlaybackState, RerunTimePanel, TimeScrubber,
-};
+use crate::views::widgets::{FilterPanel, PlaybackState, RerunTimePanel, TimeScrubber};
 #[cfg(feature = "native")]
-use crate::views::widgets::{StreamsPanel, StreamsPanelResponse, StreamId, StreamStatus, StreamViewMode};
+use crate::views::widgets::{
+    StreamId, StreamStatus, StreamViewMode, StreamsPanel, StreamsPanelResponse,
+};
 
 // Stub types for web builds (recording/streams not supported)
 #[cfg(not(feature = "native"))]
 mod web_stubs {
     use egui::Ui;
-    
+
     #[derive(Clone, PartialEq, Eq, Hash, Default)]
     pub struct StreamId(pub String);
     impl StreamId {
-        pub fn new(id: String) -> Self { Self(id) }
-        pub fn live_api() -> Self { Self("live-api".to_string()) }
-        pub fn as_str(&self) -> &str { &self.0 }
+        pub fn new(id: String) -> Self {
+            Self(id)
+        }
+        pub fn live_api() -> Self {
+            Self("live-api".to_string())
+        }
+        pub fn as_str(&self) -> &str {
+            &self.0
+        }
     }
-    
+
     #[derive(Clone, Copy, PartialEq, Default, Debug)]
-    pub enum StreamStatus { #[default] Disconnected, Connected }
-    
+    pub enum StreamStatus {
+        #[default]
+        Disconnected,
+        Connected,
+    }
+
     #[derive(Clone, Copy, PartialEq, Default, Debug)]
-    pub enum StreamViewMode { #[default] Timeline }
-    
+    pub enum StreamViewMode {
+        #[default]
+        Timeline,
+    }
+
     #[derive(Clone, Default)]
     pub struct Stream {
         pub name: String,
         pub color: Option<String>,
         pub enabled: bool,
     }
-    
+
     #[derive(Default)]
     pub struct RecordingState;
     impl RecordingState {
-        pub fn is_pending_save(&self) -> bool { false }
+        pub fn is_pending_save(&self) -> bool {
+            false
+        }
     }
-    
+
     pub struct StreamsPanel {
         pub streams: std::collections::HashMap<StreamId, Stream>,
         pub recording_state: RecordingState,
         pub view_mode: StreamViewMode,
     }
     impl StreamsPanel {
-        pub fn new() -> Self { 
-            Self { 
-                streams: std::collections::HashMap::new(), 
+        pub fn new() -> Self {
+            Self {
+                streams: std::collections::HashMap::new(),
                 recording_state: RecordingState,
                 view_mode: StreamViewMode::Timeline,
-            } 
+            }
         }
         pub fn set_stream_status(&mut self, _id: &StreamId, _status: StreamStatus) {}
         pub fn set_stream_events(&mut self, _id: &StreamId, _count: usize) {}
         pub fn request_recording_for(&mut self, _streams: &[StreamId]) {}
         pub fn stop_recording(&mut self) {}
-        pub fn is_recording(&self) -> bool { false }
+        pub fn is_recording(&self) -> bool {
+            false
+        }
         pub fn record_event(&mut self, _id: Option<&StreamId>) {}
-        pub fn recording_event_count(&self) -> usize { 0 }
+        pub fn recording_event_count(&self) -> usize {
+            0
+        }
         pub fn finish_save(&mut self) {}
         pub fn remove_stream(&mut self, _id: &StreamId) {}
-        pub fn ui(&mut self, _ui: &mut Ui) -> StreamsPanelResponse { StreamsPanelResponse::default() }
+        pub fn ui(&mut self, _ui: &mut Ui) -> StreamsPanelResponse {
+            StreamsPanelResponse::default()
+        }
     }
-    
+
     #[derive(Default)]
     pub struct StreamsPanelResponse {
         pub start_recording: Option<Vec<StreamId>>,
@@ -292,7 +313,10 @@ impl TimelineView {
 
         // View mode change might require re-filtering events
         if response.view_mode_changed {
-            tracing::debug!("Stream view mode changed to {:?}", self.streams_panel.view_mode);
+            tracing::debug!(
+                "Stream view mode changed to {:?}",
+                self.streams_panel.view_mode
+            );
         }
 
         // Handle recording start - store which streams are being recorded
@@ -383,8 +407,11 @@ impl TimelineView {
                                 ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
                             let time = ui.ctx().input(|i| i.time);
                             let alpha = (0.5 + 0.5 * (time * 2.0).sin()) as f32;
-                            ui.painter()
-                                .rect_filled(rect, rounding::NONE, status_color.gamma_multiply(alpha));
+                            ui.painter().rect_filled(
+                                rect,
+                                rounding::NONE,
+                                status_color.gamma_multiply(alpha),
+                            );
                         }
 
                         ui.label(
@@ -573,4 +600,3 @@ impl Default for TimelineView {
         Self::new()
     }
 }
-

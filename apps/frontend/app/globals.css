@@ -1,219 +1,51 @@
-/* Chronicle Labs shared design system — tokens, base styles, component classes */
 @import "ui/styles/globals.css";
+@import "ui/styles/auth.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================
-   FRONTEND-SPECIFIC FONT FACES
-   Helvetica Neue LT Pro - Self-hosted
-   ============================================ */
-
-@font-face {
-  font-family: 'Helvetica Neue LT Pro';
-  src: url('/fonts/HelveticaNeueLTPro-Lt.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Neue LT Pro';
-  src: url('/fonts/HelveticaNeueLTPro-Roman.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Neue LT Pro';
-  src: url('/fonts/HelveticaNeueLTPro-Md.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica Neue LT Pro';
-  src: url('/fonts/HelveticaNeueLTPro-Bd.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* ============================================
-   AUTH PAGE ANIMATIONS
-   ============================================ */
-
-@keyframes grid-drift {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(60px, 60px); }
-}
-
-@keyframes scan {
-  0%, 100% { background-position: 0% 0%; }
-  50% { background-position: 0% 100%; }
-}
-
-@keyframes float-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-  50% { transform: translate(10px, -20px) scale(1.2); opacity: 0.3; }
-}
-
-@keyframes float-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-  50% { transform: translate(-15px, 15px) scale(0.8); opacity: 0.6; }
-}
-
-@keyframes float-3 {
-  0%, 100% { transform: translate(0, 0) scale(1.1); opacity: 0.3; }
-  50% { transform: translate(20px, 10px) scale(0.9); opacity: 0.5; }
-}
-
-.animate-float-1 { animation: float-1 8s ease-in-out infinite; }
-.animate-float-2 { animation: float-2 10s ease-in-out infinite; }
-.animate-float-3 { animation: float-3 12s ease-in-out infinite; }
-
-.animate-grid-drift {
-  animation: grid-drift 20s linear infinite;
-}
-
-.animate-scan {
-  animation: scan 4s ease-in-out infinite;
-}
-
-/* ============================================
-   TIMELINE ANIMATIONS
-   ============================================ */
-
-@keyframes timeline-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-@keyframes playhead-drift {
-  0%, 100% { left: 38%; opacity: 0.5; }
-  50% { left: 42%; opacity: 0.7; }
-}
-
-@keyframes playhead-drift-2 {
-  0%, 100% { left: 62%; opacity: 0.3; }
-  50% { left: 68%; opacity: 0.5; }
-}
-
-@keyframes dither-shift {
-  0% { background-position: 0 0; }
-  100% { background-position: 4px 4px; }
-}
-
-.timeline-scroll {
-  animation: timeline-scroll 20s linear infinite;
-}
-
-.playhead-1 {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 40%;
-  width: 3px;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 212, 255, 0.8) 10%, rgba(0, 212, 255, 0.8) 90%, transparent 100%);
-  box-shadow: 0 0 30px rgba(0, 212, 255, 0.6), 0 0 60px rgba(0, 212, 255, 0.3), 0 0 100px rgba(0, 212, 255, 0.15);
-  animation: playhead-drift 8s ease-in-out infinite;
-}
-
-.playhead-2 {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 65%;
-  width: 2px;
-  background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.6) 15%, rgba(16, 185, 129, 0.6) 85%, transparent 100%);
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 0 50px rgba(16, 185, 129, 0.2);
-  animation: playhead-drift-2 12s ease-in-out infinite;
-}
-
-.dither-pattern {
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(0, 212, 255, 0.06) 3px,
-      rgba(0, 212, 255, 0.06) 4px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 255, 255, 0.04) 3px,
-      rgba(255, 255, 255, 0.04) 4px
-    );
-  animation: dither-shift 0.3s steps(4) infinite;
-}
-
-/* ============================================
-   SANDBOX / REACT FLOW OVERRIDES
-   ============================================ */
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
+/*
+ * The shared `ui/styles/globals.css` already paints the body using
+ * `var(--c-page)` / `var(--c-ink)` and wires the Geist fonts to
+ * `--font-sans`. We just need to:
+ *   1. Tell the browser its native chrome (form controls, scrollbars,
+ *      autofill background) follows the active `data-theme`, and
+ *   2. Layer `--font-geist-sans` ahead of the design-system stack so
+ *      the Next/font subset is preferred — keeping the rest of the
+ *      stack as a fallback.
+ *
+ * No raw `bg-neutral-950` / `text-neutral-100` — those forced the
+ * app into dark mode even when the ThemeProvider flipped to light.
+ */
+@layer base {
+  :root {
+    color-scheme: dark;
   }
-  to {
-    transform: translateX(0);
-    opacity: 1;
+  [data-theme="light"] {
+    color-scheme: light;
   }
-}
 
-.react-flow__controls {
-  background: #0f1215 !important;
-  border: 1px solid #252a30 !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-}
+  body {
+    font-family:
+      var(--font-geist-sans),
+      var(--font-sans),
+      system-ui,
+      sans-serif;
+    /*
+     * Account for iOS notches and Android gesture bars on full-bleed
+     * pages (auth, onboarding) without padding nested layouts twice.
+     */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 
-.react-flow__controls button {
-  background: #0f1215 !important;
-  border-color: #252a30 !important;
-  fill: #9aa0a6 !important;
-}
-
-.react-flow__controls button:hover {
-  background: #1a1d21 !important;
-  fill: #e8eaed !important;
-}
-
-.react-flow__minimap {
-  background: #0a0c0f !important;
-  border: 1px solid #252a30 !important;
-  border-radius: 6px !important;
-}
-
-.react-flow__edge-path {
-  stroke: #353c45 !important;
-  stroke-width: 2px !important;
-}
-
-.react-flow__edge.selected .react-flow__edge-path,
-.react-flow__edge:hover .react-flow__edge-path {
-  stroke: #00d4ff !important;
-}
-
-.react-flow__handle {
-  transition: all 100ms ease;
-}
-
-.react-flow__handle:hover {
-  transform: scale(1.4);
-}
-
-.react-flow__connection-line {
-  stroke: #00d4ff !important;
-  stroke-width: 2px !important;
-}
-
-.react-flow__attribution {
-  display: none !important;
+  /*
+   * Anchor scroll-into-view leaves room for the dashboard's sticky
+   * header (`--header-height`). Without it, focused inputs and
+   * `scrollIntoView()` targets land flush with — or under — the bar.
+   */
+  [id] {
+    scroll-margin-top: calc(var(--header-height, 3.5rem) + 8px);
+  }
 }

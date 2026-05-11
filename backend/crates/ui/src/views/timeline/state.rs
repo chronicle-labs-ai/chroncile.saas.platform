@@ -101,11 +101,7 @@ impl TimelineView {
     /// Internal method to add an event and update available filters
     fn add_event_internal(&mut self, event: EventDto) {
         // Update available sources/types if new AND add to selected (so new types show up)
-        if !self
-            .filter_panel
-            .available_sources
-            .contains(&event.source)
-        {
+        if !self.filter_panel.available_sources.contains(&event.source) {
             let mut sources = self.filter_panel.available_sources.clone();
             sources.push(event.source.clone());
             sources.sort();
@@ -208,4 +204,3 @@ impl TimelineView {
         }
     }
 }
-

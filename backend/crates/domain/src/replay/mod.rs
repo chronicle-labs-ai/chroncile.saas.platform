@@ -104,10 +104,16 @@ mod tests {
         session.advance(); // Advance one
 
         session.pause();
-        assert!(matches!(session.state, ReplayState::Paused { index: 1, .. }));
+        assert!(matches!(
+            session.state,
+            ReplayState::Paused { index: 1, .. }
+        ));
 
         session.start();
-        assert!(matches!(session.state, ReplayState::Playing { index: 1, .. }));
+        assert!(matches!(
+            session.state,
+            ReplayState::Playing { index: 1, .. }
+        ));
     }
 
     #[test]
@@ -143,4 +149,3 @@ mod tests {
         assert!(session.state.is_completed());
     }
 }
-

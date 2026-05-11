@@ -25,8 +25,8 @@ impl TimeView {
         Self {
             center,
             half_width_ms: (duration_ms / 2).max(1000),
-            min_half_width_ms: 1000,                      // 1 second minimum
-            max_half_width_ms: 7 * 24 * 60 * 60 * 1000,  // 7 days maximum
+            min_half_width_ms: 1000,                    // 1 second minimum
+            max_half_width_ms: 7 * 24 * 60 * 60 * 1000, // 7 days maximum
         }
     }
 
@@ -57,7 +57,8 @@ impl TimeView {
         if end > start {
             let duration_ms = (end - start).num_milliseconds();
             self.center = start + Duration::milliseconds(duration_ms / 2);
-            self.half_width_ms = (duration_ms / 2).clamp(self.min_half_width_ms, self.max_half_width_ms);
+            self.half_width_ms =
+                (duration_ms / 2).clamp(self.min_half_width_ms, self.max_half_width_ms);
         }
     }
 
@@ -98,10 +99,8 @@ impl TimeView {
         let duration_ms = (max_time - min_time).num_milliseconds().max(1000);
 
         let padding_ms = (duration_ms as f32 * padding_ratio) as i64;
-        self.half_width_ms = ((duration_ms + padding_ms * 2) / 2).clamp(
-            self.min_half_width_ms,
-            self.max_half_width_ms,
-        );
+        self.half_width_ms = ((duration_ms + padding_ms * 2) / 2)
+            .clamp(self.min_half_width_ms, self.max_half_width_ms);
         self.center = min_time + Duration::milliseconds(duration_ms / 2);
     }
 

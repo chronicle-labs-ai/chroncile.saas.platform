@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Grader weight bucket — `low | med | high` matches the segmented control in the GraderBuilder tray.",
+  "enum": [
+    "low",
+    "med",
+    "high"
+  ],
+  "title": "BacktestGraderWeight",
+  "type": "string"
+}

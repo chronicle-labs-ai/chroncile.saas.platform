@@ -1,14 +1,17 @@
 [package]
-name = "chronicle-sources-core"
+name = "chronicle_sources_core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 description = "Core abstractions for event source integrations"
 
+[lints]
+workspace = true
+
 [dependencies]
 # Internal
-chronicle-domain = { workspace = true }
+chronicle_domain = { workspace = true }
 
 # Async
 async-trait = { workspace = true }

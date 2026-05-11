@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Intended use of a dataset — drives the colored badge on the picker and lets apps route additions to the right backend (eval suite, training set, replay corpus, manual review queue).",
+  "enum": [
+    "eval",
+    "training",
+    "replay",
+    "review"
+  ],
+  "title": "DatasetPurpose",
+  "type": "string"
+}

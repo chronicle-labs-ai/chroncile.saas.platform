@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "flagKey": {
+      "enum": [
+        "sandbox",
+        "auditLog",
+        "agentEndpointConfig",
+        "workflowFilters"
+      ],
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rolloutPercentage": {
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "scopeId": {
+      "type": "string"
+    },
+    "scopeType": {
+      "enum": [
+        "global",
+        "tenant",
+        "user"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "variant": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "createdAt",
+    "enabled",
+    "flagKey",
+    "id",
+    "scopeId",
+    "scopeType",
+    "updatedAt"
+  ],
+  "title": "FeatureFlagOverride",
+  "type": "object"
+}

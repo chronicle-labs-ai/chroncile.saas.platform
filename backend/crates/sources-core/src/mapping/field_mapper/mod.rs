@@ -135,9 +135,8 @@ impl FieldMapper {
             Some(v) => {
                 // Apply transform if specified
                 if let Some(ref transform) = mapping.transform {
-                    let extract_fn = |path: &str, val: &serde_json::Value| {
-                        self.extract_value(path, val)
-                    };
+                    let extract_fn =
+                        |path: &str, val: &serde_json::Value| self.extract_value(path, val);
                     apply_transform(v, transform, &extract_fn)?
                 } else {
                     v
@@ -286,4 +285,3 @@ transform = { type = "map", mappings = { "CREATE" = "user.created", "DELETE" = "
         assert_eq!(envelope.event_type, "user.created");
     }
 }
-

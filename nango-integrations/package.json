@@ -1,0 +1,9 @@
+{
+  "name": "nango-integrations",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "nango": "^0.111.0",
+    "zod": "^3.24.1"
+  }
+}

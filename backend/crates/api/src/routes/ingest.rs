@@ -58,8 +58,9 @@ pub async fn ingest_event(
     State(state): State<AppState>,
     Json(req): Json<IngestEventRequest>,
 ) -> ApiResult<Json<IngestResponse>> {
-    let tenant_id = req.tenant_id
-        .map(|t| TenantId::new(t))
+    let tenant_id = req
+        .tenant_id
+        .map(TenantId::new)
         .unwrap_or_else(|| state.default_tenant.clone());
 
     // Check for duplicate
@@ -140,8 +141,9 @@ pub async fn ingest_batch(
     let mut duplicates = 0;
 
     for req in events {
-        let tenant_id = req.tenant_id
-            .map(|t| TenantId::new(t))
+        let tenant_id = req
+            .tenant_id
+            .map(TenantId::new)
             .unwrap_or_else(|| state.default_tenant.clone());
 
         // Check for duplicate

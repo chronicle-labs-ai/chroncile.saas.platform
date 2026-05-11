@@ -56,81 +56,81 @@ pub fn arb_subject() -> impl Strategy<Value = Subject> {
 pub fn arb_event_envelope() -> impl Strategy<Value = EventEnvelope> {
     (
         arb_tenant_id(),
-        "[a-z]{5,10}", // source
-        "[a-z0-9]{8,16}", // source_event_id  
+        "[a-z]{5,10}",              // source
+        "[a-z0-9]{8,16}",           // source_event_id
         "[a-z]+\\.[a-z]+\\.[a-z]+", // event_type
         arb_subject(),
         arb_actor(),
         0i64..3600i64, // seconds offset
     )
-        .prop_map(|(tenant_id, source, source_event_id, event_type, subject, actor, offset)| {
-            let occurred_at = Utc::now() - Duration::seconds(offset);
-            let payload = RawValue::from_string("{}".to_string()).unwrap();
+        .prop_map(
+            |(tenant_id, source, source_event_id, event_type, subject, actor, offset)| {
+                let occurred_at = Utc::now() - Duration::seconds(offset);
+                let payload = RawValue::from_string("{}".to_string()).unwrap();
 
-            EventEnvelope {
-                event_id: crate::new_event_id(),
-                tenant_id,
-                source,
-                source_event_id,
-                event_type,
-                subject,
-                actor,
-                occurred_at,
-                ingested_at: Utc::now(),
-                schema_version: 1,
-                payload,
-                pii: PiiFlags::none(),
-                permissions: Permissions::support(),
-                stream_id: None,
-            }
-        })
+                EventEnvelope {
+                    event_id: crate::new_event_id(),
+                    tenant_id,
+                    source,
+                    source_event_id,
+                    event_type,
+                    subject,
+                    actor,
+                    occurred_at,
+                    ingested_at: Utc::now(),
+                    schema_version: 1,
+                    payload,
+                    pii: PiiFlags::none(),
+                    permissions: Permissions::support(),
+                    stream_id: None,
+                }
+            },
+        )
 }
 
 /// Generate a vector of events for the same conversation
-pub fn arb_conversation_events(min: usize, max: usize) -> impl Strategy<Value = Vec<EventEnvelope>> {
-    (
-        arb_tenant_id(),
-        arb_subject_id(),
-        min..=max,
-    )
-        .prop_flat_map(|(tenant_id, conv_id, count)| {
-            proptest::collection::vec(
-                (
-                    "[a-z]{5,10}",
-                    "[a-z0-9]{8,16}",
-                    "[a-z]+\\.[a-z]+",
-                    arb_actor(),
-                    0i64..3600i64,
-                ),
-                count,
-            )
-            .prop_map(move |items| {
-                items
-                    .into_iter()
-                    .map(|(source, source_event_id, event_type, actor, offset)| {
-                        let occurred_at = Utc::now() - Duration::seconds(offset);
-                        let payload = RawValue::from_string("{}".to_string()).unwrap();
+pub fn arb_conversation_events(
+    min: usize,
+    max: usize,
+) -> impl Strategy<Value = Vec<EventEnvelope>> {
+    (arb_tenant_id(), arb_subject_id(), min..=max).prop_flat_map(|(tenant_id, conv_id, count)| {
+        proptest::collection::vec(
+            (
+                "[a-z]{5,10}",
+                "[a-z0-9]{8,16}",
+                "[a-z]+\\.[a-z]+",
+                arb_actor(),
+                0i64..3600i64,
+            ),
+            count,
+        )
+        .prop_map(move |items| {
+            items
+                .into_iter()
+                .map(|(source, source_event_id, event_type, actor, offset)| {
+                    let occurred_at = Utc::now() - Duration::seconds(offset);
+                    let payload = RawValue::from_string("{}".to_string()).unwrap();
 
-                        EventEnvelope {
-                            event_id: crate::new_event_id(),
-                            tenant_id: tenant_id.clone(),
-                            source,
-                            source_event_id,
-                            event_type,
-                            subject: Subject::new(conv_id.clone()),
-                            actor,
-                            occurred_at,
-                            ingested_at: Utc::now(),
-                            schema_version: 1,
-                            payload,
-                            pii: PiiFlags::none(),
-                            permissions: Permissions::support(),
-                            stream_id: None,
-                        }
-                    })
-                    .collect()
-            })
+                    EventEnvelope {
+                        event_id: crate::new_event_id(),
+                        tenant_id: tenant_id.clone(),
+                        source,
+                        source_event_id,
+                        event_type,
+                        subject: Subject::new(conv_id.clone()),
+                        actor,
+                        occurred_at,
+                        ingested_at: Utc::now(),
+                        schema_version: 1,
+                        payload,
+                        pii: PiiFlags::none(),
+                        permissions: Permissions::support(),
+                        stream_id: None,
+                    }
+                })
+                .collect()
         })
+    })
 }
 
 #[cfg(test)]

@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Row projection of `\"BacktestTrial\"`.",
+  "properties": {
+    "agentId": {
+      "type": "string"
+    },
+    "agentLabel": {
+      "type": "string"
+    },
+    "attempt": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "caseCluster": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "caseId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "durationMs": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "exception": {
+      "description": "Captured exception info for a failed trial. Mirrors Harbor's `ExceptionInfo` — kind for routing/retry, message for humans.",
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "message"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "isBaseline": {
+      "type": "boolean"
+    },
+    "jobId": {
+      "type": "string"
+    },
+    "sandboxId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "description": "Lifecycle state of a single `BacktestTrial` (one (case × agent) cell).",
+      "enum": [
+        "pending",
+        "setup",
+        "running",
+        "verifying",
+        "succeeded",
+        "failed",
+        "cancelled"
+      ],
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "timings": {
+      "description": "Per-phase timing bookkeeping. Each pair is `(started_at, finished_at)`; `None` until that phase starts/ends.",
+      "properties": {
+        "agentRunFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agentRunStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agentSetupFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agentSetupStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "envSetupFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "envSetupStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verifierFinishedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verifierStartedAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "required": [
+    "agentId",
+    "agentLabel",
+    "attempt",
+    "caseId",
+    "createdAt",
+    "id",
+    "isBaseline",
+    "jobId",
+    "status",
+    "tenantId",
+    "timings",
+    "updatedAt"
+  ],
+  "title": "BacktestTrialRecord",
+  "type": "object"
+}

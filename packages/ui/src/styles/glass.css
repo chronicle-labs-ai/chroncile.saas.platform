@@ -1,0 +1,268 @@
+/*
+ * Chronicle glass system — CSS.
+ *
+ * Ported from @chronicle/glass. Every value is exposed as a CSS custom
+ * property so consumers can retheme by overriding on :root or on a
+ * GlassScene wrapper. See `../surfaces/tokens.ts` for the typed mirror
+ * and `../surfaces/*.tsx` for the React primitives that consume these.
+ *
+ * Scene / pane anatomy:
+ *   - `.cg-scene`        — dark stage, isolated stacking context, clips.
+ *   - `.cg-scene__stage` — fixed-dimension logical canvas (1920x1080 default)
+ *                          CSS-scaled to fit; Figma-pixel values stay
+ *                          proportional at every viewport size.
+ *   - `.cg-light`        — the colored emitter (gradient pill/sheet/blob).
+ *                          Pre-blurred so its edges dissolve into the
+ *                          scene bg before panes sample it.
+ *   - `.cg-pane`         — single backdrop-filter blur slat with a
+ *                          dark-core/bright-edge gradient composited via
+ *                          mix-blend-mode: overlay.
+ *   - `.cg-stack`        — flex container for panes. INTENTIONALLY creates
+ *                          NO new stacking context so the panes' blend
+ *                          and backdrop-filter can reach the light source.
+ */
+
+/* ─────────────────────────────────────────────────────────────
+   Tokens
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --cg-bg-obsidian: #040404;
+  --cg-bg-void: #020202;
+  --cg-bg-paper: #ffffff;
+  --cg-bg-bone: #f5f1ea;
+
+  /* Glass pane edge-highlight gradient.
+   *
+   * Figma applies this gradient with fill-blend OVERLAY against the
+   * backdrop-blurred light. CSS can't replicate fill-level overlay against
+   * backdrop-filter, so we approximate by making the core semi-transparent.
+   * The dark center darkens the blurred light while letting color bleed
+   * through — matching what overlay of #121212 against mid-tone produces. */
+  --cg-pane-edge: rgba(255, 255, 255, 0.05);
+  --cg-pane-core: #121212;
+  --cg-pane-edge-stop-start: 5.42%;
+  --cg-pane-core-stop: 78.51%;
+  --cg-pane-edge-stop-end: 115.06%;
+  --cg-pane-highlight-angle: 268deg;
+
+  /* Soft variant (Diagonal recipe — Figma fill-opacity is 0.1) */
+  --cg-pane-edge-soft: rgba(255, 255, 255, 0.005);
+  --cg-pane-core-soft: rgba(4, 4, 4, 0.08);
+  --cg-pane-edge-soft-stop-start: 0%;
+  --cg-pane-core-soft-stop: 83.22%;
+  --cg-pane-edge-soft-stop-end: 100%;
+
+  /* Blur scale — xl (127px) matches the Figma default for vertical slats. */
+  --cg-blur-sm: 32px;
+  --cg-blur-md: 64px;
+  --cg-blur-lg: 99px;
+  --cg-blur-xl: 127px;
+  --cg-blur-2xl: 183px;
+
+  /* Pane overlap — each pane extends past its layout slot by this amount
+   * to cover subpixel gaps from fractional widths. Panes blend with
+   * overlay, so a small overlap is visually benign. */
+  --cg-pane-overlap: 2px;
+
+  /* Grain / noise overlay — matches Figma's filter pipeline:
+   *   fractalNoise → luminanceToAlpha → discrete threshold → dark flood
+   *
+   * The discrete table (52 ones + 48 zeros) makes the grain sharp and
+   * pixel-like instead of smooth, matching Figma's TEXTURE/NOISE output.
+   * The flood rgb(0,0,0) at 25% opacity is then masked by that binary
+   * pattern — only dark speckles are produced, never bright ones. */
+  --cg-noise-opacity: 0.12;
+  --cg-noise-blend: multiply;
+  --cg-noise-url: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'><filter id='n' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch' result='t'/><feColorMatrix in='t' type='luminanceToAlpha' result='a'/><feComponentTransfer in='a' result='q'><feFuncA type='discrete' tableValues='1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'/></feComponentTransfer><feFlood flood-color='rgb(0,0,0)' flood-opacity='0.25' result='d'/><feComposite in='d' in2='q' operator='in'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+
+  /* Per-pane grain — a direct grain texture baked into each glass slat
+   * via a ::after pseudo-element. Defaults to 0 (off). Set to ~0.8 for
+   * Figma-accurate film-grain on every slat. */
+  --cg-pane-noise: 0;
+
+  /* Light-source edge blur — pre-softens the pill's rounded edge so it
+   * dissolves into the scene bg before panes' backdrop-filter samples it. */
+  --cg-light-edge-blur: 60px;
+
+  /* Light-source inner shadow. Darkens the rim of the emitter, giving
+   * the pill a tangible, volumetric feel against the black stage. */
+  --cg-light-shadow: inset 0 4px 237.63px rgba(0, 0, 0, 0.25);
+  --cg-light-shadow-soft: inset 0 2px 120px rgba(0, 0, 0, 0.2);
+  --cg-light-shadow-none: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Scene
+   ───────────────────────────────────────────────────────────── */
+.cg-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--cg-scene-bg, var(--cg-bg-obsidian));
+  color: inherit;
+}
+
+.cg-scene__stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--cg-stage-w, 1920px);
+  height: var(--cg-stage-h, 1080px);
+  transform-origin: center center;
+  /* Stage scale is container-relative (computed at runtime). Stage
+   * rotation rotates light + stack together, preserving per-pane blend. */
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--cg-stage-rotate, 0deg))
+    scale(var(--cg-stage-scale, 1));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Light source — the colored emitter behind the glass
+   ───────────────────────────────────────────────────────────── */
+.cg-light {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  will-change: transform;
+  background-image: var(--cg-light-gradient);
+  box-shadow: var(--cg-light-shadow-resolved, none);
+  overflow: hidden;
+  /* Pre-blur the light source so the pill's rounded edge dissolves into
+   * the scene background BEFORE panes sample it via backdrop-filter.
+   * Without this, the sharp pill-to-black transition creates a visible
+   * diagonal contour line through the glass slats. */
+  filter: blur(var(--cg-light-edge-blur, 60px));
+}
+
+/* Grain texture on the light source — matches Figma's TEXTURE effect. */
+.cg-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: var(--cg-light-grain-opacity, 0.08);
+  mix-blend-mode: multiply;
+  background-image: var(--cg-noise-url);
+  background-size: 200px 200px;
+}
+
+.cg-light[data-shape="pill"] {
+  border-radius: 9999px;
+}
+
+.cg-light[data-shape="sheet"] {
+  border-radius: 0;
+}
+
+.cg-light[data-shape="blob"] {
+  border-radius: 45% 55% 52% 48% / 55% 48% 52% 45%;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Glass pane (slat) — atomic primitive. Everything composes panes.
+   ─────────────────────────────────────────────────────────────
+   Figma dev-mode export for node 0:41 (exact):
+     backdrop-filter: blur(127.4px);
+     background: linear-gradient(268deg, rgba(255,255,255,0.05) 5.42%,
+                 #121212 78.51%, rgba(255,255,255,0.05) 115.06%);
+     mix-blend-mode: overlay;
+*/
+.cg-pane {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  backdrop-filter: blur(var(--cg-pane-blur, var(--cg-blur-xl)));
+  -webkit-backdrop-filter: blur(var(--cg-pane-blur, var(--cg-blur-xl)));
+  mix-blend-mode: var(--cg-pane-blend, overlay);
+  background: linear-gradient(
+    var(--cg-pane-highlight-angle),
+    var(--cg-pane-edge) var(--cg-pane-edge-stop-start),
+    var(--cg-pane-core) var(--cg-pane-core-stop),
+    var(--cg-pane-edge) var(--cg-pane-edge-stop-end)
+  );
+}
+
+.cg-pane[data-highlight="soft"] {
+  background: linear-gradient(
+    var(--cg-pane-highlight-angle),
+    var(--cg-pane-edge-soft) var(--cg-pane-edge-soft-stop-start),
+    var(--cg-pane-core-soft) var(--cg-pane-core-soft-stop),
+    var(--cg-pane-edge-soft) var(--cg-pane-edge-soft-stop-end)
+  );
+}
+
+/* Per-pane grain — dark speckle texture baked into each slat. */
+.cg-pane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--cg-pane-noise, 0);
+  background-image: var(--cg-noise-url);
+  background-size: 300px 300px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Glass stack — un-transformed flex layout for panes.
+   ─────────────────────────────────────────────────────────────
+   INTENTIONALLY creates NO new stacking context: no transform, no
+   mix-blend-mode, no filter, no opacity<1, no isolation. Any of those
+   would trap the panes' blend and backdrop-filter inside an isolated
+   group and break the glass effect. Scene-level rotation (for diagonal
+   compositions) is applied on `.cg-scene__stage` instead.
+*/
+.cg-stack {
+  display: flex;
+  position: absolute;
+  overflow: hidden;
+}
+
+/* Film-grain / noise overlay sits on top of the blended glass. */
+.cg-stack[data-noise="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--cg-stack-noise-opacity, var(--cg-noise-opacity));
+  mix-blend-mode: var(--cg-stack-noise-blend, var(--cg-noise-blend));
+  background-image: var(--cg-noise-url);
+  background-size: 200px 200px;
+}
+
+.cg-stack[data-orientation="vertical"] {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.cg-stack[data-orientation="horizontal"] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cg-stack > .cg-pane {
+  flex: 1 0 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Pane-to-pane overlap covers subpixel gaps from fractional widths. */
+.cg-stack[data-orientation="vertical"] > .cg-pane {
+  width: calc(100% + var(--cg-stack-overlap, var(--cg-pane-overlap)));
+  margin-inline-end: calc(
+    -1 * var(--cg-stack-overlap, var(--cg-pane-overlap))
+  );
+}
+
+.cg-stack[data-orientation="horizontal"] > .cg-pane {
+  height: calc(100% + var(--cg-stack-overlap, var(--cg-pane-overlap)));
+  margin-block-end: calc(
+    -1 * var(--cg-stack-overlap, var(--cg-pane-overlap))
+  );
+}

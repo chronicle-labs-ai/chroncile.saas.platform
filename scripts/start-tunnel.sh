@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Start an ngrok tunnel for a local Chronicle app.
+# Usage: ./scripts/start-tunnel.sh [port] [--domain=custom.domain.com]
+
+PORT="${1:-3000}"
+DOMAIN=""
+
+# Parse flags
+shift 2>/dev/null || true
+for arg in "$@"; do
+  case "$arg" in
+    --domain=*) DOMAIN="${arg#--domain=}" ;;
+  esac
+done
+
+NGROK_API="http://127.0.0.1:4040/api/tunnels"
+MAX_WAIT=15
+
+if ! command -v ngrok >/dev/null 2>&1; then
+  echo "ngrok is not installed. Install with: brew install ngrok" >&2
+  exit 1
+fi
+
+# Kill any existing ngrok process so we get a clean tunnel.
+pkill -f "ngrok http" 2>/dev/null || true
+sleep 1
+
+NGROK_ARGS="--log=stdout --log-format=json"
+if [[ -n "$DOMAIN" ]]; then
+  NGROK_ARGS="--domain=$DOMAIN $NGROK_ARGS"
+  echo "Starting ngrok tunnel to localhost:${PORT} with domain ${DOMAIN}..."
+else
+  echo "Starting ngrok tunnel to localhost:${PORT}..."
+fi
+
+ngrok http "$PORT" $NGROK_ARGS > /tmp/ngrok.log 2>&1 &
+NGROK_PID=$!
+
+# Wait for the ngrok API to come up and return a tunnel URL.
+TUNNEL_URL=""
+for i in $(seq 1 "$MAX_WAIT"); do
+  sleep 1
+  TUNNEL_URL=$(curl -s "$NGROK_API" 2>/dev/null \
+    | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    for t in data.get('tunnels', []):
+        if t.get('proto') == 'https':
+            print(t['public_url'])
+            break
+except: pass
+" 2>/dev/null || true)
+  if [[ -n "$TUNNEL_URL" ]]; then
+    break
+  fi
+done
+
+if [[ -z "$TUNNEL_URL" ]]; then
+  echo "Failed to get tunnel URL after ${MAX_WAIT}s. Check ngrok logs at /tmp/ngrok.log" >&2
+  kill "$NGROK_PID" 2>/dev/null || true
+  exit 1
+fi
+
+echo "Tunnel URL:  $TUNNEL_URL"
+echo "ngrok PID:   $NGROK_PID"
+echo "Inspector:   http://127.0.0.1:4040"
+
+# Write state so other scripts can read the tunnel URL.
+cat > /tmp/chronicle-tunnel.env <<EOF
+TUNNEL_URL=${TUNNEL_URL}
+NGROK_PID=${NGROK_PID}
+EOF
+
+echo "Tunnel is running. Stop with: kill $NGROK_PID"

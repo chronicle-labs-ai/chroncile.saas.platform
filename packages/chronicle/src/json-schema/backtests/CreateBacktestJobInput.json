@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Insert payload accepted by `BacktestJobRepository::create`. The orchestrator typically builds this from a `JobConfig`; the API layer accepts a `JobConfig` directly and translates.",
+  "properties": {
+    "createdBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "replay",
+        "compare",
+        "regression",
+        "suite"
+      ],
+      "type": "string"
+    },
+    "nConcurrent": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "recipe": true,
+    "retryConfig": {
+      "description": "Retry policy applied to transient trial failures (network errors, sandbox-create timeouts). Mirrors Harbor's `RetryConfig`. Pass `null` on the wire (`None` here) to fall back to defaults.",
+      "properties": {
+        "excludeExceptions": {
+          "description": "Exception kinds that explicitly should not be retried even if otherwise matched by `include_exceptions`.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "includeExceptions": {
+          "description": "When set, only exception kinds in this list trigger a retry. `None` means \"retry every transient kind\".",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "maxRetries": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "maxWaitSec": {
+          "format": "double",
+          "type": "number"
+        },
+        "minWaitSec": {
+          "format": "double",
+          "type": "number"
+        },
+        "waitMultiplier": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "maxRetries",
+        "maxWaitSec",
+        "minWaitSec",
+        "waitMultiplier"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "sandboxDriver": {
+      "description": "Sandbox driver picked at submit time. Echoed onto the `BacktestJob.sandboxDriver` column. The orchestrator reads this to pick the implementation behind the `Sandbox` trait (Phase 1).",
+      "oneOf": [
+        {
+          "description": "Local Docker daemon. Useful for CI + dev loops.",
+          "enum": [
+            "docker"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Daytona cloud sandboxes. Default for production.",
+          "enum": [
+            "daytona"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "In-process echo sandbox; powers CLI smoke tests + unit tests without container infra.",
+          "enum": [
+            "mock"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "scheduledFor": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tenantId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "mode",
+    "nConcurrent",
+    "name",
+    "recipe",
+    "sandboxDriver",
+    "tenantId"
+  ],
+  "title": "CreateBacktestJobInput",
+  "type": "object"
+}

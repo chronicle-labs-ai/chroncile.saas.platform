@@ -302,13 +302,9 @@ category = "conversation"
 
         catalog
             .register(
-                EventTypeDefinition::new(
-                    "test.event",
-                    "test.topic",
-                    "Test event",
-                )
-                .with_category("test")
-                .with_tags(vec!["tag1".to_string(), "tag2".to_string()]),
+                EventTypeDefinition::new("test.event", "test.topic", "Test event")
+                    .with_category("test")
+                    .with_tags(vec!["tag1".to_string(), "tag2".to_string()]),
             )
             .unwrap();
 
@@ -338,4 +334,3 @@ category = "conversation"
         assert!(result.is_err());
     }
 }
-

@@ -18,11 +18,14 @@ use wasm_bindgen::prelude::*;
 use web_sys::{CustomEvent, CustomEventInit};
 
 #[cfg(target_arch = "wasm32")]
+use chronicle_timeline_core::TimelineTheme;
+#[cfg(target_arch = "wasm32")]
 use panel::TimelinePanel;
 #[cfg(target_arch = "wasm32")]
-use types::{parse_event, parse_events, parse_options, to_js, PlaybackStateJs, PlayheadEvent, SelectionEvent, TimeRangeEvent};
-#[cfg(target_arch = "wasm32")]
-use chronicle_timeline_core::TimelineTheme;
+use types::{
+    parse_event, parse_events, parse_options, to_js, PlaybackStateJs, PlayheadEvent,
+    SelectionEvent, TimeRangeEvent,
+};
 
 /// Initialize panic hook and logging (call once on module load)
 #[cfg(target_arch = "wasm32")]
@@ -49,7 +52,7 @@ impl TimelineViewer {
     #[wasm_bindgen(constructor)]
     pub fn new(options: JsValue) -> Result<TimelineViewer, JsValue> {
         let opts = parse_options(options)?;
-        
+
         Ok(TimelineViewer {
             canvas_id: String::new(),
             panel: Rc::new(RefCell::new(TimelinePanel::new(opts))),
@@ -61,10 +64,12 @@ impl TimelineViewer {
     #[wasm_bindgen]
     pub async fn start(&mut self, canvas_id: &str) -> Result<(), JsValue> {
         self.canvas_id = canvas_id.to_string();
-        
+
         // Get the canvas element from the DOM
         let window = web_sys::window().ok_or_else(|| JsValue::from_str("No window"))?;
-        let document = window.document().ok_or_else(|| JsValue::from_str("No document"))?;
+        let document = window
+            .document()
+            .ok_or_else(|| JsValue::from_str("No document"))?;
         let canvas = document
             .get_element_by_id(canvas_id)
             .ok_or_else(|| JsValue::from_str(&format!("Canvas '{}' not found", canvas_id)))?
@@ -76,7 +81,7 @@ impl TimelineViewer {
 
         let web_options = eframe::WebOptions::default();
         let runner = eframe::WebRunner::new();
-        
+
         runner
             .start(
                 canvas,
@@ -133,7 +138,7 @@ impl TimelineViewer {
         let end = chrono::DateTime::parse_from_rfc3339(end)
             .map_err(|e| JsValue::from_str(&format!("Invalid end time: {}", e)))?
             .with_timezone(&chrono::Utc);
-        
+
         self.panel.borrow_mut().set_time_range(start, end);
         Ok(())
     }
@@ -152,7 +157,7 @@ impl TimelineViewer {
         let time = chrono::DateTime::parse_from_rfc3339(time)
             .map_err(|e| JsValue::from_str(&format!("Invalid time: {}", e)))?
             .with_timezone(&chrono::Utc);
-        
+
         self.panel.borrow_mut().set_playhead(time);
         Ok(())
     }
@@ -170,7 +175,11 @@ impl TimelineViewer {
             "live" => PlaybackStateJs::Live,
             "playing" => PlaybackStateJs::Playing,
             "paused" => PlaybackStateJs::Paused,
-            _ => return Err(JsValue::from_str("Invalid playback state. Use 'live', 'playing', or 'paused'")),
+            _ => {
+                return Err(JsValue::from_str(
+                    "Invalid playback state. Use 'live', 'playing', or 'paused'",
+                ))
+            }
         };
         // TODO: set on inner panel
         Ok(())
@@ -192,7 +201,8 @@ impl TimelineViewer {
         let panel = self.panel.borrow();
         let event = SelectionEvent {
             event_id: panel.selected_event().cloned(),
-            event: panel.selected_event()
+            event: panel
+                .selected_event()
                 .and_then(|id| panel.events().iter().find(|e| &e.id == id).cloned()),
         };
         to_js(&event)
@@ -221,7 +231,7 @@ impl TimelineViewer {
 #[cfg(target_arch = "wasm32")]
 fn configure_egui_style(ctx: &egui::Context, theme: &TimelineTheme) {
     use egui::Stroke;
-    
+
     let mut style = (*ctx.style()).clone();
 
     // Visuals
@@ -271,16 +281,22 @@ impl eframe::App for TimelineApp {
                 // Emit custom events for React integration
                 if let Some(event_id) = response.selected_event {
                     let panel = self.panel.borrow();
-                    let _ = self.emit_event("timelineselect", &SelectionEvent {
-                        event_id: Some(event_id.clone()),
-                        event: panel.events().iter().find(|e| e.id == event_id).cloned(),
-                    });
+                    let _ = self.emit_event(
+                        "timelineselect",
+                        &SelectionEvent {
+                            event_id: Some(event_id.clone()),
+                            event: panel.events().iter().find(|e| e.id == event_id).cloned(),
+                        },
+                    );
                 }
 
                 if response.playhead_changed {
-                    let _ = self.emit_event("timelineplayhead", &PlayheadEvent {
-                        time: self.panel.borrow().playhead(),
-                    });
+                    let _ = self.emit_event(
+                        "timelineplayhead",
+                        &PlayheadEvent {
+                            time: self.panel.borrow().playhead(),
+                        },
+                    );
                 }
 
                 if response.range_changed {
@@ -298,8 +314,10 @@ impl eframe::App for TimelineApp {
 impl TimelineApp {
     fn emit_event<T: serde::Serialize>(&self, event_name: &str, data: &T) -> Result<(), JsValue> {
         let window = web_sys::window().ok_or_else(|| JsValue::from_str("No window"))?;
-        let document = window.document().ok_or_else(|| JsValue::from_str("No document"))?;
-        
+        let document = window
+            .document()
+            .ok_or_else(|| JsValue::from_str("No document"))?;
+
         let canvas = document
             .get_element_by_id(&self.canvas_id)
             .ok_or_else(|| JsValue::from_str("Canvas not found"))?;

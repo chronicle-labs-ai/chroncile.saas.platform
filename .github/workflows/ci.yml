@@ -69,13 +69,27 @@ jobs:
           node-version: 20
           cache: yarn
       - run: yarn install --immutable
-      - name: Generate types
-        run: cargo test --workspace
-        working-directory: backend
-      - name: Copy generated types
+      # Single source of truth: regenerate every wire shape from the
+      # Rust crates (ts-rs + JSON Schema + Zod) and assert the
+      # working tree is clean. Drift between Rust + frontend types
+      # fails the build here.
+      - name: Regenerate contracts
+        run: yarn gen:contracts
+      - name: Assert no drift
         run: |
-          mkdir -p packages/shared/src/generated
-          find backend/crates -path "*/bindings/generated/*.ts" -exec cp {} packages/shared/src/generated/ \;
+          # `git diff --exit-code` catches modifications to tracked files;
+          # `git status --porcelain` also flags untracked files (newly
+          # emitted .ts files for a Rust struct that wasn't committed).
+          # Recursive paths — all three trees are now folder-organised.
+          DIFF_PATHS="packages/chronicle/src/types packages/chronicle/src/json-schema packages/chronicle/src/schemas"
+          DIRTY=0
+          if ! git diff --exit-code -- $DIFF_PATHS; then DIRTY=1; fi
+          if [ -n "$(git status --porcelain -- $DIFF_PATHS)" ]; then DIRTY=1; fi
+          if [ "$DIRTY" -ne 0 ]; then
+            echo "::error::generated contracts drifted from Rust source. Run 'yarn gen:contracts' locally and commit the result."
+            git status --short -- $DIFF_PATHS
+            exit 1
+          fi
       - name: TypeScript compile check
         run: npx tsc --noEmit
         working-directory: apps/frontend
@@ -127,9 +141,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install Doppler CLI
+        run: curl -Ls --tlsv1.2 --proto '=https' --retry 3 https://cli.doppler.com/install.sh | sudo sh
+      - name: Sync Fly secrets from Doppler (dev)
+        run: ./scripts/sync-fly-secrets-from-doppler.sh dev
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_BACKEND_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (dev)
         run: |
-          flyctl deploy --config fly.development.toml --remote-only \
+          flyctl deploy --config deploy/fly.development.toml --remote-only \
             --build-arg GIT_SHA=${{ github.sha }} \
             --build-arg GIT_TAG="" \
             --build-arg ENVIRONMENT=development
@@ -146,9 +167,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install Doppler CLI
+        run: curl -Ls --tlsv1.2 --proto '=https' --retry 3 https://cli.doppler.com/install.sh | sudo sh
+      - name: Sync Fly secrets from Doppler (stg)
+        run: ./scripts/sync-fly-secrets-from-doppler.sh stg
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_BACKEND_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (staging)
         run: |
-          flyctl deploy --config fly.staging.toml --remote-only \
+          flyctl deploy --config deploy/fly.staging.toml --remote-only \
             --build-arg GIT_SHA=${{ github.sha }} \
             --build-arg GIT_TAG="" \
             --build-arg ENVIRONMENT=staging
@@ -165,9 +193,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Install Doppler CLI
+        run: curl -Ls --tlsv1.2 --proto '=https' --retry 3 https://cli.doppler.com/install.sh | sudo sh
+      - name: Sync Fly secrets from Doppler (prd)
+        run: ./scripts/sync-fly-secrets-from-doppler.sh prd
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_BACKEND_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (production)
         run: |
-          flyctl deploy --config fly.production.toml --remote-only \
+          flyctl deploy --config deploy/fly.production.toml --remote-only \
             --build-arg GIT_SHA=${{ github.sha }} \
             --build-arg GIT_TAG="" \
             --build-arg ENVIRONMENT=production
@@ -194,7 +229,7 @@ jobs:
       - name: Generate ephemeral fly.toml
         run: |
           sed "s/{{BRANCH_SLUG}}/${{ steps.slug.outputs.slug }}/g" \
-            fly.ephemeral.toml > fly.branch.toml
+            deploy/fly.ephemeral.toml > deploy/fly.branch.toml
         working-directory: backend
       - name: Create Fly app (if not exists)
         run: flyctl apps create ${{ steps.slug.outputs.app_name }} --org ${{ vars.FLY_ORG_SLUG }} || true
@@ -202,7 +237,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Deploy to Fly.io (branch)
         run: |
-          flyctl deploy --config fly.branch.toml --remote-only \
+          flyctl deploy --config deploy/fly.branch.toml --remote-only \
             --build-arg GIT_SHA=${{ github.event.pull_request.head.sha }} \
             --build-arg GIT_TAG="" \
             --build-arg ENVIRONMENT=ephemeral

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "stripeCustomerId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stripePriceId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stripeSubscriptionStatus": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "title": "UpdateStripeRequest",
+  "type": "object"
+}

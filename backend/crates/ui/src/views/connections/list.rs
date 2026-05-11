@@ -87,7 +87,9 @@ impl ConnectionsView {
 
                             if ui.add(del_btn).clicked() {
                                 self.pending_actions
-                                    .push(ConnectionAction::DeleteConnection(conn.connection_id.clone()));
+                                    .push(ConnectionAction::DeleteConnection(
+                                        conn.connection_id.clone(),
+                                    ));
                             }
                         });
                     });
@@ -140,7 +142,8 @@ impl ConnectionsView {
 
                             if ui.add(load_btn).clicked() {
                                 let name = scenario.name.to_lowercase().replace(' ', "_");
-                                self.pending_actions.push(ConnectionAction::LoadScenario(name));
+                                self.pending_actions
+                                    .push(ConnectionAction::LoadScenario(name));
                             }
                         });
                     });
@@ -150,4 +153,3 @@ impl ConnectionsView {
         ui.add_space(spacing::XS);
     }
 }
-

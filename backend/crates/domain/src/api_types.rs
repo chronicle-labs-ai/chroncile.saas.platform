@@ -1,13 +1,17 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{AgentEndpointConfig, AuditLog, Connection, PipedreamTrigger, Run, Tenant};
+use crate::{
+    AgentEndpointConfig, AuditLog, Connection, FeatureAccessSnapshot, FeatureFlagDefinition,
+    FeatureFlagOverride, GraphEditCommand, GraphEditPreview, GraphEditValidationError, Run,
+    SandboxAiChatMessage, SandboxEdgeDto, SandboxNodeDto, SandboxValidationResponse, Tenant,
+};
 
 // ── Dashboard ──
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct DashboardStatsResponse {
     pub total_runs: usize,
     pub pending_runs: usize,
@@ -17,27 +21,27 @@ pub struct DashboardStatsResponse {
     pub active_connections: usize,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct DashboardActivityResponse {
     pub activity: Vec<AuditLog>,
 }
 
 // ── Runs ──
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct ListRunsParams {
     pub status: Option<String>,
     pub limit: Option<usize>,
     pub offset: Option<usize>,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct ListRunsResponse {
     pub runs: Vec<Run>,
     pub total: usize,
@@ -45,9 +49,9 @@ pub struct ListRunsResponse {
     pub offset: usize,
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct CreateRunRequest {
     pub event_id: String,
     pub invocation_id: String,
@@ -57,40 +61,40 @@ pub struct CreateRunRequest {
     pub context_pointers: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct RunResponse {
     pub run: Run,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct RunDetailResponse {
     pub run: Run,
     pub audit_logs: Vec<AuditLog>,
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct UpdateRunStatusRequest {
     pub status: String,
 }
 
 // ── Settings ──
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct AgentEndpointResponse {
     pub config: Option<AgentEndpointConfig>,
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct UpdateAgentEndpointRequest {
     pub endpoint_url: Option<String>,
     pub auth_type: Option<String>,
@@ -100,33 +104,33 @@ pub struct UpdateAgentEndpointRequest {
 
 // ── Connections ──
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct ConnectionListResponse {
     pub connections: Vec<Connection>,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct ConnectionResponse {
     pub connection: Connection,
 }
 
 // ── Audit ──
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct AuditLogParams {
     pub limit: Option<usize>,
     pub offset: Option<usize>,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct AuditLogListResponse {
     pub audit_logs: Vec<AuditLog>,
     pub limit: usize,
@@ -135,81 +139,81 @@ pub struct AuditLogListResponse {
 
 // ── Tenant ──
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct TenantResponse {
     pub tenant: Option<Tenant>,
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
+#[ts(export, export_to = "types/endpoints/")]
 pub struct UpdateStripeRequest {
     pub stripe_customer_id: Option<String>,
     pub stripe_subscription_status: Option<String>,
     pub stripe_price_id: Option<String>,
 }
 
-// ── Pipedream ──
+// ── Feature Access ──
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ListAppsParams {
-    pub q: Option<String>,
-    pub limit: Option<u64>,
+#[ts(export, export_to = "types/endpoints/")]
+pub struct FeatureAccessResponse {
+    pub access: FeatureAccessSnapshot,
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct ListTriggersParams {
-    pub app: Option<String>,
-    pub q: Option<String>,
-    pub limit: Option<u64>,
+#[ts(export, export_to = "types/endpoints/")]
+pub struct FeatureFlagDefinitionsResponse {
+    pub flags: Vec<FeatureFlagDefinition>,
 }
 
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct DeployTriggerRequest {
-    pub trigger_id: String,
-    pub webhook_url: Option<String>,
-    pub configured_props: Option<serde_json::Value>,
+#[ts(export, export_to = "types/endpoints/")]
+pub struct AdminTenantFeatureAccessResponse {
+    pub tenant: Option<Tenant>,
+    pub access: FeatureAccessSnapshot,
+    pub overrides: Vec<FeatureFlagOverride>,
 }
 
-#[derive(Debug, Serialize, TS)]
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct DeployedTriggersResponse {
-    pub data: serde_json::Value,
-    pub triggers: Vec<PipedreamTrigger>,
+#[ts(export, export_to = "types/endpoints/")]
+pub struct UpsertFeatureFlagOverrideRequest {
+    pub enabled: bool,
+    pub reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize, TS)]
+// ── Sandbox AI ──
+
+#[derive(Debug, Deserialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct PipedreamTokenRequest {
-    pub app_id: Option<String>,
+#[ts(export, export_to = "types/endpoints/")]
+pub struct SandboxAiChatRequest {
+    pub prompt: String,
+    pub nodes: Vec<SandboxNodeDto>,
+    pub edges: Vec<SandboxEdgeDto>,
+    pub selected_node_id: Option<String>,
+    pub recent_messages: Vec<SandboxAiChatMessage>,
 }
 
-// ── Auth (request types for login/signup) ──
-
-#[derive(Debug, Deserialize, TS)]
+#[derive(Debug, Serialize, TS, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
+#[ts(export, export_to = "types/endpoints/")]
+pub struct SandboxAiChatResponse {
+    pub assistant_message: String,
+    pub commands: Vec<GraphEditCommand>,
+    pub preview: GraphEditPreview,
+    pub validation: SandboxValidationResponse,
+    pub errors: Vec<GraphEditValidationError>,
 }
 
-#[derive(Debug, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "generated/")]
-pub struct SignupRequest {
-    pub email: String,
-    pub password: String,
-    pub name: String,
-    pub org_name: String,
-}
+// Legacy bcrypt-era request/response types (LoginRequest, SignupRequest,
+// ForgotPasswordRequest, ResetPasswordRequest) were removed as part of
+// Phase 0b of the WorkOS migration. The frontend now talks to WorkOS
+// directly for those flows; the only auth surface the backend exposes
+// is /api/platform/auth/workos-exchange (see crates/api routes/saas/auth.rs).

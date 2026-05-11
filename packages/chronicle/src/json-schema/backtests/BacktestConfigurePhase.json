@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Phases inside the Configure stage. The configure flow is a directional pipeline: pick → coverage → environment → versions → launch.",
+  "enum": [
+    "pick",
+    "coverage",
+    "environment",
+    "versions"
+  ],
+  "title": "BacktestConfigurePhase",
+  "type": "string"
+}

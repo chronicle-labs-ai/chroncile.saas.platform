@@ -54,10 +54,7 @@ impl MockEventGenerator {
             "support.message.customer",
         )
         .source_event_id(&source_event_id)
-        .subject(
-            Subject::new(conversation_id)
-                .with_customer(customer_id),
-        )
+        .subject(Subject::new(conversation_id).with_customer(customer_id))
         .actor(Actor::customer(customer_id).with_name("Customer"))
         .payload(&json!({
             "text": message,
@@ -149,12 +146,7 @@ impl MockEventGenerator {
     }
 
     /// Generate a tag applied event
-    pub fn tag_applied(
-        &mut self,
-        conversation_id: &str,
-        tag: &str,
-        actor: Actor,
-    ) -> EventEnvelope {
+    pub fn tag_applied(&mut self, conversation_id: &str, tag: &str, actor: Actor) -> EventEnvelope {
         let source_event_id = self.next_event_id();
 
         EventEnvelopeBuilder::new(
@@ -252,10 +244,7 @@ impl MockEventGenerator {
 }
 
 /// Generate a batch of random events for testing
-pub fn generate_random_events(
-    tenant_id: impl Into<TenantId>,
-    count: usize,
-) -> Vec<EventEnvelope> {
+pub fn generate_random_events(tenant_id: impl Into<TenantId>, count: usize) -> Vec<EventEnvelope> {
     let tenant_id = tenant_id.into();
     let conn = MockOAuthConnection::new(tenant_id.clone(), crate::MockService::MockZendesk);
     let mut generator = MockEventGenerator::new(conn);

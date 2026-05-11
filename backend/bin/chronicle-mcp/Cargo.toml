@@ -1,0 +1,27 @@
+[package]
+name = "chronicle_mcp_server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "chronicle-mcp"
+path = "src/main.rs"
+
+[dependencies]
+chronicle_backend = { workspace = true }
+chronicle_auth = { workspace = true }
+chronicle_interfaces = { workspace = true }
+chronicle_mcp = { workspace = true }
+
+tokio = { workspace = true }
+axum = { workspace = true }
+dotenvy = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+toml = "0.8"
+rmcp = { workspace = true, features = ["server", "transport-io", "transport-streamable-http-server"] }

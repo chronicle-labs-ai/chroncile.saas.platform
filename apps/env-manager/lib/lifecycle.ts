@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/db";
-import * as fly from "@/lib/fly-client";
-import * as vercel from "@/lib/vercel-client";
-import * as github from "@/lib/github-client";
+import { prisma } from "@/lib/data";
+import { fly, vercel } from "@/lib/integrations";
+import * as github from "./github-client";
 
 const FLY_REGION = "ams";
 // Tag of the current production image. Update when a new version is deployed.
-const BACKEND_IMAGE = "registry.fly.io/chronicle-backend:deployment-01KJKV4CE2AG4XE7GFHCFZGHJ0";
+const BACKEND_IMAGE =
+  "registry.fly.io/chronicle-backend:deployment-01KJKV4CE2AG4XE7GFHCFZGHJ0";
 // chronicle-backend- prefix = 18 chars, suffix = 5 chars (-xxxx), Fly max = 30 → base slug max = 7
 const MAX_SLUG_BASE_LEN = 7;
 
@@ -42,7 +42,9 @@ export interface ProvisionOptions {
 export async function provisionEphemeral(
   opts: ProvisionOptions
 ): Promise<string> {
-  const env = await prisma.environment.findUnique({ where: { name: opts.name } });
+  const env = await prisma.environment.findUnique({
+    where: { name: opts.name },
+  });
   if (!env) throw new Error(`Environment record for "${opts.name}" not found`);
 
   const slug = env.name;
@@ -60,13 +62,18 @@ export async function provisionEphemeral(
     vercelEnvVarId: null as string | null,
   };
 
-  async function log(message: string, level: "info" | "warn" | "error" = "info") {
+  async function log(
+    message: string,
+    level: "info" | "warn" | "error" = "info"
+  ) {
     const line = `[${new Date().toISOString()}] ${level.toUpperCase()}: ${message}`;
     logLines.push(line);
-    await prisma.environment.update({
-      where: { id: env!.id },
-      data: { provisionLog: logLines.join("\n") },
-    }).catch(() => {}); // don't throw on DB errors during logging
+    await prisma.environment
+      .update({
+        where: { id: env!.id },
+        data: { provisionLog: logLines.join("\n") },
+      })
+      .catch(() => {}); // don't throw on DB errors during logging
   }
 
   async function rollback(reason: string): Promise<void> {
@@ -132,20 +139,39 @@ export async function provisionEphemeral(
     await log("Fetching branch info from GitHub...");
     const branchInfo = await github.getBranchInfo(opts.branch);
     branchSha = branchInfo.sha;
-    await prisma.environment.update({ where: { id: env.id }, data: { gitSha: branchSha } });
+    await prisma.environment.update({
+      where: { id: env.id },
+      data: { gitSha: branchSha },
+    });
     await log(`Branch SHA: ${branchSha.slice(0, 7)}`);
   } catch (err) {
-    await failWith(new Error(`GitHub branch lookup failed: ${err instanceof Error ? err.message : String(err)}`));
+    await failWith(
+      new Error(
+        `GitHub branch lookup failed: ${err instanceof Error ? err.message : String(err)}`
+      )
+    );
   }
 
   // 1. Postgres cluster — fork from template or create fresh
   let pgConnStr = "";
-  let dbTemplate: { id: string; name: string; flyDbName: string | null; sourceEnvId: string | null; seedSqlUrl: string | null; mode: string } | null = null;
+  let dbTemplate: {
+    id: string;
+    name: string;
+    flyDbName: string | null;
+    sourceEnvId: string | null;
+    seedSqlUrl: string | null;
+    mode: string;
+  } | null = null;
 
   if (opts.dbTemplateId) {
-    dbTemplate = await prisma.dbTemplate.findUnique({ where: { id: opts.dbTemplateId } });
+    dbTemplate = await prisma.dbTemplate.findUnique({
+      where: { id: opts.dbTemplateId },
+    });
     if (dbTemplate) {
-      await prisma.environment.update({ where: { id: env.id }, data: { dbTemplateId: dbTemplate.id } });
+      await prisma.environment.update({
+        where: { id: env.id },
+        data: { dbTemplateId: dbTemplate.id },
+      });
     }
   }
 
@@ -154,22 +180,40 @@ export async function provisionEphemeral(
     if (existing) {
       await log(`Postgres cluster already exists: ${flyDbName} — reusing`);
       created.flyDb = true;
-    } else if (dbTemplate && (dbTemplate.mode === "FLY_DB" || dbTemplate.mode === "ENVIRONMENT")) {
+    } else if (
+      dbTemplate &&
+      (dbTemplate.mode === "FLY_DB" || dbTemplate.mode === "ENVIRONMENT")
+    ) {
       // Fork from template
       let sourceDbName = dbTemplate.flyDbName;
       if (dbTemplate.mode === "ENVIRONMENT" && dbTemplate.sourceEnvId) {
-        const srcEnv = await prisma.environment.findUnique({ where: { id: dbTemplate.sourceEnvId } });
+        const srcEnv = await prisma.environment.findUnique({
+          where: { id: dbTemplate.sourceEnvId },
+        });
         sourceDbName = srcEnv?.flyDbName ?? null;
       }
       if (!sourceDbName) {
-        await failWith(new Error(`Template "${dbTemplate.name}" has no source DB to fork from`));
+        await failWith(
+          new Error(
+            `Template "${dbTemplate.name}" has no source DB to fork from`
+          )
+        );
       }
-      await log(`Forking Postgres from ${sourceDbName} → ${flyDbName} (template: ${dbTemplate.name})...`);
-      const pgResult = await fly.forkPostgresCluster(sourceDbName!, flyDbName, FLY_REGION);
+      await log(
+        `Forking Postgres from ${sourceDbName} → ${flyDbName} (template: ${dbTemplate.name})...`
+      );
+      const pgResult = await fly.forkPostgresCluster(
+        sourceDbName!,
+        flyDbName,
+        FLY_REGION
+      );
       pgConnStr = pgResult.connectionString;
       created.flyDb = true;
       await log(`Postgres forked from ${sourceDbName}`);
-      await prisma.dbTemplate.update({ where: { id: dbTemplate.id }, data: { lastUsedAt: new Date() } });
+      await prisma.dbTemplate.update({
+        where: { id: dbTemplate.id },
+        data: { lastUsedAt: new Date() },
+      });
     } else {
       // Fresh empty DB
       await log(`Creating Fly Postgres cluster: ${flyDbName}...`);
@@ -180,14 +224,20 @@ export async function provisionEphemeral(
     }
   } catch (err) {
     if ((err as Error).message.includes("ROLLBACK")) throw err;
-    await failWith(new Error(`Postgres setup failed: ${err instanceof Error ? err.message : String(err)}`));
+    await failWith(
+      new Error(
+        `Postgres setup failed: ${err instanceof Error ? err.message : String(err)}`
+      )
+    );
   }
 
   // 2. Fly app
   try {
     const existingApp = await fly.getApp(flyAppName);
     if (existingApp) {
-      await log(`Fly app already exists: ${flyAppName} (${existingApp.status}) — reusing`);
+      await log(
+        `Fly app already exists: ${flyAppName} (${existingApp.status}) — reusing`
+      );
       created.flyApp = true;
     } else {
       await log(`Creating Fly app: ${flyAppName}...`);
@@ -203,22 +253,25 @@ export async function provisionEphemeral(
   if (!pgConnStr) {
     try {
       await log(`Attaching Postgres ${flyDbName} → ${flyAppName}...`);
-      const { execFile } = await import("child_process");
-      const { promisify } = await import("util");
-      const exec = promisify(execFile);
-      const { stdout } = await exec("flyctl", [
-        "postgres", "attach", flyDbName, "-a", flyAppName,
-      ], { env: { ...process.env }, timeout: 60_000 });
+      const { stdout } = await fly.attachPostgres(flyDbName, flyAppName);
       const connMatch = stdout.match(/DATABASE_URL=(\S+)/);
       if (connMatch) {
         pgConnStr = connMatch[1];
         await log("Postgres attached, DATABASE_URL extracted");
       } else {
-        await failWith(new Error("Postgres attached but DATABASE_URL could not be extracted from output"));
+        await failWith(
+          new Error(
+            "Postgres attached but DATABASE_URL could not be extracted from output"
+          )
+        );
       }
     } catch (err) {
       if ((err as Error).message.includes("DATABASE_URL")) throw err; // already failWith'd
-      await failWith(new Error(`Postgres attach failed: ${err instanceof Error ? err.message : String(err)}`));
+      await failWith(
+        new Error(
+          `Postgres attach failed: ${err instanceof Error ? err.message : String(err)}`
+        )
+      );
     }
   }
 
@@ -241,10 +294,16 @@ export async function provisionEphemeral(
       GIT_SHA: branchSha,
       DATABASE_URL: pgConnStr,
       SERVICE_SECRET: ephemeralServiceSecret,
-      AUTH_SECRET: opts.secrets.AUTH_SECRET ?? `ephemeral-auth-${generateSuffix()}-change-in-prod`,
+      AUTH_SECRET:
+        opts.secrets.AUTH_SECRET ??
+        `ephemeral-auth-${generateSuffix()}-change-in-prod`,
       ...opts.secrets,
     };
-    await fly.createMachine(flyAppName, { region: FLY_REGION, image: BACKEND_IMAGE, env: machineEnv });
+    await fly.createMachine(flyAppName, {
+      region: FLY_REGION,
+      image: BACKEND_IMAGE,
+      env: machineEnv,
+    });
     await log("Machine created, waiting for healthy...");
   } catch (err) {
     await failWith(err);
@@ -253,7 +312,11 @@ export async function provisionEphemeral(
   // 6. Health check
   const healthy = await fly.waitForHealthy(flyAppUrl, 120_000, 5_000);
   if (!healthy) {
-    await failWith(new Error(`Backend at ${flyAppUrl} did not become healthy within 120s — check machine logs`));
+    await failWith(
+      new Error(
+        `Backend at ${flyAppUrl} did not become healthy within 120s — check machine logs`
+      )
+    );
   }
   await log("Backend is healthy");
 
@@ -264,7 +327,10 @@ export async function provisionEphemeral(
       await fly.runSeedSql(flyDbName, dbTemplate.seedSqlUrl);
       await log("Seed SQL executed successfully");
     } catch (err) {
-      await log(`Seed SQL failed: ${err instanceof Error ? err.message : String(err)} — continuing without seed`, "warn");
+      await log(
+        `Seed SQL failed: ${err instanceof Error ? err.message : String(err)} — continuing without seed`,
+        "warn"
+      );
     }
   }
 
@@ -272,12 +338,18 @@ export async function provisionEphemeral(
   let vercelUrl: string | null = null;
   try {
     await log(`Setting NEXT_PUBLIC_BACKEND_URL = ${flyAppUrl} on Vercel...`);
-    const envVar = await vercel.setEnvVar("NEXT_PUBLIC_BACKEND_URL", flyAppUrl, opts.branch);
+    const envVar = await vercel.setEnvVar(
+      "NEXT_PUBLIC_BACKEND_URL",
+      flyAppUrl,
+      opts.branch
+    );
     created.vercelEnvVarId = envVar.id;
     if (envVar.branchScoped) {
       await log(`Env var set (branch-scoped to: ${opts.branch})`);
     } else {
-      await log("Env var set as preview-wide (branch not yet registered with Vercel)");
+      await log(
+        "Env var set as preview-wide (branch not yet registered with Vercel)"
+      );
     }
   } catch (err) {
     await failWith(err);
@@ -288,19 +360,29 @@ export async function provisionEphemeral(
   try {
     const deployment = await vercel.triggerBranchDeployment(opts.branch);
     if (!deployment) {
-      await log("Vercel deployment trigger skipped — no connected GitHub repo on project", "warn");
+      await log(
+        "Vercel deployment trigger skipped — no connected GitHub repo on project",
+        "warn"
+      );
     } else {
       await log(`Vercel deployment created: ${deployment.uid}`);
       vercelUrl = `https://${deployment.url}`;
       await log(`Frontend URL: ${vercelUrl} (building...)`);
       await log("Waiting for Vercel build to finish...");
 
-      const result = await vercel.waitForDeployment(deployment.uid, 10 * 60_000, 15_000);
+      const result = await vercel.waitForDeployment(
+        deployment.uid,
+        10 * 60_000,
+        15_000
+      );
       if (result.state === "READY" && result.url) {
         vercelUrl = result.url;
         await log(`Frontend build complete: ${vercelUrl}`);
       } else {
-        await log(`Build ended with state: ${result.state} — frontend URL may still work once build retries`, "warn");
+        await log(
+          `Build ended with state: ${result.state} — frontend URL may still work once build retries`,
+          "warn"
+        );
       }
     }
   } catch (err) {

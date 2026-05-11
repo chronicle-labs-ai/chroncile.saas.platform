@@ -90,7 +90,11 @@ pub type StreamResult<T> = Result<T, StreamError>;
 pub type StoreResult<T> = Result<T, StoreError>;
 
 impl EventsError {
-    pub fn duplicate(tenant_id: impl Into<String>, source_system: impl Into<String>, source_event_id: impl Into<String>) -> Self {
+    pub fn duplicate(
+        tenant_id: impl Into<String>,
+        source_system: impl Into<String>,
+        source_event_id: impl Into<String>,
+    ) -> Self {
         Self::Duplicate {
             tenant_id: tenant_id.into(),
             source_system: source_system.into(),

@@ -3,6 +3,7 @@
 //! Declarative configuration types for mapping source payloads to EventEnvelope fields.
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
@@ -38,9 +39,11 @@ pub enum MappingTarget {
     Custom(String),
 }
 
-impl MappingTarget {
-    pub fn from_str(s: &str) -> Self {
-        match s {
+impl FromStr for MappingTarget {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
             "source_event_id" => Self::SourceEventId,
             "event_type" => Self::EventType,
             "occurred_at" => Self::OccurredAt,
@@ -51,7 +54,7 @@ impl MappingTarget {
             "actor.id" => Self::ActorId,
             "actor.name" => Self::ActorName,
             other => Self::Custom(other.to_string()),
-        }
+        })
     }
 }
 
@@ -153,4 +156,3 @@ pub struct FieldMapperDefaults {
     #[serde(default)]
     pub mappings: Vec<FieldMapping>,
 }
-
