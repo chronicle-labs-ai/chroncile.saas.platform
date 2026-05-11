@@ -40,9 +40,9 @@ import type {
   DatasetSnapshot,
   TraceSummary,
 } from "../../../datasets/types";
-import { ClusterDensityList } from "../coverage/cluster-density-list";
-import { EnrichmentProposals } from "../coverage/enrichment-proposals";
-import { SavedDatasetPicker } from "../coverage/saved-dataset-picker";
+import { ClusterDensityList } from "../../coverage/cluster-density-list";
+import { EnrichmentProposals } from "../../coverage/enrichment-proposals";
+import { SavedDatasetPicker } from "../../coverage/saved-dataset-picker";
 
 export interface StepCoverageProps {
   recipe: BacktestRecipe;

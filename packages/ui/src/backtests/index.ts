@@ -51,14 +51,14 @@ export type { BacktestStepperProps, BacktestStepStatus } from "./configure/backt
 export { StepCoverage } from "./configure/steps/step-coverage";
 export type { StepCoverageProps } from "./configure/steps/step-coverage";
 
-export { ClusterDensityList } from "./configure/coverage/cluster-density-list";
-export type { ClusterDensityListProps } from "./configure/coverage/cluster-density-list";
+export { ClusterDensityList } from "./coverage/cluster-density-list";
+export type { ClusterDensityListProps } from "./coverage/cluster-density-list";
 
-export { EnrichmentProposals } from "./configure/coverage/enrichment-proposals";
-export type { EnrichmentProposalsProps } from "./configure/coverage/enrichment-proposals";
+export { EnrichmentProposals } from "./coverage/enrichment-proposals";
+export type { EnrichmentProposalsProps } from "./coverage/enrichment-proposals";
 
-export { SavedDatasetPicker } from "./configure/coverage/saved-dataset-picker";
-export type { SavedDatasetPickerProps } from "./configure/coverage/saved-dataset-picker";
+export { SavedDatasetPicker } from "./coverage/saved-dataset-picker";
+export type { SavedDatasetPickerProps } from "./coverage/saved-dataset-picker";
 
 export { StepEnvironment } from "./configure/steps/step-environment";
 export type { StepEnvironmentProps } from "./configure/steps/step-environment";
