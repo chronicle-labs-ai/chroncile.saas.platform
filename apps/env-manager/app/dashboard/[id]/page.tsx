@@ -1,1 +1,1 @@
-export { EnvironmentDetailPage as default } from "@/features/environments/client/environment-detail-page";
+export { EnvironmentDetailPage as default } from "@/frontend/features/environments/client/environment-detail-page";

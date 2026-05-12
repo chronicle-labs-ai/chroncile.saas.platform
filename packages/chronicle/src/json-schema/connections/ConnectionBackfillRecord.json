@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Persisted backfill log row. The currently-running shape lives in the onboarding store on the TS side; this is the historical record returned by the dashboard.",
+  "properties": {
+    "entities": {
+      "description": "Subset of entity ids the user picked (e.g. `conversations`, `contacts`).",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "estEvents": {
+      "description": "Estimator output at submit time.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "finishedAt": {
+      "description": "Absent while still running.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "startedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "running",
+        "done",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "windowDays": {
+      "description": "Lookback window in days.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "entities",
+    "estEvents",
+    "id",
+    "startedAt",
+    "status",
+    "windowDays"
+  ],
+  "title": "ConnectionBackfillRecord",
+  "type": "object"
+}

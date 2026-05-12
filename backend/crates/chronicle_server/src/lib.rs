@@ -23,4 +23,4 @@
 pub mod rest;
 pub mod state;
 
-pub use state::ServerState;
+pub use state::{SdkAuthConfig, ServerState, VerifiedSdkKey};

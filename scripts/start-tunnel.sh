@@ -2,9 +2,19 @@
 set -euo pipefail
 
 # Start an ngrok tunnel for a local Chronicle app.
-# Usage: ./scripts/start-tunnel.sh [port]   (default: 3000)
+# Usage: ./scripts/start-tunnel.sh [port] [--domain=custom.domain.com]
 
 PORT="${1:-3000}"
+DOMAIN=""
+
+# Parse flags
+shift 2>/dev/null || true
+for arg in "$@"; do
+  case "$arg" in
+    --domain=*) DOMAIN="${arg#--domain=}" ;;
+  esac
+done
+
 NGROK_API="http://127.0.0.1:4040/api/tunnels"
 MAX_WAIT=15
 
@@ -17,8 +27,15 @@ fi
 pkill -f "ngrok http" 2>/dev/null || true
 sleep 1
 
-echo "Starting ngrok tunnel to localhost:${PORT}..."
-ngrok http "$PORT" --log=stdout --log-format=json > /tmp/ngrok.log 2>&1 &
+NGROK_ARGS="--log=stdout --log-format=json"
+if [[ -n "$DOMAIN" ]]; then
+  NGROK_ARGS="--domain=$DOMAIN $NGROK_ARGS"
+  echo "Starting ngrok tunnel to localhost:${PORT} with domain ${DOMAIN}..."
+else
+  echo "Starting ngrok tunnel to localhost:${PORT}..."
+fi
+
+ngrok http "$PORT" $NGROK_ARGS > /tmp/ngrok.log 2>&1 &
 NGROK_PID=$!
 
 # Wait for the ngrok API to come up and return a tunnel URL.

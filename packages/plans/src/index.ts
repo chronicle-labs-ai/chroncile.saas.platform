@@ -22,7 +22,8 @@ export function getPlans(): Plan[] {
 }
 
 export function getPlansForTenant(tenantSlug: string | null): Plan[] {
-  if (!tenantSlug) return plans.filter((plan) => plan.id !== "customEnterprise");
+  if (!tenantSlug)
+    return plans.filter((plan) => plan.id !== "customEnterprise");
   if (CUSTOM_PLAN_TENANT_SLUGS.includes(tenantSlug)) {
     return plans.filter((plan) => plan.id !== "enterprise");
   }

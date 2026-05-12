@@ -185,8 +185,10 @@ events-manager/
 │   ├── infra/           # Vendor implementations (feature-gated)
 │   ├── mock-connector/  # Mock OAuth + event generation
 │   ├── api/             # HTTP API (axum)
+│   ├── auth/            # JWT + AuthUser extractor + WorkOS HTTP wrapper
 │   └── ui/              # Desktop + Web UI (egui/wgpu)
 ├── bin/server/          # Main server binary
+├── bin/workos-import/   # One-shot WorkOS bulk import (Phase 1 cutover)
 ├── ui/                  # Static web UI (HTML/CSS/JS)
 └── migrations/          # SQLx migrations
 ```
@@ -209,6 +211,55 @@ events-manager/
 | GET | `/api/conversations/:id/timeline` | Get conversation timeline |
 | POST | `/api/replay` | Create replay session |
 | GET | `/api/replay/:id/stream` | SSE replay stream |
+
+### WorkOS AuthKit endpoints
+
+Phase 0b of the WorkOS migration replaced bcrypt + custom-token auth with
+WorkOS-AuthKit-issued sessions. The frontend talks to WorkOS directly for
+sign-in/sign-up/forgot-password/SSO; these backend endpoints exist
+strictly to mint Chronicle JWTs and to mirror WorkOS state into local
+Postgres.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/platform/auth/workos-exchange` | Trade verified WorkOS access token for Chronicle JWT. Returns `200 { token }` on the happy path; `409 { kind: "no_membership", reason }` when provisioning is required; `401` on bad WorkOS token. |
+| POST | `/api/platform/auth/workspace/provision` | Self-serve workspace creation: makes a Tenant + WorkOS Organization + JIT User row + Chronicle JWT in one shot. Drives the A.4/A.5/A.6 sub-states of `/workspace/setup`. |
+| GET | `/api/platform/auth/discover?email=…` | Returns one of `free`, `existing`, `pending_invite`, or `sso_required`. Drives the DomainStrip sub-states (A.1 / A.1c / A.1p / A.1s + D.1 / D.2). |
+| POST | `/api/platform/auth/invitations/send` | Owner-initiated invitation via `userManagement.sendInvitation`. |
+| POST | `/api/platform/auth/invitations/resend` | Re-issue a pending invitation by `invitationId` for the A.1p "Resend invite" UX. |
+| POST | `/api/webhooks/workos` | SCIM webhook (`directory.user.created/updated/deleted`). Validates the `WorkOS-Signature` header (HMAC-SHA256 over `<ms>.<body>` with `WORKOS_WEBHOOK_SECRET`). |
+
+All `/api/platform/auth/*` routes (except the SCIM webhook, which
+authenticates via signature) are guarded by the `x-service-secret`
+header pattern shared with the rest of the platform admin surface.
+
+#### Importer binary
+
+`workos-import` is a one-shot bulk importer (Phase 1 of the rollout).
+It walks every `Tenant` and `User` row, calls
+`organizations.create` + `userManagement.bulkCreateUsers` against
+WorkOS, and writes back `workosOrganizationId` / `workosUserId`
+(plus `createdVia = 'import'`). It is idempotent — re-running skips
+already-linked rows.
+
+```bash
+DATABASE_URL=postgres://… \
+WORKOS_API_KEY=sk_… \
+WORKOS_CLIENT_ID=client_… \
+cargo run --bin workos-import -- --batch-size 50
+```
+
+#### Required env vars
+
+In addition to the existing `SERVICE_SECRET`, the WorkOS migration
+needs (see `docs/doppler.md`):
+
+- `WORKOS_API_KEY` — server-side API key (`sk_…`).
+- `WORKOS_CLIENT_ID` — project client id (`client_…`).
+- `WORKOS_WEBHOOK_SECRET` — HMAC secret for the SCIM webhook.
+
+The frontend additionally consumes `WORKOS_REDIRECT_URI` and
+`WORKOS_COOKIE_PASSWORD`; those live in the frontend Doppler config.
 
 ---
 

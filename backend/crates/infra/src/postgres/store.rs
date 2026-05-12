@@ -79,6 +79,14 @@ impl PostgresStore {
         .map_err(|err| PostgresError::Query(err.to_string()))
     }
 
+    pub async fn health_check(&self) -> Result<(), PostgresError> {
+        sqlx::query_scalar::<_, i32>("SELECT 1")
+            .fetch_one(self.pool())
+            .await
+            .map(|_| ())
+            .map_err(|err| PostgresError::Query(err.to_string()))
+    }
+
     fn pool(&self) -> &TracedPgPool {
         self.backend.traced_pool()
     }

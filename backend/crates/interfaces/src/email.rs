@@ -39,4 +39,8 @@ pub struct TemplateEmailParams {
 #[async_trait]
 pub trait EmailService: Send + Sync {
     async fn send_template_email(&self, params: TemplateEmailParams) -> Result<String, EmailError>;
+
+    async fn health_check(&self) -> Result<(), EmailError> {
+        Ok(())
+    }
 }

@@ -1,0 +1,54 @@
+{
+  "name": "@chroniclelabs/ai-sdk",
+  "version": "0.1.0",
+  "description": "Chronicle Labs capture wrapper for the Vercel AI SDK.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./workers": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "yarn workspace @chroniclelabs/sdk build && tsc -p tsconfig.build.json",
+    "typecheck": "yarn workspace @chroniclelabs/sdk build && tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test src/**/*.test.ts",
+    "test:live-node": "tsx --test src/live-node.integration.ts",
+    "prepublishOnly": "yarn build"
+  },
+  "dependencies": {
+    "@chroniclelabs/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "ai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "ai": "^6.0.168",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.0",
+    "zod": "^4.3.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "UNLICENSED"
+}

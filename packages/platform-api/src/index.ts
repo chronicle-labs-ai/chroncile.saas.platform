@@ -1,29 +1,58 @@
 import type {
   AgentEndpointResponse,
   AuditLogListResponse,
-  AuthResponse,
   ConnectionListResponse,
   ConnectionResponse,
   CreateRunRequest,
   DashboardActivityResponse,
   DashboardStatsResponse,
   FeatureAccessResponse,
-  ForgotPasswordRequest,
-  ForgotPasswordResponse,
   ListRunsResponse,
-  LoginRequest,
   SandboxAiChatRequest,
   SandboxAiChatResponse,
-  ResetPasswordRequest,
-  ResetPasswordResponse,
   RunDetailResponse,
   RunResponse,
-  SignupRequest,
   TenantResponse,
   UpdateAgentEndpointRequest,
   UpdateRunStatusRequest,
   UpdateStripeRequest,
-} from "shared/generated";
+} from "chronicle/types";
+
+/*
+ * Legacy SaaS auth shapes — the Rust impl behind these endpoints
+ * was replaced by WorkOS. The methods below are kept as scaffolding
+ * for any future first-party auth surface; the request/response
+ * shapes live here as TS-only contracts until they re-land in
+ * `chronicle/types/saas` (or wherever the next iteration places
+ * them). When that happens, swap these for `chronicle/types`
+ * imports and delete the locals.
+ */
+export interface AuthResponse {
+  token: string;
+  user: { id: string; email: string; tenantId: string };
+}
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+export interface SignupRequest {
+  email: string;
+  password: string;
+  name?: string;
+}
+export interface ForgotPasswordRequest {
+  email: string;
+}
+export interface ForgotPasswordResponse {
+  ok: true;
+}
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+export interface ResetPasswordResponse {
+  ok: true;
+}
 
 export interface NangoProviderSummary {
   provider: string;
@@ -142,7 +171,7 @@ export function getBackendUrl(): string {
 export class ApiError extends Error {
   constructor(
     public status: number,
-    message: string,
+    message: string
   ) {
     super(message);
     this.name = "ApiError";
@@ -163,7 +192,7 @@ class PlatformApi {
   private async request<T>(
     method: string,
     path: string,
-    options?: { body?: unknown; params?: Record<string, string | undefined> },
+    options?: { body?: unknown; params?: Record<string, string | undefined> }
   ): Promise<T> {
     const url = new URL(path, this.baseUrl);
     if (options?.params) {
@@ -201,21 +230,21 @@ class PlatformApi {
   getDashboardStats() {
     return this.request<DashboardStatsResponse>(
       "GET",
-      "/api/platform/dashboard/stats",
+      "/api/platform/dashboard/stats"
     );
   }
 
   getDashboardActivity() {
     return this.request<DashboardActivityResponse>(
       "GET",
-      "/api/platform/dashboard/activity",
+      "/api/platform/dashboard/activity"
     );
   }
 
   getFeatureAccess() {
     return this.request<FeatureAccessResponse>(
       "GET",
-      "/api/platform/feature-access",
+      "/api/platform/feature-access"
     );
   }
 
@@ -234,10 +263,7 @@ class PlatformApi {
   }
 
   getRun(id: string) {
-    return this.request<RunDetailResponse>(
-      "GET",
-      `/api/platform/runs/${id}`,
-    );
+    return this.request<RunDetailResponse>("GET", `/api/platform/runs/${id}`);
   }
 
   updateRunStatus(id: string, body: UpdateRunStatusRequest) {
@@ -249,7 +275,7 @@ class PlatformApi {
   getAgentEndpoint() {
     return this.request<AgentEndpointResponse>(
       "GET",
-      "/api/platform/settings/agent-endpoint",
+      "/api/platform/settings/agent-endpoint"
     );
   }
 
@@ -257,7 +283,7 @@ class PlatformApi {
     return this.request<AgentEndpointResponse>(
       "PUT",
       "/api/platform/settings/agent-endpoint",
-      { body },
+      { body }
     );
   }
 
@@ -265,29 +291,26 @@ class PlatformApi {
     return this.request<SandboxAiChatResponse>(
       "POST",
       "/api/platform/sandboxes/ai/chat",
-      { body },
+      { body }
     );
   }
 
   listConnections() {
     return this.request<ConnectionListResponse>(
       "GET",
-      "/api/platform/connections",
+      "/api/platform/connections"
     );
   }
 
   getConnection(id: string) {
     return this.request<ConnectionResponse>(
       "GET",
-      `/api/platform/connections/${id}`,
+      `/api/platform/connections/${id}`
     );
   }
 
   deleteConnection(id: string) {
-    return this.request<void>(
-      "DELETE",
-      `/api/platform/connections/${id}`,
-    );
+    return this.request<void>("DELETE", `/api/platform/connections/${id}`);
   }
 
   listAuditLogs(params?: { limit?: number; offset?: number }) {
@@ -312,14 +335,14 @@ class PlatformApi {
   listNangoProviders() {
     return this.request<NangoProvidersResponse>(
       "GET",
-      "/api/platform/integrations/providers",
+      "/api/platform/integrations/providers"
     );
   }
 
   listNangoConnections() {
     return this.request<ConnectionListResponse>(
       "GET",
-      "/api/platform/integrations/connections",
+      "/api/platform/integrations/connections"
     );
   }
 
@@ -327,7 +350,7 @@ class PlatformApi {
     return this.request<CreateNangoConnectSessionResponse>(
       "POST",
       "/api/platform/integrations/connect-session",
-      { body },
+      { body }
     );
   }
 
@@ -339,7 +362,7 @@ class PlatformApi {
     return this.request<NangoConnectionActionResponse>(
       "POST",
       "/api/platform/integrations/connections/sync",
-      { body },
+      { body }
     );
   }
 
@@ -351,7 +374,7 @@ class PlatformApi {
     return this.request<NangoConnectionActionResponse>(
       "POST",
       "/api/platform/integrations/sync",
-      { body },
+      { body }
     );
   }
 
@@ -359,56 +382,56 @@ class PlatformApi {
     return this.request<NangoConnectionActionResponse>(
       "POST",
       "/api/platform/integrations/disconnect",
-      { body },
+      { body }
     );
   }
 
   getIntercomIntegration() {
     return this.request<IntercomIntegrationResponse>(
       "GET",
-      "/api/platform/integrations/intercom",
+      "/api/platform/integrations/intercom"
     );
   }
 
   authorizeIntercom() {
     return this.request<IntercomAuthorizeResponse>(
       "POST",
-      "/api/platform/integrations/intercom/authorize",
+      "/api/platform/integrations/intercom/authorize"
     );
   }
 
   disconnectIntercom() {
     return this.request<IntercomIntegrationResponse>(
       "POST",
-      "/api/platform/integrations/intercom/disconnect",
+      "/api/platform/integrations/intercom/disconnect"
     );
   }
 
   getKlaviyoIntegration() {
     return this.request<KlaviyoIntegrationResponse>(
       "GET",
-      "/api/platform/integrations/klaviyo",
+      "/api/platform/integrations/klaviyo"
     );
   }
 
   authorizeKlaviyo() {
     return this.request<KlaviyoAuthorizeResponse>(
       "POST",
-      "/api/platform/integrations/klaviyo/authorize",
+      "/api/platform/integrations/klaviyo/authorize"
     );
   }
 
   disconnectKlaviyo() {
     return this.request<KlaviyoIntegrationResponse>(
       "POST",
-      "/api/platform/integrations/klaviyo/disconnect",
+      "/api/platform/integrations/klaviyo/disconnect"
     );
   }
 
   getShopifyIntegration() {
     return this.request<ShopifyIntegrationResponse>(
       "GET",
-      "/api/platform/integrations/shopify",
+      "/api/platform/integrations/shopify"
     );
   }
 
@@ -416,21 +439,21 @@ class PlatformApi {
     return this.request<ShopifyAuthorizeResponse>(
       "POST",
       "/api/platform/integrations/shopify/authorize",
-      { body },
+      { body }
     );
   }
 
   disconnectShopify() {
     return this.request<ShopifyIntegrationResponse>(
       "POST",
-      "/api/platform/integrations/shopify/disconnect",
+      "/api/platform/integrations/shopify/disconnect"
     );
   }
 
   getTrellusIntegration() {
     return this.request<TrellusIntegrationResponse>(
       "GET",
-      "/api/platform/integrations/trellus",
+      "/api/platform/integrations/trellus"
     );
   }
 
@@ -438,21 +461,21 @@ class PlatformApi {
     return this.request<TrellusIntegrationResponse>(
       "POST",
       "/api/platform/integrations/trellus/setup",
-      { body: body ?? {} },
+      { body: body ?? {} }
     );
   }
 
   rotateTrellusSecret() {
     return this.request<TrellusIntegrationResponse>(
       "POST",
-      "/api/platform/integrations/trellus/rotate-secret",
+      "/api/platform/integrations/trellus/rotate-secret"
     );
   }
 
   disconnectTrellus() {
     return this.request<TrellusIntegrationResponse>(
       "POST",
-      "/api/platform/integrations/trellus/disconnect",
+      "/api/platform/integrations/trellus/disconnect"
     );
   }
 
@@ -472,7 +495,7 @@ class PlatformApi {
     return this.request<ForgotPasswordResponse>(
       "POST",
       "/api/platform/auth/forgot-password",
-      { body },
+      { body }
     );
   }
 
@@ -480,7 +503,7 @@ class PlatformApi {
     return this.request<ResetPasswordResponse>(
       "POST",
       "/api/platform/auth/reset-password",
-      { body },
+      { body }
     );
   }
 }

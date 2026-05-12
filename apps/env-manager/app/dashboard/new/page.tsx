@@ -1,1 +1,1 @@
-export { NewEnvironmentPage as default } from "@/features/environments/client/new-environment-page";
+export { NewEnvironmentPage as default } from "@/frontend/features/environments/client/new-environment-page";

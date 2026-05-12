@@ -1,1 +1,1 @@
-export { DashboardPage as default } from "@/features/environments/client/dashboard-page";
+export { DashboardPage as default } from "@/frontend/features/environments/client/dashboard-page";

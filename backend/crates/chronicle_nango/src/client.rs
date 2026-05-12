@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use reqwest::Client;
 
 use crate::{
@@ -52,6 +54,23 @@ impl NangoClient {
             .request(method, format!("{}{}", self.base_url, path))
             .header("Authorization", format!("Bearer {}", self.secret_key))
             .header("Content-Type", "application/json")
+    }
+
+    /// Lightweight connectivity check: hits GET /health with a 5s timeout.
+    pub async fn health_check(&self) -> Result<()> {
+        let resp = self
+            .request(reqwest::Method::GET, "/health")
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await?;
+        if resp.status().is_success() {
+            Ok(())
+        } else {
+            Err(NangoError::ApiError {
+                status: resp.status().as_u16(),
+                message: resp.text().await.unwrap_or_default(),
+            })
+        }
     }
 
     pub async fn create_connect_session(

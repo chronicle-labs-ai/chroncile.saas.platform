@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "definition": {
+      "properties": {
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "defaultEnabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "expiresAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "flagType": {
+          "enum": [
+            "release",
+            "ops",
+            "experiment",
+            "entitlement"
+          ],
+          "type": "string"
+        },
+        "key": {
+          "enum": [
+            "sandbox",
+            "auditLog",
+            "agentEndpointConfig",
+            "workflowFilters"
+          ],
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "createdAt",
+        "defaultEnabled",
+        "description",
+        "enabled",
+        "flagType",
+        "key",
+        "owner",
+        "updatedAt"
+      ],
+      "type": "object"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "key": {
+      "enum": [
+        "sandbox",
+        "auditLog",
+        "agentEndpointConfig",
+        "workflowFilters"
+      ],
+      "type": "string"
+    },
+    "overrideEnabled": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "source": {
+      "enum": [
+        "default",
+        "plan",
+        "globalOverride",
+        "tenantOverride",
+        "userOverride"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "definition",
+    "enabled",
+    "key",
+    "source"
+  ],
+  "title": "FeatureFlagSnapshot",
+  "type": "object"
+}

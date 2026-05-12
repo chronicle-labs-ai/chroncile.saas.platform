@@ -14,7 +14,9 @@ export function getResend(): Resend {
   return resendInstance;
 }
 
-const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? "Chronicle Labs <noreply@notify.chronicle-labs.com>";
+const FROM_ADDRESS =
+  process.env.RESEND_FROM_ADDRESS ??
+  "Chronicle Labs <noreply@notify.chronicle-labs.com>";
 
 interface SendOrgInviteParams {
   to: string;

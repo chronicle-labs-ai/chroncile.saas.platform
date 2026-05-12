@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/server/data/db";
+import { prisma } from "@/backend/data/db";
 
 export async function PUT(
   request: Request,
@@ -68,7 +68,10 @@ export async function DELETE(
 
   if (existing.assignments.length > 0) {
     return NextResponse.json(
-      { error: "Cannot delete: template key has active assignments. Remove assignments first." },
+      {
+        error:
+          "Cannot delete: template key has active assignments. Remove assignments first.",
+      },
       { status: 409 }
     );
   }

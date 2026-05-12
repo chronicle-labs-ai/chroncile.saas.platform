@@ -57,7 +57,7 @@ const IntercomConversationSchema = z.object({
         name: z.string().nullable().optional(),
         email: z.string().nullable().optional(),
         external_id: z.string().nullable().optional(),
-      }),
+      })
     )
     .optional(),
   assignee: IntercomAdminSchema.nullable().optional(),
@@ -125,8 +125,7 @@ type IntercomConversationDetail = {
 
 function asUnixSeconds(value: Date | string | undefined): number | undefined {
   if (!value) return undefined;
-  const parsed =
-    value instanceof Date ? value.getTime() : Date.parse(value);
+  const parsed = value instanceof Date ? value.getTime() : Date.parse(value);
   if (Number.isNaN(parsed)) return undefined;
   return Math.floor(parsed / 1000);
 }
@@ -140,7 +139,9 @@ function nextCursorFromIntercomPage(response: any): string | undefined {
   );
 }
 
-function mapConversation(detail: IntercomConversationDetail): IntercomConversationRecord {
+function mapConversation(
+  detail: IntercomConversationDetail
+): IntercomConversationRecord {
   const contacts = detail.contacts?.contacts ?? [];
 
   return {
@@ -196,9 +197,12 @@ function mapConversation(detail: IntercomConversationDetail): IntercomConversati
 }
 
 export default createSync({
-  description: "Fetch Intercom conversations with full backfill and incremental updates.",
+  description:
+    "Fetch Intercom conversations with full backfill and incremental updates.",
   version: "1.0.0",
-  endpoints: [{ method: "GET", path: "/conversations", group: "Conversations" }],
+  endpoints: [
+    { method: "GET", path: "/conversations", group: "Conversations" },
+  ],
   frequency: "every hour",
   autoStart: true,
   syncType: "incremental",
@@ -207,11 +211,13 @@ export default createSync({
   },
 
   exec: async (nango) => {
-    await nango.log(`Starting Intercom sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`);
+    await nango.log(
+      `Starting Intercom sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`
+    );
 
     await nango.setMergingStrategy(
       { strategy: "ignore_if_modified_after" },
-      "IntercomConversation",
+      "IntercomConversation"
     );
 
     const checkpoint = asUnixSeconds(nango.lastSyncDate);
@@ -234,7 +240,9 @@ export default createSync({
       const conversations =
         response.data?.conversations || response.data?.data || [];
 
-      await nango.log(`Fetched ${conversations.length} Intercom conversations in current page.`);
+      await nango.log(
+        `Fetched ${conversations.length} Intercom conversations in current page.`
+      );
 
       if (!conversations.length) {
         break;
@@ -260,7 +268,9 @@ export default createSync({
       }
 
       if (batch.length) {
-        await nango.log(`Saving ${batch.length} Intercom conversations to Nango cache.`);
+        await nango.log(
+          `Saving ${batch.length} Intercom conversations to Nango cache.`
+        );
         await nango.batchSave(batch, "IntercomConversation");
       }
 

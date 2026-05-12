@@ -22,12 +22,15 @@ tracing = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
 
-bcrypt = { workspace = true }
 jsonwebtoken = { workspace = true }
 cuid2 = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
+hmac = { workspace = true }
 ts-rs = { workspace = true }
+
+# WorkOS HTTP wrapper
+reqwest = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }

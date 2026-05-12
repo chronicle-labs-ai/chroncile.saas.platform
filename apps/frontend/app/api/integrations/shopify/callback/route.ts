@@ -7,7 +7,10 @@ function appOrigin(request: NextRequest) {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 }
 
-function redirectToConnections(request: NextRequest, params: Record<string, string>) {
+function redirectToConnections(
+  request: NextRequest,
+  params: Record<string, string>
+) {
   const url = new URL("/dashboard/connections", appOrigin(request));
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
@@ -39,7 +42,7 @@ async function handleCallback(request: NextRequest, params: URLSearchParams) {
 
   try {
     await fetchFromBackend(
-      `/api/platform/integrations/shopify/callback?${params.toString()}`,
+      `/api/platform/integrations/shopify/callback?${params.toString()}`
     );
 
     return redirectToConnections(request, {

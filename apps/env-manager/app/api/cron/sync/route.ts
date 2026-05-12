@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { syncPermanentEnvironments } from "@/server/environments/sync";
+import { syncPermanentEnvironments } from "@/backend/environments/sync";
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {

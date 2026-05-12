@@ -36,6 +36,12 @@ or your runtime platform secret store.
 yarn dev:env-manager
 ```
 
+When `DATABASE_URL` points at a Fly private hostname such as
+`chronicle-env-manager-db.flycast`, the dev script starts `fly proxy`
+automatically and runs Next.js against `localhost:15432`. Set
+`ENV_MANAGER_DB_PROXY_PORT` to override the local port, or set
+`ENV_MANAGER_DB_PROXY=0` to disable the automatic proxy.
+
 ## Permanent Environment Sync
 
 The cron sync path reads permanent backend and frontend config values from

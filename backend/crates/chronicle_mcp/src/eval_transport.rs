@@ -9,7 +9,10 @@ use axum::{
     response::Response,
     Router,
 };
-use chronicle_auth::{jwt::JwtService, types::AuthUser};
+use chronicle_auth::{types::AuthUser, workos_jwt::WorkosJwtVerifier};
+use chronicle_interfaces::{TenantRepository, UserRepository};
+
+use crate::auth::validate_workos_token;
 use chronicle_backend::runtime::ChroniclePlatformRuntime;
 use chronicle_domain::EventEnvelope;
 use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
@@ -98,8 +101,14 @@ impl StdioEvalTransportClient {
         live_events: Vec<EventEnvelope>,
         enable_replay: bool,
     ) -> Result<Self, String> {
-        let auth = ChronicleMcpAuthResolver::for_stdio(runtime.saas_state.jwt.clone(), &auth_token)
-            .map_err(|error| error.to_mcp_error().message.to_string())?;
+        let auth = ChronicleMcpAuthResolver::for_stdio(
+            runtime.saas_state.workos_jwt.clone(),
+            runtime.saas_state.users.clone(),
+            runtime.saas_state.tenants.clone(),
+            &auth_token,
+        )
+        .await
+        .map_err(|error| error.to_mcp_error().message.to_string())?;
         let data_access = Arc::new(InProcessChronicleMcpDataAccess::new(
             runtime.events_state.clone(),
             runtime.saas_state.clone(),
@@ -193,8 +202,14 @@ impl HttpEvalTransportClient {
         live_events: Vec<EventEnvelope>,
         enable_replay: bool,
     ) -> Result<Self, String> {
-        let auth = ChronicleMcpAuthResolver::for_http(runtime.saas_state.jwt.clone());
-        let jwt = runtime.saas_state.jwt.clone();
+        let auth = ChronicleMcpAuthResolver::for_http(
+            runtime.saas_state.workos_jwt.clone(),
+            runtime.saas_state.users.clone(),
+            runtime.saas_state.tenants.clone(),
+        );
+        let workos_jwt = runtime.saas_state.workos_jwt.clone();
+        let users_repo = runtime.saas_state.users.clone();
+        let tenants_repo = runtime.saas_state.tenants.clone();
         let data_access = Arc::new(InProcessChronicleMcpDataAccess::new(
             runtime.events_state.clone(),
             runtime.saas_state.clone(),
@@ -216,9 +231,14 @@ impl HttpEvalTransportClient {
                 },
             );
 
+        let mw_state = AuthMwState {
+            workos_jwt,
+            users: users_repo,
+            tenants: tenants_repo,
+        };
         let app = Router::new()
             .nest_service("/mcp", service)
-            .layer(middleware::from_fn_with_state(jwt, auth_middleware));
+            .layer(middleware::from_fn_with_state(mw_state, auth_middleware));
 
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
@@ -351,8 +371,15 @@ impl EvalTransportClient for HttpEvalTransportClient {
     }
 }
 
+#[derive(Clone)]
+struct AuthMwState {
+    workos_jwt: Arc<WorkosJwtVerifier>,
+    users: Arc<dyn UserRepository>,
+    tenants: Arc<dyn TenantRepository>,
+}
+
 async fn auth_middleware(
-    State(jwt): State<Arc<JwtService>>,
+    State(state): State<AuthMwState>,
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
@@ -362,7 +389,9 @@ async fn auth_middleware(
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.strip_prefix("Bearer "))
         .ok_or(StatusCode::UNAUTHORIZED)?;
-    let user = jwt.validate(token).map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let user = validate_workos_token(&state.workos_jwt, &state.users, &state.tenants, token)
+        .await
+        .map_err(|_| StatusCode::UNAUTHORIZED)?;
     request.extensions_mut().insert::<AuthUser>(user);
     Ok(next.run(request).await)
 }

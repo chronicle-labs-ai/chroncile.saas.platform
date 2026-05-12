@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "baseline": {
+      "properties": {
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "latency": {
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "resolved",
+            "escalated",
+            "failed",
+            "partial",
+            "merged",
+            "pr_opened"
+          ],
+          "type": "string"
+        },
+        "turns": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "verdict": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "latency",
+        "outcome",
+        "turns",
+        "verdict"
+      ],
+      "type": "object"
+    },
+    "candidate": {
+      "properties": {
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "latency": {
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "resolved",
+            "escalated",
+            "failed",
+            "partial",
+            "merged",
+            "pr_opened"
+          ],
+          "type": "string"
+        },
+        "turns": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "verdict": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "latency",
+        "outcome",
+        "turns",
+        "verdict"
+      ],
+      "type": "object"
+    },
+    "cluster": {
+      "type": "string"
+    },
+    "delta": {
+      "enum": [
+        "improvement",
+        "regression",
+        "neutral"
+      ],
+      "type": "string"
+    },
+    "grader": {
+      "description": "Grader id (joins with `BacktestGrader.id`).",
+      "type": "string"
+    },
+    "hue": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "baseline",
+    "candidate",
+    "cluster",
+    "delta",
+    "grader",
+    "hue",
+    "id",
+    "note",
+    "prompt",
+    "severity"
+  ],
+  "title": "BacktestDivergence",
+  "type": "object"
+}

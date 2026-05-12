@@ -1,43 +1,38 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
-import { Button, FormField, Input } from "ui";
-import { BranchPicker } from "@/shared/components/branch-picker";
-import { fetcher } from "@/shared/fetcher";
-
-interface Branch {
-  name: string;
-  sha: string;
-  isDefault: boolean;
-}
-
-interface DbTemplate {
-  id: string;
-  name: string;
-  description: string | null;
-  mode: "FLY_DB" | "ENVIRONMENT" | "SEED_ONLY";
-}
-
-const SECRET_FIELDS = [
-  { key: "AUTH_SECRET", label: "Auth Secret", placeholder: "Override or leave blank for default" },
-  { key: "STRIPE_SECRET_KEY", label: "Stripe Secret Key", placeholder: "sk_test_..." },
-];
-
-const TTL_OPTIONS = [
-  { value: 4, label: "4 hours" },
-  { value: 12, label: "12 hours" },
-  { value: 24, label: "24 hours" },
-  { value: 48, label: "48 hours" },
-  { value: 168, label: "7 days" },
-];
+import {
+  Badge,
+  Button,
+  FormField,
+  Input,
+  NativeSelect,
+  OptionTile,
+  Panel,
+  PanelContent,
+  PanelHeader,
+} from "ui";
+import { apiErrorMessage, fetcher } from "@/frontend/shared/fetcher";
+import { createEphemeralEnvironment } from "../api";
+import { SECRET_FIELDS, TEMPLATE_MODE_LABEL, TTL_OPTIONS } from "../constants";
+import { nonEmptySecrets } from "../mappers";
+import type { Branch, DbTemplateSummary } from "../types";
 
 export function NewEnvironmentPage() {
   const router = useRouter();
-  const { data: branches, isLoading: branchesLoading } = useSWR<Branch[]>("/api/branches", fetcher);
-  const { data: templates } = useSWR<DbTemplate[]>("/api/db-templates", fetcher);
+  const {
+    data: branches,
+    error: branchesError,
+    isLoading: branchesLoading,
+    mutate: retryBranches,
+  } = useSWR<Branch[]>("/api/branches", fetcher);
+  const {
+    data: templates,
+    error: templatesError,
+    mutate: retryTemplates,
+  } = useSWR<DbTemplateSummary[]>("/api/db-templates", fetcher);
 
   const [selectedBranch, setSelectedBranch] = useState("");
   const [ttlHours, setTtlHours] = useState(24);
@@ -54,25 +49,12 @@ export function NewEnvironmentPage() {
     setError(null);
 
     try {
-      const nonEmptySecrets = Object.fromEntries(
-        Object.entries(secrets).filter(([, v]) => v.trim() !== "")
-      );
-
-      const res = await fetch("/api/environments/ephemeral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          branch: selectedBranch,
-          ttlHours,
-          secrets: nonEmptySecrets,
-          dbTemplateId: dbTemplateId || undefined,
-        }),
+      await createEphemeralEnvironment({
+        branch: selectedBranch,
+        ttlHours,
+        secrets: nonEmptySecrets(secrets),
+        dbTemplateId,
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to provision");
-      }
 
       router.push("/dashboard");
     } catch (err) {
@@ -83,151 +65,171 @@ export function NewEnvironmentPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-s-6">
         <Button
           onClick={() => router.push("/dashboard")}
           variant="ghost"
           size="sm"
         >
-          &larr; Back to Dashboard
+          Back to Dashboard
         </Button>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-xl font-sans font-semibold">New Ephemeral Environment</h1>
-        <p className="text-xs text-tertiary mt-1">
-          Spin up an isolated environment for any git branch
+      <div className="mb-s-6">
+        <h1 className="font-sans text-xl font-semibold text-ink-hi">
+          New Ephemeral Environment
+        </h1>
+        <p className="mt-1 text-xs text-ink-dim">
+          Spin up an isolated environment for any git branch.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Git Branch</span>
-          </div>
-          <div className="panel__content">
-            <BranchPicker
-              branches={branches ?? []}
-              value={selectedBranch}
-              onChange={setSelectedBranch}
-              loading={branchesLoading}
-            />
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Time to Live</span>
-          </div>
-          <div className="panel__content">
-            <div className="flex gap-2 flex-wrap">
-              {TTL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setTtlHours(opt.value)}
-                  className={
-                    ttlHours === opt.value
-                      ? "btn btn--primary btn--sm"
-                      : "btn btn--secondary btn--sm"
-                  }
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Database</span>
-            <Link href="/dashboard/templates" className="text-[10px] text-data font-mono hover:underline">
-              Manage Templates
-            </Link>
-          </div>
-          <div className="panel__content space-y-3">
-            <label
-              className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
-                !dbTemplateId ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"
-              }`}
-            >
-              <input
-                type="radio"
-                name="dbTemplate"
-                checked={!dbTemplateId}
-                onChange={() => setDbTemplateId(null)}
-                className="mt-0.5"
-              />
-              <div>
-                <span className={`text-sm font-medium ${!dbTemplateId ? "text-data" : "text-primary"}`}>
-                  Fresh empty database
-                </span>
-                <p className="text-[10px] text-tertiary mt-0.5">
-                  New Fly Postgres cluster with only migrations applied
-                </p>
-              </div>
-            </label>
-
-            {(templates ?? []).map((t) => (
-              <label
-                key={t.id}
-                className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
-                  dbTemplateId === t.id ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"
-                }`}
+      <form onSubmit={handleSubmit} className="space-y-s-6">
+        <Panel>
+          <PanelHeader title="Git Branch" />
+          <PanelContent>
+            <FormField label="Branch" htmlFor="env-branch">
+              <NativeSelect
+                id="env-branch"
+                required
+                value={selectedBranch}
+                onChange={(event) => setSelectedBranch(event.target.value)}
+                disabled={branchesLoading || Boolean(branchesError)}
               >
-                <input
-                  type="radio"
-                  name="dbTemplate"
-                  checked={dbTemplateId === t.id}
-                  onChange={() => setDbTemplateId(t.id)}
-                  className="mt-0.5"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium ${dbTemplateId === t.id ? "text-data" : "text-primary"}`}>
-                      {t.name}
-                    </span>
-                    <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-elevated text-tertiary">
-                      {t.mode === "FLY_DB" ? "Fork" : t.mode === "ENVIRONMENT" ? "Env" : "Seed"}
-                    </span>
-                  </div>
-                  {t.description && (
-                    <p className="text-[10px] text-tertiary mt-0.5">{t.description}</p>
-                  )}
+                <option value="">
+                  {branchesLoading
+                    ? "Loading branches..."
+                    : branchesError
+                      ? "Branches unavailable"
+                      : "Select a branch"}
+                </option>
+                {(branches ?? []).map((branch) => (
+                  <option key={branch.name} value={branch.name}>
+                    {branch.name}
+                    {branch.isDefault ? " (default)" : ""} ·{" "}
+                    {branch.sha.slice(0, 7)}
+                  </option>
+                ))}
+              </NativeSelect>
+              {branchesError ? (
+                <div className="mt-s-2 flex items-center justify-between gap-s-3">
+                  <p className="text-xs text-event-red">
+                    {apiErrorMessage(branchesError, "Unable to load branches")}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void retryBranches()}
+                  >
+                    Retry
+                  </Button>
                 </div>
-              </label>
+              ) : null}
+            </FormField>
+          </PanelContent>
+        </Panel>
+
+        <Panel>
+          <PanelHeader title="Time to Live" />
+          <PanelContent className="flex flex-wrap gap-s-2">
+            {TTL_OPTIONS.map((opt) => (
+              <Button
+                key={opt.value}
+                type="button"
+                size="sm"
+                variant={ttlHours === opt.value ? "primary" : "secondary"}
+                onClick={() => setTtlHours(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </PanelContent>
+        </Panel>
+
+        <Panel>
+          <PanelHeader
+            title="Database"
+            actions={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/dashboard/templates")}
+              >
+                Manage Templates
+              </Button>
+            }
+          />
+          <PanelContent className="space-y-s-3">
+            <OptionTile
+              label="Fresh empty database"
+              meta="New Fly Postgres cluster with only migrations applied"
+              isSelected={!dbTemplateId}
+              onClick={() => setDbTemplateId(null)}
+            />
+
+            {(templates ?? []).map((template) => (
+              <OptionTile
+                key={template.id}
+                label={template.name}
+                meta={template.description ?? "Database template"}
+                rightTag={<Badge>{TEMPLATE_MODE_LABEL[template.mode]}</Badge>}
+                isSelected={dbTemplateId === template.id}
+                onClick={() => setDbTemplateId(template.id)}
+              />
             ))}
 
-            {(templates ?? []).length === 0 && (
-              <p className="text-xs text-tertiary pl-7">
-                No templates created yet.{" "}
-                <Link href="/dashboard/templates" className="text-data hover:underline">Create one</Link>
+            {templatesError ? (
+              <div className="flex items-center justify-between gap-s-3">
+                <p className="text-xs text-event-red">
+                  {apiErrorMessage(templatesError, "Unable to load templates")}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void retryTemplates()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (templates ?? []).length === 0 ? (
+              <p className="text-xs text-ink-dim">
+                No templates created yet. Use DB Templates to add one.
               </p>
-            )}
-          </div>
-        </div>
+            ) : null}
+          </PanelContent>
+        </Panel>
 
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Secrets</span>
-            <span className="font-mono text-[10px] text-tertiary">Optional overrides</span>
-          </div>
-          <div className="panel__content space-y-4">
-            <p className="text-xs text-tertiary">
+        <Panel>
+          <PanelHeader
+            title="Secrets"
+            actions={
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-dim">
+                Optional overrides
+              </span>
+            }
+          />
+          <PanelContent className="space-y-s-4">
+            <p className="text-xs text-ink-dim">
               Leave blank to use defaults from SECRETS_TEMPLATE.
             </p>
             {SECRET_FIELDS.map((field) => (
-              <FormField key={field.key} label={field.label} htmlFor={field.key}>
+              <FormField
+                key={field.key}
+                label={field.label}
+                htmlFor={field.key}
+              >
                 <Input
                   id={field.key}
                   type="text"
                   value={secrets[field.key] ?? ""}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setSecrets((prev) => ({
                       ...prev,
-                      [field.key]: e.target.value,
+                      [field.key]: event.target.value,
                     }))
                   }
                   placeholder={field.placeholder}
@@ -235,26 +237,23 @@ export function NewEnvironmentPage() {
                 />
               </FormField>
             ))}
-          </div>
-        </div>
+          </PanelContent>
+        </Panel>
 
-        {error && (
-          <div className="panel border-critical-dim bg-critical-bg">
-            <div className="panel__content">
-              <div className="flex items-center gap-2">
-                <span className="status-dot status-dot--critical" />
-                <span className="text-xs text-critical">{error}</span>
-              </div>
-            </div>
-          </div>
-        )}
+        {error ? (
+          <Panel>
+            <PanelContent>
+              <p className="text-xs text-event-red">{error}</p>
+            </PanelContent>
+          </Panel>
+        ) : null}
 
         <Button
           type="submit"
-          disabled={!selectedBranch || submitting}
+          disabled={!selectedBranch || submitting || Boolean(branchesError)}
           variant="primary"
           isLoading={submitting}
-          className="w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full"
         >
           {submitting ? "Provisioning..." : "Create Environment"}
         </Button>

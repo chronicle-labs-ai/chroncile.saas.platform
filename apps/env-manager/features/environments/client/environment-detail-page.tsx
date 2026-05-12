@@ -1,194 +1,32 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import useSWR from "swr";
-import { ConfirmDestroyModal } from "@/shared/components/confirm-destroy-modal";
-import { ProvisioningTimeline } from "@/shared/components/provisioning-timeline";
-import { BADGE_CLASS, TYPE_LABELS } from "@/shared/environment-ui";
-import { fetcher } from "@/shared/fetcher";
-import type { EnvironmentRecord, EnvironmentStats } from "@/shared/types";
 import {
+  Badge,
+  Button,
+  ConfirmModal,
   EndpointRow,
-  LoadTestsPanel,
-  LogsPanel,
-  ResourceMetricsPanel,
-  StatCard,
-  TenantsPanel,
-} from "@/features/environments/components/detail";
-
-type DetailTab = "deployment" | "users" | "resources" | "load-tests";
-
-const DETAIL_TABS: { id: DetailTab; label: string; icon: React.ReactNode }[] = [
-  {
-    id: "deployment",
-    label: "Deployment",
-    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 010 1.954l-7.108 4.061A1.125 1.125 0 013 16.811V8.689zM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 010 1.954l-7.108 4.061a1.125 1.125 0 01-1.683-.977V8.689z" /></svg>,
-  },
-  {
-    id: "users",
-    label: "Users & Orgs",
-    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>,
-  },
-  {
-    id: "resources",
-    label: "Resources",
-    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" /></svg>,
-  },
-  {
-    id: "load-tests",
-    label: "Load Tests",
-    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>,
-  },
-];
-
-function DeploymentTab({
-  env,
-  envId,
-  stats,
-  isProvisioning,
-}: {
-  env: EnvironmentRecord;
-  envId: string;
-  stats: EnvironmentStats | undefined;
-  isProvisioning: boolean;
-}) {
-  return (
-    <div className="space-y-6">
-      <div className="panel">
-        <div className="panel__content">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div><span className="label block mb-1">Status</span><span className="font-mono text-sm text-primary">{env.status}</span></div>
-            <div><span className="label block mb-1">Branch</span><span className="font-mono text-sm text-primary">{env.gitBranch ?? "—"}</span></div>
-            <div><span className="label block mb-1">Commit</span><span className="font-mono text-sm text-primary">{env.gitSha?.slice(0, 7) ?? "—"}</span></div>
-            <div><span className="label block mb-1">Created</span><span className="font-mono text-sm text-primary">{new Date(env.createdAt).toLocaleDateString()}</span></div>
-          </div>
-        </div>
-      </div>
-
-      {(env.provisionLog || env.type === "EPHEMERAL") && (
-        <ProvisioningTimeline provisionLog={env.provisionLog} envStatus={env.status} isProvisioning={isProvisioning} />
-      )}
-
-      <div className="panel">
-        <div className="panel__header"><span className="panel__title">Endpoints</span></div>
-        <div className="divide-y divide-[var(--border-dim)]">
-          <EndpointRow label="Backend" url={env.flyAppUrl} badge="Fly.io" badgeClass="bg-[#7c3aed]/20 text-[#a78bfa]" extra={env.flyAppUrl ? `${env.flyAppUrl}/health` : null} extraLabel="Health" />
-          <EndpointRow label="Frontend" url={env.vercelUrl} badge="Vercel" badgeClass="bg-[#000]/30 text-[#e5e5e5]" pending={!env.vercelUrl && env.type === "EPHEMERAL"} pendingHint="Vercel preview will appear after the next branch push" extra={env.vercelUrl ? `${env.vercelUrl}/api/system/info` : null} extraLabel="Info" />
-          {env.expiresAt && (
-            <div className="flex items-center gap-4 px-4 py-3">
-              <span className="label shrink-0 w-20">Expires</span>
-              <span className="font-mono text-sm text-caution">{new Date(env.expiresAt).toLocaleString()}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {env.errorLog && (
-        <div className="panel border-[var(--critical-dim)]">
-          <div className="panel__header bg-[var(--critical-bg)]">
-            <div className="flex items-center gap-2">
-              <span className="status-dot status-dot--critical" />
-              <span className="panel__title text-critical">{env.status === "ERROR" ? "Provisioning Error" : "Warnings"}</span>
-            </div>
-          </div>
-          <div className="max-h-48 overflow-y-auto bg-[var(--critical-bg)]">
-            <pre className="px-4 py-3 text-xs font-mono text-critical/90 whitespace-pre-wrap break-all leading-relaxed">{env.errorLog}</pre>
-          </div>
-        </div>
-      )}
-
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <span className="label">Platform Metrics</span>
-          {stats?._note && <span className="font-mono text-[10px] text-caution">{stats._note}</span>}
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatCard label="Runs" value={stats?.runs ?? null} />
-          <StatCard label="Connections" value={stats?.connections ?? null} />
-          <StatCard label="Tenants" value={stats?.tenants ?? null} />
-          <StatCard label="Users" value={stats?.users ?? null} />
-          <StatCard label="Events" value={stats?.events ?? null} />
-        </div>
-      </div>
-
-      <LogsPanel envId={envId} />
-    </div>
-  );
-}
-
-function EnvDetailTabs({
-  env,
-  envId,
-  stats,
-  isProvisioning,
-}: {
-  env: EnvironmentRecord;
-  envId: string;
-  stats: EnvironmentStats | undefined;
-  isProvisioning: boolean;
-}) {
-  const [activeTab, setActiveTab] = useState<DetailTab>("deployment");
-
-  return (
-    <div>
-      <div className="flex border-b border-border-dim mb-6">
-        {DETAIL_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? "text-data border-data"
-                : "text-tertiary hover:text-secondary border-transparent"
-            }`}
-          >
-            <span className={activeTab === tab.id ? "text-data" : "text-tertiary"}>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "deployment" && (
-        <DeploymentTab env={env} envId={envId} stats={stats} isProvisioning={isProvisioning} />
-      )}
-
-      {activeTab === "users" && (
-        <div className="space-y-6">
-          {env.status === "RUNNING" && env.isHealthy ? (
-            <TenantsPanel envId={envId} />
-          ) : (
-            <div className="panel">
-              <div className="panel__content text-center py-8">
-                <p className="text-sm text-secondary">Backend must be running and healthy to view tenants</p>
-                <p className="text-xs text-tertiary mt-1">Current status: {env.status}{!env.isHealthy && " (unhealthy)"}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === "resources" && (
-        <div className="space-y-6">
-          {env.status === "RUNNING" ? (
-            <ResourceMetricsPanel envId={envId} />
-          ) : (
-            <div className="panel">
-              <div className="panel__content text-center py-8">
-                <p className="text-sm text-secondary">Resources available once environment is running</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === "load-tests" && (
-        <LoadTestsPanel envId={envId} isRunning={env.status === "RUNNING"} />
-      )}
-    </div>
-  );
-}
+  KpiCard,
+  KpiGrid,
+  LogStream,
+  Panel,
+  PanelContent,
+  PanelHeader,
+  ProvisioningTimeline,
+  SkeletonBlock,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+} from "ui";
+import { apiErrorMessage, fetcher } from "@/frontend/shared/fetcher";
+import type { EnvironmentRecord, EnvironmentStats } from "@/frontend/shared/types";
+import { destroyEnvironment } from "../api";
+import { ENV_TYPE_LABELS } from "../constants";
+import { buildProvisioningSteps, getTabsForEnvironment } from "../mappers";
+import type { DetailTab } from "../types";
 
 export function EnvironmentDetailPage({
   params,
@@ -200,8 +38,14 @@ export function EnvironmentDetailPage({
   const [destroying, setDestroying] = useState(false);
   const [showDestroyModal, setShowDestroyModal] = useState(false);
   const [fastPoll, setFastPoll] = useState(true);
+  const [activeTab, setActiveTab] = useState<DetailTab>("deployment");
 
-  const { data: env, isLoading } = useSWR<EnvironmentRecord>(
+  const {
+    data: env,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<EnvironmentRecord>(
     `/api/environments/${id}`,
     fetcher,
     {
@@ -214,9 +58,7 @@ export function EnvironmentDetailPage({
     }
   );
 
-  const isProvisioning = env?.status === "PROVISIONING";
-
-  const { data: stats } = useSWR<EnvironmentStats>(
+  const { data: stats, error: statsError, mutate: retryStats } = useSWR<EnvironmentStats>(
     env ? `/api/environments/${id}/stats` : null,
     fetcher,
     { refreshInterval: 60_000 }
@@ -226,70 +68,251 @@ export function EnvironmentDetailPage({
     if (!env) return;
     setDestroying(true);
     setShowDestroyModal(false);
-    await fetch(`/api/environments/${id}`, { method: "DELETE" });
+    await destroyEnvironment(id);
     router.push("/dashboard");
   };
 
-  if (isLoading) {
+  if (isLoading && !error) {
     return (
-      <div className="max-w-6xl mx-auto">
-        <div className="text-secondary text-sm font-mono">Loading environment...</div>
+      <div className="mx-auto max-w-6xl">
+        <SkeletonBlock className="h-6 w-64" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <Panel>
+          <PanelHeader title="Unable to load environment" />
+          <PanelContent className="space-y-s-3 py-s-8 text-center">
+            <p className="text-sm text-ink-dim">
+              {apiErrorMessage(error, "The environment API did not respond successfully")}
+            </p>
+            <div className="flex justify-center gap-s-3">
+              <Button size="sm" variant="secondary" onClick={() => void mutate()}>
+                Retry
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => router.push("/dashboard")}>
+                Back to Dashboard
+              </Button>
+            </div>
+          </PanelContent>
+        </Panel>
       </div>
     );
   }
 
   if (!env) {
     return (
-      <div className="max-w-6xl mx-auto">
-        <div className="panel">
-          <div className="panel__content text-center py-8">
-            <p className="text-secondary text-sm mb-3">Environment not found</p>
-            <Link href="/dashboard" className="btn btn--secondary btn--sm">Back to Dashboard</Link>
-          </div>
-        </div>
+      <div className="mx-auto max-w-6xl">
+        <Panel>
+          <PanelContent className="py-s-8 text-center">
+            <p className="mb-s-3 text-sm text-ink-dim">Environment not found</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => router.push("/dashboard")}
+            >
+              Back to Dashboard
+            </Button>
+          </PanelContent>
+        </Panel>
       </div>
     );
   }
 
+  const tabs = getTabsForEnvironment(env);
+
   return (
     <>
-      {showDestroyModal && (
-        <ConfirmDestroyModal
-          environmentName={env.name}
-          destroying={destroying}
-          onConfirm={handleDestroy}
-          onCancel={() => setShowDestroyModal(false)}
-        />
-      )}
-      <div className="max-w-6xl mx-auto space-y-6">
+      <ConfirmModal
+        isOpen={showDestroyModal}
+        onClose={() => setShowDestroyModal(false)}
+        onConfirm={handleDestroy}
+        title="Destroy environment"
+        message={`Destroy "${env.name}"? This cannot be undone.`}
+        confirmText="Destroy"
+        variant="danger"
+        isLoading={destroying}
+      />
+
+      <div className="mx-auto flex max-w-6xl flex-col gap-s-6">
         <div>
-          <Link href="/dashboard" className="btn btn--ghost btn--sm mb-4 inline-flex">&larr; All Environments</Link>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <span className={`badge ${BADGE_CLASS[env.type]}`}>{TYPE_LABELS[env.type]}</span>
-              <h1 className="text-xl font-sans font-semibold">{env.name}</h1>
-              <span className={`status-dot ${env.isHealthy ? "status-dot--nominal status-dot--pulse" : "status-dot--critical"}`} />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/dashboard")}
+            className="mb-s-4"
+          >
+            All Environments
+          </Button>
+          <div className="flex items-start justify-between gap-s-4">
+            <div className="flex min-w-0 items-center gap-s-3">
+              <Badge>{ENV_TYPE_LABELS[env.type]}</Badge>
+              <h1 className="truncate font-sans text-xl font-semibold text-ink-hi">
+                {env.name}
+              </h1>
+              <Badge variant={env.isHealthy ? "green" : "red"}>
+                {env.isHealthy ? "healthy" : "unhealthy"}
+              </Badge>
             </div>
-            <div className="flex items-center gap-3">
-              {env.type === "EPHEMERAL" && env.status !== "DESTROYING" && (
-                <button
-                  onClick={() => setShowDestroyModal(true)}
-                  disabled={destroying}
-                  className="btn btn--critical btn--sm disabled:opacity-40"
-                >
-                  {destroying ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full border-2 border-critical/40 border-t-critical animate-spin" />
-                      Destroying...
-                    </span>
-                  ) : "Destroy Environment"}
-                </button>
-              )}
-            </div>
+            {env.type === "EPHEMERAL" && env.status !== "DESTROYING" ? (
+              <Button
+                variant="critical"
+                size="sm"
+                disabled={destroying}
+                isLoading={destroying}
+                onClick={() => setShowDestroyModal(true)}
+              >
+                Destroy Environment
+              </Button>
+            ) : null}
           </div>
         </div>
 
-        <EnvDetailTabs env={env} envId={id} stats={stats} isProvisioning={isProvisioning} />
+        <Tabs selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key as DetailTab)}>
+          <TabList aria-label="Environment detail tabs">
+            {tabs.map((tab) => (
+              <Tab key={tab.id} id={tab.id}>
+                {tab.label}
+              </Tab>
+            ))}
+          </TabList>
+
+          <TabPanel id="deployment" className="space-y-s-6">
+            <KpiGrid columns={4}>
+              <KpiCard label="Status" value={env.status} monoValue />
+              <KpiCard label="Branch" value={env.gitBranch ?? "—"} monoValue />
+              <KpiCard
+                label="Commit"
+                value={env.gitSha?.slice(0, 7) ?? "—"}
+                monoValue
+              />
+              <KpiCard
+                label="Created"
+                value={new Date(env.createdAt).toLocaleDateString()}
+                monoValue
+              />
+            </KpiGrid>
+
+            <ProvisioningTimeline
+              title="Provisioning"
+              meta={env.status.toLowerCase()}
+            >
+              {buildProvisioningSteps(env).map((step, index, steps) => (
+                <ProvisioningTimeline.Step
+                  key={step.label}
+                  label={step.label}
+                  description={step.description}
+                  status={step.status}
+                  time={step.time}
+                  isLast={index === steps.length - 1}
+                />
+              ))}
+            </ProvisioningTimeline>
+
+            <Panel>
+              <PanelHeader title="Endpoints" />
+              <EndpointRow
+                label="Backend"
+                value={env.flyAppUrl}
+                externalHref={env.flyAppUrl ?? undefined}
+              />
+              <EndpointRow
+                label="Frontend"
+                value={env.vercelUrl}
+                externalHref={env.vercelUrl ?? undefined}
+              />
+              {env.expiresAt ? (
+                <EndpointRow
+                  label="Expires"
+                  value={new Date(env.expiresAt).toLocaleString()}
+                  externalHref={undefined}
+                />
+              ) : null}
+            </Panel>
+
+            {env.errorLog ? (
+              <Panel>
+                <PanelHeader title={env.status === "ERROR" ? "Provisioning Error" : "Warnings"} />
+                <LogStream heightClassName="max-h-48">
+                  <LogStream.Line level="error">{env.errorLog}</LogStream.Line>
+                </LogStream>
+              </Panel>
+            ) : null}
+
+            <KpiGrid columns={4}>
+              <KpiCard label="Runs" value={stats?.runs ?? "—"} />
+              <KpiCard label="Connections" value={stats?.connections ?? "—"} />
+              <KpiCard label="Tenants" value={stats?.tenants ?? "—"} />
+              <KpiCard label="Users" value={stats?.users ?? "—"} />
+            </KpiGrid>
+            {statsError ? (
+              <Panel>
+                <PanelContent className="flex items-center justify-between gap-s-3">
+                  <p className="text-xs text-event-red">
+                    {apiErrorMessage(statsError, "Unable to load environment stats")}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void retryStats()}
+                  >
+                    Retry
+                  </Button>
+                </PanelContent>
+              </Panel>
+            ) : null}
+          </TabPanel>
+
+          <TabPanel id="users">
+            <Panel>
+              <PanelContent className="py-s-8 text-center">
+                <p className="text-sm text-ink">
+                  Tenant and organization controls will render here once the
+                  shared table/form composition is migrated.
+                </p>
+                <p className="mt-1 text-xs text-ink-dim">
+                  Current status: {env.status}
+                  {!env.isHealthy ? " (unhealthy)" : ""}
+                </p>
+              </PanelContent>
+            </Panel>
+          </TabPanel>
+
+          <TabPanel id="resources">
+            <Panel>
+              <PanelContent className="py-s-8 text-center">
+                <p className="text-sm text-ink">
+                  Resource metrics will render here through shared `MetricChart`
+                  and `Panel` components.
+                </p>
+              </PanelContent>
+            </Panel>
+          </TabPanel>
+
+          <TabPanel id="load-tests">
+            <Panel>
+              <PanelContent className="py-s-8 text-center">
+                <p className="text-sm text-ink">
+                  Load test controls will render here through shared table and
+                  button primitives.
+                </p>
+              </PanelContent>
+            </Panel>
+          </TabPanel>
+
+          <TabPanel id="database">
+            <Panel>
+              <PanelContent className="py-s-8 text-center">
+                <p className="text-sm text-ink">
+                  Local database controls are available for local environments.
+                </p>
+              </PanelContent>
+            </Panel>
+          </TabPanel>
+        </Tabs>
       </div>
     </>
   );

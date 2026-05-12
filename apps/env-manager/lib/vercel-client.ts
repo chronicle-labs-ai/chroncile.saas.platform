@@ -32,7 +32,9 @@ async function vercelFetch(
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Vercel API ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`);
+    throw new Error(
+      `Vercel API ${init?.method ?? "GET"} ${path} → ${res.status}: ${body}`
+    );
   }
   return res;
 }
@@ -98,18 +100,24 @@ async function findEnvVar(
     const res = await vercelFetch(`/v10/projects/${pid}/env`);
     const data = await res.json();
     const vars: VercelEnvVar[] = data.envs ?? [];
-    return vars.find((v) =>
-      v.key === key &&
-      v.target.includes(target) &&
-      (gitBranch ? v.gitBranch === gitBranch : !v.gitBranch)
-    ) ?? null;
+    return (
+      vars.find(
+        (v) =>
+          v.key === key &&
+          v.target.includes(target) &&
+          (gitBranch ? v.gitBranch === gitBranch : !v.gitBranch)
+      ) ?? null
+    );
   } catch {
     return null;
   }
 }
 
 /** Update an existing env var value in-place */
-async function updateEnvVar(envVarId: string, value: string): Promise<VercelEnvVar> {
+async function updateEnvVar(
+  envVarId: string,
+  value: string
+): Promise<VercelEnvVar> {
   const pid = projectId();
   const res = await vercelFetch(`/v10/projects/${pid}/env/${envVarId}`, {
     method: "PATCH",
@@ -142,14 +150,20 @@ export async function upsertEnvVar(
   );
 
   if (createResponse.ok) {
-    return { ...(await createResponse.json()), branchScoped: Boolean(gitBranch) };
+    return {
+      ...(await createResponse.json()),
+      branchScoped: Boolean(gitBranch),
+    };
   }
 
-  const createError = await createResponse.json().catch(() => ({})) as {
-    error?: { code?: string; message?: string }
+  const createError = (await createResponse.json().catch(() => ({}))) as {
+    error?: { code?: string; message?: string };
   };
 
-  if (createResponse.status === 400 && createError?.error?.code === "ENV_CONFLICT") {
+  if (
+    createResponse.status === 400 &&
+    createError?.error?.code === "ENV_CONFLICT"
+  ) {
     const existing = await findEnvVar(key, target, gitBranch);
     if (existing) {
       const updated = await updateEnvVar(existing.id, value);
@@ -183,8 +197,8 @@ export async function upsertEnvVar(
     return { ...(await branchRes.json()), branchScoped: false };
   }
 
-  const branchErr = await branchRes.json().catch(() => ({})) as {
-    error?: { code?: string; message?: string }
+  const branchErr = (await branchRes.json().catch(() => ({}))) as {
+    error?: { code?: string; message?: string };
   };
 
   if (branchRes.status === 400 && branchErr?.error?.code === "ENV_CONFLICT") {
@@ -290,8 +304,10 @@ export async function waitForDeployment(
       const data: VercelDeployment = await res.json();
       // Single deployment endpoint returns readyState; list endpoint returns state
       const deployState = data.readyState ?? data.state ?? "";
-      if (deployState === "READY") return { url: `https://${data.url}`, state: "READY" };
-      if (deployState === "ERROR" || deployState === "CANCELED") return { url: null, state: deployState };
+      if (deployState === "READY")
+        return { url: `https://${data.url}`, state: "READY" };
+      if (deployState === "ERROR" || deployState === "CANCELED")
+        return { url: null, state: deployState };
     } catch {
       // transient error — keep polling
     }
@@ -299,4 +315,3 @@ export async function waitForDeployment(
   }
   return { url: null, state: "TIMEOUT" };
 }
-

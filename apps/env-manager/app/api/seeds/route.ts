@@ -17,7 +17,8 @@ export async function GET() {
           return {
             name,
             filename: f,
-            description: firstComment?.[1]?.replace(/^Chronicle Labs —\s*/, "") ?? name,
+            description:
+              firstComment?.[1]?.replace(/^Chronicle Labs —\s*/, "") ?? name,
             url: `/api/seeds/${name}`,
           };
         })

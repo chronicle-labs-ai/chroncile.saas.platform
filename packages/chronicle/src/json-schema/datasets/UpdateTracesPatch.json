@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Patch to apply to one or more traces. Distinguishes between \"leave alone\" (`None`) and \"clear\" (`Some(NullableField::Clear)`) — the TS side uses literal `null` for clearing; we serialize as a flat `Option<...>` and reserve the `null` literal in the JSON shape via `#[serde(default, deserialize_with = \"...\")]` if we later need to distinguish. For now `None` covers both — frontends use the absence to mean \"leave alone\" and explicit `null` to mean \"clear\", which serde handles transparently.",
+  "properties": {
+    "clusterId": {
+      "description": "New cluster id, or `null` to drop the trace from any cluster.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "note": {
+      "description": "Replace the membership note, or `null` to clear it.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "split": {
+      "description": "New split, or `null` to mark unassigned.",
+      "enum": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "description": "Health status of a trace as judged by the dataset owner.",
+      "enum": [
+        "ok",
+        "warn",
+        "error"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "title": "UpdateTracesPatch",
+  "type": "object"
+}

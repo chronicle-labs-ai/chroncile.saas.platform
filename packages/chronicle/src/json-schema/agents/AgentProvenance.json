@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "aiSdkVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "dependencyLockHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "frameworkVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "gitSha": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "publishedBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "createdAt"
+  ],
+  "title": "AgentProvenance",
+  "type": "object"
+}

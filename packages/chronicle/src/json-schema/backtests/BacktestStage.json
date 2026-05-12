@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "`list`      — manager landing page: table of past / scheduled / draft backtests + \"+ New backtest\". `configure` — the directional pipeline (steps 01..04) for a single run. `running`   — live progress for a launched run. `results`   — verdict, metrics, divergences for a finished run.",
+  "enum": [
+    "list",
+    "configure",
+    "running",
+    "results"
+  ],
+  "title": "BacktestStage",
+  "type": "string"
+}

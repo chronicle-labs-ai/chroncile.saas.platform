@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/data";
 
 const LOCAL_ENV_NAME = "local";
 const BACKEND_URL = process.env.LOCAL_BACKEND_URL ?? "http://localhost:8080";
@@ -60,9 +60,7 @@ export async function syncLocalEnvironment(): Promise<void> {
   }
 
   const serviceSecret =
-    process.env.LOCAL_SERVICE_SECRET ??
-    process.env.SERVICE_SECRET ??
-    null;
+    process.env.LOCAL_SERVICE_SECRET ?? process.env.SERVICE_SECRET ?? null;
 
   await prisma.environment.upsert({
     where: { name: LOCAL_ENV_NAME },

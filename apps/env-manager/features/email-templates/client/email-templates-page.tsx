@@ -1,769 +1,720 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { Button, FormField, Input, Select, Textarea } from "ui";
-import { fetcher } from "@/shared/fetcher";
 import {
-  assignTemplateSchema,
-  registerTemplateKeySchema,
-  sendTestEmailSchema,
-  type AssignTemplateInput,
-  type RegisterTemplateKeyInput,
-  type SendTestEmailInput,
-} from "@/shared/forms/schemas";
-import type { EnvironmentRecord } from "@/shared/types";
+  Button,
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogXClose,
+  EmailTemplateRegistryCard,
+  FormField,
+  Input,
+  Modal,
+  NativeSelect,
+  SkeletonBlock,
+  Textarea,
+  ProductChip,
+} from "ui";
+import { apiErrorMessage, fetcher } from "@/frontend/shared/fetcher";
+import type { EnvironmentRecord } from "@/frontend/shared/types";
+import {
+  assignEmailTemplate,
+  deleteTemplateKey,
+  registerTemplateKey,
+  deleteAssignment as removeEmailTemplateAssignment,
+} from "../api";
+import {
+  DEFAULT_REGISTER_VARIABLES,
+  EMAIL_TEMPLATE_CATEGORIES,
+} from "../constants";
+import {
+  findMatchingResendTemplate,
+  isEmailTemplateAssignmentEnvironment,
+  sortEmailTemplateAssignmentEnvironment,
+  toAssignmentTargets,
+  toRegistryEntry,
+  toResendTemplateCard,
+} from "../mappers";
+import type {
+  Assignment,
+  EmailTemplateKey,
+  ResendTemplate,
+  ResendTemplatesResponse,
+} from "../types";
 
-interface TemplateVariable {
-  key: string;
-  type: "string" | "number";
-  description?: string;
-  sampleValue?: string;
-}
+type EmailTemplateAction = {
+  kind: "preview" | "send" | "delete";
+  template: EmailTemplateKey;
+  resendTemplate?: ResendTemplate | null;
+} | null;
 
-interface EmailTemplateKey {
-  id: string;
-  key: string;
-  name: string;
-  description: string | null;
-  variables: TemplateVariable[];
-  category: string;
-  createdAt: string;
-  assignments: {
-    id: string;
-    resendTemplateId: string;
-    environmentId: string | null;
-    environment: { id: string; name: string } | null;
-  }[];
-}
-
-interface Assignment {
-  id: string;
-  resendTemplateId: string;
-  templateKeyId: string;
-  environmentId: string | null;
-  templateKey: { id: string; key: string; name: string };
-  environment: { id: string; name: string } | null;
-  createdAt: string;
-}
-
-interface ResendTemplate {
-  id: string;
-  name: string;
-  alias: string | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  published_at: string | null;
-}
-
-const CATEGORY_BADGE: Record<string, string> = {
-  transactional: "badge--data",
-  auth: "badge--caution",
-  notification: "badge--nominal",
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  published: "badge--nominal",
-  draft: "badge--caution",
-};
-
-function PreviewModal({
-  template,
-  onClose,
+function TemplateTableShell({
+  title,
+  count,
+  children,
 }: {
-  template: ResendTemplate;
-  onClose: () => void;
+  title: React.ReactNode;
+  count: React.ReactNode;
+  children: React.ReactNode;
 }) {
-  const { data, isLoading } = useSWR(
-    `/api/email-templates/resend/${template.id}/preview`,
-    fetcher
-  );
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
-      <div className="relative w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col panel">
-        <div className="panel__header">
-          <div>
-            <span className="panel__title">{template.name}</span>
-            <span className="ml-2 font-mono text-[10px] text-tertiary">{template.alias ?? template.id}</span>
-          </div>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <div className="flex-1 overflow-auto">
-          {isLoading ? (
-            <div className="p-8 text-center text-secondary text-sm">Loading preview...</div>
-          ) : data?.html ? (
-            <iframe
-              srcDoc={data.html}
-              className="w-full border-0"
-              style={{ height: "600px", background: "#0a0c0f" }}
-              sandbox=""
-              title="Email Preview"
-            />
-          ) : (
-            <div className="p-8 text-center text-secondary text-sm">
-              No HTML preview available.
-              {data?.subject && <p className="mt-2 font-mono text-xs text-tertiary">Subject: {data.subject}</p>}
-            </div>
-          )}
-        </div>
-        {data?.variables && data.variables.length > 0 && (
-          <div className="border-t border-border-dim px-4 py-3 bg-elevated">
-            <span className="text-[10px] font-medium tracking-wider text-tertiary uppercase mb-2 block">Variables</span>
-            <div className="flex flex-wrap gap-1.5">
-              {data.variables.map((v: { key: string; type: string; fallback_value?: string }) => (
-                <span key={v.key} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-data-bg border border-data-dim text-[10px] font-mono text-data">
-                  {v.key}
-                  {v.fallback_value && <span className="text-tertiary">= {String(v.fallback_value)}</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+    <div className="overflow-visible rounded-md border border-l-border bg-l-surface-raised">
+      <div className="flex items-center justify-between gap-s-3 border-b border-l-border-faint px-s-4 py-s-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-l-ink-dim">
+          {title}
+        </span>
+        <span className="font-mono text-[10px] text-l-ink-dim">{count}</span>
       </div>
+      <div className="p-s-4">{children}</div>
     </div>
   );
 }
 
-function SendTestModal({
-  template,
-  registryKeys,
-  onClose,
-}: {
-  template: ResendTemplate;
-  registryKeys: EmailTemplateKey[];
-  onClose: () => void;
-}) {
-  const matchingKey = registryKeys.find(
-    (k) => k.assignments.some((a) => a.resendTemplateId === template.alias || a.resendTemplateId === template.id)
+function assignmentTargetId(
+  assignment: EmailTemplateKey["assignments"][number]
+) {
+  return assignment.environmentId ?? "default";
+}
+
+export function EmailTemplatesPage() {
+  const {
+    data: templateKeys,
+    error: keysError,
+    isLoading: keysLoading,
+    mutate: mutateKeys,
+  } = useSWR<EmailTemplateKey[]>("/api/email-templates/keys", fetcher);
+  const { mutate: mutateAssignments } = useSWR<Assignment[]>(
+    "/api/email-templates/assignments",
+    fetcher
+  );
+  const {
+    data: resendData,
+    error: resendError,
+    isLoading: resendLoading,
+    mutate: retryResend,
+  } = useSWR<ResendTemplatesResponse>("/api/email-templates/resend", fetcher);
+  const {
+    data: envs,
+    error: envsError,
+    mutate: retryEnvs,
+  } = useSWR<EnvironmentRecord[]>("/api/environments", fetcher);
+
+  const resendTemplates = resendData?.data ?? [];
+  const [showRegister, setShowRegister] = useState(false);
+  const [emailAction, setEmailAction] = useState<EmailTemplateAction>(null);
+  const [registerKey, setRegisterKey] = useState("");
+  const [registerName, setRegisterName] = useState("");
+  const [registerDescription, setRegisterDescription] = useState("");
+  const [registerCategory, setRegisterCategory] = useState("transactional");
+  const [registerVariables, setRegisterVariables] = useState(
+    DEFAULT_REGISTER_VARIABLES
+  );
+  const [registerResendTemplateId, setRegisterResendTemplateId] = useState("");
+  const [registerEnvironmentIds, setRegisterEnvironmentIds] = useState<
+    string[]
+  >([]);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const registerEnvironments = useMemo(
+    () =>
+      (envs ?? [])
+        .filter(isEmailTemplateAssignmentEnvironment)
+        .sort(sortEmailTemplateAssignmentEnvironment),
+    [envs]
   );
 
-  const initialVars: Record<string, string> = {};
-  if (matchingKey) {
-    for (const v of matchingKey.variables) {
-      initialVars[v.key] = v.sampleValue ?? "";
-    }
-  }
+  const defaultRegisterEnvironmentIds = useMemo(() => {
+    const staging = registerEnvironments.find(
+      (environment) =>
+        environment.type === "STAGING" ||
+        ["staging", "stage"].includes(environment.name.toLowerCase())
+    );
+    return staging ? [staging.id] : [];
+  }, [registerEnvironments]);
 
-  const [variables, setVariables] = useState<Record<string, string>>(initialVars);
-  const [result, setResult] = useState<{ sent?: boolean; error?: string } | null>(null);
+  const refreshAll = async () => {
+    await mutateKeys();
+    await mutateAssignments();
+  };
 
-  const form = useForm<SendTestEmailInput>({
-    resolver: zodResolver(sendTestEmailSchema),
-    defaultValues: {
-      to: "",
-    },
-  });
+  const resetRegister = () => {
+    setRegisterKey("");
+    setRegisterName("");
+    setRegisterDescription("");
+    setRegisterCategory("transactional");
+    setRegisterVariables(DEFAULT_REGISTER_VARIABLES);
+    setRegisterResendTemplateId("");
+    setRegisterEnvironmentIds(defaultRegisterEnvironmentIds);
+    setModalError(null);
+  };
 
-  const handleSend = form.handleSubmit(async ({ to }) => {
-    setResult(null);
+  const handleRegister = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setModalError(null);
     try {
-      const res = await fetch(`/api/email-templates/resend/${template.id}/send-test`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to,
-          subject: `[TEST] ${template.name}`,
-          variables,
-        }),
+      const templateKey = await registerTemplateKey({
+        key: registerKey,
+        name: registerName,
+        description: registerDescription,
+        category: registerCategory,
+        variablesText: registerVariables,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setResult({ error: data.error ?? "Failed to send" });
-      } else {
-        setResult({ sent: true });
+
+      if (registerEnvironmentIds.length > 0) {
+        if (!registerResendTemplateId) {
+          throw new Error(
+            "Select a Resend template before assigning environments."
+          );
+        }
+
+        await Promise.all(
+          registerEnvironmentIds.map((environmentId) =>
+            assignEmailTemplate({
+              templateKeyId: templateKey.id,
+              environmentId,
+              resendTemplateId: registerResendTemplateId,
+            })
+          )
+        );
       }
-    } catch (err) {
-      setResult({ error: err instanceof Error ? err.message : String(err) });
+
+      await refreshAll();
+      resetRegister();
+      setShowRegister(false);
+    } catch (error) {
+      setModalError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSubmitting(false);
     }
-  });
+  };
+
+  const handleDeleteKey = async (template: EmailTemplateKey) => {
+    setSubmitting(true);
+    setModalError(null);
+    try {
+      await deleteTemplateKey(template.id);
+      setEmailAction(null);
+      await refreshAll();
+    } catch (error) {
+      setModalError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRegistryAssignmentChange = async (
+    template: EmailTemplateKey,
+    resendTemplate: ResendTemplate | undefined,
+    selectedIds: Set<string>
+  ) => {
+    const allowedEnvironmentIds = new Set(
+      registerEnvironments.map((environment) => environment.id)
+    );
+    const normalizedSelectedIds = new Set(
+      [...selectedIds].filter((id) => allowedEnvironmentIds.has(id))
+    );
+    const existingIds = new Set(template.assignments.map(assignmentTargetId));
+    const removedAssignments = template.assignments.filter(
+      (assignment) => !normalizedSelectedIds.has(assignmentTargetId(assignment))
+    );
+    const addedIds = [...normalizedSelectedIds].filter(
+      (id) => !existingIds.has(id)
+    );
+
+    if (!resendTemplate && addedIds.length > 0) {
+      const message =
+        "Link a Resend template before assigning this key to more environments.";
+      setPageError(message);
+      throw new Error(message);
+    }
+
+    const resendTemplateId = resendTemplate?.alias ?? resendTemplate?.id;
+
+    await Promise.all([
+      ...removedAssignments.map((assignment) =>
+        removeEmailTemplateAssignment(assignment.id)
+      ),
+      ...(resendTemplateId
+        ? addedIds.map((id) =>
+            assignEmailTemplate({
+              templateKeyId: template.id,
+              environmentId: id === "default" ? "" : id,
+              resendTemplateId,
+            })
+          )
+        : []),
+    ]);
+
+    setPageError(null);
+    await refreshAll();
+  };
+
+  const toggleRegisterEnvironment = (environmentId: string) => {
+    setRegisterEnvironmentIds((currentIds) =>
+      currentIds.includes(environmentId)
+        ? currentIds.filter((id) => id !== environmentId)
+        : [...currentIds, environmentId]
+    );
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
-      <div className="relative w-full max-w-lg mx-4 panel">
-        <div className="panel__header">
-          <span className="panel__title">Send Test Email</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <form onSubmit={handleSend}>
-          <div className="panel__content space-y-4">
-            <div className="flex items-center gap-2 p-2 rounded bg-elevated border border-border-dim">
-              <span className={`badge ${STATUS_BADGE[template.status] ?? ""}`}>{template.status}</span>
-              <span className="text-sm text-primary font-medium">{template.name}</span>
-              <span className="font-mono text-[10px] text-tertiary">{template.alias ?? template.id}</span>
+    <>
+      {emailAction ? (
+        <Modal
+          isOpen
+          onClose={() => setEmailAction(null)}
+          title={
+            emailAction?.kind === "delete"
+              ? "Delete Template Key"
+              : emailAction?.kind === "send"
+                ? "Send Test Email"
+                : emailAction?.kind === "preview"
+                  ? (emailAction.resendTemplate?.name ??
+                    emailAction.template.name)
+                  : "Preview"
+          }
+          variant={emailAction?.kind === "delete" ? "danger" : "default"}
+          className={emailAction?.kind === "preview" ? "max-w-3xl" : undefined}
+          actions={
+            emailAction?.kind === "delete" ? (
+              <>
+                <Button size="sm" onClick={() => setEmailAction(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  variant="critical"
+                  isLoading={submitting}
+                  onClick={() => void handleDeleteKey(emailAction.template)}
+                >
+                  Delete
+                </Button>
+              </>
+            ) : emailAction?.kind === "send" ? (
+              <>
+                <Button size="sm" onClick={() => setEmailAction(null)}>
+                  Close
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  disabled={emailAction.resendTemplate?.status !== "published"}
+                >
+                  Send Test
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" onClick={() => setEmailAction(null)}>
+                Close
+              </Button>
+            )
+          }
+        >
+          {emailAction?.kind === "delete" ? (
+            <div className="space-y-s-3">
+              <p>
+                Delete template key{" "}
+                <span className="font-mono text-l-ink">
+                  {emailAction.template.key}
+                </span>
+                ? This will fail if there are active assignments.
+              </p>
+              {modalError ? (
+                <p className="text-xs text-event-red">{modalError}</p>
+              ) : null}
             </div>
-
-            <FormField
-              label="Recipient Email"
-              htmlFor="send-test-email"
-              description="Use delivered@resend.dev for safe testing"
-              error={form.formState.errors.to?.message}
-            >
-              <Input
-                id="send-test-email"
-                type="email"
-                placeholder="you@example.com"
-                invalid={!!form.formState.errors.to}
-                {...form.register("to")}
-              />
-            </FormField>
-
-            {Object.keys(variables).length > 0 && (
+          ) : emailAction?.kind === "send" ? (
+            <div className="space-y-s-4">
+              <div className="flex items-center gap-s-2 rounded-md border border-l-border bg-l-surface px-s-3 py-s-2">
+                <ProductChip
+                  tone={
+                    emailAction.resendTemplate?.status === "published"
+                      ? "nominal"
+                      : "caution"
+                  }
+                >
+                  {emailAction.resendTemplate?.status ?? "missing"}
+                </ProductChip>
+                <span className="text-sm font-medium text-l-ink">
+                  {emailAction.template.name}
+                </span>
+                <span className="font-mono text-[10px] text-l-ink-dim">
+                  {emailAction.resendTemplate?.alias ??
+                    emailAction.template.key}
+                </span>
+              </div>
+              <FormField
+                label="Recipient Email"
+                htmlFor="send-test-email"
+                description="Use delivered@resend.dev for safe testing"
+              >
+                <Input
+                  id="send-test-email"
+                  type="email"
+                  placeholder="you@example.com"
+                />
+              </FormField>
               <div>
-                <label className="label block mb-1.5">Template Variables</label>
-                <div className="space-y-2">
-                  {Object.entries(variables).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] text-data w-32 shrink-0 text-right">{key}</span>
+                <div className="mb-s-2 font-sans text-[12px] font-medium text-l-ink-lo">
+                  Template Variables
+                </div>
+                <div className="space-y-s-2">
+                  {emailAction.template.variables.map((variable) => (
+                    <div
+                      key={variable.key}
+                      className="flex items-center gap-s-2"
+                    >
+                      <span className="w-32 shrink-0 text-right font-mono text-[10px] text-event-teal">
+                        {variable.key}
+                      </span>
                       <Input
-                        type="text"
-                        value={value}
-                        onChange={(e) => setVariables((prev) => ({ ...prev, [key]: e.target.value }))}
-                        className="font-mono text-xs flex-1"
+                        defaultValue={variable.sampleValue ?? ""}
+                        className="flex-1 font-mono text-xs"
                       />
                     </div>
                   ))}
                 </div>
               </div>
-            )}
-
-            {result?.sent && (
-              <div className="flex items-center gap-2 p-2 rounded bg-nominal/10 border border-nominal/30">
-                <span className="status-dot status-dot--nominal" />
-                <span className="text-xs text-nominal">Test email sent successfully</span>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-md border border-l-border bg-white text-[#1a140a]">
+              <div className="border-b border-black/10 px-s-6 py-s-5">
+                <div className="text-xs uppercase tracking-[0.12em] text-black/45">
+                  Chronicle Labs
+                </div>
+                <h2 className="mt-s-2 text-2xl font-semibold">
+                  {emailAction?.kind === "preview"
+                    ? emailAction.template.name
+                    : "Email template"}
+                </h2>
               </div>
-            )}
-            {result?.error && (
-              <div className="flex items-center gap-2 p-2 rounded bg-critical/10 border border-critical/30">
-                <span className="status-dot status-dot--critical" />
-                <span className="text-xs text-critical">{result.error}</span>
+              <div className="space-y-s-3 px-s-6 py-s-5 text-sm leading-relaxed">
+                <p>Hi {"{{INVITEE_NAME}}"},</p>
+                <p>
+                  {"{{INVITER_NAME}}"} invited you to join {"{{ORG_NAME}}"} on
+                  Chronicle Labs.
+                </p>
+                <div className="inline-flex rounded-md bg-[#1a140a] px-s-4 py-s-2 text-white">
+                  Accept invitation
+                </div>
               </div>
-            )}
-          </div>
-          <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Close</Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              isLoading={form.formState.isSubmitting}
-              disabled={template.status !== "published"}
-            >
-              {form.formState.isSubmitting ? "Sending..." : "Send Test"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+            </div>
+          )}
+        </Modal>
+      ) : null}
 
-function RegisterKeyModal({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: () => void;
-}) {
-  const form = useForm<RegisterTemplateKeyInput>({
-    resolver: zodResolver(registerTemplateKeySchema),
-    defaultValues: {
-      key: "",
-      name: "",
-      description: "",
-      category: "transactional",
-      variablesText: "[]",
-    },
-  });
-
-  const handleSubmit = form.handleSubmit(async (values) => {
-    try {
-      const variables = JSON.parse(values.variablesText);
-
-      const res = await fetch("/api/email-templates/keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: values.key,
-          name: values.name,
-          description: values.description || undefined,
-          variables,
-          category: values.category,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to create");
-      }
-      onCreated();
-      onClose();
-    } catch (err) {
-      form.setError("root", {
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
-      <div className="relative w-full max-w-lg mx-4 panel">
-        <div className="panel__header">
-          <span className="panel__title">Register Email Template Key</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="panel__content space-y-4">
-            <FormField
-              label="Key (slug)"
-              htmlFor="template-key"
-              error={form.formState.errors.key?.message}
-            >
-              <Input
-                id="template-key"
-                className="font-mono text-sm"
-                placeholder="team-invite"
-                invalid={!!form.formState.errors.key}
-                {...form.register("key")}
-              />
-            </FormField>
-            <FormField
-              label="Display Name"
-              htmlFor="template-name"
-              error={form.formState.errors.name?.message}
-            >
-              <Input
-                id="template-name"
-                className="text-sm"
-                placeholder="Team Invitation"
-                invalid={!!form.formState.errors.name}
-                {...form.register("name")}
-              />
-            </FormField>
-            <FormField label="Description" htmlFor="template-description">
-              <Input
-                id="template-description"
-                className="text-sm"
-                placeholder="Sent when an admin invites a new team member"
-                {...form.register("description")}
-              />
-            </FormField>
-            <FormField
-              label="Category"
-              htmlFor="template-category"
-              error={form.formState.errors.category?.message}
-            >
-              <Select
-                id="template-category"
-                className="text-sm"
-                invalid={!!form.formState.errors.category}
-                {...form.register("category")}
-              >
-                <option value="transactional">Transactional</option>
-                <option value="auth">Auth</option>
-                <option value="notification">Notification</option>
-              </Select>
-            </FormField>
-            <FormField
-              label="Variables (JSON)"
-              htmlFor="template-variables"
-              error={form.formState.errors.variablesText?.message ?? form.formState.errors.root?.message}
-            >
-              <Textarea
-                id="template-variables"
-                className="font-mono text-xs h-32"
-                placeholder='[{ "key": "ORG_NAME", "type": "string", "description": "Org name", "sampleValue": "Acme Corp" }]'
-                invalid={!!form.formState.errors.variablesText || !!form.formState.errors.root}
-                {...form.register("variablesText")}
-              />
-            </FormField>
-          </div>
-          <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              isLoading={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? "Creating..." : "Register Key"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function AssignModal({
-  templateKeys,
-  environments,
-  onClose,
-  onAssigned,
-}: {
-  templateKeys: EmailTemplateKey[];
-  environments: EnvironmentRecord[];
-  onClose: () => void;
-  onAssigned: () => void;
-}) {
-  const form = useForm<AssignTemplateInput>({
-    resolver: zodResolver(assignTemplateSchema),
-    defaultValues: {
-      templateKeyId: "",
-      environmentId: "",
-      resendTemplateId: "",
-    },
-  });
-
-  const handleSubmit = form.handleSubmit(async (values) => {
-    try {
-      const res = await fetch("/api/email-templates/assignments", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateKeyId: values.templateKeyId,
-          environmentId: values.environmentId || null,
-          resendTemplateId: values.resendTemplateId,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to assign");
-      }
-      onAssigned();
-      onClose();
-    } catch (err) {
-      form.setError("root", {
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
-      <div className="relative w-full max-w-lg mx-4 panel">
-        <div className="panel__header">
-          <span className="panel__title">Assign Template to Environment</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="panel__content space-y-4">
-            <FormField
-              label="Template Key"
-              htmlFor="assign-template-key"
-              error={form.formState.errors.templateKeyId?.message}
-            >
-              <Select
-                id="assign-template-key"
-                className="text-sm"
-                invalid={!!form.formState.errors.templateKeyId}
-                {...form.register("templateKeyId")}
-              >
-                <option value="">Select template key...</option>
-                {templateKeys.map((tk) => (
-                  <option key={tk.id} value={tk.id}>{tk.name} ({tk.key})</option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Environment" htmlFor="assign-environment">
-              <Select
-                id="assign-environment"
-                className="text-sm"
-                {...form.register("environmentId")}
-              >
-                <option value="">Default (global fallback)</option>
-                {environments.map((env) => (
-                  <option key={env.id} value={env.id}>{env.name}</option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField
-              label="Resend Template ID"
-              htmlFor="assign-resend-template-id"
-              error={form.formState.errors.resendTemplateId?.message ?? form.formState.errors.root?.message}
-            >
-              <Input
-                id="assign-resend-template-id"
-                className="font-mono text-sm"
-                placeholder="tmpl_xxx or alias"
-                invalid={!!form.formState.errors.resendTemplateId || !!form.formState.errors.root}
-                {...form.register("resendTemplateId")}
-              />
-            </FormField>
-          </div>
-          <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              isLoading={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? "Assigning..." : "Assign"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-export function EmailTemplatesPage() {
-  const { data: templateKeys, isLoading: keysLoading, mutate: mutateKeys } = useSWR<EmailTemplateKey[]>("/api/email-templates/keys", fetcher);
-  const { data: assignments, isLoading: assignmentsLoading, mutate: mutateAssignments } = useSWR<Assignment[]>("/api/email-templates/assignments", fetcher);
-  const { data: resendData, isLoading: resendLoading } = useSWR<{ data: ResendTemplate[] }>("/api/email-templates/resend", fetcher);
-  const resendTemplates = resendData?.data ?? [];
-  const { data: envs } = useSWR<EnvironmentRecord[]>("/api/environments", fetcher);
-  const [showRegister, setShowRegister] = useState(false);
-  const [showAssign, setShowAssign] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState<ResendTemplate | null>(null);
-  const [sendTestTemplate, setSendTestTemplate] = useState<ResendTemplate | null>(null);
-
-  const handleDeleteKey = async (id: string, name: string) => {
-    if (!confirm(`Delete template key "${name}"? This will fail if there are active assignments.`)) return;
-    await fetch(`/api/email-templates/keys/${id}`, { method: "DELETE" });
-    mutateKeys();
-  };
-
-  const handleDeleteAssignment = async (id: string) => {
-    if (!confirm("Remove this assignment?")) return;
-    await fetch(`/api/email-templates/assignments/${id}`, { method: "DELETE" });
-    mutateAssignments();
-    mutateKeys();
-  };
-
-  const refreshAll = () => {
-    mutateKeys();
-    mutateAssignments();
-  };
-
-  return (
-    <>
-      {showRegister && (
-        <RegisterKeyModal onClose={() => setShowRegister(false)} onCreated={refreshAll} />
-      )}
-      {showAssign && (
-        <AssignModal
-          templateKeys={templateKeys ?? []}
-          environments={envs ?? []}
-          onClose={() => setShowAssign(false)}
-          onAssigned={refreshAll}
-        />
-      )}
-      {previewTemplate && (
-        <PreviewModal template={previewTemplate} onClose={() => setPreviewTemplate(null)} />
-      )}
-      {sendTestTemplate && (
-        <SendTestModal
-          template={sendTestTemplate}
-          registryKeys={templateKeys ?? []}
-          onClose={() => setSendTestTemplate(null)}
-        />
-      )}
-
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-start justify-between">
+      <div className="mx-auto max-w-5xl space-y-s-6">
+        <div className="flex items-start justify-between gap-s-4">
           <div>
-            <h1 className="text-xl font-sans font-semibold">Email Templates</h1>
-            <p className="text-xs text-tertiary mt-1">Manage Resend email templates and per-environment assignments</p>
+            <h1 className="font-sans text-xl font-semibold text-l-ink">
+              Email Templates
+            </h1>
+            <p className="mt-1 text-xs text-l-ink-dim">
+              Manage Resend email templates and per-environment assignments
+            </p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowAssign(true)}>Assign</Button>
-            <Button variant="primary" onClick={() => setShowRegister(true)}>Register Key</Button>
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Template Registry</span>
-            <span className="font-mono text-[10px] text-tertiary">{templateKeys?.length ?? 0}</span>
-          </div>
-          {keysLoading ? (
-            <div className="divide-y divide-border-dim">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-4">
-                  <div className="w-16 h-4 bg-elevated animate-pulse rounded" />
-                  <div className="flex-1 h-4 bg-elevated animate-pulse rounded w-40" />
-                </div>
-              ))}
-            </div>
-          ) : (templateKeys?.length ?? 0) === 0 ? (
-            <div className="panel__content text-center py-8">
-              <p className="text-sm text-secondary mb-3">No template keys registered</p>
-              <Button size="sm" onClick={() => setShowRegister(true)}>Register your first key</Button>
-            </div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Key</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Variables</th>
-                  <th>Assignments</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {templateKeys!.map((tk) => (
-                  <tr key={tk.id}>
-                    <td><span className="font-mono text-xs text-data">{tk.key}</span></td>
-                    <td>
-                      <div>
-                        <span className="text-primary font-medium">{tk.name}</span>
-                        {tk.description && <p className="text-[10px] text-tertiary mt-0.5">{tk.description}</p>}
-                      </div>
-                    </td>
-                    <td><span className={`badge ${CATEGORY_BADGE[tk.category] ?? ""}`}>{tk.category}</span></td>
-                    <td><span className="font-mono text-xs">{tk.variables.length}</span></td>
-                    <td>
-                      <div className="flex flex-wrap gap-1">
-                        {tk.assignments.length === 0 && <span className="text-[10px] text-tertiary">none</span>}
-                        {tk.assignments.map((a) => (
-                          <span key={a.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-elevated text-[10px] font-mono">
-                            <span className="status-dot status-dot--nominal" style={{ width: 5, height: 5 }} />
-                            {a.environment?.name ?? "default"}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td>
-                      <button onClick={() => handleDeleteKey(tk.id, tk.key)} className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Resend Templates</span>
-            <span className="font-mono text-[10px] text-tertiary">{resendTemplates.length}</span>
-          </div>
-          {resendLoading ? (
-            <div className="divide-y divide-border-dim">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-4">
-                  <div className="w-16 h-4 bg-elevated animate-pulse rounded" />
-                  <div className="flex-1 h-4 bg-elevated animate-pulse rounded w-40" />
-                </div>
-              ))}
-            </div>
-          ) : resendTemplates.length === 0 ? (
-            <div className="panel__content text-center py-8">
-              <p className="text-sm text-secondary">No templates found in Resend</p>
-            </div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Alias</th>
-                  <th>Status</th>
-                  <th>Updated</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {resendTemplates.map((t) => (
-                  <tr key={t.id}>
-                    <td><span className="text-primary font-medium">{t.name}</span></td>
-                    <td><span className="font-mono text-xs text-data">{t.alias ?? "—"}</span></td>
-                    <td><span className={`badge ${STATUS_BADGE[t.status] ?? ""}`}>{t.status}</span></td>
-                    <td><span className="font-mono text-xs text-tertiary">{new Date(t.updated_at).toLocaleDateString()}</span></td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setPreviewTemplate(t)}
-                          className="text-data hover:text-primary text-xs font-mono uppercase tracking-wider"
+          <Dialog
+            open={showRegister}
+            onOpenChange={(open) => {
+              if (open) {
+                resetRegister();
+              }
+              setShowRegister(open);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="primary">Register Email Template</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
+              <form id="register-template-key" onSubmit={handleRegister}>
+                <DialogHeader>
+                  <div>
+                    <DialogTitle>Register Email Template</DialogTitle>
+                    <DialogDescription>
+                      Create a registry key and connect it to environment
+                      assignments.
+                    </DialogDescription>
+                  </div>
+                  <DialogXClose />
+                </DialogHeader>
+                <DialogBody className="space-y-s-4">
+                  <FormField label="Key (slug)" htmlFor="template-key">
+                    <Input
+                      id="template-key"
+                      required
+                      value={registerKey}
+                      onChange={(event) => setRegisterKey(event.target.value)}
+                      placeholder="team-invite"
+                      className="font-mono text-xs"
+                    />
+                  </FormField>
+                  <FormField label="Display Name" htmlFor="template-name">
+                    <Input
+                      id="template-name"
+                      required
+                      value={registerName}
+                      onChange={(event) => setRegisterName(event.target.value)}
+                      placeholder="Team Invitation"
+                    />
+                  </FormField>
+                  <FormField label="Description" htmlFor="template-description">
+                    <Input
+                      id="template-description"
+                      value={registerDescription}
+                      onChange={(event) =>
+                        setRegisterDescription(event.target.value)
+                      }
+                      placeholder="Sent when an admin invites a new team member"
+                    />
+                  </FormField>
+                  <FormField label="Category" htmlFor="template-category">
+                    <NativeSelect
+                      id="template-category"
+                      value={registerCategory}
+                      onChange={(event) =>
+                        setRegisterCategory(event.target.value)
+                      }
+                    >
+                      {EMAIL_TEMPLATE_CATEGORIES.map((category) => (
+                        <option key={category.value} value={category.value}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </FormField>
+                  <FormField label="Variables (JSON)" htmlFor="template-vars">
+                    <Textarea
+                      id="template-vars"
+                      value={registerVariables}
+                      onChange={(event) =>
+                        setRegisterVariables(event.target.value)
+                      }
+                      className="h-32 font-mono text-xs"
+                    />
+                  </FormField>
+                  <FormField
+                    label="Resend Template"
+                    htmlFor="register-resend-template"
+                    description="Required when assigning this template to environments."
+                  >
+                    <NativeSelect
+                      id="register-resend-template"
+                      value={registerResendTemplateId}
+                      onChange={(event) =>
+                        setRegisterResendTemplateId(event.target.value)
+                      }
+                    >
+                      <option value="">Select Resend template...</option>
+                      {resendTemplates.map((template) => (
+                        <option
+                          key={template.id}
+                          value={template.alias ?? template.id}
                         >
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => setSendTestTemplate(t)}
-                          className="text-caution hover:text-primary text-xs font-mono uppercase tracking-wider"
-                          disabled={t.status !== "published"}
-                          title={t.status !== "published" ? "Template must be published to send" : undefined}
-                        >
-                          Send Test
-                        </button>
+                          {template.name} — {template.alias ?? template.id}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </FormField>
+                  <div>
+                    <div className="mb-s-2">
+                      <div className="font-sans text-[12px] font-medium text-l-ink-lo">
+                        Assign to environments
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Environment Assignments</span>
-            <span className="font-mono text-[10px] text-tertiary">{assignments?.length ?? 0}</span>
-          </div>
-          {assignmentsLoading ? (
-            <div className="divide-y divide-border-dim">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-4">
-                  <div className="w-16 h-4 bg-elevated animate-pulse rounded" />
-                  <div className="flex-1 h-4 bg-elevated animate-pulse rounded w-40" />
-                </div>
-              ))}
-            </div>
-          ) : (assignments?.length ?? 0) === 0 ? (
-            <div className="panel__content text-center py-8">
-              <p className="text-sm text-secondary mb-3">No assignments yet</p>
-              <Button size="sm" onClick={() => setShowAssign(true)}>Create your first assignment</Button>
-            </div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Template Key</th>
-                  <th>Environment</th>
-                  <th>Resend Template ID</th>
-                  <th>Updated</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments!.map((a) => (
-                  <tr key={a.id}>
-                    <td><span className="font-mono text-xs text-data">{a.templateKey.key}</span></td>
-                    <td>
-                      {a.environment ? (
-                        <span className="font-mono text-xs">{a.environment.name}</span>
+                      <p className="mt-[3px] text-xs text-l-ink-dim">
+                        Staging is selected by default. Choose any permanent
+                        environment that should use this template.
+                      </p>
+                    </div>
+                    <div className="grid gap-s-2">
+                      {envsError ? (
+                        <div className="flex items-center justify-between gap-s-3 rounded-md border border-event-red/30 bg-event-red/10 px-s-3 py-s-2">
+                          <p className="text-xs text-event-red">
+                            {apiErrorMessage(
+                              envsError,
+                              "Unable to load environments"
+                            )}
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => void retryEnvs()}
+                          >
+                            Retry
+                          </Button>
+                        </div>
+                      ) : registerEnvironments.length === 0 ? (
+                        <p className="rounded-md border border-l-border bg-l-surface px-s-3 py-s-2 text-xs text-l-ink-dim">
+                          No prod, staging, or dev environments available.
+                        </p>
                       ) : (
-                        <span className="text-xs text-caution font-medium">Default</span>
+                        registerEnvironments.map((environment) => (
+                          <label
+                            key={environment.id}
+                            className="flex items-center justify-between gap-s-3 rounded-md border border-l-border bg-l-surface px-s-3 py-s-2 text-xs text-l-ink transition-colors hover:border-l-border-strong"
+                          >
+                            <span>
+                              <span className="block font-medium">
+                                {environment.name}
+                              </span>
+                              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-l-ink-dim">
+                                {environment.type.toLowerCase()}
+                              </span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={registerEnvironmentIds.includes(
+                                environment.id
+                              )}
+                              onChange={() =>
+                                toggleRegisterEnvironment(environment.id)
+                              }
+                              className="h-4 w-4 accent-ember"
+                            />
+                          </label>
+                        ))
                       )}
-                    </td>
-                    <td><span className="font-mono text-xs">{a.resendTemplateId}</span></td>
-                    <td><span className="font-mono text-xs text-tertiary">{new Date(a.createdAt).toLocaleDateString()}</span></td>
-                    <td>
-                      <button onClick={() => handleDeleteAssignment(a.id)} className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider">Remove</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                    </div>
+                  </div>
+                  {modalError ? (
+                    <p className="text-xs text-event-red">{modalError}</p>
+                  ) : null}
+                </DialogBody>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button size="sm">Cancel</Button>
+                  </DialogClose>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    type="submit"
+                    isLoading={submitting}
+                  >
+                    Register Email Template
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
+
+        {pageError ? (
+          <div className="rounded-md border border-event-red/30 bg-event-red/10 px-s-4 py-s-3 text-sm text-event-red">
+            {pageError}
+          </div>
+        ) : null}
+
+        <TemplateTableShell
+          title="Template Registry"
+          count={templateKeys?.length ?? 0}
+        >
+          <div className="space-y-s-3">
+            {keysError ? (
+              <div className="space-y-s-3 py-s-8 text-center">
+                <p className="text-sm text-l-ink-dim">
+                  {apiErrorMessage(keysError, "Unable to load template keys")}
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void mutateKeys()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : resendError ? (
+              <div className="space-y-s-3 py-s-8 text-center">
+                <p className="text-sm text-l-ink-dim">
+                  {apiErrorMessage(
+                    resendError,
+                    "Unable to load Resend templates"
+                  )}
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void retryResend()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : keysLoading || resendLoading ? (
+              <>
+                <SkeletonBlock className="h-28 w-full" />
+                <SkeletonBlock className="h-28 w-full" />
+              </>
+            ) : (templateKeys?.length ?? 0) === 0 ? (
+              <div className="py-s-8 text-center">
+                <p className="mb-s-3 text-sm text-l-ink-dim">
+                  No template keys registered.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    resetRegister();
+                    setShowRegister(true);
+                  }}
+                >
+                  Register your first email template
+                </Button>
+              </div>
+            ) : (
+              templateKeys!.map((template) => {
+                const resendTemplate = findMatchingResendTemplate(
+                  template,
+                  resendTemplates
+                );
+                return (
+                  <EmailTemplateRegistryCard
+                    key={template.id}
+                    template={toRegistryEntry(template)}
+                    assignmentTargets={toAssignmentTargets(template, envs)}
+                    resendTemplate={toResendTemplateCard(resendTemplate)}
+                    onAssignmentChange={(ids) =>
+                      handleRegistryAssignmentChange(
+                        template,
+                        resendTemplate,
+                        ids
+                      )
+                    }
+                    onPreview={() => {
+                      setEmailAction({
+                        kind: "preview",
+                        template,
+                        resendTemplate,
+                      });
+                    }}
+                    onSendTest={() => {
+                      setEmailAction({
+                        kind: "send",
+                        template,
+                        resendTemplate,
+                      });
+                    }}
+                    onDelete={() =>
+                      setEmailAction({
+                        kind: "delete",
+                        template,
+                        resendTemplate,
+                      })
+                    }
+                  />
+                );
+              })
+            )}
+          </div>
+        </TemplateTableShell>
       </div>
     </>
   );

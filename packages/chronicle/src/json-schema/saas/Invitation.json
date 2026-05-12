@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "acceptedAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "invitedBy": {
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "owner",
+        "admin",
+        "member"
+      ],
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "token": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "createdAt",
+    "email",
+    "expiresAt",
+    "id",
+    "invitedBy",
+    "role",
+    "tenantId",
+    "token"
+  ],
+  "title": "Invitation",
+  "type": "object"
+}

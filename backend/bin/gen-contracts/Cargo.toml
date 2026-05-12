@@ -1,0 +1,23 @@
+[package]
+name = "gen-contracts"
+version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "gen-contracts"
+path = "src/main.rs"
+
+[dependencies]
+# Crates whose ts-rs / schemars types we re-export to packages/shared.
+# Add a new line here when a domain-shape crate joins the registry.
+chronicle_domain = { workspace = true }
+
+# Tooling
+ts-rs = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }

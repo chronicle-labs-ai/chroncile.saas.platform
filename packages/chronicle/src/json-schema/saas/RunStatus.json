@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "enum": [
+    "pending",
+    "processing",
+    "completed",
+    "failed",
+    "requires_human"
+  ],
+  "title": "RunStatus",
+  "type": "string"
+}

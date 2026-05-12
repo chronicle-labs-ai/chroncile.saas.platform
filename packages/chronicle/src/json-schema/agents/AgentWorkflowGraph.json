@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "edges": {
+      "items": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "label": {
+            "description": "Optional short label rendered along the edge.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "input",
+              "tool",
+              "model",
+              "branch",
+              "output"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "toolName": {
+            "description": "Optional tool name reference for tool nodes.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "edges",
+    "nodes"
+  ],
+  "title": "AgentWorkflowGraph",
+  "type": "object"
+}

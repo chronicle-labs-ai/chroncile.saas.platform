@@ -32,9 +32,7 @@ export function OrgInviteEmail({
       </Text>
 
       {environmentName && (
-        <Text style={styles.monoBadge}>
-          Environment: {environmentName}
-        </Text>
+        <Text style={styles.monoBadge}>Environment: {environmentName}</Text>
       )}
 
       <Text style={styles.paragraph}>
@@ -50,8 +48,8 @@ export function OrgInviteEmail({
       </Section>
 
       <Text style={styles.note}>
-        Sign in with your <strong>{inviteeEmail}</strong> Google account
-        to get started.
+        Sign in with your <strong>{inviteeEmail}</strong> Google account to get
+        started.
       </Text>
 
       <Hr style={styles.hr} />

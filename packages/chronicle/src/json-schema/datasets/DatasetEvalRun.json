@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "agentLabel": {
+      "description": "Display label — usually `agent.name@version` or a build hash.",
+      "type": "string"
+    },
+    "failedTraceIds": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "id": {
+      "type": "string"
+    },
+    "note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "passRate": {
+      "description": "0–1; null while running.",
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "startedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "status": {
+      "description": "Status badge tone for an eval run.",
+      "enum": [
+        "passing",
+        "regressed",
+        "running",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "totalCount": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "agentLabel",
+    "failedTraceIds",
+    "id",
+    "startedAt",
+    "status",
+    "totalCount"
+  ],
+  "title": "DatasetEvalRun",
+  "type": "object"
+}

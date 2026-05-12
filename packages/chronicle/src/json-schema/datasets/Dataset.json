@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "createdBy": {
+      "description": "Display name of the dataset owner / creator.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "eventCount": {
+      "description": "Optional total event count across all traces.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "purpose": {
+      "description": "Intended use of a dataset — drives the colored badge on the picker and lets apps route additions to the right backend (eval suite, training set, replay corpus, manual review queue).",
+      "enum": [
+        "eval",
+        "training",
+        "replay",
+        "review"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "description": "Free-form pinned tags.",
+      "items": {
+        "type": "string"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "traceCount": {
+      "description": "Number of traces currently in the dataset.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "updatedAt": {
+      "description": "ISO timestamp of the most recent addition.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "traceCount"
+  ],
+  "title": "Dataset",
+  "type": "object"
+}

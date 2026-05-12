@@ -14,6 +14,7 @@ path = "src/main.rs"
 [dependencies]
 chronicle_backend = { workspace = true }
 chronicle_auth = { workspace = true }
+chronicle_interfaces = { workspace = true }
 chronicle_mcp = { workspace = true }
 
 tokio = { workspace = true }

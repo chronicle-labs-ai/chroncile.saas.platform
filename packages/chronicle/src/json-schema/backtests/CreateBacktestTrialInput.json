@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Insert payload for `BacktestTrialRepository::create`.",
+  "properties": {
+    "agentId": {
+      "type": "string"
+    },
+    "agentLabel": {
+      "type": "string"
+    },
+    "caseCluster": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "caseId": {
+      "type": "string"
+    },
+    "isBaseline": {
+      "type": "boolean"
+    },
+    "jobId": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agentId",
+    "agentLabel",
+    "caseId",
+    "isBaseline",
+    "jobId",
+    "tenantId"
+  ],
+  "title": "CreateBacktestTrialInput",
+  "type": "object"
+}

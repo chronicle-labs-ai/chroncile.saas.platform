@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "shared": "workspace:*"
+    "chronicle": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

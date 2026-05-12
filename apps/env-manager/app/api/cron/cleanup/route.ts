@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/server/data/db";
-import { destroyEnvironment } from "@/server/environments/lifecycle";
+import { prisma } from "@/backend/data/db";
+import { destroyEnvironment } from "@/backend/environments/lifecycle";
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   });
 
   const results = await Promise.allSettled(
-    expired.map(async (env) => {
+    expired.map(async (env: { id: string; name: string }) => {
       await prisma.environment.update({
         where: { id: env.id },
         data: { status: "DESTROYING" },

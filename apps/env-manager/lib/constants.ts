@@ -1,4 +1,4 @@
-import type { EnvironmentType, EnvironmentStatus } from "@/lib/types";
+import type { EnvironmentStatus, EnvironmentType } from "./types";
 
 export const TYPE_LABELS: Record<EnvironmentType, string> = {
   PRODUCTION: "PROD",
@@ -24,4 +24,54 @@ export const STATUS_DOT_CLASS: Record<EnvironmentStatus, string> = {
   ERROR: "status-dot--critical",
 };
 
-export const fetcher = (url: string) => fetch(url).then((r) => r.json());
+export class ApiFetchError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly statusText: string
+  ) {
+    super(message);
+    this.name = "ApiFetchError";
+  }
+}
+
+export async function fetcher<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    let message = response.statusText || "Request failed";
+
+    try {
+      const body = (await response.json()) as {
+        error?: string;
+        message?: string;
+      };
+      message = body.error ?? body.message ?? message;
+    } catch {
+      // Some framework errors return HTML/plain text; keep the status message.
+    }
+
+    throw new ApiFetchError(message, response.status, response.statusText);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export function apiErrorMessage(
+  error: unknown,
+  fallback = "Unable to load data"
+) {
+  if (error instanceof ApiFetchError) {
+    return `${fallback} (${error.status}): ${error.message}`;
+  }
+
+  if (error instanceof Error) {
+    return `${fallback}: ${error.message}`;
+  }
+
+  return fallback;
+}

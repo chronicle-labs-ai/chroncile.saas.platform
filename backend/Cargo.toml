@@ -17,6 +17,8 @@ members = [
     "crates/chronicle_query",
     "crates/chronicle_link",
     "crates/chronicle_embed",
+    "crates/chronicle_orchestrator",
+    "crates/chronicle_sandbox",
     "crates/chronicle_server",
     "crates/chronicle_sdk",
     "crates/chronicle_py",
@@ -31,8 +33,11 @@ members = [
     "crates/ui",
     "crates/timeline-core",
     "crates/timeline-widget",
+    "bin/chronicle",
     "bin/chronicle-mcp",
+    "bin/gen-contracts",
     "bin/server",
+    "bin/workos-import",
 ]
 
 [workspace.package]
@@ -112,6 +117,8 @@ chronicle_ingest = { path = "crates/chronicle_ingest" }
 chronicle_query = { path = "crates/chronicle_query" }
 chronicle_link = { path = "crates/chronicle_link" }
 chronicle_embed = { path = "crates/chronicle_embed" }
+chronicle_orchestrator = { path = "crates/chronicle_orchestrator" }
+chronicle_sandbox = { path = "crates/chronicle_sandbox" }
 chronicle_sdk = { path = "crates/chronicle_sdk" }
 chronicle_py = { path = "crates/chronicle_py" }
 chronicle_viewer_common = { path = "crates/chronicle_viewer_common" }
@@ -157,6 +164,9 @@ dotenvy = "0.15"
 
 # Type generation
 ts-rs = { version = "10", features = ["chrono-impl", "serde-json-impl"] }
+# JSON Schema generation. Exported alongside ts-rs by `bin/gen-contracts`
+# so we can codegen Zod runtime validators for the same Rust types.
+schemars = { version = "0.8", features = ["chrono", "preserve_order"] }
 
 # Testing
 insta = { version = "1", features = ["json"] }

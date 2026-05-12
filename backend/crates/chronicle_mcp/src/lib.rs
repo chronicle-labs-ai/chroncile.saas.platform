@@ -1,4 +1,4 @@
-mod auth;
+pub mod auth;
 mod data_access;
 mod error;
 mod eval;

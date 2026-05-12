@@ -44,7 +44,7 @@ const FrontConversationSchema = z.object({
         id: z.string(),
         name: z.string().nullable().optional(),
         handle: z.string().nullable().optional(),
-      }),
+      })
     )
     .optional(),
   tags: z
@@ -52,7 +52,7 @@ const FrontConversationSchema = z.object({
       z.object({
         id: z.string().nullable().optional(),
         name: z.string().nullable().optional(),
-      }),
+      })
     )
     .optional(),
   messages: z.array(FrontMessageSchema).optional(),
@@ -87,10 +87,11 @@ type FrontConversation = {
   tags?: Array<{ id?: string | null; name?: string | null }> | null;
 };
 
-function asFrontTimestamp(value: Date | string | undefined): number | undefined {
+function asFrontTimestamp(
+  value: Date | string | undefined
+): number | undefined {
   if (!value) return undefined;
-  const parsed =
-    value instanceof Date ? value.getTime() : Date.parse(value);
+  const parsed = value instanceof Date ? value.getTime() : Date.parse(value);
   if (Number.isNaN(parsed)) return undefined;
   return Math.floor(parsed / 1000);
 }
@@ -106,7 +107,7 @@ function nextFrontPage(data: any): string | undefined {
 
 async function fetchFrontMessages(
   nango: NangoSyncClient,
-  conversationId: string,
+  conversationId: string
 ) {
   let endpoint = `/conversations/${conversationId}/messages`;
   const messages: any[] = [];
@@ -123,7 +124,7 @@ async function fetchFrontMessages(
 
 function mapFrontConversation(
   conversation: FrontConversation,
-  messages: any[],
+  messages: any[]
 ): FrontConversationRecord {
   const contact =
     conversation.recipient?.contact?.id || conversation.recipient?.handle
@@ -205,7 +206,9 @@ function mapFrontConversation(
 export default createSync({
   description: "Fetch Front conversations, messages, comments, and assignees.",
   version: "1.0.0",
-  endpoints: [{ method: "GET", path: "/conversations", group: "Conversations" }],
+  endpoints: [
+    { method: "GET", path: "/conversations", group: "Conversations" },
+  ],
   frequency: "every hour",
   autoStart: false,
   syncType: "incremental",
@@ -214,11 +217,13 @@ export default createSync({
   },
 
   exec: async (nango) => {
-    await nango.log(`Starting Front sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`);
+    await nango.log(
+      `Starting Front sync. lastSyncDate=${nango.lastSyncDate?.toISOString?.() ?? "none"}`
+    );
 
     await nango.setMergingStrategy(
       { strategy: "ignore_if_modified_after" },
-      "FrontConversation",
+      "FrontConversation"
     );
 
     let endpoint = "/conversations";
@@ -227,17 +232,20 @@ export default createSync({
     while (endpoint) {
       const response = await nango.get<any>({
         endpoint,
-        params: endpoint === "/conversations" && checkpoint
-          ? { "q[updated_after]": checkpoint, limit: 50 }
-          : endpoint === "/conversations"
-            ? { limit: 50 }
-            : undefined,
+        params:
+          endpoint === "/conversations" && checkpoint
+            ? { "q[updated_after]": checkpoint, limit: 50 }
+            : endpoint === "/conversations"
+              ? { limit: 50 }
+              : undefined,
       });
 
       const conversations: FrontConversation[] =
         response.data?._results || response.data?.results || [];
 
-      await nango.log(`Fetched ${conversations.length} Front conversations in current page.`);
+      await nango.log(
+        `Fetched ${conversations.length} Front conversations in current page.`
+      );
 
       if (!conversations.length) {
         break;
@@ -251,7 +259,9 @@ export default createSync({
       }
 
       if (batch.length) {
-        await nango.log(`Saving ${batch.length} Front conversations to Nango cache.`);
+        await nango.log(
+          `Saving ${batch.length} Front conversations to Nango cache.`
+        );
         await nango.batchSave(batch, "FrontConversation");
       }
 

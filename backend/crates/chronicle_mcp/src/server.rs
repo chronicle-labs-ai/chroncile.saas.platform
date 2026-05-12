@@ -155,7 +155,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<QueryEventsArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .query_events(
@@ -183,7 +183,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<SearchEventsArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .search_events(
@@ -208,7 +208,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<TimelineArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .get_timeline(
@@ -232,7 +232,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<TraverseGraphArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .traverse_graph(
@@ -257,7 +257,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<ListRunsArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .list_runs(
@@ -280,7 +280,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<RunIdArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self.data_access.get_run(&session, &args.run_id).await;
         self.log_tool_invocation(&context, "get_run", &session)
             .await;
@@ -293,7 +293,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<ListAuditLogsArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .list_audit_logs(
@@ -314,7 +314,7 @@ impl ChronicleMcpServer {
         &self,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self.data_access.describe_sources(&session).await;
         self.log_tool_invocation(&context, "describe_sources", &session)
             .await;
@@ -326,7 +326,7 @@ impl ChronicleMcpServer {
         &self,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self.data_access.describe_entity_types(&session).await;
         self.log_tool_invocation(&context, "describe_entity_types", &session)
             .await;
@@ -339,7 +339,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<DescribeSchemaArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         let result = self
             .data_access
             .describe_schema(&session, &args.source, &args.event_type)
@@ -355,7 +355,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<WatchEventsArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         self.notify_progress(&context, 0.0, 1.0, "Waiting for live events")
             .await;
         let result = self
@@ -385,7 +385,7 @@ impl ChronicleMcpServer {
         Parameters(args): Parameters<ReplayTimelineArgs>,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let session = self.session(&context)?;
+        let session = self.session(&context).await?;
         if !self.options.enable_replay {
             return Ok(ChronicleMcpError::unsupported(
                 "Replay is disabled for this Chronicle MCP server instance",
@@ -449,7 +449,9 @@ impl ServerHandler for ChronicleMcpServer {
         _request: Option<PaginatedRequestParams>,
         context: RequestContext<RoleServer>,
     ) -> Result<ListResourcesResult, McpError> {
-        let _session = self.session_from_parts(context.extensions.get::<Parts>())?;
+        let _session = self
+            .session_from_parts(context.extensions.get::<Parts>())
+            .await?;
         Ok(ListResourcesResult {
             resources: vec![
                 RawResource::new(TENANT_CONTEXT_URI, "tenant-context").no_annotation(),
@@ -466,7 +468,9 @@ impl ServerHandler for ChronicleMcpServer {
         request: ReadResourceRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<ReadResourceResult, McpError> {
-        let session = self.session_from_parts(context.extensions.get::<Parts>())?;
+        let session = self
+            .session_from_parts(context.extensions.get::<Parts>())
+            .await?;
         let parsed = ChronicleResourceUri::parse(request.uri.as_str()).ok_or_else(|| {
             ChronicleMcpError::not_found(format!("Unknown Chronicle resource {}", request.uri))
                 .to_mcp_error()
@@ -531,13 +535,21 @@ impl ServerHandler for ChronicleMcpServer {
 }
 
 impl ChronicleMcpServer {
-    fn session(&self, context: &RequestContext<RoleServer>) -> Result<McpSessionContext, McpError> {
+    async fn session(
+        &self,
+        context: &RequestContext<RoleServer>,
+    ) -> Result<McpSessionContext, McpError> {
         self.session_from_parts(context.extensions.get::<Parts>())
+            .await
     }
 
-    fn session_from_parts(&self, parts: Option<&Parts>) -> Result<McpSessionContext, McpError> {
+    async fn session_from_parts(
+        &self,
+        parts: Option<&Parts>,
+    ) -> Result<McpSessionContext, McpError> {
         self.auth
             .resolve_from_parts(parts)
+            .await
             .map_err(|error| error.to_mcp_error())
     }
 

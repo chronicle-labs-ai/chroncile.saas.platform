@@ -13,6 +13,7 @@ chrono = { workspace = true }
 ulid = { workspace = true }
 thiserror = { workspace = true }
 ts-rs = { workspace = true }
+schemars = { workspace = true }
 mcap = "0.9"
 chronicle_core = { workspace = true }
 

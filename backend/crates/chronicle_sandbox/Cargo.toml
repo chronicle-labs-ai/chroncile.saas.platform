@@ -1,0 +1,52 @@
+[package]
+name = "chronicle_sandbox"
+description = "Sandbox abstraction + driver implementations (Mock, Daytona) for the Chronicle backtest orchestrator."
+version.workspace = true
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+chronicle_domain = { workspace = true }
+
+# Async
+async-trait = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# IDs + time
+chrono = { workspace = true }
+ulid = { workspace = true }
+
+# Error / logging
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# Concurrency primitives
+parking_lot = { workspace = true }
+
+# HTTP client (Daytona driver). `multipart` is enabled here (not in
+# the workspace dep) because chronicle_sandbox is the only consumer
+# that uploads files via multipart/form-data.
+reqwest = { workspace = true, features = ["multipart"] }
+
+# Retry helper for transient HTTP errors
+backon = "1"
+
+# File transfer codecs (Daytona's file API is deprecated, so we
+# tunnel uploads/downloads as base64-encoded tarballs through the
+# exec session).
+base64 = { workspace = true }
+tar = "0.4"
+flate2 = "1"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+wiremock = { workspace = true }
+serde_json = { workspace = true }

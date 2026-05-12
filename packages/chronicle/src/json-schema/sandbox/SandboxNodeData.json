@@ -1,0 +1,231 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "oneOf": [
+    {
+      "properties": {
+        "config": {
+          "properties": {
+            "dateRange": {
+              "properties": {
+                "end": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "end",
+                "start"
+              ],
+              "type": "object"
+            },
+            "eventTypeFilter": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "sourceFilter": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "dateRange",
+            "eventTypeFilter",
+            "sourceFilter"
+          ],
+          "type": "object"
+        },
+        "label": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "event-source"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "config",
+        "label",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    {
+      "properties": {
+        "config": {
+          "properties": {
+            "rules": {
+              "items": {
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "operator": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field",
+                  "id",
+                  "operator",
+                  "value"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "rules"
+          ],
+          "type": "object"
+        },
+        "label": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "filter"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "config",
+        "label",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    {
+      "properties": {
+        "config": {
+          "properties": {
+            "fileFormat": {
+              "enum": [
+                "jsonl",
+                "csv"
+              ],
+              "type": "string"
+            },
+            "includedFields": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "outputType": {
+              "enum": [
+                "sse",
+                "webhook",
+                "file",
+                "console"
+              ],
+              "type": "string"
+            },
+            "transformTemplate": {
+              "type": "string"
+            },
+            "webhookUrl": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fileFormat",
+            "includedFields",
+            "outputType",
+            "transformTemplate",
+            "webhookUrl"
+          ],
+          "type": "object"
+        },
+        "label": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "output"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "config",
+        "label",
+        "nodeType"
+      ],
+      "type": "object"
+    },
+    {
+      "properties": {
+        "config": {
+          "properties": {
+            "count": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            "eventTypes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "intervalMs": {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            "sourceTypes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "variationLevel": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "count",
+            "eventTypes",
+            "intervalMs",
+            "sourceTypes",
+            "variationLevel"
+          ],
+          "type": "object"
+        },
+        "label": {
+          "type": "string"
+        },
+        "nodeType": {
+          "enum": [
+            "generator"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "config",
+        "label",
+        "nodeType"
+      ],
+      "type": "object"
+    }
+  ],
+  "title": "SandboxNodeData"
+}

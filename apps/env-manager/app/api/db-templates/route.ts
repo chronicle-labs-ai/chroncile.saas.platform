@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/server/data/db";
-import { ensureBuiltInTemplates } from "@/server/environments/seed-templates";
+import { prisma } from "@/backend/data/db";
+import { ensureBuiltInTemplates } from "@/backend/environments/seed-templates";
 
 export async function GET(request: NextRequest) {
   const appUrl = new URL(request.url).origin;
@@ -24,7 +24,9 @@ const CreateSchema = z.object({
 
 export async function POST(request: Request) {
   let body;
-  try { body = await request.json(); } catch {
+  try {
+    body = await request.json();
+  } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
@@ -46,16 +48,32 @@ export async function POST(request: Request) {
   }
 
   if (mode === "FLY_DB" && !flyDbName) {
-    return NextResponse.json({ error: "flyDbName required for FLY_DB mode" }, { status: 400 });
+    return NextResponse.json(
+      { error: "flyDbName required for FLY_DB mode" },
+      { status: 400 }
+    );
   }
   if (mode === "ENVIRONMENT" && !sourceEnvId) {
-    return NextResponse.json({ error: "sourceEnvId required for ENVIRONMENT mode" }, { status: 400 });
+    return NextResponse.json(
+      { error: "sourceEnvId required for ENVIRONMENT mode" },
+      { status: 400 }
+    );
   }
 
   if (mode === "ENVIRONMENT" && sourceEnvId) {
-    const env = await prisma.environment.findUnique({ where: { id: sourceEnvId } });
-    if (!env) return NextResponse.json({ error: "Source environment not found" }, { status: 404 });
-    if (!env.flyDbName) return NextResponse.json({ error: "Source environment has no database" }, { status: 400 });
+    const env = await prisma.environment.findUnique({
+      where: { id: sourceEnvId },
+    });
+    if (!env)
+      return NextResponse.json(
+        { error: "Source environment not found" },
+        { status: 404 }
+      );
+    if (!env.flyDbName)
+      return NextResponse.json(
+        { error: "Source environment has no database" },
+        { status: 400 }
+      );
   }
 
   const template = await prisma.dbTemplate.create({

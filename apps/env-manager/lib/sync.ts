@@ -1,8 +1,9 @@
-import { prisma } from "@/lib/db";
-import { getPermanentEnvSecrets } from "@/lib/doppler-client";
-import { getPermanentEnvs, type PermanentEnvConfig } from "@/lib/permanent-envs";
-import * as fly from "@/lib/fly-client";
-import * as vercel from "@/lib/vercel-client";
+import { prisma } from "@/lib/data";
+import { fly, getPermanentEnvSecrets, vercel } from "@/lib/integrations";
+import {
+  getPermanentEnvs,
+  type PermanentEnvConfig,
+} from "./permanent-envs";
 
 const FRONTEND_SYNC_KEYS = [
   "AUTH_SECRET",
@@ -67,8 +68,12 @@ async function syncOne(config: PermanentEnvConfig): Promise<void> {
   }
 
   const [backendSecrets, frontendSecrets] = await Promise.all([
-    getPermanentEnvSecrets(config, "backend", ["SERVICE_SECRET"]).catch(() => null),
-    getPermanentEnvSecrets(config, "frontend", [...FRONTEND_SYNC_KEYS]).catch(() => null),
+    getPermanentEnvSecrets(config, "backend", ["SERVICE_SECRET"]).catch(
+      () => null
+    ),
+    getPermanentEnvSecrets(config, "frontend", [...FRONTEND_SYNC_KEYS]).catch(
+      () => null
+    ),
   ]);
 
   if (backendSecrets?.SERVICE_SECRET) {
@@ -138,7 +143,7 @@ export async function ensurePermanentEnvsExist(): Promise<void> {
     where: { name: { in: names } },
     select: { name: true },
   });
-  const existingNames = new Set(existing.map((e) => e.name));
+  const existingNames = new Set(existing.map((e: { name: string }) => e.name));
 
   const missing = configs.filter((c) => !existingNames.has(c.name));
   if (missing.length === 0) return;

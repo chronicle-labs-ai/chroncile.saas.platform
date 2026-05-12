@@ -1,0 +1,74 @@
+/* ─────────────────────────────────────────────────────────────
+   Chronicle Labs — font faces
+
+   - Kalice (display serif) is a brand asset shipped locally as
+     woff2 in `../fonts/`.
+   - Inter (UI sans) is the Linear reference type for product UI;
+     loaded via Google Fonts so apps don't need to bundle it.
+   - IBM Plex Mono is the Linear-spec substitute for Berkeley Mono
+     (a paid foundry font); loaded via Google Fonts for portability.
+
+   Consumers import `ui/styles/globals.css` (which pulls this in)
+   and bundler resolution handles the woff2 URLs.
+   ───────────────────────────────────────────────────────────── */
+
+/* Inter Variable + IBM Plex Mono — Linear-aligned UI + code stack */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap");
+
+/* Kalice — display serif (Chronicle brand asset, kept) */
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-MediumItalic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Kalice";
+  src: url("../fonts/Kalice-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

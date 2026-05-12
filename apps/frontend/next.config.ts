@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../../"),
-  transpilePackages: ["ui", "platform-api", "plans"],
+  transpilePackages: ["ui", "platform-api"],
 };
 
 export default nextConfig;

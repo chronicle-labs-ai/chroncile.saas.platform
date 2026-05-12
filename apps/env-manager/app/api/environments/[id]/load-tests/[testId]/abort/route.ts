@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/server/data/db";
-import { abortTestRun } from "@/server/integrations/k6-client";
+import { prisma } from "@/backend/data/db";
+import { abortTestRun } from "@/backend/integrations/k6-client";
 
 export async function POST(
   _request: Request,
@@ -21,10 +21,7 @@ export async function POST(
     test.status === "aborted" ||
     test.status === "error"
   ) {
-    return NextResponse.json(
-      { error: "Test is not active" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Test is not active" }, { status: 400 });
   }
 
   try {

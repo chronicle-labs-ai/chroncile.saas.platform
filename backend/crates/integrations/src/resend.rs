@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use tracing::{info, warn};
 
 const RESEND_API_URL: &str = "https://api.resend.com/emails";
+const RESEND_DOMAINS_URL: &str = "https://api.resend.com/domains";
 const MAX_RETRIES: u32 = 3;
 const DEFAULT_FROM: &str = "Chronicle Labs <noreply@notify.chronicle-labs.com>";
 
@@ -180,6 +181,28 @@ impl ResendEmailService {
 impl EmailService for ResendEmailService {
     async fn send_template_email(&self, params: TemplateEmailParams) -> Result<String, EmailError> {
         self.send_with_retry(&params).await
+    }
+
+    async fn health_check(&self) -> Result<(), EmailError> {
+        let resp = self
+            .client
+            .get(RESEND_DOMAINS_URL)
+            .bearer_auth(&self.api_key)
+            .timeout(std::time::Duration::from_secs(5))
+            .send()
+            .await
+            .map_err(|e| EmailError::Other(format!("resend health check failed: {e}")))?;
+
+        if resp.status().is_success() {
+            Ok(())
+        } else if resp.status().as_u16() == 401 || resp.status().as_u16() == 403 {
+            Err(EmailError::Auth("invalid API key".to_string()))
+        } else {
+            Err(EmailError::Other(format!(
+                "resend returned {}",
+                resp.status()
+            )))
+        }
     }
 }
 

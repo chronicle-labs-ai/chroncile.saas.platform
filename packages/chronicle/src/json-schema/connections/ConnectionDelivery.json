@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "method": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "preview": {
+      "type": "string"
+    },
+    "status": {
+      "description": "HTTP status; `< 200` or `>= 300` tints the row red.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "ts": {
+      "description": "Wall-clock time string the activity tab renders directly (e.g. `13:02:14`). NOT a full ISO timestamp — the row's purpose is \"what just happened in the last few minutes\".",
+      "type": "string"
+    }
+  },
+  "required": [
+    "preview",
+    "status",
+    "ts"
+  ],
+  "title": "ConnectionDelivery",
+  "type": "object"
+}

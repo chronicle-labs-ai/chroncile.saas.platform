@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Dataset reference rendered inside the recipe. Distinct from `domain::datasets::Dataset` (the catalog row) — this carries only the identity + size metadata the recipe surface needs.",
+  "properties": {
+    "cases": {
+      "description": "Number of cases in the dataset.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "id": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "updated": {
+      "description": "ISO timestamp of the most recent dataset update.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "cases",
+    "id",
+    "label",
+    "source",
+    "updated"
+  ],
+  "title": "BacktestDataset",
+  "type": "object"
+}

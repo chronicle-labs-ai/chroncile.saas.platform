@@ -10,11 +10,30 @@ use axum::Json;
 use chronicle_core::error::{ChronicleError, StoreError};
 
 /// Wrapper that implements `IntoResponse` for `ChronicleError`.
-pub struct ApiError(pub ChronicleError);
+pub struct ApiError {
+    error: ChronicleError,
+    status_override: Option<StatusCode>,
+}
+
+impl ApiError {
+    pub fn unauthorized(message: impl Into<String>) -> Self {
+        Self {
+            error: ChronicleError::External(message.into()),
+            status_override: Some(StatusCode::UNAUTHORIZED),
+        }
+    }
+
+    pub fn forbidden(message: impl Into<String>) -> Self {
+        Self {
+            error: ChronicleError::External(message.into()),
+            status_override: Some(StatusCode::FORBIDDEN),
+        }
+    }
+}
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let (status, message) = match &self.0 {
+        let (default_status, message) = match &self.error {
             ChronicleError::Store(StoreError::NotFound { entity, id }) => {
                 (StatusCode::NOT_FOUND, format!("{entity} not found: {id}"))
             }
@@ -27,6 +46,7 @@ impl IntoResponse for ApiError {
             ChronicleError::Serialization(e) => (StatusCode::BAD_REQUEST, e.clone()),
             ChronicleError::External(e) => (StatusCode::BAD_GATEWAY, e.clone()),
         };
+        let status = self.status_override.unwrap_or(default_status);
 
         let body = serde_json::json!({
             "error": message,
@@ -39,6 +59,9 @@ impl IntoResponse for ApiError {
 
 impl From<ChronicleError> for ApiError {
     fn from(e: ChronicleError) -> Self {
-        Self(e)
+        Self {
+            error: e,
+            status_override: None,
+        }
     }
 }

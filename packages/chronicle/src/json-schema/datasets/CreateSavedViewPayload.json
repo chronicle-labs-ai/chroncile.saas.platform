@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "datasetId": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "personal",
+        "workspace"
+      ],
+      "type": "string"
+    },
+    "state": {
+      "properties": {
+        "density": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "displayProperties": {
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "filters": {
+          "items": {
+            "properties": {
+              "columnId": {
+                "type": "string"
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "operator": {
+                "type": "string"
+              },
+              "value": {
+                "description": "Filter value — typed loosely so this module doesn't depend on `product/filters` types. Mirrors `unknown` on the TS side."
+              }
+            },
+            "required": [
+              "columnId",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "groupBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lens": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ordering": {
+          "description": "Deprecated since the table moved to TanStack multi-column sort. New views write `sorting`; this stays as a back-compat fallback for views captured before the migration.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "search": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "showEmptyGroups": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "sorting": {
+          "items": {
+            "properties": {
+              "desc": {
+                "type": "boolean"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "desc",
+              "id"
+            ],
+            "type": "object"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "datasetId",
+    "name",
+    "scope",
+    "state"
+  ],
+  "title": "CreateSavedViewPayload",
+  "type": "object"
+}

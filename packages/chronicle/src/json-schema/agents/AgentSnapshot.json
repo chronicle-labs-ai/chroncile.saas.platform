@@ -1,0 +1,1056 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "hashIndex": {
+      "items": {
+        "properties": {
+          "artifactId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "framework": {
+            "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+            "enum": [
+              "vercel-ai-sdk",
+              "openai-agents",
+              "langchain",
+              "mastra",
+              "langchain-python",
+              "llamaindex",
+              "crewai",
+              "smolagents",
+              "pydantic-ai",
+              "strands",
+              "google-adk",
+              "openai-agents-python",
+              "autogen"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hash": {
+            "type": "string"
+          },
+          "kind": {
+            "description": "The 13 hash domains the wrapper tracks. The first eight describe the artifact (config-time); the last five describe a run (observed at call-time).",
+            "enum": [
+              "agent.root",
+              "prompt",
+              "model.contract",
+              "provider.options",
+              "tool.contract",
+              "runtime.policy",
+              "dependency",
+              "knowledge.contract",
+              "workflow.graph",
+              "effective.run",
+              "provider.observation",
+              "operational",
+              "output"
+            ],
+            "type": "string"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "preview": {
+            "description": "Stringified preview of the value rendered next to the hash.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "runId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "hash",
+          "kind",
+          "observedAt",
+          "path"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "runs": {
+      "items": {
+        "properties": {
+          "artifactId": {
+            "type": "string"
+          },
+          "callOptionsHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "configHash": {
+            "type": "string"
+          },
+          "durationMs": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "stack": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inputHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operation": {
+            "enum": [
+              "generate",
+              "stream"
+            ],
+            "type": "string"
+          },
+          "preparedCall": {
+            "properties": {
+              "activeTools": {
+                "items": {
+                  "type": "string"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              },
+              "hash": {
+                "type": "string"
+              },
+              "providerOptionsHash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "hash"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "response": {
+            "properties": {
+              "bodyHash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "finishReason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "headers": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Subset of headers preserved for the run drawer.",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "modelId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "modelMetadata": {
+                "additionalProperties": true,
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "providerMetadata": {
+                "additionalProperties": true,
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "usage": {
+                "properties": {
+                  "cachedInputTokens": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "inputTokens": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "outputTokens": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "reasoningTokens": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "totalTokens": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "runId": {
+            "type": "string"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "started",
+              "success",
+              "error"
+            ],
+            "type": "string"
+          },
+          "toolCalls": {
+            "items": {
+              "properties": {
+                "argsHash": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "argsPreview": {
+                  "additionalProperties": true,
+                  "description": "Optional small preview of the tool args.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "callId": {
+                  "type": "string"
+                },
+                "durationMs": {
+                  "format": "uint32",
+                  "minimum": 0.0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "error": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "stack": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "finishedAt": {
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "resultHash": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "resultPreview": {
+                  "additionalProperties": true,
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "startedAt": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "started",
+                    "success",
+                    "error"
+                  ],
+                  "type": "string"
+                },
+                "toolName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "callId",
+                "startedAt",
+                "status",
+                "toolName"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "trace": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "artifactId",
+          "configHash",
+          "operation",
+          "runId",
+          "schemaVersion",
+          "startedAt",
+          "status",
+          "toolCalls"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "summary": {
+      "properties": {
+        "capabilityTags": {
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "framework": {
+          "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+          "enum": [
+            "vercel-ai-sdk",
+            "openai-agents",
+            "langchain",
+            "mastra",
+            "langchain-python",
+            "llamaindex",
+            "crewai",
+            "smolagents",
+            "pydantic-ai",
+            "strands",
+            "google-adk",
+            "openai-agents-python",
+            "autogen"
+          ],
+          "type": "string"
+        },
+        "lastDriftAt": {
+          "description": "Last drift event, if any.",
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lastRunAt": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "latestVersion": {
+          "type": "string"
+        },
+        "model": {
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "modelId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "provider": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "label"
+          ],
+          "type": "object"
+        },
+        "modelLabel": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "personaSummary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "playgroundUrl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "purpose": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "runbookUrl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "successRate": {
+          "format": "double",
+          "type": "number"
+        },
+        "totalRuns": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "versionCount": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "framework",
+        "latestVersion",
+        "model",
+        "modelLabel",
+        "name",
+        "successRate",
+        "totalRuns",
+        "versionCount"
+      ],
+      "type": "object"
+    },
+    "versions": {
+      "items": {
+        "properties": {
+          "artifact": {
+            "properties": {
+              "artifactId": {
+                "type": "string"
+              },
+              "configHash": {
+                "type": "string"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "framework": {
+                "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+                "enum": [
+                  "vercel-ai-sdk",
+                  "openai-agents",
+                  "langchain",
+                  "mastra",
+                  "langchain-python",
+                  "llamaindex",
+                  "crewai",
+                  "smolagents",
+                  "pydantic-ai",
+                  "strands",
+                  "google-adk",
+                  "openai-agents-python",
+                  "autogen"
+                ],
+                "type": "string"
+              },
+              "inputContractPreview": {
+                "description": "Compact preview of the input contract this artifact expects.",
+                "properties": {
+                  "example": {
+                    "description": "Representative example payload."
+                  },
+                  "schemaSummary": {
+                    "description": "One-line shape summary.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "instructions": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "instructionsHash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "knowledgeSources": {
+                "items": {
+                  "properties": {
+                    "href": {
+                      "description": "Optional jump-out link.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "vector",
+                        "doc",
+                        "table",
+                        "graph"
+                      ],
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "sizeLabel": {
+                      "description": "Optional human-readable size hint, e.g. \"12.4k docs\".",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "label"
+                  ],
+                  "type": "object"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              },
+              "metadata": {
+                "additionalProperties": true,
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "model": {
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "modelId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "provider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "label"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "type": "string"
+              },
+              "outputContractPreview": {
+                "description": "Compact preview of the output contract this artifact emits.",
+                "properties": {
+                  "example": {
+                    "description": "Representative example payload."
+                  },
+                  "schemaSummary": {
+                    "description": "One-line shape summary.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "policy": {
+                "properties": {
+                  "allowedTools": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "approvalRequired": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "maxSteps": {
+                    "format": "uint32",
+                    "minimum": 0.0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "metadata": {
+                    "additionalProperties": true,
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "provenance": {
+                "properties": {
+                  "aiSdkVersion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "dependencyLockHash": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "frameworkVersion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "gitSha": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "publishedBy": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "createdAt"
+                ],
+                "type": "object"
+              },
+              "providerOptions": {
+                "additionalProperties": true,
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "providerOptionsHash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "schemaVersion": {
+                "description": "Schema marker — frontend code matches against the literal string `\"agent-artifact-v1\"` so newer payloads can co-exist when we evolve the shape.",
+                "type": "string"
+              },
+              "tools": {
+                "items": {
+                  "properties": {
+                    "description": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "inputSchemaHash": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "inputSchemaPreview": {
+                      "additionalProperties": true,
+                      "description": "Optional small input-schema preview rendered in the Tools tab.",
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "metadata": {
+                      "additionalProperties": true,
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "version": {
+                "type": "string"
+              },
+              "workflowGraphPreview": {
+                "properties": {
+                  "edges": {
+                    "items": {
+                      "properties": {
+                        "from": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "description": "Optional short label rendered along the edge.",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "to": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "nodes": {
+                    "items": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "enum": [
+                            "input",
+                            "tool",
+                            "model",
+                            "branch",
+                            "output"
+                          ],
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "toolName": {
+                          "description": "Optional tool name reference for tool nodes.",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "label"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "edges",
+                  "nodes"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "artifactId",
+              "configHash",
+              "framework",
+              "model",
+              "name",
+              "provenance",
+              "schemaVersion",
+              "tools",
+              "version"
+            ],
+            "type": "object"
+          },
+          "lastRunAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "meanDurationMs": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "p95DurationMs": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "resolvedModelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "runCount": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "stable",
+              "deprecated",
+              "draft"
+            ],
+            "type": "string"
+          },
+          "successRate": {
+            "description": "Successful runs / total runs (0..1).",
+            "format": "double",
+            "type": "number"
+          },
+          "totalTokens": {
+            "format": "uint32",
+            "minimum": 0.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "artifact",
+          "resolvedModelIds",
+          "runCount",
+          "status",
+          "successRate"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "hashIndex",
+    "runs",
+    "summary",
+    "versions"
+  ],
+  "title": "AgentSnapshot",
+  "type": "object"
+}

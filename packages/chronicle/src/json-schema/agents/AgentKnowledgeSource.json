@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "href": {
+      "description": "Optional jump-out link.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "vector",
+        "doc",
+        "table",
+        "graph"
+      ],
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "sizeLabel": {
+      "description": "Optional human-readable size hint, e.g. \"12.4k docs\".",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "label"
+  ],
+  "title": "AgentKnowledgeSource",
+  "type": "object"
+}

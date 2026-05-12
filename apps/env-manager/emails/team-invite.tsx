@@ -27,13 +27,12 @@ export function TeamInviteEmail({
       </Heading>
 
       <Text style={styles.paragraph}>
-        <strong>{"{{{INVITER_NAME}}}"}</strong> has invited you ({"{{{INVITEE_EMAIL}}}"}) to
-        join <strong>{"{{{ORG_NAME}}}"}</strong> on the Chronicle Labs platform.
+        <strong>{"{{{INVITER_NAME}}}"}</strong> has invited you (
+        {"{{{INVITEE_EMAIL}}}"}) to join <strong>{"{{{ORG_NAME}}}"}</strong> on
+        the Chronicle Labs platform.
       </Text>
 
-      <Text style={styles.monoBadge}>
-        Role: {"{{{ROLE}}}"}
-      </Text>
+      <Text style={styles.monoBadge}>Role: {"{{{ROLE}}}"}</Text>
 
       <Text style={styles.paragraph}>
         Chronicle Labs is an AI agent testing and validation platform.
@@ -48,8 +47,8 @@ export function TeamInviteEmail({
       </Section>
 
       <Text style={styles.note}>
-        Sign in with your <strong>{"{{{INVITEE_EMAIL}}}"}</strong> Google account
-        to get started.
+        Sign in with your <strong>{"{{{INVITEE_EMAIL}}}"}</strong> Google
+        account to get started.
       </Text>
 
       <Hr style={styles.hr} />

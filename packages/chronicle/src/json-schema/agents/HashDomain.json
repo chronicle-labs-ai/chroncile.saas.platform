@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "The 13 hash domains the wrapper tracks. The first eight describe the artifact (config-time); the last five describe a run (observed at call-time).",
+  "enum": [
+    "agent.root",
+    "prompt",
+    "model.contract",
+    "provider.options",
+    "tool.contract",
+    "runtime.policy",
+    "dependency",
+    "knowledge.contract",
+    "workflow.graph",
+    "effective.run",
+    "provider.observation",
+    "operational",
+    "output"
+  ],
+  "title": "HashDomain",
+  "type": "string"
+}

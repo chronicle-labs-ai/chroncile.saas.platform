@@ -1,1 +1,1 @@
-export * from "@/lib/k6-client";
+export * from "@/lib/integrations";

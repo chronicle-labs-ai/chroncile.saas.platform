@@ -125,11 +125,11 @@ impl LaunchConfig {
                 .context("failed to parse FEATURE_ACCESS_PLAN_PRICE_IDS_JSON as JSON object")?;
         }
 
-        if let Some(value) = non_empty_env("AUTH_SECRET") {
-            self.security.auth_secret = value;
-        }
         if let Some(value) = non_empty_env("SERVICE_SECRET") {
             self.security.service_secret = Some(value);
+        }
+        if let Some(value) = non_empty_env("WORKOS_CLIENT_ID") {
+            self.security.workos_client_id = value;
         }
 
         if let Some(value) = non_empty_env("NEXT_PUBLIC_APP_URL") {
@@ -363,15 +363,19 @@ pub struct FeatureAccessConfig {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SecurityConfig {
-    pub auth_secret: String,
     pub service_secret: Option<String>,
+    /// WorkOS Client ID (`client_...`). Used to derive the JWKS URL for
+    /// validating WorkOS access tokens. Empty in dev environments that
+    /// don't need WorkOS auth — every authenticated endpoint will 401 in
+    /// that case.
+    pub workos_client_id: String,
 }
 
 impl Default for SecurityConfig {
     fn default() -> Self {
         Self {
-            auth_secret: "dev-secret-change-in-production-min-32-chars!!".to_string(),
             service_secret: None,
+            workos_client_id: String::new(),
         }
     }
 }
@@ -654,9 +658,6 @@ impl FileConfig {
             config.feature_access.plan_price_ids = self.feature_access.plan_price_ids;
         }
 
-        if let Some(value) = self.security.auth_secret {
-            config.security.auth_secret = value;
-        }
         if let Some(value) = self.security.service_secret {
             config.security.service_secret = Some(value);
         }
@@ -809,7 +810,6 @@ struct FileFeatureAccessConfig {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 struct FileSecurityConfig {
-    auth_secret: Option<String>,
     service_secret: Option<String>,
 }
 

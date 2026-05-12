@@ -8,6 +8,7 @@ mod error;
 pub mod ingest;
 pub mod links;
 pub mod queries;
+pub mod sdk;
 pub mod web;
 
 use crate::ServerState;
@@ -20,6 +21,7 @@ pub fn build_router(state: ServerState) -> Router {
         .merge(queries::routes())
         .merge(links::routes())
         .merge(discovery::routes())
+        .merge(sdk::routes())
         .merge(web::routes())
         .with_state(state)
 }

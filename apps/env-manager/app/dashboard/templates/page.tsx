@@ -1,1 +1,1 @@
-export { TemplatesPage as default } from "@/features/templates/client/templates-page";
+export { TemplatesPage as default } from "@/frontend/features/templates/client/templates-page";

@@ -11,11 +11,12 @@ use axum::{
     routing::get,
     Router,
 };
-use chronicle_auth::{jwt::JwtService, types::AuthUser};
+use chronicle_auth::{types::AuthUser, workos_jwt::WorkosJwtVerifier};
 use chronicle_backend::{config, runtime, telemetry};
+use chronicle_interfaces::{TenantRepository, UserRepository};
 use chronicle_mcp::{
-    ChronicleMcpAuthResolver, ChronicleMcpServer, ChronicleMcpServerOptions,
-    InProcessChronicleMcpDataAccess,
+    auth::validate_workos_token, ChronicleMcpAuthResolver, ChronicleMcpServer,
+    ChronicleMcpServerOptions, InProcessChronicleMcpDataAccess,
 };
 use rmcp::{
     transport::{
@@ -87,31 +88,56 @@ async fn run(
         enable_replay: cli.enable_replay,
     };
 
+    let workos_jwt = platform_runtime.saas_state.workos_jwt.clone();
+    let users_repo = platform_runtime.saas_state.users.clone();
+    let tenants_repo = platform_runtime.saas_state.tenants.clone();
+
     match cli.transport {
         TransportMode::Stdio => {
             let token = cli.token.as_deref().ok_or_else(|| {
                 anyhow::anyhow!("--token or CHRONICLE_MCP_TOKEN is required for stdio mode")
             })?;
-            let auth =
-                ChronicleMcpAuthResolver::for_stdio(platform_runtime.saas_state.jwt.clone(), token)
-                    .map_err(|error| anyhow::anyhow!(error.to_mcp_error().message.to_string()))?;
+            let auth = ChronicleMcpAuthResolver::for_stdio(
+                workos_jwt.clone(),
+                users_repo.clone(),
+                tenants_repo.clone(),
+                token,
+            )
+            .await
+            .map_err(|error| anyhow::anyhow!(error.to_mcp_error().message.to_string()))?;
             let server = ChronicleMcpServer::new(auth, data_access, options);
             let service = server.serve((stdin(), stdout())).await?;
             service.waiting().await?;
         }
         TransportMode::Http => {
-            let auth = ChronicleMcpAuthResolver::for_http(platform_runtime.saas_state.jwt.clone());
+            let auth = ChronicleMcpAuthResolver::for_http(
+                workos_jwt.clone(),
+                users_repo.clone(),
+                tenants_repo.clone(),
+            );
             let server = ChronicleMcpServer::new(auth, data_access, options);
-            serve_http(server, platform_runtime.saas_state.jwt.clone(), &cli).await?;
+            let mw_state = AuthMwState {
+                workos_jwt,
+                users: users_repo,
+                tenants: tenants_repo,
+            };
+            serve_http(server, mw_state, &cli).await?;
         }
     }
 
     Ok(())
 }
 
+#[derive(Clone)]
+struct AuthMwState {
+    workos_jwt: Arc<WorkosJwtVerifier>,
+    users: Arc<dyn UserRepository>,
+    tenants: Arc<dyn TenantRepository>,
+}
+
 async fn serve_http(
     server: ChronicleMcpServer,
-    jwt: Arc<JwtService>,
+    mw_state: AuthMwState,
     cli: &McpCliArgs,
 ) -> Result<()> {
     let addr: SocketAddr = format!("{}:{}", cli.host, cli.port).parse()?;
@@ -127,7 +153,7 @@ async fn serve_http(
 
     let protected_mcp = Router::new()
         .nest_service("/mcp", mcp_service)
-        .layer(middleware::from_fn_with_state(jwt, auth_middleware));
+        .layer(middleware::from_fn_with_state(mw_state, auth_middleware));
     let app = Router::new()
         .route("/health", get(health_check))
         .merge(protected_mcp);
@@ -147,12 +173,14 @@ async fn health_check() -> &'static str {
 }
 
 async fn auth_middleware(
-    State(jwt): State<Arc<JwtService>>,
+    State(state): State<AuthMwState>,
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
     let token = bearer_token(request.headers()).ok_or(StatusCode::UNAUTHORIZED)?;
-    let user = jwt.validate(token).map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let user = validate_workos_token(&state.workos_jwt, &state.users, &state.tenants, token)
+        .await
+        .map_err(|_| StatusCode::UNAUTHORIZED)?;
     request.extensions_mut().insert::<AuthUser>(user);
     Ok(next.run(request).await)
 }

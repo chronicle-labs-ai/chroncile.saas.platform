@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Row projection of `\"BacktestTrialReward\"`. The repo typically returns a `HashMap<String, f64>` for rendering, but exporting the row itself lets the CLI inspector show provenance (which grader scored which key).",
+  "properties": {
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "graderId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "key": {
+      "type": "string"
+    },
+    "trialId": {
+      "type": "string"
+    },
+    "value": {
+      "format": "double",
+      "type": "number"
+    }
+  },
+  "required": [
+    "createdAt",
+    "key",
+    "trialId",
+    "value"
+  ],
+  "title": "BacktestTrialRewardRecord",
+  "type": "object"
+}

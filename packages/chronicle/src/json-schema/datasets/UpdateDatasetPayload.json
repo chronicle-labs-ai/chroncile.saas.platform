@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "patch": {
+      "description": "Editable subset of `Dataset` fields. Maps to TS `Partial<Pick<Dataset, \"name\" | \"description\" | \"purpose\" | \"tags\">>` — every field is optional and `None` means \"leave alone\".",
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "purpose": {
+          "description": "Intended use of a dataset — drives the colored badge on the picker and lets apps route additions to the right backend (eval suite, training set, replay corpus, manual review queue).",
+          "enum": [
+            "eval",
+            "training",
+            "replay",
+            "review"
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "id",
+    "patch"
+  ],
+  "title": "UpdateDatasetPayload",
+  "type": "object"
+}

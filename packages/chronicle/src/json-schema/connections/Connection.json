@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "connectedAt": {
+      "description": "ISO timestamp the connection was first authorized.",
+      "format": "date-time",
+      "type": "string"
+    },
+    "errorKind": {
+      "description": "Populated when `health == \"error\"`; classifies the failure.",
+      "enum": [
+        "auth",
+        "signature",
+        "rate-limit",
+        "unknown"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "errorPayload": {
+      "description": "Populated when `health == \"error\"`; raw payload string for the inspector.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "eventsLast24h": {
+      "description": "Rolling 24-hour event count.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "expiresAt": {
+      "description": "Populated when `health == \"expired\"`; ISO of token expiry.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "health": {
+      "description": "Operational state of a live connection. Drives the `ConnectionHealthBadge` colour, the row's right-side hint, and whether the action menu shows \"Reauth\" / \"Retry\" / \"Resume\".",
+      "enum": [
+        "live",
+        "paused",
+        "error",
+        "expired",
+        "testing",
+        "disconnected"
+      ],
+      "type": "string"
+    },
+    "id": {
+      "description": "Stable id (e.g. `conn_3PJz4Z…`).",
+      "type": "string"
+    },
+    "lastEventAt": {
+      "description": "ISO timestamp of the most recent event observed.",
+      "format": "date-time",
+      "type": "string"
+    },
+    "lastTestStatus": {
+      "description": "Outcome of the last `Test connection` run.",
+      "enum": [
+        "ok",
+        "fail",
+        "pending"
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lastTestedAt": {
+      "description": "ISO timestamp of the last manual \"Test connection\" run. Older connections that pre-date the field render a `—` cell.",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "description": "Workspace alias for the connection. Defaults to `source.name` at install time.",
+      "type": "string"
+    },
+    "ownerEmail": {
+      "description": "Optional point-of-contact email for the install.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "prevEventsLast24h": {
+      "description": "Previous-period (24h) event count, used to compute a trend delta on the card view (\"+12% vs prev 24h\").",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "scopes": {
+      "description": "Granted scope ids — joins with the per-vendor scope catalog.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "source": {
+      "description": "Catalog source id (joins with the design-system `SOURCES` catalog). Free-form string so adding a new vendor doesn't require bumping a Rust enum.",
+      "type": "string"
+    },
+    "spark": {
+      "description": "24-bucket sparkline values (events/hour).",
+      "items": {
+        "format": "uint32",
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "connectedAt",
+    "eventsLast24h",
+    "health",
+    "id",
+    "lastEventAt",
+    "name",
+    "scopes",
+    "source"
+  ],
+  "title": "Connection",
+  "type": "object"
+}

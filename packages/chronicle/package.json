@@ -1,0 +1,42 @@
+{
+  "name": "chronicle",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./aliases": "./src/aliases.ts",
+    "./feature-access": "./src/feature-access.ts",
+    "./types": "./src/types/index.ts",
+    "./types/agents": "./src/types/agents/index.ts",
+    "./types/connections": "./src/types/connections/index.ts",
+    "./types/datasets": "./src/types/datasets/index.ts",
+    "./types/saas": "./src/types/saas/index.ts",
+    "./types/sandbox": "./src/types/sandbox/index.ts",
+    "./types/endpoints": "./src/types/endpoints/index.ts",
+    "./types/feature-access": "./src/types/feature-access/index.ts",
+    "./types/timeline": "./src/types/timeline/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./schemas/agents": "./src/schemas/agents/index.ts",
+    "./schemas/connections": "./src/schemas/connections/index.ts",
+    "./schemas/datasets": "./src/schemas/datasets/index.ts",
+    "./schemas/saas": "./src/schemas/saas/index.ts",
+    "./schemas/sandbox": "./src/schemas/sandbox/index.ts",
+    "./schemas/endpoints": "./src/schemas/endpoints/index.ts",
+    "./schemas/feature-access": "./src/schemas/feature-access/index.ts",
+    "./schemas/timeline": "./src/schemas/timeline/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "gen:zod": "tsx scripts/gen-zod.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.0"
+  },
+  "dependencies": {
+    "json-schema-to-zod": "^2",
+    "zod": "~3.23.0"
+  }
+}

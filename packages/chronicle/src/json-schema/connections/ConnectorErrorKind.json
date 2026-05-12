@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Classifies a `health == \"error\"` failure for the connector state-error modal. Mirrors the TS `ConnectorErrorKind` union.",
+  "enum": [
+    "auth",
+    "signature",
+    "rate-limit",
+    "unknown"
+  ],
+  "title": "ConnectorErrorKind",
+  "type": "string"
+}

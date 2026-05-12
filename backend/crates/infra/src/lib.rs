@@ -92,6 +92,15 @@ impl StreamBackend {
             Self::Kafka(_) => vec![],
         }
     }
+
+    pub async fn health_check(&self) -> Result<(), String> {
+        match self {
+            #[cfg(feature = "memory")]
+            Self::Memory(_) => Ok(()),
+            #[cfg(feature = "kafka")]
+            Self::Kafka(_) => Ok(()),
+        }
+    }
 }
 
 /// Chronicle-native store backend.
@@ -162,6 +171,21 @@ impl StoreBackend {
             .await
             .map(|_| ())
             .map_err(map_store_error)
+    }
+
+    pub async fn health_check(&self) -> Result<(), String> {
+        match self {
+            #[cfg(feature = "memory")]
+            Self::Memory(_) => Ok(()),
+            #[cfg(feature = "helix")]
+            Self::Helix(store) => store
+                .canonical()
+                .health_check()
+                .await
+                .map_err(|e| e.to_string()),
+            #[cfg(feature = "postgres")]
+            Self::Postgres(store) => store.health_check().await.map_err(|e| e.to_string()),
+        }
     }
 
     pub async fn exists(

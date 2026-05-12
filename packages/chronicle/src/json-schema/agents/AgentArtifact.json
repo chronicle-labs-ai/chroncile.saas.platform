@@ -1,0 +1,394 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "artifactId": {
+      "type": "string"
+    },
+    "configHash": {
+      "type": "string"
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "framework": {
+      "description": "Framework label. Multi-word kebab-case to match the existing TS union (`vercel-ai-sdk`, `openai-agents-python`, etc.).",
+      "enum": [
+        "vercel-ai-sdk",
+        "openai-agents",
+        "langchain",
+        "mastra",
+        "langchain-python",
+        "llamaindex",
+        "crewai",
+        "smolagents",
+        "pydantic-ai",
+        "strands",
+        "google-adk",
+        "openai-agents-python",
+        "autogen"
+      ],
+      "type": "string"
+    },
+    "inputContractPreview": {
+      "description": "Compact preview of the input contract this artifact expects.",
+      "properties": {
+        "example": {
+          "description": "Representative example payload."
+        },
+        "schemaSummary": {
+          "description": "One-line shape summary.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "instructions": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "instructionsHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "knowledgeSources": {
+      "items": {
+        "properties": {
+          "href": {
+            "description": "Optional jump-out link.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "vector",
+              "doc",
+              "table",
+              "graph"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "sizeLabel": {
+            "description": "Optional human-readable size hint, e.g. \"12.4k docs\".",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "model": {
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "modelId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
+    "name": {
+      "type": "string"
+    },
+    "outputContractPreview": {
+      "description": "Compact preview of the output contract this artifact emits.",
+      "properties": {
+        "example": {
+          "description": "Representative example payload."
+        },
+        "schemaSummary": {
+          "description": "One-line shape summary.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "policy": {
+      "properties": {
+        "allowedTools": {
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "approvalRequired": {
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "maxSteps": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "provenance": {
+      "properties": {
+        "aiSdkVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "dependencyLockHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "frameworkVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gitSha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "publishedBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "createdAt"
+      ],
+      "type": "object"
+    },
+    "providerOptions": {
+      "additionalProperties": true,
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "providerOptionsHash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schemaVersion": {
+      "description": "Schema marker — frontend code matches against the literal string `\"agent-artifact-v1\"` so newer payloads can co-exist when we evolve the shape.",
+      "type": "string"
+    },
+    "tools": {
+      "items": {
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inputSchemaHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inputSchemaPreview": {
+            "additionalProperties": true,
+            "description": "Optional small input-schema preview rendered in the Tools tab.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "version": {
+      "type": "string"
+    },
+    "workflowGraphPreview": {
+      "properties": {
+        "edges": {
+          "items": {
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "label": {
+                "description": "Optional short label rendered along the edge.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "nodes": {
+          "items": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "input",
+                  "tool",
+                  "model",
+                  "branch",
+                  "output"
+                ],
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "toolName": {
+                "description": "Optional tool name reference for tool nodes.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "edges",
+        "nodes"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "artifactId",
+    "configHash",
+    "framework",
+    "model",
+    "name",
+    "provenance",
+    "schemaVersion",
+    "tools",
+    "version"
+  ],
+  "title": "AgentArtifact",
+  "type": "object"
+}

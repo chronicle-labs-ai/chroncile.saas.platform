@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Cluster bucket emitted by the data-science layer when looking for missing scenarios in a dataset.",
+  "enum": [
+    "captured",
+    "adjacent",
+    "emerging",
+    "edge"
+  ],
+  "title": "BacktestScenarioBucket",
+  "type": "string"
+}

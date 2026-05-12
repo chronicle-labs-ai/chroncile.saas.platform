@@ -2,80 +2,91 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Button, FormField, Input, Select } from "ui";
-import { fetcher } from "@/shared/fetcher";
-import type { EnvironmentRecord } from "@/shared/types";
+import {
+  Badge,
+  Button,
+  Cell,
+  Column,
+  ConfirmModal,
+  FormField,
+  Input,
+  Modal,
+  NativeSelect,
+  OptionTile,
+  Panel,
+  PanelContent,
+  PanelHeader,
+  Row,
+  SkeletonBlock,
+  Table,
+  TableBody,
+  TableHeader,
+} from "ui";
+import { apiErrorMessage, fetcher } from "@/frontend/shared/fetcher";
+import type { EnvironmentRecord } from "@/frontend/shared/types";
+import { createDbTemplate, deleteDbTemplate } from "../api";
+import { MODE_LABELS, MODE_OPTIONS, MODE_TONE } from "../constants";
+import {
+  seedOptionLabel,
+  templateLastUsedLabel,
+  templateSeedLabel,
+  templateSourceLabel,
+} from "../mappers";
+import type { DbTemplate, SeedFile } from "../types";
 
-interface DbTemplate {
-  id: string;
-  name: string;
-  description: string | null;
-  mode: "FLY_DB" | "ENVIRONMENT" | "SEED_ONLY";
-  flyDbName: string | null;
-  sourceEnvId: string | null;
-  seedSqlUrl: string | null;
-  createdAt: string;
-  lastUsedAt: string | null;
-}
-
-const MODE_LABELS: Record<string, string> = {
-  FLY_DB: "Fly Postgres Fork",
-  ENVIRONMENT: "Fork from Environment",
-  SEED_ONLY: "Fresh DB + Seed SQL",
-};
-
-const MODE_BADGE: Record<string, string> = {
-  FLY_DB: "badge--data",
-  ENVIRONMENT: "badge--caution",
-  SEED_ONLY: "badge--nominal",
-};
-
-interface SeedFile {
-  name: string;
-  filename: string;
-  description: string;
-  url: string;
-}
-
-function CreateTemplateModal({ envs, onClose, onCreated }: {
-  envs: EnvironmentRecord[];
-  onClose: () => void;
-  onCreated: () => void;
-}) {
-  const { data: availableSeeds } = useSWR<SeedFile[]>("/api/seeds", fetcher);
+export function TemplatesPage() {
+  const {
+    data: templates,
+    error: templatesError,
+    isLoading,
+    mutate,
+  } = useSWR<DbTemplate[]>("/api/db-templates", fetcher);
+  const { data: envs, error: envsError, mutate: retryEnvs } = useSWR<EnvironmentRecord[]>(
+    "/api/environments",
+    fetcher
+  );
+  const {
+    data: availableSeeds,
+    error: seedsError,
+    mutate: retrySeeds,
+  } = useSWR<SeedFile[]>("/api/seeds", fetcher);
+  const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DbTemplate | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [mode, setMode] = useState<"FLY_DB" | "ENVIRONMENT" | "SEED_ONLY">("FLY_DB");
+  const [mode, setMode] = useState<DbTemplate["mode"]>("FLY_DB");
   const [flyDbName, setFlyDbName] = useState("");
   const [sourceEnvId, setSourceEnvId] = useState("");
   const [seedSqlUrl, setSeedSqlUrl] = useState("");
-  const [seedSource, setSeedSource] = useState<"none" | "builtin" | "custom">("none");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resetCreateForm = () => {
+    setName("");
+    setDescription("");
+    setMode("FLY_DB");
+    setFlyDbName("");
+    setSourceEnvId("");
+    setSeedSqlUrl("");
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/db-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          description: description || undefined,
-          mode,
-          flyDbName: mode === "FLY_DB" ? flyDbName : undefined,
-          sourceEnvId: mode === "ENVIRONMENT" ? sourceEnvId : undefined,
-          seedSqlUrl: seedSqlUrl || undefined,
-        }),
+      await createDbTemplate({
+        name,
+        description,
+        mode,
+        flyDbName,
+        sourceEnvId,
+        seedSqlUrl,
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to create template");
-      }
-      onCreated();
-      onClose();
+      await mutate();
+      resetCreateForm();
+      setShowCreate(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -83,230 +94,295 @@ function CreateTemplateModal({ envs, onClose, onCreated }: {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-void/80 backdrop-blur-sm" />
-      <div className="relative w-full max-w-lg mx-4 panel">
-        <div className="panel__header">
-          <span className="panel__title">New DB Template</span>
-          <button onClick={onClose} className="text-tertiary hover:text-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="panel__content space-y-4">
-            <FormField label="Template Name" htmlFor="db-template-name">
-              <Input id="db-template-name" required value={name} onChange={(e) => setName(e.target.value)} className="font-mono text-sm" placeholder="demo-users" />
-            </FormField>
-            <FormField label="Description" htmlFor="db-template-description">
-              <Input id="db-template-description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-sm" placeholder="Pre-seeded with demo users and sample runs" />
-            </FormField>
-
-            <div>
-              <label className="label block mb-2">Database Source</label>
-              <div className="space-y-2">
-                {(["FLY_DB", "ENVIRONMENT", "SEED_ONLY"] as const).map((m) => (
-                  <label key={m} className={`flex items-start gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${mode === m ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"}`}>
-                    <input type="radio" name="mode" checked={mode === m} onChange={() => setMode(m)} className="mt-0.5" />
-                    <div>
-                      <span className={`text-sm font-medium ${mode === m ? "text-data" : "text-primary"}`}>{MODE_LABELS[m]}</span>
-                      <p className="text-[10px] text-tertiary mt-0.5">
-                        {m === "FLY_DB" && "Fork from an existing Fly Postgres app"}
-                        {m === "ENVIRONMENT" && "Fork from a running environment's database"}
-                        {m === "SEED_ONLY" && "Create a fresh empty DB and run seed SQL"}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {mode === "FLY_DB" && (
-              <div>
-                <FormField label="Fly Postgres App" htmlFor="fly-db-name">
-                  <Select
-                    id="fly-db-name"
-                  required
-                  value={flyDbName}
-                  onChange={(e) => setFlyDbName(e.target.value)}
-                  className="font-mono text-sm"
-                >
-                  <option value="">Select a Postgres app...</option>
-                  {envs
-                    .filter((e) => e.flyDbName)
-                    .map((e) => (
-                      <option key={e.flyDbName} value={e.flyDbName!}>
-                        {e.flyDbName} — {e.name} ({e.type.toLowerCase()})
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
-                <p className="text-[10px] text-tertiary mt-1">
-                  Or enter a custom Fly Postgres app name:
-                </p>
-                <Input
-                  type="text"
-                  value={flyDbName}
-                  onChange={(e) => setFlyDbName(e.target.value)}
-                  className="font-mono text-xs mt-1"
-                  placeholder="custom-fly-postgres-app"
-                />
-              </div>
-            )}
-
-            {mode === "ENVIRONMENT" && (
-              <FormField label="Source Environment" htmlFor="source-environment-id">
-                <Select id="source-environment-id" required value={sourceEnvId} onChange={(e) => setSourceEnvId(e.target.value)} className="font-mono text-sm">
-                  <option value="">Select environment...</option>
-                  {envs.filter((e) => e.flyDbName).map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name} ({e.type.toLowerCase()}) — {e.flyDbName}
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-            )}
-
-            <div>
-              <label className="label block mb-2">Seed SQL (optional)</label>
-              <div className="space-y-2">
-                <label className={`flex items-center gap-3 p-2.5 rounded-sm border cursor-pointer transition-colors ${seedSource === "none" ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"}`}>
-                  <input type="radio" name="seedSource" checked={seedSource === "none"} onChange={() => { setSeedSource("none"); setSeedSqlUrl(""); }} />
-                  <span className={`text-sm ${seedSource === "none" ? "text-data" : "text-primary"}`}>No seed data</span>
-                </label>
-
-                {(availableSeeds ?? []).map((seed) => (
-                  <label
-                    key={seed.name}
-                    className={`flex items-start gap-3 p-2.5 rounded-sm border cursor-pointer transition-colors ${seedSource === "builtin" && seedSqlUrl === seed.url ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"}`}
-                  >
-                    <input
-                      type="radio"
-                      name="seedSource"
-                      checked={seedSource === "builtin" && seedSqlUrl === seed.url}
-                      onChange={() => { setSeedSource("builtin"); setSeedSqlUrl(seed.url); }}
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <span className={`text-sm font-medium ${seedSource === "builtin" && seedSqlUrl === seed.url ? "text-data" : "text-primary"}`}>
-                        {seed.name}
-                      </span>
-                      <p className="text-[10px] text-tertiary mt-0.5">{seed.description}</p>
-                    </div>
-                  </label>
-                ))}
-
-                <label className={`flex items-start gap-3 p-2.5 rounded-sm border cursor-pointer transition-colors ${seedSource === "custom" ? "border-data bg-data-bg" : "border-border-dim hover:border-border-bright"}`}>
-                  <input type="radio" name="seedSource" checked={seedSource === "custom"} onChange={() => { setSeedSource("custom"); setSeedSqlUrl(""); }} className="mt-0.5" />
-                  <div className="flex-1">
-                    <span className={`text-sm ${seedSource === "custom" ? "text-data" : "text-primary"}`}>Custom URL</span>
-                    {seedSource === "custom" && (
-                      <Input
-                        type="url"
-                        value={seedSqlUrl}
-                        onChange={(e) => setSeedSqlUrl(e.target.value)}
-                        className="font-mono text-xs mt-2"
-                        placeholder="https://raw.githubusercontent.com/.../seed.sql"
-                      />
-                    )}
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {error && <div className="flex items-center gap-2"><span className="status-dot status-dot--critical" /><span className="text-xs text-critical">{error}</span></div>}
-          </div>
-          <div className="px-4 pb-4 flex justify-end gap-3">
-            <Button type="button" size="sm" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="primary" size="sm" isLoading={loading}>{loading ? "Creating..." : "Create Template"}</Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-export function TemplatesPage() {
-  const { data: templates, isLoading, mutate } = useSWR<DbTemplate[]>("/api/db-templates", fetcher);
-  const { data: envs } = useSWR<EnvironmentRecord[]>("/api/environments", fetcher);
-  const [showCreate, setShowCreate] = useState(false);
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete template "${name}"?`)) return;
-    await fetch(`/api/db-templates/${id}`, { method: "DELETE" });
-    mutate();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteDbTemplate(deleteTarget.id);
+    await mutate();
+    setDeleteTarget(null);
   };
 
   return (
     <>
-      {showCreate && (
-        <CreateTemplateModal envs={envs ?? []} onClose={() => setShowCreate(false)} onCreated={() => mutate()} />
-      )}
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-sans font-semibold">Database Templates</h1>
-            <p className="text-xs text-tertiary mt-1">Pre-configured databases for ephemeral environments</p>
+      <Modal
+        isOpen={showCreate}
+        onClose={() => {
+          resetCreateForm();
+          setShowCreate(false);
+        }}
+        title="New DB Template"
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowCreate(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="create-db-template"
+              isLoading={loading}
+            >
+              Create Template
+            </Button>
+          </>
+        }
+      >
+        <form id="create-db-template" onSubmit={handleSubmit} className="space-y-s-4">
+          <FormField label="Template Name" htmlFor="db-template-name">
+            <Input
+              id="db-template-name"
+              required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="demo-users"
+            />
+          </FormField>
+
+          <FormField label="Description" htmlFor="db-template-description">
+            <Input
+              id="db-template-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Pre-seeded with demo users and sample runs"
+            />
+          </FormField>
+
+          <div className="space-y-s-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-dim">
+              Database Source
+            </span>
+            {MODE_OPTIONS.map((option) => (
+              <OptionTile
+                key={option.value}
+                label={option.label}
+                meta={option.description}
+                isSelected={mode === option.value}
+                onClick={() => setMode(option.value)}
+              />
+            ))}
           </div>
-          <Button variant="primary" onClick={() => setShowCreate(true)}>New Template</Button>
+
+          {mode === "FLY_DB" ? (
+            <FormField label="Fly Postgres App" htmlFor="fly-db-name">
+              <NativeSelect
+                id="fly-db-name"
+                required
+                value={flyDbName}
+                onChange={(event) => setFlyDbName(event.target.value)}
+                disabled={Boolean(envsError)}
+              >
+                <option value="">
+                  {envsError ? "Environments unavailable" : "Select a Postgres app..."}
+                </option>
+                {(envs ?? [])
+                  .filter((env) => env.flyDbName)
+                  .map((env) => (
+                    <option key={env.flyDbName} value={env.flyDbName!}>
+                      {env.flyDbName} — {env.name}
+                    </option>
+                  ))}
+              </NativeSelect>
+              {envsError ? (
+                <div className="mt-s-2 flex items-center justify-between gap-s-3">
+                  <p className="text-xs text-event-red">
+                    {apiErrorMessage(envsError, "Unable to load environments")}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void retryEnvs()}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : null}
+            </FormField>
+          ) : null}
+
+          {mode === "ENVIRONMENT" ? (
+            <FormField label="Source Environment" htmlFor="source-environment-id">
+              <NativeSelect
+                id="source-environment-id"
+                required
+                value={sourceEnvId}
+                onChange={(event) => setSourceEnvId(event.target.value)}
+                disabled={Boolean(envsError)}
+              >
+                <option value="">
+                  {envsError ? "Environments unavailable" : "Select environment..."}
+                </option>
+                {(envs ?? [])
+                  .filter((env) => env.flyDbName)
+                  .map((env) => (
+                    <option key={env.id} value={env.id}>
+                      {env.name} — {env.flyDbName}
+                    </option>
+                  ))}
+              </NativeSelect>
+              {envsError ? (
+                <div className="mt-s-2 flex items-center justify-between gap-s-3">
+                  <p className="text-xs text-event-red">
+                    {apiErrorMessage(envsError, "Unable to load environments")}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void retryEnvs()}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : null}
+            </FormField>
+          ) : null}
+
+          <FormField label="Seed SQL" htmlFor="seed-sql-url">
+            <NativeSelect
+              id="seed-sql-url"
+              value={seedSqlUrl}
+              onChange={(event) => setSeedSqlUrl(event.target.value)}
+              disabled={Boolean(seedsError)}
+            >
+              <option value="">
+                {seedsError ? "Seed files unavailable" : "No seed data"}
+              </option>
+              {(availableSeeds ?? []).map((seed) => (
+                <option key={seed.name} value={seed.url}>
+                  {seedOptionLabel(seed)}
+                </option>
+              ))}
+            </NativeSelect>
+            {seedsError ? (
+              <div className="mt-s-2 flex items-center justify-between gap-s-3">
+                <p className="text-xs text-event-red">
+                  {apiErrorMessage(seedsError, "Unable to load seed files")}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void retrySeeds()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : null}
+          </FormField>
+
+          {error ? <p className="text-xs text-event-red">{error}</p> : null}
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete DB template"
+        message={`Delete template "${deleteTarget?.name ?? "template"}"?`}
+        confirmText="Delete"
+        variant="danger"
+      />
+
+      <div className="mx-auto flex max-w-4xl flex-col gap-s-6">
+        <div className="flex items-start justify-between gap-s-4">
+          <div>
+            <h1 className="font-sans text-xl font-semibold text-ink-hi">
+              Database Templates
+            </h1>
+            <p className="mt-1 text-xs text-ink-dim">
+              Pre-configured databases for ephemeral environments.
+            </p>
+          </div>
+          <Button onClick={() => setShowCreate(true)}>New Template</Button>
         </div>
 
-        <div className="panel">
-          <div className="panel__header">
-            <span className="panel__title">Templates</span>
-            <span className="font-mono text-[10px] text-tertiary">{templates?.length ?? 0}</span>
-          </div>
-          {isLoading ? (
-            <div className="divide-y divide-border-dim">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-4">
-                  <div className="w-16 h-4 bg-elevated animate-pulse rounded" />
-                  <div className="flex-1 h-4 bg-elevated animate-pulse rounded w-40" />
-                  <div className="w-20 h-4 bg-elevated animate-pulse rounded" />
-                </div>
-              ))}
-            </div>
-          ) : (templates?.length ?? 0) === 0 ? (
-            <div className="panel__content text-center py-8">
-              <p className="text-sm text-secondary mb-3">No templates yet</p>
-              <Button size="sm" onClick={() => setShowCreate(true)}>Create your first template</Button>
-            </div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Mode</th>
-                  <th>Source</th>
-                  <th>Seed SQL</th>
-                  <th>Last Used</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {templates!.map((t) => (
-                  <tr key={t.id}>
-                    <td>
-                      <div>
-                        <span className="text-primary font-medium">{t.name}</span>
-                        {t.description && <p className="text-[10px] text-tertiary mt-0.5">{t.description}</p>}
-                      </div>
-                    </td>
-                    <td><span className={`badge ${MODE_BADGE[t.mode]}`}>{MODE_LABELS[t.mode]}</span></td>
-                    <td><span className="font-mono text-xs">{t.flyDbName ?? t.sourceEnvId?.slice(0, 12) ?? "—"}</span></td>
-                    <td>
-                      {t.seedSqlUrl ? <span className="status-dot status-dot--nominal" title={t.seedSqlUrl} /> : <span className="text-tertiary">—</span>}
-                    </td>
-                    <td><span className="font-mono text-xs">{t.lastUsedAt ? new Date(t.lastUsedAt).toLocaleDateString() : "never"}</span></td>
-                    <td>
-                      <button onClick={() => handleDelete(t.id, t.name)} className="text-tertiary hover:text-critical text-xs font-mono uppercase tracking-wider">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <Panel>
+          <PanelHeader
+            title="Templates"
+            actions={<Badge>{templates?.length ?? 0}</Badge>}
+          />
+          <PanelContent>
+            {templatesError ? (
+              <div className="space-y-s-3 py-s-8 text-center">
+                <p className="text-sm text-ink-dim">
+                  {apiErrorMessage(
+                    templatesError,
+                    "Unable to load database templates"
+                  )}
+                </p>
+                <Button size="sm" variant="secondary" onClick={() => void mutate()}>
+                  Retry
+                </Button>
+              </div>
+            ) : isLoading ? (
+              <div className="space-y-s-3">
+                <SkeletonBlock className="h-10 w-full" />
+                <SkeletonBlock className="h-10 w-full" />
+              </div>
+            ) : (templates?.length ?? 0) === 0 ? (
+              <div className="py-s-8 text-center">
+                <p className="mb-s-3 text-sm text-ink-dim">No templates yet.</p>
+                <Button size="sm" onClick={() => setShowCreate(true)}>
+                  Create your first template
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <Row>
+                    <Column>Name</Column>
+                    <Column>Mode</Column>
+                    <Column>Source</Column>
+                    <Column>Seed SQL</Column>
+                    <Column>Last Used</Column>
+                    <Column>Actions</Column>
+                  </Row>
+                </TableHeader>
+                <TableBody>
+                  {templates!.map((template) => (
+                    <Row key={template.id}>
+                      <Cell>
+                        <span className="font-medium text-ink-hi">
+                          {template.name}
+                        </span>
+                        {template.description ? (
+                          <p className="mt-0.5 text-[10px] text-ink-dim">
+                            {template.description}
+                          </p>
+                        ) : null}
+                      </Cell>
+                      <Cell>
+                        <Badge variant={MODE_TONE[template.mode]}>
+                          {MODE_LABELS[template.mode]}
+                        </Badge>
+                      </Cell>
+                      <Cell className="font-mono">
+                        {templateSourceLabel(template)}
+                      </Cell>
+                      <Cell>{templateSeedLabel(template)}</Cell>
+                      <Cell className="font-mono">
+                        {templateLastUsedLabel(template)}
+                      </Cell>
+                      <Cell>
+                        <Button
+                          size="sm"
+                          variant="critical"
+                          onClick={() => setDeleteTarget(template)}
+                        >
+                          Delete
+                        </Button>
+                      </Cell>
+                    </Row>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </PanelContent>
+        </Panel>
       </div>
     </>
   );

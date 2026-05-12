@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Outcome of the last `Test connection` run. `Pending` means the test is in flight; the row's button stays in a wait state.",
+  "enum": [
+    "ok",
+    "fail",
+    "pending"
+  ],
+  "title": "ConnectionTestStatus",
+  "type": "string"
+}

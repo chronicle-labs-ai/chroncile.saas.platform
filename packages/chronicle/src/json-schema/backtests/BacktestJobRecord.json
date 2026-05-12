@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Row projection of `\"BacktestJob\"`.",
+  "properties": {
+    "completedTrials": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "createdBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "exceptionKind": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "failedTrials": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "finishedAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "replay",
+        "compare",
+        "regression",
+        "suite"
+      ],
+      "type": "string"
+    },
+    "nConcurrent": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "recipe": {
+      "description": "Full BacktestRecipe blob persisted at submit time."
+    },
+    "retryConfig": {
+      "description": "Retry policy applied to transient trial failures (network errors, sandbox-create timeouts). Mirrors Harbor's `RetryConfig`. Pass `null` on the wire (`None` here) to fall back to defaults.",
+      "properties": {
+        "excludeExceptions": {
+          "description": "Exception kinds that explicitly should not be retried even if otherwise matched by `include_exceptions`.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "includeExceptions": {
+          "description": "When set, only exception kinds in this list trigger a retry. `None` means \"retry every transient kind\".",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "maxRetries": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "maxWaitSec": {
+          "format": "double",
+          "type": "number"
+        },
+        "minWaitSec": {
+          "format": "double",
+          "type": "number"
+        },
+        "waitMultiplier": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "maxRetries",
+        "maxWaitSec",
+        "minWaitSec",
+        "waitMultiplier"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "sandboxDriver": {
+      "description": "Sandbox driver picked at submit time. Echoed onto the `BacktestJob.sandboxDriver` column. The orchestrator reads this to pick the implementation behind the `Sandbox` trait (Phase 1).",
+      "oneOf": [
+        {
+          "description": "Local Docker daemon. Useful for CI + dev loops.",
+          "enum": [
+            "docker"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Daytona cloud sandboxes. Default for production.",
+          "enum": [
+            "daytona"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "In-process echo sandbox; powers CLI smoke tests + unit tests without container infra.",
+          "enum": [
+            "mock"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "scheduledFor": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "startedAt": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "description": "Lifecycle state of an entire `BacktestJob`. Maps 1:1 onto the `status` column in `migrations/013_create_backtest_runtime.sql`.",
+      "enum": [
+        "pending",
+        "running",
+        "succeeded",
+        "failed",
+        "cancelled"
+      ],
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "totalTrials": {
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "verdict": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "completedTrials",
+    "createdAt",
+    "failedTrials",
+    "id",
+    "mode",
+    "nConcurrent",
+    "name",
+    "recipe",
+    "sandboxDriver",
+    "status",
+    "tenantId",
+    "updatedAt"
+  ],
+  "title": "BacktestJobRecord",
+  "type": "object"
+}

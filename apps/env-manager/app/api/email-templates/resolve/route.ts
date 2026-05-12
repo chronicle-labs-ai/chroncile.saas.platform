@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/server/data/db";
+import { prisma } from "@/backend/data/db";
 
 export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key");
   const envId = request.nextUrl.searchParams.get("envId");
 
   if (!key) {
-    return NextResponse.json({ error: "key parameter is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "key parameter is required" },
+      { status: 400 }
+    );
   }
 
   const templateKey = await prisma.emailTemplateKey.findUnique({
@@ -29,7 +32,9 @@ export async function GET(request: NextRequest) {
       },
     });
     if (envAssignment) {
-      return NextResponse.json({ resendTemplateId: envAssignment.resendTemplateId });
+      return NextResponse.json({
+        resendTemplateId: envAssignment.resendTemplateId,
+      });
     }
   }
 
@@ -41,11 +46,15 @@ export async function GET(request: NextRequest) {
   });
 
   if (defaultAssignment) {
-    return NextResponse.json({ resendTemplateId: defaultAssignment.resendTemplateId });
+    return NextResponse.json({
+      resendTemplateId: defaultAssignment.resendTemplateId,
+    });
   }
 
   return NextResponse.json(
-    { error: `No template assignment found for key "${key}" (envId: ${envId ?? "default"})` },
+    {
+      error: `No template assignment found for key "${key}" (envId: ${envId ?? "default"})`,
+    },
     { status: 404 }
   );
 }

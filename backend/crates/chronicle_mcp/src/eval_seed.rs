@@ -68,11 +68,15 @@ pub async fn build_seeded_eval_scenario(
         .await
         .map_err(|error| error.to_string())?;
 
-    let auth_token = runtime
-        .saas_state
-        .jwt
-        .issue(&auth_user)
-        .map_err(|error| error.to_string())?;
+    // The Chronicle-issued HS256 JWT path is gone — auth flows through WorkOS
+    // JWKS now. The evals don't have a real WorkOS user, so we hand the
+    // downstream MCP transport a placeholder token. Eval scenarios that
+    // exercise the auth boundary will fail fast on `/api/auth/me` (expected);
+    // re-architecting the eval harness against WorkOS test users is tracked
+    // separately. For scenarios that don't touch authenticated endpoints,
+    // this placeholder is harmless.
+    let _ = auth_user; // silence unused-binding warning until the harness is rewired
+    let auth_token = String::from("eval-placeholder-token");
 
     match scenario.id.as_str() {
         "incident_investigation" => seed_incident_investigation(runtime, session, auth_token).await,

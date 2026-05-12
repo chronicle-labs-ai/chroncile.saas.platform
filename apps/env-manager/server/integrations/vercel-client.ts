@@ -1,1 +1,1 @@
-export * from "@/lib/vercel-client";
+export * from "@/lib/integrations";

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/server/data/db";
+import { prisma } from "@/backend/data/db";
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   });
 
   const results = await Promise.allSettled(
-    environments.map((env) => pollEnvironment(env))
+    environments.map((env: EnvironmentRow) => pollEnvironment(env))
   );
 
   const summary = results.map((r, i) => ({
@@ -30,12 +30,39 @@ interface EnvironmentRow {
   vercelUrl: string | null;
 }
 
+interface DeepHealthResponse {
+  status: "healthy" | "degraded" | "unhealthy";
+  services: Record<
+    string,
+    {
+      status: "up" | "down" | "unconfigured";
+      latencyMs?: number;
+      error?: string;
+    }
+  >;
+}
+
+async function fetchDeepHealth(
+  flyAppUrl: string
+): Promise<DeepHealthResponse | null> {
+  try {
+    const res = await fetch(`${flyAppUrl}/health/ready`, {
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (res.ok) return (await res.json()) as DeepHealthResponse;
+  } catch {
+    // deep health is optional — swallow errors
+  }
+  return null;
+}
+
 async function pollEnvironment(env: EnvironmentRow): Promise<void> {
   let backendStatus: number | null = null;
   let backendMs: number | null = null;
   let frontendStatus: number | null = null;
   let frontendMs: number | null = null;
   let gitSha: string | null = null;
+  let serviceStatuses: DeepHealthResponse["services"] | null = null;
 
   if (env.flyAppUrl) {
     try {
@@ -52,6 +79,11 @@ async function pollEnvironment(env: EnvironmentRow): Promise<void> {
     } catch {
       backendStatus = 0;
     }
+
+    const deepHealth = await fetchDeepHealth(env.flyAppUrl);
+    if (deepHealth) {
+      serviceStatuses = deepHealth.services;
+    }
   }
 
   if (env.vercelUrl) {
@@ -67,8 +99,10 @@ async function pollEnvironment(env: EnvironmentRow): Promise<void> {
     }
   }
 
-  const backendHealthy = backendStatus !== null && backendStatus >= 200 && backendStatus < 300;
-  const frontendHealthy = frontendStatus !== null && frontendStatus >= 200 && frontendStatus < 300;
+  const backendHealthy =
+    backendStatus !== null && backendStatus >= 200 && backendStatus < 300;
+  const frontendHealthy =
+    frontendStatus !== null && frontendStatus >= 200 && frontendStatus < 300;
   const isHealthy = backendHealthy && frontendHealthy;
 
   const now = new Date();
@@ -82,6 +116,7 @@ async function pollEnvironment(env: EnvironmentRow): Promise<void> {
         backendMs,
         frontendMs,
         gitSha,
+        ...(serviceStatuses ? { serviceStatuses } : {}),
       },
     }),
     prisma.environment.update({

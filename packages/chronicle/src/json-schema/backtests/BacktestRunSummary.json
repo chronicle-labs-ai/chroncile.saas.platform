@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Compact projection of a backtest run rendered on the list view. Combines the recipe identity (mode, environment, agents, dataset) with run lifecycle metadata (status, verdict, divergences).",
+  "properties": {
+    "agentIds": {
+      "description": "Agent ids participating in the run; the first is the baseline.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "datasetLabel": {
+      "description": "Display label for the dataset / production window seed.",
+      "type": "string"
+    },
+    "divergences": {
+      "description": "Divergences observed (only set when status is `done` / `failed`).",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "environmentLabel": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "hue": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "replay",
+        "compare",
+        "regression",
+        "suite"
+      ],
+      "type": "string"
+    },
+    "name": {
+      "description": "Display name of the run (matches `BacktestRecipe.name`).",
+      "type": "string"
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scheduledFor": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "running",
+        "done",
+        "paused",
+        "scheduled",
+        "draft",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "totalRuns": {
+      "description": "Total cases × agents; null while still drafting.",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "updatedAt": {
+      "description": "ISO timestamp of the most recent state change — drives \"ago\".",
+      "format": "date-time",
+      "type": "string"
+    },
+    "verdict": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "agentIds",
+    "datasetLabel",
+    "id",
+    "mode",
+    "name",
+    "status",
+    "updatedAt"
+  ],
+  "title": "BacktestRunSummary",
+  "type": "object"
+}

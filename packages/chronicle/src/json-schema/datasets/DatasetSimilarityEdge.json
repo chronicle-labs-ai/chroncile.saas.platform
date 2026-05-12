@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "fromTraceId": {
+      "type": "string"
+    },
+    "toTraceId": {
+      "type": "string"
+    },
+    "weight": {
+      "description": "Similarity weight in [0..1].",
+      "format": "double",
+      "type": "number"
+    }
+  },
+  "required": [
+    "fromTraceId",
+    "toTraceId",
+    "weight"
+  ],
+  "title": "DatasetSimilarityEdge",
+  "type": "object"
+}

@@ -1,0 +1,17 @@
+/* Tailwind layers — processed via ./postcss.config.cjs.
+   Our own tokens + fonts + base surfaces are imported separately from
+   `preview.tsx` AFTER this file so they win the cascade against
+   `@tailwind base`'s preflight. Doing it through a JS import (instead of
+   a CSS `@import`) keeps each CSS file spec-compliant for Vite. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Storybook canvas chrome — let the design tokens paint the preview. */
+body,
+#storybook-root,
+.sb-show-main {
+  background: var(--c-page);
+  color: var(--c-ink);
+  min-height: 100vh;
+}

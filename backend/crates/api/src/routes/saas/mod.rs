@@ -1,13 +1,16 @@
 pub mod admin;
 pub mod audit;
 pub mod auth;
+pub mod backtests;
 pub mod connections;
 pub mod dashboard;
-mod error;
+pub(crate) mod error;
 pub mod feature_access;
 pub mod integrations;
 pub mod intercom;
 pub mod klaviyo;
+pub mod me;
+pub mod metrics;
 pub mod runs;
 pub mod sandboxes;
 pub mod settings;
@@ -27,25 +30,27 @@ use crate::feature_access::ResolvedFeatureAccess;
 use crate::saas_state::SaasAppState;
 
 pub fn build_saas_routes(state: SaasAppState) -> Router {
-    let jwt = state.jwt.clone();
-    let feature_access = state.feature_access.clone();
 
     let public = Router::new()
-        .route("/api/platform/auth/signup", post(auth::signup))
-        .route("/api/platform/auth/login", post(auth::login))
+        // CP 7.1 — register a Tenant for an Organization the frontend just
+        // created in WorkOS (server-to-server, service_secret auth).
         .route(
-            "/api/platform/auth/forgot-password",
-            post(auth::forgot_password),
+            "/api/platform/tenants/register-workos",
+            post(tenant::register_workos_tenant),
         )
         .route(
-            "/api/platform/auth/reset-password",
-            post(auth::reset_password),
+            "/api/platform/users/primary-org",
+            post(tenant::lookup_primary_org),
         )
-        .route(
-            "/api/platform/auth/token-exchange",
-            post(auth::exchange_token),
-        )
-        .route("/api/platform/auth/oauth-signup", post(auth::oauth_signup))
+        // CP 7.5 — current user via WorkOS JWKS path. Self-protected by the
+        // WorkosAuthUser extractor (no JWT middleware).
+        .route("/api/saas/me", get(me::get_me))
+        // Org-agnostic identity probe. Used by the frontend when the
+        // sealed session is authenticated but has no `org_id` claim
+        // (typically right after a token refresh) so the dashboard guard
+        // can recover by switching to the user's primary workspace.
+        .route("/api/saas/identity", get(me::get_identity))
+        .route("/api/webhooks/workos", post(auth::workos_webhook))
         .route("/api/platform/admin/stats", get(dashboard::admin_stats))
         .route(
             "/api/platform/admin/feature-flags",
@@ -86,6 +91,8 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/auth/accept-invite/:token",
             post(team::accept_invite),
         )
+        .route("/health/ready", get(super::health::deep_health_check))
+        .route("/api/platform/metrics", get(metrics::platform_metrics))
         .with_state(state.clone());
 
     let protected = Router::new()
@@ -232,46 +239,104 @@ pub fn build_saas_routes(state: SaasAppState) -> Router {
             "/api/platform/team/members/:user_id/role",
             patch(team::update_member_role),
         )
-        .layer(axum_mw::from_fn(
-            move |mut req: axum::extract::Request, next: axum_mw::Next| {
-                let jwt = jwt.clone();
-                let feature_access = feature_access.clone();
-                async move {
-                    req.extensions_mut().insert(jwt.clone());
-
-                    let maybe_token = req
-                        .headers()
-                        .get("authorization")
-                        .and_then(|value| value.to_str().ok())
-                        .and_then(|header| header.strip_prefix("Bearer "))
-                        .map(str::to_string);
-
-                    if let Some(token) = maybe_token {
-                        match jwt.validate(&token) {
-                            Ok(user) => {
-                                req.extensions_mut().insert(user.clone());
-                                match feature_access.resolve_for_user(&user).await {
-                                    Ok(access) => {
-                                        req.extensions_mut().insert(ResolvedFeatureAccess(access));
-                                    }
-                                    Err(error) => {
-                                        tracing::warn!(
-                                            tenant_id = %user.tenant_id,
-                                            user_id = %user.id,
-                                            error = %error,
-                                            "Failed to resolve feature access during request bootstrap"
-                                        );
-                                    }
-                                }
-                            }
-                            Err(error) => {
-                                tracing::debug!(error = %error, "Skipping feature access bootstrap due to invalid auth token");
-                            }
+        // ── Backtests (Phase 3) ────────────────────────────────
+        .route(
+            "/api/platform/backtests/availability",
+            get(backtests::availability::get_availability),
+        )
+        .route(
+            "/api/platform/backtests/jobs",
+            get(backtests::routes::list_jobs).post(backtests::routes::create_job),
+        )
+        .route(
+            "/api/platform/backtests/jobs/:id",
+            get(backtests::routes::get_job),
+        )
+        .route(
+            "/api/platform/backtests/jobs/:id/cancel",
+            post(backtests::routes::cancel_job),
+        )
+        .route(
+            "/api/platform/backtests/jobs/:id/stream",
+            get(backtests::sse::stream_job_events),
+        )
+        .layer(axum_mw::from_fn_with_state(
+            state.clone(),
+            |axum::extract::State(state): axum::extract::State<SaasAppState>,
+             mut req: axum::extract::Request,
+             next: axum_mw::Next| async move {
+                if let Some(token) = req
+                    .headers()
+                    .get("authorization")
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|h| h.strip_prefix("Bearer "))
+                    .map(str::to_string)
+                {
+                    // Dev-mode bypass: when CHRONICLE_DEV_TOKEN is set
+                    // *and* the inbound bearer matches, synthesize an
+                    // AuthUser for a dev tenant. Skips WorkOS entirely
+                    // so local CLI testing works without a JWT. This
+                    // env var must be unset in any production
+                    // deployment — the dashboard wiring guards on its
+                    // own anyway.
+                    if let Ok(dev_token) = std::env::var("CHRONICLE_DEV_TOKEN") {
+                        if !dev_token.is_empty() && token == dev_token {
+                            req.extensions_mut().insert(
+                                chronicle_auth::types::AuthUser {
+                                    id: "dev_user".to_string(),
+                                    email: "dev@chronicle.local".to_string(),
+                                    name: Some("Dev User".to_string()),
+                                    role: "owner".to_string(),
+                                    tenant_id: "dev_tenant".to_string(),
+                                    tenant_name: "Dev Tenant".to_string(),
+                                    tenant_slug: "dev".to_string(),
+                                },
+                            );
+                            return next.run(req).await;
                         }
                     }
 
-                    next.run(req).await
+                    if let Ok(claims) = state.workos_jwt.verify(&token).await {
+                        if let (Ok(Some(user_row)), Some(org_id)) = (
+                            state.users.find_by_workos_user_id(&claims.sub).await,
+                            claims.org_id.as_deref(),
+                        ) {
+                            if let Ok(Some(tenant_row)) = state
+                                .tenants
+                                .find_by_workos_organization_id(org_id)
+                                .await
+                            {
+                                if user_row.tenant_id == tenant_row.id {
+                                    let role = match user_row.role {
+                                        chronicle_domain::UserRole::Owner => "owner",
+                                        chronicle_domain::UserRole::Admin => "admin",
+                                        chronicle_domain::UserRole::Member => "member",
+                                    }
+                                    .to_string();
+                                    let auth_user = chronicle_auth::types::AuthUser {
+                                        id: user_row.id,
+                                        email: user_row.email,
+                                        name: user_row.name,
+                                        role,
+                                        tenant_id: tenant_row.id,
+                                        tenant_name: tenant_row.name,
+                                        tenant_slug: tenant_row.slug,
+                                    };
+
+                                    if let Ok(access) =
+                                        state.feature_access.resolve_for_user(&auth_user).await
+                                    {
+                                        req.extensions_mut()
+                                            .insert(ResolvedFeatureAccess(access));
+                                    }
+                                    req.extensions_mut().insert(auth_user);
+                                }
+                            }
+                        }
+                    }
                 }
+
+                next.run(req).await
             },
         ))
         .with_state(state);

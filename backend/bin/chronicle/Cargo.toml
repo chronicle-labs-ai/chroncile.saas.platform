@@ -1,0 +1,48 @@
+[package]
+name = "chronicle_cli"
+description = "Chronicle CLI — command-line interface for the Chronicle SaaS platform."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "chronicle"
+path = "src/main.rs"
+
+[dependencies]
+chronicle_domain = { workspace = true }
+
+# CLI parsing
+clap = { version = "4", features = ["derive", "env", "wrap_help"] }
+
+# Async runtime
+tokio = { workspace = true, features = ["full"] }
+futures = { workspace = true }
+
+# HTTP + SSE
+reqwest = { workspace = true, features = ["json", "stream"] }
+eventsource-stream = "0.2"
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = "0.8"
+
+# Time + IDs
+chrono = { workspace = true }
+
+# Errors
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Pretty terminal output
+comfy-table = { version = "7", default-features = false }
+colored = "2"
+indicatif = "0.17"
+
+# Filesystem helpers
+dirs = "5"

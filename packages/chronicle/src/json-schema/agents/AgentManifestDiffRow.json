@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "after": true,
+    "before": true,
+    "domain": {
+      "description": "The 13 hash domains the wrapper tracks. The first eight describe the artifact (config-time); the last five describe a run (observed at call-time).",
+      "enum": [
+        "agent.root",
+        "prompt",
+        "model.contract",
+        "provider.options",
+        "tool.contract",
+        "runtime.policy",
+        "dependency",
+        "knowledge.contract",
+        "workflow.graph",
+        "effective.run",
+        "provider.observation",
+        "operational",
+        "output"
+      ],
+      "type": "string"
+    },
+    "path": {
+      "description": "JSON path within the domain.",
+      "type": "string"
+    },
+    "unchanged": {
+      "description": "True when before/after are deep-equal.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "after",
+    "before",
+    "domain",
+    "path",
+    "unchanged"
+  ],
+  "title": "AgentManifestDiffRow",
+  "type": "object"
+}
