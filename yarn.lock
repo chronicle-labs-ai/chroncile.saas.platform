@@ -54,30 +54,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@auth/core@npm:0.41.0":
-  version: 0.41.0
-  resolution: "@auth/core@npm:0.41.0"
-  dependencies:
-    "@panva/hkdf": "npm:^1.2.1"
-    jose: "npm:^6.0.6"
-    oauth4webapi: "npm:^3.3.0"
-    preact: "npm:10.24.3"
-    preact-render-to-string: "npm:6.5.11"
-  peerDependencies:
-    "@simplewebauthn/browser": ^9.0.1
-    "@simplewebauthn/server": ^9.0.2
-    nodemailer: ^6.8.0
-  peerDependenciesMeta:
-    "@simplewebauthn/browser":
-      optional: true
-    "@simplewebauthn/server":
-      optional: true
-    nodemailer:
-      optional: true
-  checksum: 10c0/2971dc78b12cb00774fa4a82105d0302b7e2d96e416336f119e7e90604878bde26fca16c5c53dc027ecb47cecffb0d1471397cd5d8aedb85a8cd4b41c742379c
-  languageName: node
-  linkType: hard
-
 "@aws-crypto/crc32@npm:5.2.0":
   version: 5.2.0
   resolution: "@aws-crypto/crc32@npm:5.2.0"
@@ -3180,13 +3156,6 @@ __metadata:
   version: 1.40.0
   resolution: "@opentelemetry/semantic-conventions@npm:1.40.0"
   checksum: 10c0/3259de0ea11b52eb70e44c12eba21448392baf9cb74c37b62071c4a5ed7fb89b61e194f3898d40ac6bfa7293617a0e132876cb6e355472b66de0cdb13c50b529
-  languageName: node
-  linkType: hard
-
-"@panva/hkdf@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@panva/hkdf@npm:1.2.1"
-  checksum: 10c0/1fabdec9bd2c19b8e88a3fa6fd0c25e25823c5000d9efdf4b6dfe32e9f370f8b9603cf776d120d160bec15fba17e079974cc34f0f52cebb24602cd832dfde19c
   languageName: node
   linkType: hard
 
@@ -6996,6 +6965,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@workos-inc/authkit-nextjs@npm:^2.13.0":
+  version: 2.17.0
+  resolution: "@workos-inc/authkit-nextjs@npm:2.17.0"
+  dependencies:
+    "@workos-inc/node": "npm:^8.9.0"
+    iron-session: "npm:^8.0.4"
+    jose: "npm:^5.10.0"
+    path-to-regexp: "npm:^6.3.0"
+  peerDependencies:
+    next: ^13.5.9 || ^14.2.26 || ^15.2.3 || ^16
+    react: ^18.0 || ^19.0.0
+    react-dom: ^18.0 || ^19.0.0
+  checksum: 10c0/35ab46551d7142e6adcbdcba003c35ad5ded713d04d16f7c023b90cb2d911f379ea83259c47fbf026b840f73c24eef5f3a3bc7080f0dabb781e708f81f52d9b2
+  languageName: node
+  linkType: hard
+
+"@workos-inc/node@npm:^8.9.0":
+  version: 8.13.0
+  resolution: "@workos-inc/node@npm:8.13.0"
+  dependencies:
+    eventemitter3: "npm:^5.0.4"
+  checksum: 10c0/1ac93ad5ac73e4a5f083278264795a782a316f77d9de8123456be707e55f85952cf73684c09629a03343625ea994760ba094de9c7c9786abd0a38939a69aecea
+  languageName: node
+  linkType: hard
+
 "@workos-inc/node@npm:^9.1.1":
   version: 9.1.1
   resolution: "@workos-inc/node@npm:9.1.1"
@@ -8066,7 +8060,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:~0.7.2":
+"cookie@npm:^0.7.2, cookie@npm:~0.7.2":
   version: 0.7.2
   resolution: "cookie@npm:0.7.2"
   checksum: 10c0/9596e8ccdbf1a3a88ae02cf5ee80c1c50959423e1022e4e60b91dd87c622af1da309253d8abdb258fb5e3eacb4f08e579dc58b4897b8087574eee0fd35dfa5d2
@@ -8526,12 +8520,12 @@ __metadata:
     "@types/pg": "npm:^8.18.0"
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
+    "@workos-inc/authkit-nextjs": "npm:^2.13.0"
     autoprefixer: "npm:^10.4.0"
     chronicle: "workspace:*"
     eslint: "npm:^9.0.0"
     eslint-config-next: "npm:^15.1.7"
     next: "npm:^15.1.7"
-    next-auth: "npm:^5.0.0-beta.25"
     pg: "npm:^8.19.0"
     postcss: "npm:^8.4.0"
     prisma: "npm:^6.4.1"
@@ -10352,6 +10346,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"iron-session@npm:^8.0.4":
+  version: 8.0.4
+  resolution: "iron-session@npm:8.0.4"
+  dependencies:
+    cookie: "npm:^0.7.2"
+    iron-webcrypto: "npm:^1.2.1"
+    uncrypto: "npm:^0.1.3"
+  checksum: 10c0/774ed93d964cec435455609120df18c8c8b21f29baeb5969dfb4677e5185eed289d2c31707bd5949dd16d5e10a9f06b7a0d1bc6ff57e8dbf50a50c0deef1b4ea
+  languageName: node
+  linkType: hard
+
+"iron-webcrypto@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "iron-webcrypto@npm:1.2.1"
+  checksum: 10c0/5cf27c6e2bd3ef3b4970e486235fd82491ab8229e2ed0ac23307c28d6c80d721772a86ed4e9fe2a5cabadd710c2f024b706843b40561fb83f15afee58f809f66
+  languageName: node
+  linkType: hard
+
 "is-arguments@npm:^1.0.4":
   version: 1.2.0
   resolution: "is-arguments@npm:1.2.0"
@@ -10752,10 +10764,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:^6.0.6":
-  version: 6.1.3
-  resolution: "jose@npm:6.1.3"
-  checksum: 10c0/b9577b4a7a5e84131011c23823db9f5951eae3ba796771a6a2401ae5dd50daf71104febc8ded9c38146aa5ebe94a92ac09c725e699e613ef26949b9f5a8bc30f
+"jose@npm:^5.10.0":
+  version: 5.10.0
+  resolution: "jose@npm:5.10.0"
+  checksum: 10c0/e20d9fc58d7e402f2e5f04e824b8897d5579aae60e64cb88ebdea1395311c24537bf4892f7de413fab1acf11e922797fb1b42269bc8fc65089a3749265ccb7b0
   languageName: node
   linkType: hard
 
@@ -11510,28 +11522,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next-auth@npm:^5.0.0-beta.25":
-  version: 5.0.0-beta.30
-  resolution: "next-auth@npm:5.0.0-beta.30"
-  dependencies:
-    "@auth/core": "npm:0.41.0"
-  peerDependencies:
-    "@simplewebauthn/browser": ^9.0.1
-    "@simplewebauthn/server": ^9.0.2
-    next: ^14.0.0-0 || ^15.0.0 || ^16.0.0
-    nodemailer: ^7.0.7
-    react: ^18.2.0 || ^19.0.0
-  peerDependenciesMeta:
-    "@simplewebauthn/browser":
-      optional: true
-    "@simplewebauthn/server":
-      optional: true
-    nodemailer:
-      optional: true
-  checksum: 10c0/31ce5ff20320a001ab93444f00c9e0afc8112fd4380a5186bf637f48f6bdc616363861d125da934ea4fa5d1044fe5a61adc988e23a886bf6fb4710aa6488405d
-  languageName: node
-  linkType: hard
-
 "next@npm:16.1.6":
   version: 16.1.6
   resolution: "next@npm:16.1.6"
@@ -11735,13 +11725,6 @@ __metadata:
   bin:
     nypm: dist/cli.mjs
   checksum: 10c0/47a945e83085dc34e8f92c19afb21fc36230d9186af071dffff6e727332c49eb2df1f9abbd71eabfa366cd00d4cf314ba41a202dd111e5c25c2c5f117808b8c7
-  languageName: node
-  linkType: hard
-
-"oauth4webapi@npm:^3.3.0":
-  version: 3.8.4
-  resolution: "oauth4webapi@npm:3.8.4"
-  checksum: 10c0/961d82ecb44b994b116616f7f60b2c6ba03dfccb36815e4b8976597e98da1938521ed6465807d6941029ea69488ea146de2bf210eb69a435c109e18a6f46ec80
   languageName: node
   linkType: hard
 
@@ -12015,6 +11998,13 @@ __metadata:
     lru-cache: "npm:^11.0.0"
     minipass: "npm:^7.1.2"
   checksum: 10c0/b35ad37cf6557a87fd057121ce2be7695380c9138d93e87ae928609da259ea0a170fac6f3ef1eb3ece8a068e8b7f2f3adf5bb2374cf4d4a57fe484954fcc9482
+  languageName: node
+  linkType: hard
+
+"path-to-regexp@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "path-to-regexp@npm:6.3.0"
+  checksum: 10c0/73b67f4638b41cde56254e6354e46ae3a2ebc08279583f6af3d96fe4664fc75788f74ed0d18ca44fa4a98491b69434f9eee73b97bb5314bd1b5adb700f5c18d6
   languageName: node
   linkType: hard
 
@@ -12395,22 +12385,6 @@ __metadata:
   dependencies:
     xtend: "npm:^4.0.0"
   checksum: 10c0/c1734c3cb79e7f22579af0b268a463b1fa1d084e742a02a7a290c4f041e349456f3bee3b4ee0bb3f226828597f7b76deb615c1b857db9a742c45520100456272
-  languageName: node
-  linkType: hard
-
-"preact-render-to-string@npm:6.5.11":
-  version: 6.5.11
-  resolution: "preact-render-to-string@npm:6.5.11"
-  peerDependencies:
-    preact: ">=10"
-  checksum: 10c0/a68b704c1343756022fb41322154b45e39f6021b940cbc97e86c292627d017d019700339a17d67b42c308b14fc5323fc120c798f785d6a3e993c8f273610bfe2
-  languageName: node
-  linkType: hard
-
-"preact@npm:10.24.3":
-  version: 10.24.3
-  resolution: "preact@npm:10.24.3"
-  checksum: 10c0/c863df6d7be6a660480189762d8a8f2d4148733fc2bb9efbd9d2fd27315d2c7ede850a16077d716c91666c915c0349bd3c9699733e4f08457226a0519f408761
   languageName: node
   linkType: hard
 
@@ -14495,6 +14469,13 @@ __metadata:
     has-symbols: "npm:^1.1.0"
     which-boxed-primitive: "npm:^1.1.1"
   checksum: 10c0/7dbd35ab02b0e05fe07136c72cb9355091242455473ec15057c11430129bab38b7b3624019b8778d02a881c13de44d63cd02d122ee782fb519e1de7775b5b982
+  languageName: node
+  linkType: hard
+
+"uncrypto@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "uncrypto@npm:0.1.3"
+  checksum: 10c0/74a29afefd76d5b77bedc983559ceb33f5bbc8dada84ff33755d1e3355da55a4e03a10e7ce717918c436b4dfafde1782e799ebaf2aadd775612b49f7b5b2998e
   languageName: node
   linkType: hard
 

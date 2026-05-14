@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SessionProvider } from "next-auth/react";
+import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 import { UIProviders } from "ui";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -9,7 +9,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <UIProviders navigate={(href) => router.push(href)}>
-      <SessionProvider>{children}</SessionProvider>
+      <AuthKitProvider>{children}</AuthKitProvider>
     </UIProviders>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/backend/data/db";
 import { backendFetch } from "@/backend/integrations/backend-client";
-import { auth } from "@/backend/auth/auth";
+import { withAuth } from "@workos-inc/authkit-nextjs";
 
 export async function PUT(
   req: Request,
@@ -22,8 +22,8 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const session = await auth();
-  const actor = session?.user?.email ?? "env-manager";
+  const { user } = await withAuth({ ensureSignedIn: true });
+  const actor = user.email ?? "env-manager";
 
   try {
     const res = await backendFetch(
@@ -67,8 +67,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const session = await auth();
-  const actor = session?.user?.email ?? "env-manager";
+  const { user } = await withAuth({ ensureSignedIn: true });
+  const actor = user.email ?? "env-manager";
 
   try {
     const res = await backendFetch(
