@@ -174,32 +174,3 @@ export async function authWithReason(): Promise<AuthResult> {
   return { session: { user, backendToken: session.accessToken } };
 }
 
-// ---------------------------------------------------------------------------
-// Compatibility stubs for legacy NextAuth imports.
-// ---------------------------------------------------------------------------
-
-const STUB_RESPONSE = () =>
-  new Response(
-    JSON.stringify({
-      error:
-        "This route is part of the legacy NextAuth flow which has been replaced by /api/auth/oauth/google + /api/auth/callback. Update your client to call those instead.",
-    }),
-    { status: 410, headers: { "content-type": "application/json" } },
-  );
-
-export const handlers = {
-  GET: STUB_RESPONSE,
-  POST: STUB_RESPONSE,
-};
-
-export async function signIn(): Promise<never> {
-  throw new Error(
-    "signIn() is no longer supported. Redirect to /api/auth/oauth/google instead.",
-  );
-}
-
-export async function signOut(): Promise<never> {
-  throw new Error(
-    "signOut() is no longer supported. Redirect to /api/auth/sign-out instead.",
-  );
-}

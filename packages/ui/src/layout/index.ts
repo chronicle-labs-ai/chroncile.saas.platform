@@ -62,7 +62,6 @@ export {
   NavProjects,
   NavSecondary,
   NavUser,
-  SearchForm,
   SiteHeader,
 } from "./dashboard-sidebar-shell";
 export type {

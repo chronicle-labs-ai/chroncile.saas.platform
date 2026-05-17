@@ -11,8 +11,6 @@ import {
 } from "@/server/auth/session";
 import { workos } from "@/server/auth/workos";
 
-export const runtime = "nodejs";
-
 const PUBLIC_PATHS = new Set<string>([
   "/",
   "/login",

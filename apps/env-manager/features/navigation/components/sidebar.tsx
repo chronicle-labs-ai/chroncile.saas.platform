@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { usePathname } from "next/navigation";
 import {
   EnvCubeIcon,
@@ -55,7 +55,7 @@ const navigation = [
 
 export function Sidebar({ className, variant = "fixed" }: SidebarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { user } = useAuth();
 
   if (pathname === "/login") return null;
 
@@ -112,13 +112,19 @@ export function Sidebar({ className, variant = "fixed" }: SidebarProps) {
         ]}
       />
 
-      {session?.user ? (
+      {user ? (
         <SidebarFooter>
           <SidebarUserCard
-            name={session.user.name ?? session.user.email ?? "Operator"}
-            email={session.user.email ?? undefined}
-            avatarUrl={session.user.image ?? undefined}
-            onSignOut={() => void signOut({ callbackUrl: "/login" })}
+            name={
+              [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+              user.email ||
+              "Operator"
+            }
+            email={user.email ?? undefined}
+            avatarUrl={user.profilePictureUrl ?? undefined}
+            onSignOut={() => {
+              window.location.href = "/api/auth/sign-out";
+            }}
           />
         </SidebarFooter>
       ) : null}

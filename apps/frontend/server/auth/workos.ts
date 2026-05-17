@@ -21,5 +21,5 @@ export const workos = new WorkOS(process.env.WORKOS_API_KEY ?? "sk_missing", {
 export const WORKOS_CLIENT_ID = process.env.WORKOS_CLIENT_ID ?? "";
 
 export const WORKOS_REDIRECT_URI =
-  process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI ??
+  process.env.WORKOS_REDIRECT_URI ??
   "http://localhost:3000/api/auth/callback";
